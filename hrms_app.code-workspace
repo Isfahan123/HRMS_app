@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "hrms_app",
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.analysis.extraPaths": [
+			"./services"
+		]
+	}
+}

@@ -1,0 +1,15 @@
+supabase==2.8.1
+PyQt5==5.15.10
+bcrypt==4.2.0
+pytz==2024.1
+reportlab==4.2.2
+pandas==2.2.2
+openpyxl==3.1.2
+python-dotenv==1.0.1
+requests==2.32.3
+tabula-py==2.9.0
+PyPDF2==3.0.1
+java-bridge==1.0.22
+num2words==0.5.13
+holidays==0.81
+

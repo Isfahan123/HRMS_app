@@ -1,0 +1,16 @@
+{
+  "table": "payroll_runs",
+  "timestamp": "2025-11-06T09:17:55.705253",
+  "required": {
+    "epf_relief_cap_annual": true,
+    "epf_relief_used_ytd": true,
+    "epf_relief_remaining": true,
+    "socso_eis_lp1_cap_annual": true,
+    "socso_eis_lp1_claimed_ytd": true,
+    "socso_eis_lp1_remaining": true
+  },
+  "helpful": {
+    "employee_email": false
+  },
+  "all_present": true
+}

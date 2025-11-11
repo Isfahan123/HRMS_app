@@ -1,0 +1,11 @@
+{
+  "require": {
+    "afiqiqmal/malaysiaholiday": "^4.0"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/afiqiqmal/MalaysiaHoliday"
+    }
+  ]
+}

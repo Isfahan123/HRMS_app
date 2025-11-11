@@ -1,0 +1,14 @@
+Schema check for public.payroll_runs @ 2025-11-06T09:17:55.705253
+
+Required columns:
+  - epf_relief_cap_annual: OK
+  - epf_relief_used_ytd: OK
+  - epf_relief_remaining: OK
+  - socso_eis_lp1_cap_annual: OK
+  - socso_eis_lp1_claimed_ytd: OK
+  - socso_eis_lp1_remaining: OK
+
+Helpful columns:
+  - employee_email: MISSING
+
+All required present: YES
