@@ -1,0 +1,66 @@
+{
+  "Chief Executive Officer (CEO)": { "position": "Executive leadership", "department": "Executive Office" },
+  "Managing Director (MD)": { "position": "Executive leadership", "department": "Executive Office" },
+  "Chief Operating Officer (COO)": { "position": "Executive leadership", "department": "Executive Office" },
+  "Chief Financial Officer (CFO)": { "position": "Executive leadership", "department": "Executive Office" },
+  "Chief Technology Officer (CTO)": { "position": "Executive leadership", "department": "Executive Office" },
+  "Chief Human Resources Officer (CHRO)": { "position": "Executive leadership", "department": "Executive Office" },
+  "Chief Marketing Officer (CMO)": { "position": "Executive leadership", "department": "Executive Office" },
+
+  "Finance Director": { "position": "Head of Finance", "department": "Finance" },
+  "Head of Finance": { "position": "Head of Finance", "department": "Finance" },
+  "Finance Manager": { "position": "Manager", "department": "Finance" },
+  "Accountant": { "position": "Senior/Staff Accountant", "department": "Finance" },
+  "Accounts Executive": { "position": "Executive", "department": "Finance" },
+  "Accounts Clerk": { "position": "Clerical", "department": "Finance" },
+
+  "HR Director": { "position": "Head of HR", "department": "Human Resources" },
+  "Head of HR": { "position": "Head of HR", "department": "Human Resources" },
+  "HR Manager": { "position": "Manager", "department": "Human Resources" },
+  "Talent Acquisition Specialist": { "position": "Specialist", "department": "Human Resources" },
+  "Training & Development Officer": { "position": "Officer", "department": "Human Resources" },
+  "Payroll Executive": { "position": "Executive", "department": "Human Resources" },
+  "HR Assistant": { "position": "Assistant", "department": "Human Resources" },
+
+  "Operations Director": { "position": "Head of Operations", "department": "Operations" },
+  "Plant Manager": { "position": "Manager", "department": "Operations" },
+  "Production Supervisor": { "position": "Supervisor", "department": "Operations" },
+  "Machine Operator": { "position": "Operator", "department": "Operations" },
+  "Warehouse Assistant": { "position": "Assistant", "department": "Operations" },
+
+  "Sales Director": { "position": "Head of Sales", "department": "Sales & Marketing" },
+  "Head of Sales": { "position": "Head of Sales", "department": "Sales & Marketing" },
+  "Marketing Director": { "position": "Head of Marketing", "department": "Sales & Marketing" },
+  "Sales Manager": { "position": "Manager", "department": "Sales & Marketing" },
+  "Account Manager": { "position": "Manager", "department": "Sales & Marketing" },
+  "Marketing Executive": { "position": "Executive", "department": "Sales & Marketing" },
+  "Sales Representative": { "position": "Representative", "department": "Sales & Marketing" },
+
+  "CTO": { "position": "Head of Technology", "department": "IT" },
+  "IT Manager": { "position": "Manager", "department": "IT" },
+  "Systems Administrator": { "position": "Specialist", "department": "IT" },
+  "Software Engineer": { "position": "Engineer", "department": "IT" },
+  "Web Developer": { "position": "Developer", "department": "IT" },
+  "IT Support Technician": { "position": "Support", "department": "IT" },
+
+  "General Counsel": { "position": "Head of Legal", "department": "Legal & Compliance" },
+  "Legal Manager": { "position": "Manager", "department": "Legal & Compliance" },
+  "Compliance Officer": { "position": "Officer", "department": "Legal & Compliance" },
+
+  "Customer Service Manager": { "position": "Manager", "department": "Customer Service" },
+  "Call Center Supervisor": { "position": "Supervisor", "department": "Customer Service" },
+  "Customer Support Executive": { "position": "Executive", "department": "Customer Service" },
+
+  "R&D Director": { "position": "Head of R&D", "department": "R&D" },
+  "Research Scientist": { "position": "Scientist", "department": "R&D" },
+  "Product Development Manager": { "position": "Manager", "department": "R&D" },
+
+  "Head of Procurement": { "position": "Head of Procurement", "department": "Procurement / Supply Chain" },
+  "Procurement Manager": { "position": "Manager", "department": "Procurement / Supply Chain" },
+  "Purchasing Executive": { "position": "Executive", "department": "Procurement / Supply Chain" },
+  "Logistics Coordinator": { "position": "Coordinator", "department": "Procurement / Supply Chain" },
+
+  "Admin Manager": { "position": "Manager", "department": "Administration" },
+  "Office Administrator": { "position": "Administrator", "department": "Administration" },
+  "Receptionist": { "position": "Clerical", "department": "Administration" }
+}

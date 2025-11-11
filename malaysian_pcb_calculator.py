@@ -1,255 +1,161 @@
-# Malaysian PCB (Monthly Tax Deduction) Calculator
-# Based on LHDN 2025 Tax Rates and Official Guidelines
+#!/usr/bin/env python3
+"""
+Malaysian PCB (Pay as You Earn) Calculator
+Based on LHDN (Inland Revenue Board) Schedule 1 for 2025
+"""
 
-from typing import Dict, Tuple
-import math
-
-class MalaysianPCBCalculator:
+def calculate_malaysian_pcb(annual_gross_income, annual_epf_employee, marital_status="single", spouse_income=0.0, number_of_children=0):
     """
-    Official Malaysian PCB Calculator based on LHDN 2025 tax rates
-    Implements progressive tax rates, reliefs, and rebates
+    Calculate Malaysian PCB (Pay as You Earn) tax based on current LHDN rates
+    
+    Parameters:
+        pass
+    - annual_gross_income: Annual gross salary
+    - annual_epf_employee: Annual EPF employee contribution
+    - marital_status: "single", "married", "divorced", "widowed"
+    - spouse_income: Annual spouse income (if applicable)
+    - number_of_children: Number of dependent children
+    
+    Returns:
+        pass
+    - dict with tax calculation details
     """
     
-    # LHDN 2025 Progressive Tax Rates for Resident Individuals
-    # Based on Official HASIL Tax Structure
-    TAX_BRACKETS = [
-        (5000, 0.00),      # A: 0 - 5,000: 0%
-        (20000, 0.01),     # B: 5,001 - 20,000: 1% 
-        (35000, 0.03),     # C: 20,001 - 35,000: 3%
-        (50000, 0.06),     # D: 35,001 - 50,000: 6%
-        (70000, 0.11),     # E: 50,001 - 70,000: 11%
-        (100000, 0.19),    # F: 70,001 - 100,000: 19%
-        (400000, 0.25),    # G: 100,001 - 400,000: 25%
-        (600000, 0.26),    # H: 400,001 - 600,000: 26%
-        (2000000, 0.28),   # I: 600,001 - 2,000,000: 28%
-        (float('inf'), 0.30)  # J: Above 2,000,000: 30%
+    # Calculate chargeable income
+    chargeable_income = annual_gross_income - annual_epf_employee
+    
+    # Personal reliefs (2025 rates)
+    personal_relief = 9000  # Basic personal relief
+    spouse_relief = 0
+    child_relief = 0
+    
+    # Determine additional reliefs based on marital status
+    if marital_status.lower() in ["married"]:
+        if spouse_income == 0 or spouse_income < 4000:  # Non-working spouse or very low income
+            spouse_relief = 4000
+        elif spouse_income < 9000:  # Working spouse with income below personal relief threshold
+            spouse_relief = max(0, 4000 - (spouse_income - 4000))
+    
+    # Child relief (RM2,000 per child, max 6 children)
+    child_relief = min(number_of_children * 2000, 12000)
+    
+    # Total reliefs
+    total_reliefs = personal_relief + spouse_relief + child_relief
+    
+    # Taxable income after reliefs
+    taxable_income = max(0, chargeable_income - total_reliefs)
+    
+    # Malaysian Income Tax Rates 2025 (Resident Individual)
+    tax_brackets = [
+        (5000, 0.0),      # First RM5,000 - 0%
+        (15000, 0.01),    # Next RM15,000 (RM5,001 - RM20,000) - 1%
+        (15000, 0.03),    # Next RM15,000 (RM20,001 - RM35,000) - 3%
+        (15000, 0.06),    # Next RM15,000 (RM35,001 - RM50,000) - 6%
+        (20000, 0.11),    # Next RM20,000 (RM50,001 - RM70,000) - 11%
+        (30000, 0.19),    # Next RM30,000 (RM70,001 - RM100,000) - 19%
+        (150000, 0.25),   # Next RM150,000 (RM100,001 - RM250,000) - 25%
+        (150000, 0.26),   # Next RM150,000 (RM250,001 - RM400,000) - 26%
+        (200000, 0.28),   # Next RM200,000 (RM400,001 - RM600,000) - 28%
+        (float('inf'), 0.30)  # Above RM600,000 - 30%
     ]
     
-    # Standard Tax Reliefs (Annual)
-    STANDARD_RELIEFS = {
-        'personal': 9000,           # Personal relief
-        'spouse': 4000,             # Spouse relief (if no income)
-        'child_under_18': 2000,     # Per child under 18
-        'child_tertiary': 8000,     # Per child in tertiary education
-        'epf_max': 6000,            # EPF contribution relief (max)
-        'life_insurance_max': 3000, # Life insurance premium relief (max)
-        'medical_serious': 10000,   # Medical expenses for serious diseases
-        'medical_checkup': 1000,    # Medical check-up expenses
-        'lifestyle_max': 2500       # Lifestyle relief (books, computers, gym)
-    }
+    # Calculate tax
+    annual_tax = 0
+    remaining_income = taxable_income
     
-    # Tax Rebate
-    TAX_REBATE = 400  # For chargeable income ≤ RM35,000
-    REBATE_THRESHOLD = 35000
+    tax_breakdown = []
     
-    def __init__(self):
-        pass
-    
-    def calculate_annual_tax(self, chargeable_income: float) -> Tuple[float, float]:
-        """
-        Calculate annual tax based on progressive rates
-        Returns (gross_tax, net_tax_after_rebate)
-        """
-        if chargeable_income <= 0:
-            return 0.0, 0.0
-        
-        gross_tax = 0.0
-        remaining_income = chargeable_income
-        previous_bracket = 0
-        
-        for bracket_limit, rate in self.TAX_BRACKETS:
-            if remaining_income <= 0:
-                break
-                
-            taxable_in_bracket = min(remaining_income, bracket_limit - previous_bracket)
-            gross_tax += taxable_in_bracket * rate
-            remaining_income -= taxable_in_bracket
-            previous_bracket = bracket_limit
+    for bracket_amount, rate in tax_brackets:
+        if remaining_income <= 0:
+            break
             
-            if bracket_limit == float('inf'):
-                break
+        taxable_in_bracket = min(remaining_income, bracket_amount)
+        tax_in_bracket = taxable_in_bracket * rate
+        annual_tax += tax_in_bracket
         
-        # Apply rebate for low income earners
-        net_tax = gross_tax
-        if chargeable_income <= self.REBATE_THRESHOLD:
-            net_tax = max(0, gross_tax - self.TAX_REBATE)
+        if taxable_in_bracket > 0:
+            tax_breakdown.append({
+                'amount': taxable_in_bracket,
+                'rate': rate * 100,
+                'tax': tax_in_bracket
+            })
         
-        return gross_tax, net_tax
+        remaining_income -= taxable_in_bracket
     
-    def calculate_monthly_taxable_income(self, 
-                                       gross_salary: float,
-                                       unpaid_leave_deduction: float,
-                                       epf_employee: float,
-                                       socso_employee: float,
-                                       eis_employee: float,
-                                       other_deductions: float = 0.0) -> float:
-        """
-        Calculate monthly taxable income after deductions
-        """
-        net_salary = gross_salary - unpaid_leave_deduction
-        total_deductions = epf_employee + socso_employee + eis_employee + other_deductions
-        return net_salary - total_deductions
+    # Monthly PCB (divide annual tax by 12)
+    monthly_pcb = annual_tax / 12
     
-    def calculate_pcb(self, 
-                     monthly_taxable_income: float,
-                     reliefs: Dict[str, float] = None,
-                     is_resident: bool = True) -> Dict[str, float]:
-        """
-        Calculate monthly PCB based on annualized income and reliefs
-        
-        Args:
-            monthly_taxable_income: Monthly taxable income after statutory deductions
-            reliefs: Dictionary of applicable reliefs
-            is_resident: Whether employee is Malaysian tax resident
-        
-        Returns:
-            Dictionary with calculation breakdown
-        """
-        if reliefs is None:
-            reliefs = {'personal': self.STANDARD_RELIEFS['personal']}
-        
-        # Annualize income
-        annual_taxable_income = monthly_taxable_income * 12
-        
-        # Non-resident flat rate
-        if not is_resident:
-            annual_tax = annual_taxable_income * 0.30
-            monthly_pcb = annual_tax / 12
-            return {
-                'monthly_taxable_income': monthly_taxable_income,
-                'annual_taxable_income': annual_taxable_income,
-                'total_reliefs': 0,
-                'chargeable_income': annual_taxable_income,
-                'annual_gross_tax': annual_tax,
-                'annual_net_tax': annual_tax,
-                'monthly_pcb': monthly_pcb,
-                'tax_rate': '30% (Non-resident)',
-                'rebate_applied': 0
-            }
-        
-        # Calculate total reliefs
-        total_reliefs = sum(reliefs.values())
-        
-        # Calculate chargeable income
-        chargeable_income = max(0, annual_taxable_income - total_reliefs)
-        
-        # Calculate tax
-        gross_tax, net_tax = self.calculate_annual_tax(chargeable_income)
-        
-        # Monthly PCB
-        monthly_pcb = net_tax / 12
-        
-        return {
-            'monthly_taxable_income': monthly_taxable_income,
-            'annual_taxable_income': annual_taxable_income,
-            'total_reliefs': total_reliefs,
-            'chargeable_income': chargeable_income,
-            'annual_gross_tax': gross_tax,
-            'annual_net_tax': net_tax,
-            'monthly_pcb': monthly_pcb,
-            'rebate_applied': gross_tax - net_tax,
-            'effective_tax_rate': (net_tax / annual_taxable_income * 100) if annual_taxable_income > 0 else 0
-        }
-    
-    def get_tax_bracket_info(self, chargeable_income: float) -> str:
-        """Get tax bracket information for display"""
-        if chargeable_income <= 0:
-            return "No tax bracket (0% rate)"
-        
-        for i, (bracket_limit, rate) in enumerate(self.TAX_BRACKETS):
-            if chargeable_income <= bracket_limit:
-                if i == 0:
-                    return f"Bracket 1: RM0 - RM{bracket_limit:,.0f} ({rate*100}%)"
-                else:
-                    prev_limit = self.TAX_BRACKETS[i-1][0]
-                    if bracket_limit == float('inf'):
-                        return f"Bracket {i+1}: Above RM{prev_limit:,.0f} ({rate*100}%)"
-                    else:
-                        return f"Bracket {i+1}: RM{prev_limit:,.0f} - RM{bracket_limit:,.0f} ({rate*100}%)"
-        
-        return "Above highest bracket (30%)"
+    return {
+        'annual_gross_income': annual_gross_income,
+        'annual_epf_employee': annual_epf_employee,
+        'chargeable_income': chargeable_income,
+        'personal_relief': personal_relief,
+        'spouse_relief': spouse_relief,
+        'child_relief': child_relief,
+        'total_reliefs': total_reliefs,
+        'taxable_income': taxable_income,
+        'annual_tax': annual_tax,
+        'monthly_pcb': monthly_pcb,
+        'tax_breakdown': tax_breakdown,
+        'effective_tax_rate': (annual_tax / annual_gross_income * 100) if annual_gross_income > 0 else 0
+    }
 
-
-# Example usage and test cases
-def test_pcb_calculator():
-    """Test the PCB calculator with the examples provided"""
-    calc = MalaysianPCBCalculator()
+def calculate_monthly_pcb(monthly_gross_salary, monthly_epf_employee, marital_status="single", spouse_annual_income=0.0, number_of_children=0):
+    """
+    Calculate monthly PCB from monthly salary
     
-    print("=== Malaysian PCB Calculator Test Cases ===\n")
+    Parameters:
+        pass
+    - monthly_gross_salary: Monthly gross salary
+    - monthly_epf_employee: Monthly EPF employee contribution
+    - marital_status: "single", "married", "divorced", "widowed"
+    - spouse_annual_income: Annual spouse income
+    - number_of_children: Number of dependent children
     
-    # Example 1: Employee Under 60, with Unpaid Leave
-    print("Example 1: Employee Under 60, Unpaid Leave")
-    print("Profile: RM3,000/month, single, 5 days unpaid leave")
+    Returns:
+        pass
+    - Monthly PCB amount
+    """
     
-    gross_salary = 3000
-    unpaid_deduction = 500  # 5 days unpaid leave
-    epf = 275  # 11% of RM2,500
-    socso = 12.25  # Under 60
-    eis = 5  # 0.2% of RM2,500
+    # Convert to annual figures
+    annual_gross = monthly_gross_salary * 12
+    annual_epf = monthly_epf_employee * 12
     
-    monthly_taxable = calc.calculate_monthly_taxable_income(
-        gross_salary, unpaid_deduction, epf, socso, eis
+    # Calculate PCB
+    result = calculate_malaysian_pcb(
+        annual_gross, 
+        annual_epf, 
+        marital_status, 
+        spouse_annual_income, 
+        number_of_children
     )
     
-    reliefs = {
-        'personal': 9000,
-        'epf': min(6000, epf * 12)  # EPF relief capped at RM6,000
-    }
-    
-    result = calc.calculate_pcb(monthly_taxable, reliefs)
-    
-    print(f"Gross Salary: RM{gross_salary:,.2f}")
-    print(f"Unpaid Leave Deduction: RM{unpaid_deduction:,.2f}")
-    print(f"Net Salary: RM{gross_salary - unpaid_deduction:,.2f}")
-    print(f"EPF: RM{epf:,.2f}")
-    print(f"SOCSO: RM{socso:,.2f}")
-    print(f"EIS: RM{eis:,.2f}")
-    print(f"Monthly Taxable Income: RM{result['monthly_taxable_income']:,.2f}")
-    print(f"Annual Taxable Income: RM{result['annual_taxable_income']:,.2f}")
-    print(f"Total Reliefs: RM{result['total_reliefs']:,.2f}")
-    print(f"Chargeable Income: RM{result['chargeable_income']:,.2f}")
-    print(f"Annual Tax (Gross): RM{result['annual_gross_tax']:,.2f}")
-    print(f"Rebate Applied: RM{result['rebate_applied']:,.2f}")
-    print(f"Annual Tax (Net): RM{result['annual_net_tax']:,.2f}")
-    print(f"Monthly PCB: RM{result['monthly_pcb']:,.2f}")
-    print(f"Tax Bracket: {calc.get_tax_bracket_info(result['chargeable_income'])}")
-    print()
-    
-    # Example 4: Higher Earner
-    print("Example 4: Higher Earner")
-    print("Profile: RM10,000/month, married with 1 child (under 18)")
-    
-    gross_salary = 10000
-    epf = 900  # 9% of RM10,000
-    socso = 24.65  # Capped
-    eis = 10  # Capped
-    
-    monthly_taxable = calc.calculate_monthly_taxable_income(
-        gross_salary, 0, epf, socso, eis
-    )
-    
-    reliefs = {
-        'personal': 9000,
-        'spouse': 4000,
-        'child_under_18': 2000,
-        'epf': 6000  # Capped at RM6,000 for relief
-    }
-    
-    result = calc.calculate_pcb(monthly_taxable, reliefs)
-    
-    print(f"Gross Salary: RM{gross_salary:,.2f}")
-    print(f"EPF: RM{epf:,.2f}")
-    print(f"SOCSO: RM{socso:,.2f}")
-    print(f"EIS: RM{eis:,.2f}")
-    print(f"Monthly Taxable Income: RM{result['monthly_taxable_income']:,.2f}")
-    print(f"Annual Taxable Income: RM{result['annual_taxable_income']:,.2f}")
-    print(f"Total Reliefs: RM{result['total_reliefs']:,.2f}")
-    print(f"Chargeable Income: RM{result['chargeable_income']:,.2f}")
-    print(f"Annual Tax (Gross): RM{result['annual_gross_tax']:,.2f}")
-    print(f"Annual Tax (Net): RM{result['annual_net_tax']:,.2f}")
-    print(f"Monthly PCB: RM{result['monthly_pcb']:,.2f}")
-    print(f"Effective Tax Rate: {result['effective_tax_rate']:.2f}%")
-    print(f"Tax Bracket: {calc.get_tax_bracket_info(result['chargeable_income'])}")
+    return result['monthly_pcb']
 
+# Test the calculator
 if __name__ == "__main__":
-    test_pcb_calculator()
+    print("=== Malaysian PCB Calculator Test ===")
+    
+    # Test case 1: Single person
+    print("\n1. Single person, RM5,000/month:")
+    result1 = calculate_malaysian_pcb(60000, 7200, "single", 0, 0)
+    print(f"   Monthly PCB: RM{result1['monthly_pcb']:.2f}")
+    print(f"   Annual Tax: RM{result1['annual_tax']:.2f}")
+    print(f"   Effective Rate: {result1['effective_tax_rate']:.2f}%")
+    
+    # Test case 2: Married with non-working spouse
+    print("\n2. Married, RM8,000/month, non-working spouse:")
+    result2 = calculate_malaysian_pcb(96000, 11520, "married", 0, 0)
+    print(f"   Monthly PCB: RM{result2['monthly_pcb']:.2f}")
+    print(f"   Annual Tax: RM{result2['annual_tax']:.2f}")
+    print(f"   Effective Rate: {result2['effective_tax_rate']:.2f}%")
+    
+    # Test case 3: Married with working spouse and children
+    print("\n3. Married, RM10,000/month, spouse earns RM36,000/year, 2 children:")
+    result3 = calculate_malaysian_pcb(120000, 14400, "married", 36000, 2)
+    print(f"   Monthly PCB: RM{result3['monthly_pcb']:.2f}")
+    print(f"   Annual Tax: RM{result3['annual_tax']:.2f}")
+    print(f"   Effective Rate: {result3['effective_tax_rate']:.2f}%")
+    print(f"   Personal Relief: RM{result3['personal_relief']}")
+    print(f"   Spouse Relief: RM{result3['spouse_relief']}")
+    print(f"   Child Relief: RM{result3['child_relief']}")

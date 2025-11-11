@@ -1,0 +1,4 @@
+-- DEPRECATED: we standardize on 'job_title' instead of 'position'.
+-- This migration is no longer required. Keep this file as a note.
+-- If you previously applied a 'position' migration and want to remove the column,
+-- run: ALTER TABLE public.employees DROP COLUMN IF EXISTS position;

@@ -1,0 +1,64 @@
+{
+  "IT": {
+    "Infrastructure": {
+      "positions": ["Intern", "Junior", "Mid-level", "Senior", "Lead", "Manager", "Head"],
+      "job_titles": [
+        "Systems Administrator",
+        "Network Engineer",
+        "IT Security Specialist",
+        "DevOps Engineer",
+        "Cloud Engineer",
+        "Site Reliability Engineer"
+      ]
+    },
+    "Development": {
+      "positions": ["Intern", "Junior", "Mid-level", "Senior", "Lead", "Manager", "Head"],
+      "job_titles": [
+        "Software Engineer",
+        "Web Developer",
+        "Mobile Developer",
+        "Backend Developer",
+        "Frontend Developer",
+        "Fullstack Developer"
+      ]
+    },
+    "Support": {
+      "positions": ["Intern", "Junior", "Mid-level", "Senior", "Lead", "Manager", "Head"],
+      "job_titles": [
+        "IT Support Technician",
+        "Helpdesk Officer",
+        "Desktop Support Engineer",
+        "Field Support Technician"
+      ]
+    },
+    "Data": {
+      "positions": ["Intern", "Junior", "Mid-level", "Senior", "Lead", "Manager", "Head"],
+      "job_titles": [
+        "Data Engineer",
+        "Database Administrator",
+        "Data Analyst",
+        "Machine Learning Engineer"
+      ]
+    }
+  },
+  "Finance": {
+    "Accounting": {
+      "positions": ["Clerical", "Executive", "Officer", "Senior", "Manager", "Head"],
+      "job_titles": [
+        "Accountant",
+        "Accounts Executive",
+        "Accounts Clerk",
+        "Senior Accountant",
+        "Audit Associate"
+      ]
+    },
+    "Payroll": {
+      "positions": ["Executive", "Officer", "Senior", "Manager", "Head"],
+      "job_titles": [
+        "Payroll Executive",
+        "Payroll Officer",
+        "Payroll Specialist"
+      ]
+    }
+  }
+}

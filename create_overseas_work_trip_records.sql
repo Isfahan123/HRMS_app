@@ -1,0 +1,28 @@
+-- Create table for overseas_work_trip_records
+CREATE TABLE public.overseas_work_trip_records (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  employee_id uuid NULL,
+  location text NOT NULL,
+  trip_date date NOT NULL,
+  purpose text NULL,
+  attachment_url text NULL,
+  admin_notes text NULL,
+  created_at timestamp without time zone NULL DEFAULT now(),
+  submitted_by uuid NULL,
+  country character varying(100) NULL,
+  city character varying(100) NULL,
+  start_date date NULL,
+  end_date date NULL,
+  duration integer NULL,
+  flight_details text NULL,
+  accommodation_details text NULL,
+  daily_allowance numeric(12,2) NULL,
+  travel_costs numeric(12,2) NULL,
+  total_claim numeric(12,2) NULL,
+  approved_by character varying(100) NULL,
+  approval_date date NULL,
+  course_fees numeric(12,2) NULL,
+  city_place_id character varying(255) NULL,
+  CONSTRAINT overseas_work_trip_records_pkey PRIMARY KEY (id),
+  CONSTRAINT overseas_work_trip_records_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES employees (id)
+) TABLESPACE pg_default;
