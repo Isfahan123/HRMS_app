@@ -4811,7 +4811,7 @@ def get_individual_employee_leave_balance(employee_email, year=None):
         years_of_service = 0.0
         base_entitlement = 14
         try:
-            from services.employee_service import calculate_cumulative_service
+            from core.employee_service import calculate_cumulative_service
             cum = calculate_cumulative_service(employee_id)
             if cum and cum.get('days', 0) > 0:
                 years_of_service = cum.get('years', 0.0)
@@ -4908,7 +4908,7 @@ def get_individual_employee_sick_leave_balance(employee_email, year=None):
         # Calculate base entitlement based on cumulative years of service
         years_of_service = 0.0
         try:
-            from services.employee_service import calculate_cumulative_service
+            from core.employee_service import calculate_cumulative_service
             cum = calculate_cumulative_service(employee_id)
             if cum and cum.get('days', 0) > 0:
                 years_of_service = cum.get('years', 0.0)
@@ -5008,7 +5008,7 @@ def calculate_working_days(start_date, end_date, state: Optional[str] = None, in
 
         # Determine working days using the centralized holidays service (Calendarific + overrides)
         try:
-            from services.holidays_service import get_holidays_for_year, canonical_state_name
+            from core.holidays_service import get_holidays_for_year, canonical_state_name
             # We'll build a per-year holiday map first, then compute working days
             current = start_date
             # Determine include flags from saved calendar UI prefs if not explicitly provided
@@ -8472,7 +8472,7 @@ def calculate_comprehensive_payroll(employee_data: Dict, payroll_inputs: Dict, m
                 try:
                     if _probe_table_exists('relief_ytd_accumulated'):
                         ytd_rows = supabase.table('relief_ytd_accumulated').select('item_key, claimed_ytd, last_claim_year').eq('employee_id', employee_uuid).eq('year', period_year).execute().data or []
-                        from services.tax_relief_catalog import adjust_claims_for_ytd_and_cycles
+                        from core.tax_relief_catalog import adjust_claims_for_ytd_and_cycles
                         adjusted = adjust_claims_for_ytd_and_cycles(tp1_claims, ytd_rows, period_year)
                         payroll_inputs['tp1_relief_claims_adjusted'] = adjusted
                         tp1_claims = adjusted
@@ -8484,7 +8484,7 @@ def calculate_comprehensive_payroll(employee_data: Dict, payroll_inputs: Dict, m
             total_lp1_pcb = None  # includes pcb_only items from TP1 claims if any
             if isinstance(tp1_claims, dict) and tp1_claims:
                 try:
-                    from services.tax_relief_catalog import (
+                    from core.tax_relief_catalog import (
                         compute_lp1_totals,
                         compute_applied_and_ytd_updates,
                         load_relief_overrides_from_db,
@@ -8578,7 +8578,7 @@ def calculate_comprehensive_payroll(employee_data: Dict, payroll_inputs: Dict, m
                 # Persist YTD relief accumulation (per-item) if we have applied items & table exists
                 try:
                     if per_item_applied and _probe_table_exists('relief_ytd_accumulated'):
-                        from services.tax_relief_catalog import compute_applied_and_ytd_updates
+                        from core.tax_relief_catalog import compute_applied_and_ytd_updates
                         ytd_updates = compute_applied_and_ytd_updates(per_item_applied, ytd_rows, period_year)
                         if ytd_updates:
                             # Upsert each item (assuming RPC or upsert available)

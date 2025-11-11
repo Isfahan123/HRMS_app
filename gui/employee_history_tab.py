@@ -14,11 +14,11 @@ from services.supabase_employee_history import (
 from services.supabase_service import supabase
 from gui.employee_selector_dialog import EmployeeSelectorDialog
 from gui.employee_profile_dialog import EmployeeProfileDialog
-from gui.job_title_mapping_loader import load_job_title_mapping
+from core.job_title_mapping_loader import load_job_title_mapping
 from services.org_structure_service import list_departments, get_department_units, list_job_title_groups, get_titles_for_group
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'database', 'employee_history.json')
-STATUS_DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'database', 'employee_status.json')
+DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'employee_history.json')
+STATUS_DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'employee_status.json')
 
 # canonical default when no employee is selected
 DEFAULT_NO_EMP_TEXT = 'No employee selected'
@@ -71,7 +71,7 @@ class EmployeeHistoryTab(QWidget):
     """Simple employment / re-employment history tab.
 
     This is a lightweight placeholder implementation that stores records locally in
-    `database/employee_history.json`. It provides a Submit form and a View table
+    `data/employee_history.json`. It provides a Submit form and a View table
     with edit/delete support. When integrated with your backend, replace the
     persistence functions with API/database calls.
     """
@@ -1428,7 +1428,7 @@ class EmployeeHistoryTab(QWidget):
 
             # Service (years) for the record: per-row period only
             try:
-                from services.employee_service import format_years
+                from core.employee_service import format_years
                 s_date = r.get('start_date')
                 e_date = r.get('end_date')
                 serv_text = ''

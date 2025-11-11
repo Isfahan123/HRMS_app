@@ -53,7 +53,7 @@ for label, ui_value in tests:
 	print('Computed end:  ', end_str)
 
 # Also print holidays around the date for verification
-from services.holidays_service import get_holidays_for_year
+from core.holidays_service import get_holidays_for_year
 holidays, details = get_holidays_for_year(2025, None)
 print('Total holidays 2025:', len(holidays))
 # print any holidays in Oct 2025

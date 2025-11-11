@@ -629,7 +629,7 @@ class EmployeeLeaveTab(QWidget):
         state = None
         try:
             state_text = getattr(self, 'state_combo', None) and self.state_combo.currentText()
-            from services.holidays_service import canonical_state_name
+            from core.holidays_service import canonical_state_name
             state = canonical_state_name(state_text)
         except Exception:
             state = None
@@ -637,7 +637,7 @@ class EmployeeLeaveTab(QWidget):
         # Fetch holidays for the relevant years (start year and next) using local python-holidays adapter
         holiday_dates = set()
         try:
-            from services.holidays_service import get_holidays_for_year
+            from core.holidays_service import get_holidays_for_year
             try:
                 ys = {start_date.year(), start_date.year() + 1}
             except Exception:
@@ -654,7 +654,7 @@ class EmployeeLeaveTab(QWidget):
         # Determine state-specific weekend days for Qt (Fri=5, Sat=6, Sun=7)
         try:
             fri_sat_states = {"Johor", "Kedah", "Kelantan", "Terengganu"}
-            from services.holidays_service import canonical_state_name
+            from core.holidays_service import canonical_state_name
             qt_state = canonical_state_name(self.state_combo.currentText()) if hasattr(self, 'state_combo') else None
             weekend_qt_days = {5, 6} if (qt_state in fri_sat_states) else {6, 7}
         except Exception:
@@ -773,7 +773,7 @@ class EmployeeLeaveTab(QWidget):
             date = today
         try:
             fri_sat_states = {"Johor", "Kedah", "Kelantan", "Terengganu"}
-            from services.holidays_service import canonical_state_name
+            from core.holidays_service import canonical_state_name
             qt_state = canonical_state_name(self.state_combo.currentText()) if hasattr(self, 'state_combo') else None
             weekend_qt_days = {5, 6} if (qt_state in fri_sat_states) else {6, 7}
         except Exception:
@@ -803,7 +803,7 @@ class EmployeeLeaveTab(QWidget):
             pass
         try:
             fri_sat_states = {"Johor", "Kedah", "Kelantan", "Terengganu"}
-            from services.holidays_service import canonical_state_name
+            from core.holidays_service import canonical_state_name
             qt_state = canonical_state_name(self.state_combo.currentText()) if hasattr(self, 'state_combo') else None
             weekend_qt_days = {5, 6} if (qt_state in fri_sat_states) else {6, 7}
         except Exception:

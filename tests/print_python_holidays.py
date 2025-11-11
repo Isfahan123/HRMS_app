@@ -12,7 +12,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from services.holidays_service import get_holidays_python_only
+from core.holidays_service import get_holidays_python_only
 
 if __name__ == '__main__':
     year = int(sys.argv[1]) if len(sys.argv) > 1 else 2025

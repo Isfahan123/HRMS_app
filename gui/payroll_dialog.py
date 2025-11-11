@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 import json
 from services.supabase_service import supabase, get_monthly_deductions, upsert_monthly_deductions, upsert_tp1_monthly_details
 from gui.payroll_sections.additional_salary_section import build_additional_salary_section
-from services.tax_relief_catalog import ITEMS as TP1_ITEMS
+from core.tax_relief_catalog import ITEMS as TP1_ITEMS
 
 class PayrollInformationDialog(QDialog):
     def __init__(self, employee_data=None, parent=None, is_admin=False):
@@ -833,7 +833,7 @@ class PayrollInformationDialog(QDialog):
 
             # Load effective TP1 catalog with overrides so UI reflects PCB? flips and caps
             try:
-                from services.tax_relief_catalog import load_relief_overrides_from_db, get_effective_items, load_relief_group_overrides_from_db, get_effective_groups
+                from core.tax_relief_catalog import load_relief_overrides_from_db, get_effective_items, load_relief_group_overrides_from_db, get_effective_groups
                 _ov = {}
                 _gov = {}
                 try:
@@ -996,7 +996,7 @@ class PayrollInformationDialog(QDialog):
                     # Apply cap enforcement and trim values before saving
                     trimmed_claims = dict(claims)
                     try:
-                        from services.tax_relief_catalog import (
+                        from core.tax_relief_catalog import (
                             load_relief_overrides_from_db, load_relief_group_overrides_from_db,
                             get_effective_items, get_effective_groups, apply_relief_caps
                         )

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkcalendar import Calendar
 from datetime import datetime
-from services.holidays_service import get_holidays_for_year
+from core.holidays_service import get_holidays_for_year
 
 def run_calendar(year=None):
     root = tk.Tk()

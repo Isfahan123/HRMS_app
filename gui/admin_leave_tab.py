@@ -1447,7 +1447,7 @@ class AdminLeaveTab(QWidget):
                     employment_display = "🎓 Intern"
                 
                 # Prepare row data with better formatting
-                from services.employee_service import format_years
+                from core.employee_service import format_years
 
                 row_data = [
                     balance_data.get("email", ""),
@@ -1527,7 +1527,7 @@ class AdminLeaveTab(QWidget):
                 employment_display = balance_data.get("employment_type", "Full-time")
                 
                 # Prepare row data with better formatting
-                from services.employee_service import format_years
+                from core.employee_service import format_years
 
                 row_data = [
                     balance_data.get("email", ""),
@@ -2510,7 +2510,7 @@ class AdminLeaveTab(QWidget):
         # Determine state-specific weekend days for Qt (Fri=5, Sat=6, Sun=7)
         try:
             fri_sat_states = {"Johor", "Kedah", "Kelantan", "Terengganu"}
-            from services.holidays_service import canonical_state_name
+            from core.holidays_service import canonical_state_name
             qt_state = canonical_state_name(self.admin_state_combo.currentText()) if hasattr(self, 'admin_state_combo') else None
             weekend_qt_days = {5, 6} if (qt_state in fri_sat_states) else {6, 7}
         except Exception:
@@ -2541,7 +2541,7 @@ class AdminLeaveTab(QWidget):
         """Validate admin start date to ensure it's not a weekend (state-specific)."""
         try:
             fri_sat_states = {"Johor", "Kedah", "Kelantan", "Terengganu"}
-            from services.holidays_service import canonical_state_name
+            from core.holidays_service import canonical_state_name
             qt_state = canonical_state_name(self.admin_state_combo.currentText()) if hasattr(self, 'admin_state_combo') else None
             weekend_qt_days = {5, 6} if (qt_state in fri_sat_states) else {6, 7}
         except Exception:
@@ -2559,7 +2559,7 @@ class AdminLeaveTab(QWidget):
         """Validate admin end date to ensure it's not a weekend (state-specific)."""
         try:
             fri_sat_states = {"Johor", "Kedah", "Kelantan", "Terengganu"}
-            from services.holidays_service import canonical_state_name
+            from core.holidays_service import canonical_state_name
             qt_state = canonical_state_name(self.admin_state_combo.currentText()) if hasattr(self, 'admin_state_combo') else None
             weekend_qt_days = {5, 6} if (qt_state in fri_sat_states) else {6, 7}
         except Exception:

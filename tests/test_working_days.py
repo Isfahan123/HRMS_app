@@ -8,7 +8,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from services.supabase_service import calculate_working_days
-from services.holidays_service import get_holidays_for_year, canonical_state_name
+from core.holidays_service import get_holidays_for_year, canonical_state_name
 
 
 def list_excluded_dates(start: date, end: date, state=None):

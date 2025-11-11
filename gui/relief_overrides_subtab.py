@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QColor
-from services.tax_relief_catalog import (
+from core.tax_relief_catalog import (
     ITEMS, ITEM_BY_KEY, load_relief_overrides_from_db,
     RELIEF_GROUPS, load_relief_group_overrides_from_db, get_effective_groups
 )
@@ -36,7 +36,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QColor
-from services.tax_relief_catalog import (
+from core.tax_relief_catalog import (
     ITEMS, ITEM_BY_KEY, RELIEF_GROUPS,
     load_relief_overrides_from_db, load_relief_group_overrides_from_db
 )
@@ -59,7 +59,7 @@ class ReliefOverridesSubtab(QWidget):
         self.reload_overrides()
 
     def _build_group_caps_index(self):
-        from services.tax_relief_catalog import GROUP_TO_ITEMS
+        from core.tax_relief_catalog import GROUP_TO_ITEMS
         return {gid: {"cap": grp.cap, "members": GROUP_TO_ITEMS.get(gid, [])}
                 for gid, grp in RELIEF_GROUPS.items()}
 

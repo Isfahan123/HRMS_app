@@ -1,7 +1,7 @@
 import json
 import os
 
-MAPPING_PATH = os.path.join(os.path.dirname(__file__), 'job_title_mapping.json')
+MAPPING_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'job_title_mapping.json')
 
 
 def load_job_title_mapping():

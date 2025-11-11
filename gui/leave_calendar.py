@@ -9,7 +9,7 @@ DB-first aggregation of Calendarific + overrides.
 from datetime import date, datetime
 from typing import Iterable, Optional, Union
 
-from services.holidays_service import get_holidays_for_year
+from core.holidays_service import get_holidays_for_year
 
 
 def _to_date(d: Union[date, datetime, str]) -> date:

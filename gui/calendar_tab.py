@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtGui import QTextCharFormat, QBrush, QColor
 from datetime import date
-from services.holidays_service import get_holidays_for_year
+from core.holidays_service import get_holidays_for_year
 from services.supabase_service import (
     get_calendar_ui_prefs, upsert_calendar_ui_prefs,
     insert_calendar_holiday, find_calendar_holidays_for_year, find_calendar_holidays_by_date, delete_calendar_holiday_by_id
@@ -19,7 +19,7 @@ import sys
 # JSON-backed fallback so the UI can work in offline/test environments and
 # so editor/linters don't flag undefined names.
 try:
-    from services.holidays_service import add_override, remove_override
+    from core.holidays_service import add_override, remove_override
 except Exception:
     import json, os
 
@@ -173,7 +173,7 @@ class CalendarTab(QWidget):
         # Abbreviations legend (short code -> full name) shown below calendar
         # Build legend text from services.holidays_service.STATE_ABBREV
         try:
-            from services.holidays_service import STATE_ABBREV
+            from core.holidays_service import STATE_ABBREV
             # HTML legend with bold/colored abbreviations for readability
             parts_html = [f"<b><span style='color:#0B5394'>{v}</span></b>: {k}" for k, v in STATE_ABBREV.items()]
             legend_html = ' &nbsp; '.join(parts_html)
@@ -271,7 +271,7 @@ class CalendarTab(QWidget):
             d = d.addDays(1)
 
         # Highlight public holidays and set per-date tooltips containing holiday names + legend
-        from services.holidays_service import STATE_ABBREV
+        from core.holidays_service import STATE_ABBREV
         rev_abbrev = {v: k for k, v in STATE_ABBREV.items()}
         for d in self.holidays:
             try:
@@ -361,7 +361,7 @@ class CalendarTab(QWidget):
                     # Create tooltip mapping short codes -> full names for the item
                     try:
                         import re
-                        from services.holidays_service import STATE_ABBREV
+                        from core.holidays_service import STATE_ABBREV
                         rev = {v: k for k, v in STATE_ABBREV.items()}
                         codes = set()
                         for nm in names:

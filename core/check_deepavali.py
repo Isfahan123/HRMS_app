@@ -7,7 +7,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from services.holidays_service import get_holidays_for_year
+from core.holidays_service import get_holidays_for_year
 
 
 if __name__ == '__main__':

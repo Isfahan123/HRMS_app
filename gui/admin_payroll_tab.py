@@ -59,7 +59,7 @@ from services.supabase_service import (
     upsert_monthly_deductions,
     upsert_tp1_monthly_details
 )
-from services.tax_relief_catalog import ITEMS as TP1_ITEMS
+from core.tax_relief_catalog import ITEMS as TP1_ITEMS
 from services.payslip_generator import generate_payslip_for_employee
 from core.malaysian_pcb_calculator import MalaysianPCBCalculator
 from datetime import datetime
@@ -452,7 +452,7 @@ class AdminPayrollTab(QWidget):
             ytd_map = fetch_ytd_map(emp_id)
             # Load effective catalog and groups with overrides so the UI reflects flips to PCB? and cap changes
             try:
-                from services.tax_relief_catalog import load_relief_overrides_from_db, load_relief_group_overrides_from_db, get_effective_items, get_effective_groups
+                from core.tax_relief_catalog import load_relief_overrides_from_db, load_relief_group_overrides_from_db, get_effective_items, get_effective_groups
                 try:
                     _ov = load_relief_overrides_from_db(supabase)
                 except Exception:
@@ -613,7 +613,7 @@ class AdminPayrollTab(QWidget):
             # Apply cap enforcement and trim values before saving
             trimmed_claims = dict(claims)
             try:
-                from services.tax_relief_catalog import (
+                from core.tax_relief_catalog import (
                     load_relief_overrides_from_db, load_relief_group_overrides_from_db,
                     get_effective_items, get_effective_groups, apply_relief_caps
                 )
@@ -1921,7 +1921,7 @@ class AdminPayrollTab(QWidget):
 
                     if tp1_claims:
                         try:
-                            from services.tax_relief_catalog import (
+                            from core.tax_relief_catalog import (
                                 compute_lp1_totals,
                                 load_relief_overrides_from_db,
                                 get_effective_items,

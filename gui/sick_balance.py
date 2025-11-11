@@ -207,7 +207,7 @@ class SickBalanceWidget(QWidget):
                     except Exception:
                         policy_caps = {}
                     
-                    from services.employee_service import format_years
+                    from core.employee_service import format_years
 
                     # Create balance record
                     balance_record = {

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'services'))
+# Ensure project root is on sys.path
+proj_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if proj_root not in sys.path:
+    sys.path.insert(0, proj_root)
 
-from supabase_service import calculate_lhdn_pcb_official
+from services.supabase_service import calculate_lhdn_pcb_official
 
 def test_lhdn_calculation():
     """Test LHDN PCB calculation with user's exact example"""
