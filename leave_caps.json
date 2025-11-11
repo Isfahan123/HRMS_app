@@ -1,0 +1,64 @@
+{
+  "tiers": [
+    {
+      "id": "lt2",
+      "label": "< 2 years",
+      "min_years": 0,
+      "max_years": 1.99
+    },
+    {
+      "id": "2to5",
+      "label": "2 - 5 years",
+      "min_years": 2,
+      "max_years": 5
+    },
+    {
+      "id": "gt5",
+      "label": "> 5 years",
+      "min_years": 5.01,
+      "max_years": 100
+    }
+  ],
+  "leave_types": [
+    "annual",
+    "sick",
+    "hospitalization",
+    "maternity",
+    "paternity",
+    "compassionate",
+    "unpaid",
+    "other"
+  ],
+  "caps": {
+    "lt2": {
+      "annual": 8,
+      "sick": 14,
+      "hospitalization": 60,
+      "maternity": 60,
+      "paternity": 3,
+      "compassionate": 3,
+      "unpaid": 0,
+      "other": 0
+    },
+    "2to5": {
+      "annual": 12,
+      "sick": 22,
+      "hospitalization": 60,
+      "maternity": 90,
+      "paternity": 3,
+      "compassionate": 3,
+      "unpaid": 0,
+      "other": 0
+    },
+    "gt5": {
+      "annual": 16,
+      "sick": 22,
+      "hospitalization": 60,
+      "maternity": 90,
+      "paternity": 5,
+      "compassionate": 5,
+      "unpaid": 0,
+      "other": 0
+    }
+  }
+}

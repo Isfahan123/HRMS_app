@@ -1,0 +1,4 @@
+{
+  "removed": true,
+  "note": "This file was cleared per request — runtime uses python-holidays only. Kept as an empty placeholder to avoid tool errors."
+}

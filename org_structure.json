@@ -1,0 +1,197 @@
+{
+  "positions_hierarchy": [
+    "Executive Leadership (Top Management)",
+    "C-Level Positions (Corporate Functional Heads)",
+    "Senior / Head-Level Management",
+    "Middle Management",
+    "Professional / Executive Level",
+    "Operational / Support Staff",
+    "Entry-Level / Trainee / Internship"
+  ],
+  "departments": {
+    "Executive Office / Corporate Leadership": [
+      "Executive Office",
+      "Office of the CEO",
+      "Strategy & Planning Department",
+      "Corporate Affairs",
+      "Corporate Communications",
+      "Risk Management & Governance",
+      "Internal Audit",
+      "Board Secretariat"
+    ],
+    "Finance & Accounting": [
+      "Finance Department",
+      "Accounting Department",
+      "Treasury Department",
+      "Budgeting & Forecasting",
+      "Accounts Payable (AP)",
+      "Accounts Receivable (AR)",
+      "Payroll",
+      "Procurement / Purchasing",
+      "Asset & Inventory Control"
+    ],
+    "Human Resources & Administration": [
+      "Human Resources Department",
+      "Recruitment & Talent Acquisition",
+      "Learning & Development (Training)",
+      "Employee Relations / Industrial Relations",
+      "HR Operations / HR Services",
+      "Compensation & Benefits",
+      "Administration Department",
+      "Office Management / General Affairs"
+    ],
+    "Operations / Production / Supply Chain": [
+      "Operations Department",
+      "Production Department",
+      "Manufacturing / Assembly Line",
+      "Logistics & Distribution",
+      "Supply Chain Management",
+      "Quality Control (QC)",
+      "Maintenance & Facilities",
+      "Warehousing"
+    ],
+    "Research & Development (R&D)": [
+      "Research & Development Department",
+      "Product Design / Engineering",
+      "Prototyping & Testing",
+      "Industrial Design",
+      "Process Development"
+    ],
+    "Information Technology (IT) / Technology": [
+      "IT Department",
+      "Software Development",
+      "Systems Administration",
+      "Network & Infrastructure",
+      "Information Security / Cybersecurity",
+      "IT Support / Helpdesk",
+      "Data Science / Analytics",
+      "AI & Automation"
+    ],
+    "Sales, Marketing & Business Development": [
+      "Sales Department",
+      "Business Development",
+      "Marketing Department",
+      "Branding & Communications",
+      "Digital Marketing",
+      "Customer Relations / CRM",
+      "Market Research",
+      "Product Management"
+    ],
+    "Legal, Compliance & Risk": [
+      "Legal Department",
+      "Compliance Department",
+      "Risk Management",
+      "Contracts & Agreements",
+      "Corporate Governance"
+    ],
+    "Engineering / Technical Services": [
+      "Engineering Department",
+      "Civil / Mechanical / Electrical Engineering Units",
+      "Technical Support",
+      "Field Operations",
+      "Design & Drafting",
+      "Project Engineering"
+    ],
+    "Security, Safety & Defense": [
+      "Security Department",
+      "Safety & Health (EHS / OSH)",
+      "Fire Safety",
+      "Defense Technology Unit",
+      "Weapons Systems Engineering",
+      "Compliance & Export Control",
+      "Intelligence / Risk Operations"
+    ],
+    "Sustainability, CSR & Environment": [
+      "Sustainability Department",
+      "Environmental Management",
+      "Corporate Social Responsibility (CSR)",
+      "ESG Compliance"
+    ],
+    "Procurement / Supply / Asset Management": [
+      "Procurement Department",
+      "Vendor Management",
+      "Inventory & Asset Management",
+      "Contract Administration"
+    ],
+    "Project Management / PMO": [
+      "Project Management Office (PMO)",
+      "Strategic Projects",
+      "Program Coordination",
+      "Process Improvement"
+    ],
+    "Customer Support / Service": [
+      "Customer Service Department",
+      "Technical Support",
+      "Warranty / Claims",
+      "Client Relations"
+    ],
+    "External Relations / Public Sector / Liaison": [
+      "Government Liaison Office",
+      "Public Relations (PR)",
+      "Investor Relations",
+      "Stakeholder Engagement"
+    ]
+  },
+  "job_titles": {
+    "Executive Leadership": [
+      "Chief Executive Officer (CEO)",
+      "President / Managing Director (MD)",
+      "Deputy CEO / Deputy MD",
+      "Chief of Staff",
+      "Executive Advisor"
+    ],
+    "C-Level": [
+      "Chief Operating Officer (COO)",
+      "Chief Financial Officer (CFO)",
+      "Chief Technology Officer (CTO)",
+      "Chief Information Officer (CIO)",
+      "Chief Human Resources Officer (CHRO)",
+      "Chief Marketing Officer (CMO)",
+      "Chief Legal Officer (CLO)",
+      "Chief Compliance Officer (CCO)",
+      "Chief Security Officer (CSO)",
+      "Chief Product Officer (CPO)",
+      "Chief Strategy Officer (CSO)",
+      "Chief Innovation Officer (CINO)",
+      "Chief Sustainability Officer (CSuO)"
+    ],
+    "Senior / Head-Level Management": [
+      "Head of Department (HoD)",
+      "Head of Division / Head of Unit",
+      "General Manager (GM)",
+      "Assistant General Manager (AGM)",
+      "Senior Manager",
+      "Principal Manager",
+      "Regional Manager / Branch Manager / Plant Manager",
+      "Program Director / Division Director"
+    ],
+    "Middle Management": [
+      "Manager",
+      "Assistant Manager",
+      "Team Leader / Lead / Supervisor",
+      "Coordinator"
+    ],
+    "Professional / Executive Level": [
+      "Senior Executive",
+      "Executive",
+      "Senior Officer",
+      "Officer",
+      "Engineer",
+      "Specialist / Analyst / Consultant"
+    ],
+    "Operational / Support Staff": [
+      "Senior Technician",
+      "Technician",
+      "Clerk / Administrative Assistant",
+      "Assistant Officer",
+      "Support Staff / Office Assistant",
+      "Operator / Driver / Security Personnel / Dispatcher"
+    ],
+    "Entry-Level / Trainee": [
+      "Graduate Trainee",
+      "Intern / Apprentice / Industrial Trainee",
+      "Junior Associate",
+      "Probationary Officer"
+    ]
+  }
+}
