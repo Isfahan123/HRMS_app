@@ -8,6 +8,8 @@ A comprehensive desktop application for managing human resources, payroll, leave
 
 ## 🚀 Quick Start
 
+**Want to deploy to Render or web hosting?** → [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) ⚠️
+
 **Confused about how to run this?** → [HOW_TO_RUN.md](HOW_TO_RUN.md) ⭐
 
 **New to HRMS?** → [QUICKSTART.md](QUICKSTART.md)
@@ -50,6 +52,7 @@ A comprehensive desktop application for managing human resources, payroll, leave
 
 ## 📖 Documentation
 
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deployment options and web vs desktop architecture
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
 - **[docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)** - Detailed setup instructions
 - **[docs/REPOSITORY_STRUCTURE.md](docs/REPOSITORY_STRUCTURE.md)** - Code organization
@@ -240,8 +243,14 @@ A: There is no index.html. This application uses PyQt5 for its user interface, n
 **Q: How do I deploy this to a server?**  
 A: This is a desktop application, not designed for web deployment. Each user runs their own copy locally.
 
+**Q: Can I deploy this to Render, Heroku, or other web hosting?**  
+A: No, PyQt5 desktop applications cannot be deployed to web hosting platforms. See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for options.
+
 **Q: Can multiple users access it simultaneously?**  
 A: Multiple users can run their own instances, and they share the same Supabase database for data synchronization.
+
+**Q: I see mentions of HTML files - where are they?**  
+A: There are no HTML files in the current codebase. This is a PyQt5 desktop app. See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for clarification.
 
 ---
 
