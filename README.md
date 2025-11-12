@@ -8,7 +8,9 @@ A comprehensive desktop application for managing human resources, payroll, leave
 
 ## 🚀 Quick Start
 
-**New to HRMS?** Start here: [QUICKSTART.md](QUICKSTART.md)
+**Confused about how to run this?** → [HOW_TO_RUN.md](HOW_TO_RUN.md) ⭐
+
+**New to HRMS?** → [QUICKSTART.md](QUICKSTART.md)
 
 ### Prerequisites
 
