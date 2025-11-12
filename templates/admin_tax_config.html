@@ -1,0 +1,473 @@
+<!-- Admin Tax Configuration Tab Content -->
+<div class="admin-tax-config-container">
+    <div class="config-tabs">
+        <button class="config-tab-btn active" data-tab="tax-rates">📊 Tax Rates</button>
+        <button class="config-tab-btn" data-tab="relief-max">💰 Relief Maximums</button>
+        <button class="config-tab-btn" data-tab="statutory">📋 Statutory Rates</button>
+    </div>
+    
+    <!-- Tax Rates Section -->
+    <div id="tax-rates-section" class="config-section active">
+        <div class="section-header">
+            <h3>Income Tax Rates Configuration (LHDN)</h3>
+            <button id="add-tax-rate-btn" class="btn-primary">➕ Add Tax Bracket</button>
+        </div>
+        
+        <table class="config-table" id="tax-rates-table">
+            <thead>
+                <tr>
+                    <th>Income Range From (RM)</th>
+                    <th>Income Range To (RM)</th>
+                    <th>Tax Rate (%)</th>
+                    <th>Fixed Amount (RM)</th>
+                    <th>Effective Year</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tax-rates-tbody">
+                <tr>
+                    <td>0</td>
+                    <td>5,000</td>
+                    <td>0%</td>
+                    <td>0</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>5,001</td>
+                    <td>20,000</td>
+                    <td>1%</td>
+                    <td>0</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>20,001</td>
+                    <td>35,000</td>
+                    <td>3%</td>
+                    <td>150</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>35,001</td>
+                    <td>50,000</td>
+                    <td>8%</td>
+                    <td>600</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>50,001</td>
+                    <td>70,000</td>
+                    <td>14%</td>
+                    <td>1,800</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Relief Maximums Section -->
+    <div id="relief-max-section" class="config-section">
+        <div class="section-header">
+            <h3>Tax Relief Maximums Configuration</h3>
+            <button id="add-relief-btn" class="btn-primary">➕ Add Relief Item</button>
+        </div>
+        
+        <table class="config-table" id="relief-max-table">
+            <thead>
+                <tr>
+                    <th>Relief Type</th>
+                    <th>Description</th>
+                    <th>Maximum Amount (RM)</th>
+                    <th>Effective Year</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="relief-max-tbody">
+                <tr>
+                    <td>Self</td>
+                    <td>Individual Relief</td>
+                    <td>9,000</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Spouse</td>
+                    <td>Spouse Relief</td>
+                    <td>4,000</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Children</td>
+                    <td>Child Relief (per child)</td>
+                    <td>2,000</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>EPF</td>
+                    <td>EPF Contribution</td>
+                    <td>4,000</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Life Insurance</td>
+                    <td>Life Insurance & EPF</td>
+                    <td>7,000</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Medical</td>
+                    <td>Medical Expenses (Parents)</td>
+                    <td>8,000</td>
+                    <td>2024</td>
+                    <td>
+                        <button class="btn-edit">Edit</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Statutory Rates Section -->
+    <div id="statutory-section" class="config-section">
+        <div class="section-header">
+            <h3>Statutory Contribution Rates (EPF, SOCSO, EIS)</h3>
+            <button id="save-statutory-btn" class="btn-primary">💾 Save Changes</button>
+        </div>
+        
+        <div class="statutory-grid">
+            <div class="statutory-card">
+                <h4>EPF (Employees Provident Fund)</h4>
+                <div class="form-group">
+                    <label>Employee Contribution (%):</label>
+                    <input type="number" id="epf-employee" value="11" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Employer Contribution (%):</label>
+                    <input type="number" id="epf-employer" value="13" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Minimum Salary for EPF (RM):</label>
+                    <input type="number" id="epf-min-salary" value="0" step="0.01">
+                </div>
+            </div>
+            
+            <div class="statutory-card">
+                <h4>SOCSO (Social Security Organization)</h4>
+                <div class="form-group">
+                    <label>Employee Contribution (%):</label>
+                    <input type="number" id="socso-employee" value="0.5" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Employer Contribution (%):</label>
+                    <input type="number" id="socso-employer" value="1.75" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Maximum Salary Ceiling (RM):</label>
+                    <input type="number" id="socso-ceiling" value="5000" step="0.01">
+                </div>
+            </div>
+            
+            <div class="statutory-card">
+                <h4>EIS (Employment Insurance System)</h4>
+                <div class="form-group">
+                    <label>Employee Contribution (%):</label>
+                    <input type="number" id="eis-employee" value="0.2" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Employer Contribution (%):</label>
+                    <input type="number" id="eis-employer" value="0.2" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Maximum Salary Ceiling (RM):</label>
+                    <input type="number" id="eis-ceiling" value="4000" step="0.01">
+                </div>
+            </div>
+            
+            <div class="statutory-card">
+                <h4>PCB (Monthly Tax Deduction)</h4>
+                <div class="form-group">
+                    <label>PCB Method:</label>
+                    <select id="pcb-method">
+                        <option value="computerised">Computerised Calculation</option>
+                        <option value="manual">Manual PCB Tables</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Minimum Monthly Income for PCB (RM):</label>
+                    <input type="number" id="pcb-min-income" value="2501" step="0.01">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tax Rate Modal -->
+<div id="tax-rate-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Tax Bracket Configuration</h2>
+        <form id="tax-rate-form">
+            <div class="form-group">
+                <label for="tax-range-from">Income Range From (RM):</label>
+                <input type="number" id="tax-range-from" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="tax-range-to">Income Range To (RM):</label>
+                <input type="number" id="tax-range-to" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="tax-rate">Tax Rate (%):</label>
+                <input type="number" id="tax-rate" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="tax-fixed-amount">Fixed Amount (RM):</label>
+                <input type="number" id="tax-fixed-amount" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label for="tax-effective-year">Effective Year:</label>
+                <input type="number" id="tax-effective-year" value="2024" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" class="btn-secondary" id="cancel-tax-rate-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Relief Modal -->
+<div id="relief-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Tax Relief Configuration</h2>
+        <form id="relief-form">
+            <div class="form-group">
+                <label for="relief-type">Relief Type:</label>
+                <input type="text" id="relief-type" required>
+            </div>
+            <div class="form-group">
+                <label for="relief-description">Description:</label>
+                <textarea id="relief-description" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="relief-max-amount">Maximum Amount (RM):</label>
+                <input type="number" id="relief-max-amount" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="relief-effective-year">Effective Year:</label>
+                <input type="number" id="relief-effective-year" value="2024" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" class="btn-secondary" id="cancel-relief-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.admin-tax-config-container {
+    max-width: 1400px;
+}
+
+.config-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.config-tab-btn {
+    padding: 12px 24px;
+    background: #f8f9fa;
+    border: none;
+    border-radius: 5px 5px 0 0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.config-tab-btn:hover {
+    background: #e9ecef;
+}
+
+.config-tab-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.config-section {
+    display: none;
+}
+
+.config-section.active {
+    display: block;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.section-header h3 {
+    font-size: 20px;
+    color: #2c3e50;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-secondary {
+    padding: 12px 24px;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.config-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.config-table thead {
+    background: #667eea;
+    color: white;
+}
+
+.config-table th,
+.config-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.config-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.btn-edit {
+    padding: 6px 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.statutory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.statutory-card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.statutory-card h4 {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching
+    document.querySelectorAll('.config-tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const tabName = button.getAttribute('data-tab');
+            
+            // Remove active class
+            document.querySelectorAll('.config-tab-btn').forEach(btn => 
+                btn.classList.remove('active'));
+            document.querySelectorAll('.config-section').forEach(section => 
+                section.classList.remove('active'));
+            
+            // Add active class
+            button.classList.add('active');
+            document.getElementById(tabName + '-section').classList.add('active');
+        });
+    });
+});
+</script>
