@@ -103,7 +103,9 @@ def api_attendance():
         history = get_attendance_history(session['user_email'])
         return jsonify({'success': True, 'data': history})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        # Log error for debugging but don't expose stack trace to user
+        app.logger.error(f"Error fetching attendance: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to fetch attendance data'}), 500
 
 @app.route('/api/leave-requests')
 @login_required
@@ -113,7 +115,11 @@ def api_leave_requests():
         requests_data = fetch_user_leave_requests(session['user_email'])
         return jsonify({'success': True, 'data': requests_data})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        # Log error for debugging but don't expose stack trace to user
+        app.logger.error(f"Error fetching leave requests: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to fetch leave requests'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Only enable debug mode in development, not production
+    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)
