@@ -4,8 +4,9 @@ This document provides an index of all HTML pages created for the HRMS web appli
 
 ## Overview
 
-**Total Pages Created**: 12 HTML templates  
+**Total Pages Created**: 13 HTML templates  
 **Base Template**: 1 (base.html)  
+**Landing Page**: 1 (index.html)  
 **Employee Pages**: 5  
 **Admin Pages**: 3  
 **Authentication**: 1  
@@ -29,6 +30,36 @@ This document provides an index of all HTML pages created for the HRMS web appli
 - `{% block extra_css %}` - Additional CSS
 - `{% block content %}` - Main content
 - `{% block extra_js %}` - Additional JavaScript
+
+---
+
+## Landing Page
+
+### 0. Index/Landing Page
+**File**: `templates/index.html`  
+**Route**: `/` (GET)  
+**Purpose**: Public landing page for HRMS application  
+
+**Features**:
+- Hero section with welcome message
+- Key features showcase (6 feature cards)
+- Benefits section (4 benefits)
+- Call-to-action to login
+- Fully responsive design
+- Animated elements
+- Redirects to dashboard if already logged in
+
+**Sections**:
+- **Hero**: Welcome message with "Get Started" and "Learn More" buttons
+- **Features**: 6 cards showcasing Employee Management, Attendance, Leave, Payroll, Training, and Trips
+- **Benefits**: Cloud-based access, Security, User-friendly UI, Mobile responsive
+- **CTA**: Final call-to-action to login
+
+**Design Elements**:
+- Purple gradient background
+- Floating animation on hero icon
+- Hover effects on cards
+- Smooth scrolling to sections
 
 ---
 

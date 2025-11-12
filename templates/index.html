@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}HRMS - Human Resources Management System{% endblock %}
+
+{% block content %}
+<div class="index-container">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Welcome to HRMS</h1>
+            <p class="hero-subtitle">Human Resources Management System</p>
+            <p class="hero-description">
+                Streamline your HR operations with our comprehensive web-based platform.
+                Manage employees, track attendance, process payroll, and more.
+            </p>
+            <div class="hero-actions">
+                <a href="/login" class="btn-hero-primary">Get Started</a>
+                <a href="#features" class="btn-hero-secondary">Learn More</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-icon">🏢</div>
+        </div>
+    </div>
+    
+    <div class="features-section" id="features">
+        <h2 class="section-title">Key Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👤</div>
+                <h3>Employee Management</h3>
+                <p>Comprehensive employee profiles with complete HR information management</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Attendance Tracking</h3>
+                <p>Real-time check-in/out system with detailed attendance history</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📬</div>
+                <h3>Leave Management</h3>
+                <p>Submit, track, and approve leave requests with balance monitoring</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💸</div>
+                <h3>Payroll Processing</h3>
+                <p>Automated payroll calculation with EPF, SOCSO, EIS, and PCB</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3>Training Management</h3>
+                <p>Track employee training courses and certifications</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✈️</div>
+                <h3>Trip Management</h3>
+                <p>Manage overseas work trips and travel documentation</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="benefits-section">
+        <h2 class="section-title">Why Choose HRMS?</h2>
+        <div class="benefits-list">
+            <div class="benefit-item">
+                <span class="benefit-icon">✅</span>
+                <div class="benefit-content">
+                    <h4>Cloud-Based Access</h4>
+                    <p>Access from anywhere, anytime on any device</p>
+                </div>
+            </div>
+            <div class="benefit-item">
+                <span class="benefit-icon">✅</span>
+                <div class="benefit-content">
+                    <h4>Secure & Reliable</h4>
+                    <p>Enterprise-grade security with role-based access control</p>
+                </div>
+            </div>
+            <div class="benefit-item">
+                <span class="benefit-icon">✅</span>
+                <div class="benefit-content">
+                    <h4>User-Friendly Interface</h4>
+                    <p>Intuitive design that's easy to navigate and use</p>
+                </div>
+            </div>
+            <div class="benefit-item">
+                <span class="benefit-icon">✅</span>
+                <div class="benefit-content">
+                    <h4>Mobile Responsive</h4>
+                    <p>Works seamlessly on smartphones, tablets, and desktops</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="cta-section">
+        <h2>Ready to Get Started?</h2>
+        <p>Log in to access your HRMS dashboard</p>
+        <a href="/login" class="btn-cta">Login Now</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.index-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Hero Section */
+.hero-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 80px 40px;
+    min-height: 600px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 0 0 50px 50px;
+    margin: -20px -20px 60px -20px;
+}
+
+.hero-content {
+    flex: 1;
+    max-width: 600px;
+}
+
+.hero-title {
+    font-size: 56px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 24px;
+    margin-bottom: 20px;
+    opacity: 0.95;
+}
+
+.hero-description {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    opacity: 0.9;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 20px;
+}
+
+.btn-hero-primary,
+.btn-hero-secondary {
+    padding: 16px 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-hero-primary {
+    background: white;
+    color: #667eea;
+}
+
+.btn-hero-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-hero-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid white;
+}
+
+.btn-hero-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-icon {
+    font-size: 200px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Features Section */
+.features-section {
+    padding: 60px 40px;
+}
+
+.section-title {
+    font-size: 36px;
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 50px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.feature-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.feature-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+.feature-card h3 {
+    font-size: 22px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.feature-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Benefits Section */
+.benefits-section {
+    padding: 60px 40px;
+    background: #f8f9fa;
+    margin: 0 -20px;
+}
+
+.benefits-list {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.benefit-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.benefit-content h4 {
+    font-size: 20px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.benefit-content p {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* CTA Section */
+.cta-section {
+    text-align: center;
+    padding: 80px 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin: 60px -20px -20px -20px;
+    border-radius: 50px 50px 0 0;
+}
+
+.cta-section h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+.cta-section p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+
+.btn-cta {
+    display: inline-block;
+    padding: 16px 48px;
+    background: white;
+    color: #667eea;
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .hero-title {
+        font-size: 36px;
+    }
+    
+    .hero-subtitle {
+        font-size: 20px;
+    }
+    
+    .hero-description {
+        font-size: 16px;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+    }
+    
+    .hero-icon {
+        font-size: 120px;
+        margin-top: 40px;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-title {
+        font-size: 28px;
+    }
+    
+    .features-section,
+    .benefits-section,
+    .cta-section {
+        padding: 40px 20px;
+    }
+}
+</style>
+{% endblock %}

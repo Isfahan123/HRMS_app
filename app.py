@@ -38,12 +38,12 @@ def admin_required(f):
 
 @app.route('/')
 def index():
-    """Redirect to login or dashboard"""
+    """Landing page or redirect to dashboard if logged in"""
     if 'user_email' in session:
         if session.get('role') == 'admin':
             return redirect(url_for('admin_dashboard'))
         return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
