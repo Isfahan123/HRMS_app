@@ -1,0 +1,239 @@
+<!-- Employee Payroll Tab Content -->
+<div class="payroll-container">
+    <div class="payroll-summary">
+        <h3>Current Salary Information</h3>
+        <div class="salary-card">
+            <div class="salary-item">
+                <label>Basic Salary:</label>
+                <span id="basic-salary">RM 0.00</span>
+            </div>
+            <div class="salary-item">
+                <label>Allowances:</label>
+                <span id="allowances">RM 0.00</span>
+            </div>
+            <div class="salary-item">
+                <label>Total Gross:</label>
+                <span id="total-gross" class="highlight">RM 0.00</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="payslip-history">
+        <h3>Payslip History</h3>
+        <div class="payslip-filters">
+            <select id="year-filter" class="filter-select">
+                <option value="">Select Year</option>
+            </select>
+            <button id="filter-payslip-btn" class="btn-secondary">Apply Filter</button>
+        </div>
+        <table class="payslip-table" id="payslip-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Year</th>
+                    <th>Gross Salary</th>
+                    <th>Deductions</th>
+                    <th>Net Salary</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="payslip-tbody">
+                <tr>
+                    <td colspan="7" style="text-align: center;">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="tax-summary">
+        <h3>Tax Summary (Year to Date)</h3>
+        <div class="tax-grid">
+            <div class="tax-item">
+                <label>Total Income:</label>
+                <span id="ytd-income">RM 0.00</span>
+            </div>
+            <div class="tax-item">
+                <label>EPF Contribution:</label>
+                <span id="ytd-epf">RM 0.00</span>
+            </div>
+            <div class="tax-item">
+                <label>SOCSO Contribution:</label>
+                <span id="ytd-socso">RM 0.00</span>
+            </div>
+            <div class="tax-item">
+                <label>EIS Contribution:</label>
+                <span id="ytd-eis">RM 0.00</span>
+            </div>
+            <div class="tax-item">
+                <label>PCB Deducted:</label>
+                <span id="ytd-pcb">RM 0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.payroll-container {
+    max-width: 1200px;
+}
+
+.payroll-summary {
+    margin-bottom: 30px;
+}
+
+.payroll-summary h3,
+.payslip-history h3,
+.tax-summary h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.salary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.salary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.salary-item:last-child {
+    border-bottom: none;
+}
+
+.salary-item label {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.salary-item span {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.salary-item .highlight {
+    font-size: 24px;
+}
+
+.payslip-history {
+    margin-bottom: 30px;
+}
+
+.payslip-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.filter-select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.btn-secondary {
+    padding: 10px 20px;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.payslip-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.payslip-table thead {
+    background: #667eea;
+    color: white;
+}
+
+.payslip-table th,
+.payslip-table td {
+    padding: 15px;
+    text-align: left;
+}
+
+.payslip-table tbody tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.payslip-table tbody tr:hover {
+    background: #e9ecef;
+}
+
+.tax-summary {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 8px;
+}
+
+.tax-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.tax-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    background: white;
+    border-radius: 5px;
+    border-left: 4px solid #667eea;
+}
+
+.tax-item label {
+    font-weight: 600;
+    color: #555;
+}
+
+.tax-item span {
+    color: #333;
+    font-weight: bold;
+}
+
+.btn-download {
+    padding: 8px 16px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-download:hover {
+    background: #2980b9;
+}
+</style>
+
+<script>
+// Populate year filter
+document.addEventListener('DOMContentLoaded', function() {
+    const yearFilter = document.getElementById('year-filter');
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= currentYear - 5; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearFilter.appendChild(option);
+    }
+});
+</script>
