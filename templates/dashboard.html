@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - HRMS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-home"></i> Employee Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-calendar-check"></i> Attendance</h5>
+                    <h2 id="attendance-status">--</h2>
+                    <p class="card-text">Current Status</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-umbrella-beach"></i> Leave Balance</h5>
+                    <h2 id="leave-balance">--</h2>
+                    <p class="card-text">Days Remaining</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock"></i> Working Hours</h5>
+                    <h2 id="working-hours">--</h2>
+                    <p class="card-text">This Month</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-money-bill-wave"></i> Payroll</h5>
+                    <h2 id="payroll-status">Ready</h2>
+                    <p class="card-text">Status</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" 
+                            data-bs-target="#profile" type="button" role="tab">
+                        <i class="fas fa-user"></i> Profile
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" 
+                            data-bs-target="#attendance" type="button" role="tab">
+                        <i class="fas fa-calendar-check"></i> Attendance
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="leave-tab" data-bs-toggle="tab" 
+                            data-bs-target="#leave" type="button" role="tab">
+                        <i class="fas fa-umbrella-beach"></i> Leave Requests
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="payroll-tab" data-bs-toggle="tab" 
+                            data-bs-target="#payroll" type="button" role="tab">
+                        <i class="fas fa-money-bill-wave"></i> Payroll
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content border border-top-0 p-4" id="dashboardTabsContent">
+                <!-- Profile Tab -->
+                <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                    <h3><i class="fas fa-user"></i> My Profile</h3>
+                    <div id="profile-content">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <p><strong>Employee ID:</strong> <span id="emp-id">{{ employee.id if employee else '--' }}</span></p>
+                                <p><strong>Name:</strong> <span id="emp-name">{{ employee.name if employee else username }}</span></p>
+                                <p><strong>Email:</strong> <span id="emp-email">{{ employee.email if employee else '--' }}</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Department:</strong> <span id="emp-dept">{{ employee.department if employee else '--' }}</span></p>
+                                <p><strong>Position:</strong> <span id="emp-position">{{ employee.position if employee else '--' }}</span></p>
+                                <p><strong>Join Date:</strong> <span id="emp-join-date">{{ employee.join_date if employee else '--' }}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Tab -->
+                <div class="tab-pane fade" id="attendance" role="tabpanel">
+                    <h3><i class="fas fa-calendar-check"></i> Attendance</h3>
+                    <div class="mt-3">
+                        <button class="btn btn-success me-2" onclick="clockIn()">
+                            <i class="fas fa-sign-in-alt"></i> Clock In
+                        </button>
+                        <button class="btn btn-danger" onclick="clockOut()">
+                            <i class="fas fa-sign-out-alt"></i> Clock Out
+                        </button>
+                    </div>
+                    <div id="attendance-content" class="mt-4">
+                        <p class="text-muted">Loading attendance records...</p>
+                    </div>
+                </div>
+
+                <!-- Leave Tab -->
+                <div class="tab-pane fade" id="leave" role="tabpanel">
+                    <h3><i class="fas fa-umbrella-beach"></i> Leave Requests</h3>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="submitLeaveRequest()">
+                            <i class="fas fa-plus"></i> New Leave Request
+                        </button>
+                    </div>
+                    <div id="leave-content" class="mt-4">
+                        <p class="text-muted">Loading leave requests...</p>
+                    </div>
+                </div>
+
+                <!-- Payroll Tab -->
+                <div class="tab-pane fade" id="payroll" role="tabpanel">
+                    <h3><i class="fas fa-money-bill-wave"></i> Payroll & Payslips</h3>
+                    <div id="payroll-content" class="mt-4">
+                        <p class="text-muted">Loading payroll information...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function clockIn() {
+    alert('Clock In feature will be implemented');
+}
+
+function clockOut() {
+    alert('Clock Out feature will be implemented');
+}
+
+function submitLeaveRequest() {
+    alert('Leave Request feature will be implemented');
+}
+
+function viewProfile() {
+    window.location.href = '{{ url_for("dashboard") }}#profile';
+}
+
+// Load profile data on page load
+$(document).ready(function() {
+    // You can add AJAX calls here to load data dynamically
+});
+</script>
+{% endblock %}

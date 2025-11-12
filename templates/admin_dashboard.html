@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-users"></i> Total Employees</h5>
+                    <h2 id="total-employees">--</h2>
+                    <p class="card-text">Active Employees</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock"></i> Pending Requests</h5>
+                    <h2 id="pending-requests">--</h2>
+                    <p class="card-text">Awaiting Approval</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-calendar-check"></i> Present Today</h5>
+                    <h2 id="present-today">--</h2>
+                    <p class="card-text">Employees</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-umbrella-beach"></i> On Leave</h5>
+                    <h2 id="on-leave">--</h2>
+                    <p class="card-text">Today</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="employees-tab" data-bs-toggle="tab" 
+                            data-bs-target="#employees" type="button" role="tab">
+                        <i class="fas fa-users"></i> Employees
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" 
+                            data-bs-target="#attendance" type="button" role="tab">
+                        <i class="fas fa-calendar-check"></i> Attendance
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="leave-tab" data-bs-toggle="tab" 
+                            data-bs-target="#leave" type="button" role="tab">
+                        <i class="fas fa-umbrella-beach"></i> Leave Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="payroll-tab" data-bs-toggle="tab" 
+                            data-bs-target="#payroll" type="button" role="tab">
+                        <i class="fas fa-money-bill-wave"></i> Payroll
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" 
+                            data-bs-target="#reports" type="button" role="tab">
+                        <i class="fas fa-chart-bar"></i> Reports
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content border border-top-0 p-4" id="adminTabsContent">
+                <!-- Employees Tab -->
+                <div class="tab-pane fade show active" id="employees" role="tabpanel">
+                    <h3><i class="fas fa-users"></i> Employee Management</h3>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="addEmployee()">
+                            <i class="fas fa-plus"></i> Add Employee
+                        </button>
+                        <button class="btn btn-secondary ms-2" onclick="refreshEmployees()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="employees-content" class="mt-4">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="employees-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Position</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <div class="spinner-border" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Tab -->
+                <div class="tab-pane fade" id="attendance" role="tabpanel">
+                    <h3><i class="fas fa-calendar-check"></i> Attendance Management</h3>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="viewAttendanceReport()">
+                            <i class="fas fa-file-alt"></i> View Report
+                        </button>
+                    </div>
+                    <div id="attendance-content" class="mt-4">
+                        <p class="text-muted">Loading attendance data...</p>
+                    </div>
+                </div>
+
+                <!-- Leave Tab -->
+                <div class="tab-pane fade" id="leave" role="tabpanel">
+                    <h3><i class="fas fa-umbrella-beach"></i> Leave Management</h3>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="viewPendingLeaves()">
+                            <i class="fas fa-clock"></i> Pending Requests
+                        </button>
+                        <button class="btn btn-secondary ms-2" onclick="viewLeaveHistory()">
+                            <i class="fas fa-history"></i> History
+                        </button>
+                    </div>
+                    <div id="leave-content" class="mt-4">
+                        <p class="text-muted">Loading leave requests...</p>
+                    </div>
+                </div>
+
+                <!-- Payroll Tab -->
+                <div class="tab-pane fade" id="payroll" role="tabpanel">
+                    <h3><i class="fas fa-money-bill-wave"></i> Payroll Management</h3>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="processPayroll()">
+                            <i class="fas fa-calculator"></i> Process Payroll
+                        </button>
+                        <button class="btn btn-success ms-2" onclick="generatePayslips()">
+                            <i class="fas fa-file-pdf"></i> Generate Payslips
+                        </button>
+                    </div>
+                    <div id="payroll-content" class="mt-4">
+                        <p class="text-muted">Loading payroll data...</p>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div class="tab-pane fade" id="reports" role="tabpanel">
+                    <h3><i class="fas fa-chart-bar"></i> Reports & Analytics</h3>
+                    <div class="mt-3">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Attendance Report</h5>
+                                        <p class="card-text">View attendance statistics and trends</p>
+                                        <button class="btn btn-primary btn-sm" onclick="generateAttendanceReport()">
+                                            <i class="fas fa-file-download"></i> Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Leave Report</h5>
+                                        <p class="card-text">Leave usage and balances</p>
+                                        <button class="btn btn-primary btn-sm" onclick="generateLeaveReport()">
+                                            <i class="fas fa-file-download"></i> Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Payroll Report</h5>
+                                        <p class="card-text">Payroll summary and breakdown</p>
+                                        <button class="btn btn-primary btn-sm" onclick="generatePayrollReport()">
+                                            <i class="fas fa-file-download"></i> Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load employees data
+function loadEmployees() {
+    fetch('/api/employees')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateEmployeesTable(data.employees);
+                $('#total-employees').text(data.employees.length);
+            }
+        })
+        .catch(error => console.error('Error loading employees:', error));
+}
+
+function updateEmployeesTable(employees) {
+    const tbody = $('#employees-table tbody');
+    tbody.empty();
+    
+    if (employees.length === 0) {
+        tbody.append('<tr><td colspan="7" class="text-center">No employees found</td></tr>');
+        return;
+    }
+    
+    employees.forEach(emp => {
+        const row = `
+            <tr>
+                <td>${emp.id || '--'}</td>
+                <td>${emp.name || '--'}</td>
+                <td>${emp.email || '--'}</td>
+                <td>${emp.department || '--'}</td>
+                <td>${emp.position || '--'}</td>
+                <td><span class="badge bg-success">Active</span></td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editEmployee(${emp.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-info" onclick="viewEmployee(${emp.id})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        tbody.append(row);
+    });
+}
+
+function addEmployee() {
+    alert('Add Employee feature will be implemented');
+}
+
+function editEmployee(id) {
+    alert('Edit Employee feature will be implemented for ID: ' + id);
+}
+
+function viewEmployee(id) {
+    alert('View Employee feature will be implemented for ID: ' + id);
+}
+
+function refreshEmployees() {
+    loadEmployees();
+}
+
+function viewAttendanceReport() {
+    alert('Attendance Report feature will be implemented');
+}
+
+function viewPendingLeaves() {
+    alert('Pending Leaves feature will be implemented');
+}
+
+function viewLeaveHistory() {
+    alert('Leave History feature will be implemented');
+}
+
+function processPayroll() {
+    alert('Process Payroll feature will be implemented');
+}
+
+function generatePayslips() {
+    alert('Generate Payslips feature will be implemented');
+}
+
+function generateAttendanceReport() {
+    alert('Attendance Report generation will be implemented');
+}
+
+function generateLeaveReport() {
+    alert('Leave Report generation will be implemented');
+}
+
+function generatePayrollReport() {
+    alert('Payroll Report generation will be implemented');
+}
+
+// Load data on page load
+$(document).ready(function() {
+    loadEmployees();
+});
+</script>
+{% endblock %}

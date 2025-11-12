@@ -46,3 +46,12 @@ htmlcov/
 *.db
 *.sqlite
 *.sqlite3
+
+# Flask sessions
+flask_session/
+
+# Environment variables
+.env
+
+# Logs
+logs/
