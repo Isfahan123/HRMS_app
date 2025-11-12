@@ -7,24 +7,15 @@ import secrets
 
 # Import existing services
 from services.supabase_service import (
-    authenticate_user, 
-    get_employee_by_id,
+    login_user_by_username,
     reconcile_employees_work_status_for_today
 )
-from services.supabase_employee import SupabaseEmployeeService
-from services.supabase_leave_types import SupabaseLeaveTypesService
-from services.org_structure_service import OrgStructureService
-from core.malaysian_pcb_calculator import MalaysianPCBCalculator
-from core.epf_socso_calculator import EPFSOCSOCalculator
+from services.supabase_employee import fetch_employee_list, fetch_employee_details
+from services import supabase_leave_types
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', secrets.token_hex(32))
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
-
-# Initialize services
-employee_service = SupabaseEmployeeService()
-leave_service = SupabaseLeaveTypesService()
-org_service = OrgStructureService()
 
 # Decorator for login required
 def login_required(f):
@@ -67,15 +58,34 @@ def login():
         
         try:
             # Authenticate user
-            result = authenticate_user(username, password)
+            result = login_user_by_username(username, password)
             
-            if result and result.get('authenticated'):
+            if result and result.get('success'):
                 # Set session variables
                 session.permanent = True
-                session['user_id'] = result.get('user_id')
                 session['username'] = username
-                session['is_admin'] = result.get('is_admin', False)
-                session['employee_name'] = result.get('employee_name', username)
+                session['email'] = result.get('email', username)
+                session['role'] = result.get('role', 'employee')
+                session['is_admin'] = result.get('role') == 'admin'
+                
+                # Fetch employee details using email
+                try:
+                    employees = fetch_employee_list()
+                    # Find matching employee by email
+                    for emp_uuid, emp_id, emp_name in employees:
+                        emp_details = fetch_employee_details(emp_uuid if emp_uuid else emp_id)
+                        if emp_details.get('email', '').lower() == result.get('email', '').lower():
+                            session['user_id'] = emp_uuid if emp_uuid else emp_id
+                            session['employee_name'] = emp_name or username
+                            break
+                    else:
+                        # Fallback if no employee found
+                        session['user_id'] = result.get('email')
+                        session['employee_name'] = username
+                except Exception as e:
+                    print(f"Error fetching employee details: {e}")
+                    session['user_id'] = result.get('email')
+                    session['employee_name'] = username
                 
                 # Reconcile work status on login
                 try:
@@ -83,12 +93,14 @@ def login():
                 except Exception as e:
                     print(f"Work status reconcile warning: {e}")
                 
-                flash(f'Welcome, {session["employee_name"]}!', 'success')
+                flash(f'Welcome, {session.get("employee_name", username)}!', 'success')
                 
                 # Redirect based on role
                 if session['is_admin']:
                     return redirect(url_for('admin_dashboard'))
                 return redirect(url_for('dashboard'))
+            elif result.get('locked_until'):
+                flash(f'Account is locked until {result.get("locked_until")}. Please try again later.', 'danger')
             else:
                 flash('Invalid username or password.', 'danger')
         except Exception as e:
@@ -110,7 +122,8 @@ def logout():
 def dashboard():
     """Employee dashboard"""
     try:
-        employee = get_employee_by_id(session['user_id'])
+        # Fetch employee details
+        employee = fetch_employee_details(session['user_id']) if session.get('user_id') else {}
         return render_template('dashboard.html', 
                              employee=employee,
                              username=session.get('employee_name', session['username']))
@@ -137,7 +150,7 @@ def admin_dashboard():
 def api_profile():
     """Get current user profile"""
     try:
-        employee = get_employee_by_id(session['user_id'])
+        employee = fetch_employee_details(session['user_id']) if session.get('user_id') else {}
         return jsonify({'success': True, 'employee': employee})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -147,7 +160,18 @@ def api_profile():
 def api_employees():
     """Get all employees (admin only)"""
     try:
-        employees = employee_service.fetch_all_employees()
+        employees_list = fetch_employee_list()
+        employees = []
+        for emp_uuid, emp_id, emp_name in employees_list:
+            emp_details = fetch_employee_details(emp_uuid if emp_uuid else emp_id)
+            employees.append({
+                'id': emp_uuid if emp_uuid else emp_id,
+                'employee_id': emp_id,
+                'name': emp_name or emp_details.get('full_name', '--'),
+                'email': emp_details.get('email', '--'),
+                'department': emp_details.get('department', '--'),
+                'position': emp_details.get('job_title', '--')
+            })
         return jsonify({'success': True, 'employees': employees})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -157,7 +181,7 @@ def api_employees():
 def api_leave_types():
     """Get leave types"""
     try:
-        leave_types = leave_service.fetch_leave_types()
+        leave_types = supabase_leave_types.list_leave_types()
         return jsonify({'success': True, 'leave_types': leave_types})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
