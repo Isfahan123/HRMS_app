@@ -153,7 +153,8 @@ def api_profile():
         employee = fetch_employee_details(session['user_id']) if session.get('user_id') else {}
         return jsonify({'success': True, 'employee': employee})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"API profile error: {e}")  # Log for debugging
+        return jsonify({'success': False, 'error': 'Failed to load profile'}), 500
 
 @app.route('/api/employees')
 @admin_required
@@ -174,7 +175,8 @@ def api_employees():
             })
         return jsonify({'success': True, 'employees': employees})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"API employees error: {e}")  # Log for debugging
+        return jsonify({'success': False, 'error': 'Failed to load employees'}), 500
 
 @app.route('/api/leave/types')
 @login_required
@@ -184,7 +186,8 @@ def api_leave_types():
         leave_types = supabase_leave_types.list_leave_types()
         return jsonify({'success': True, 'leave_types': leave_types})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"API leave types error: {e}")  # Log for debugging
+        return jsonify({'success': False, 'error': 'Failed to load leave types'}), 500
 
 # Error handlers
 @app.errorhandler(404)
