@@ -1,0 +1,466 @@
+<!-- Admin Overseas Work Trip Management Tab Content -->
+<div class="admin-trips-container">
+    <div class="trips-actions">
+        <button id="add-trip-btn" class="btn-primary">➕ Add Trip</button>
+        <select id="status-filter" class="filter-select">
+            <option value="">All Status</option>
+            <option value="pending">Pending Approval</option>
+            <option value="approved">Approved</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="year-filter" class="filter-select">
+            <option value="">All Years</option>
+        </select>
+        <button id="apply-filters-btn" class="btn-secondary">Apply Filters</button>
+        <button id="export-trips-btn" class="btn-secondary">📊 Export</button>
+    </div>
+    
+    <div class="trips-summary">
+        <div class="summary-card">
+            <h4>Total Trips (This Year)</h4>
+            <div class="summary-value" id="total-trips">0</div>
+        </div>
+        <div class="summary-card">
+            <h4>Pending Approvals</h4>
+            <div class="summary-value" id="pending-trips">0</div>
+        </div>
+        <div class="summary-card">
+            <h4>In Progress</h4>
+            <div class="summary-value" id="active-trips">0</div>
+        </div>
+        <div class="summary-card">
+            <h4>Total Budget Used</h4>
+            <div class="summary-value" id="budget-used">RM 0</div>
+        </div>
+    </div>
+    
+    <div class="trips-list">
+        <h3>Overseas Work Trips</h3>
+        <table class="trips-table" id="trips-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Destination</th>
+                    <th>Purpose</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Duration</th>
+                    <th>Estimated Cost</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="trips-tbody">
+                <tr>
+                    <td colspan="9" style="text-align: center;">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Trip Modal -->
+<div id="trip-modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <span class="close-modal">&times;</span>
+        <h2 id="trip-modal-title">Add Overseas Work Trip</h2>
+        <form id="trip-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="trip-employee">Employee:</label>
+                    <select id="trip-employee" required>
+                        <option value="">Select Employee</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trip-purpose">Purpose:</label>
+                    <select id="trip-purpose" required>
+                        <option value="">Select Purpose</option>
+                        <option value="client-meeting">Client Meeting</option>
+                        <option value="conference">Conference</option>
+                        <option value="training">Training</option>
+                        <option value="project">Project Work</option>
+                        <option value="site-visit">Site Visit</option>
+                        <option value="business-development">Business Development</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trip-country">Destination Country:</label>
+                    <input type="text" id="trip-country" required>
+                </div>
+                <div class="form-group">
+                    <label for="trip-city">City:</label>
+                    <input type="text" id="trip-city" required>
+                </div>
+                <div class="form-group">
+                    <label for="trip-start-date">Start Date:</label>
+                    <input type="date" id="trip-start-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="trip-end-date">End Date:</label>
+                    <input type="date" id="trip-end-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="trip-duration">Duration (days):</label>
+                    <input type="number" id="trip-duration" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="trip-status">Status:</label>
+                    <select id="trip-status" required>
+                        <option value="pending">Pending Approval</option>
+                        <option value="approved">Approved</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            
+            <h3 class="section-title">Cost Estimates</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="trip-flight-cost">Flight Cost (RM):</label>
+                    <input type="number" id="trip-flight-cost" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="trip-accommodation-cost">Accommodation Cost (RM):</label>
+                    <input type="number" id="trip-accommodation-cost" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="trip-meals-cost">Meals & Per Diem (RM):</label>
+                    <input type="number" id="trip-meals-cost" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="trip-other-cost">Other Expenses (RM):</label>
+                    <input type="number" id="trip-other-cost" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="trip-total-cost">Total Estimated Cost (RM):</label>
+                    <input type="number" id="trip-total-cost" step="0.01" readonly>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="trip-description">Trip Description/Details:</label>
+                <textarea id="trip-description" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="trip-remarks">Admin Remarks:</label>
+                <textarea id="trip-remarks" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save Trip</button>
+                <button type="button" class="btn-secondary" id="cancel-trip-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Trip Details Modal -->
+<div id="trip-details-modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <span class="close-modal">&times;</span>
+        <h2>Trip Details</h2>
+        <div id="trip-details-content">
+            <!-- Will be populated dynamically -->
+        </div>
+        <div class="modal-actions">
+            <button id="approve-trip-btn" class="btn-success">✓ Approve</button>
+            <button id="reject-trip-btn" class="btn-danger">✗ Reject</button>
+            <button id="close-trip-details-btn" class="btn-secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-trips-container {
+    max-width: 1600px;
+}
+
+.trips-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-success {
+    padding: 12px 24px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-danger {
+    padding: 12px 24px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-secondary {
+    padding: 12px 24px;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.filter-select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.trips-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h4 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    opacity: 0.9;
+}
+
+.summary-value {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.trips-list {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+.trips-list h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.trips-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1200px;
+}
+
+.trips-table thead {
+    background: #667eea;
+    color: white;
+}
+
+.trips-table th,
+.trips-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.trips-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.btn-view,
+.btn-edit {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+.btn-view {
+    background: #3498db;
+    color: white;
+}
+
+.btn-edit {
+    background: #f39c12;
+    color: white;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-in-progress {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.section-title {
+    font-size: 18px;
+    color: #2c3e50;
+    margin: 25px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.modal-content.large {
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+</style>
+
+<script>
+// Calculate trip duration and total cost
+document.addEventListener('DOMContentLoaded', function() {
+    const startDate = document.getElementById('trip-start-date');
+    const endDate = document.getElementById('trip-end-date');
+    const duration = document.getElementById('trip-duration');
+    
+    function calculateDuration() {
+        if (startDate.value && endDate.value) {
+            const start = new Date(startDate.value);
+            const end = new Date(endDate.value);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            duration.value = days > 0 ? days : 0;
+        }
+    }
+    
+    if (startDate && endDate) {
+        startDate.addEventListener('change', calculateDuration);
+        endDate.addEventListener('change', calculateDuration);
+    }
+    
+    // Calculate total cost
+    const costInputs = ['trip-flight-cost', 'trip-accommodation-cost', 'trip-meals-cost', 'trip-other-cost'];
+    const totalCost = document.getElementById('trip-total-cost');
+    
+    function calculateTotalCost() {
+        let total = 0;
+        costInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                total += parseFloat(input.value) || 0;
+            }
+        });
+        if (totalCost) {
+            totalCost.value = total.toFixed(2);
+        }
+    }
+    
+    costInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', calculateTotalCost);
+        }
+    });
+    
+    // Populate year filter
+    const yearFilter = document.getElementById('year-filter');
+    const currentYear = new Date().getFullYear();
+    if (yearFilter) {
+        for (let year = currentYear; year >= currentYear - 5; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearFilter.appendChild(option);
+        }
+    }
+});
+</script>

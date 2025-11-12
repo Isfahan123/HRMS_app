@@ -48,66 +48,39 @@
         </div>
         
         <div id="profile-tab" class="tab-pane">
-            <h2>Employee Profile Management</h2>
-            <div id="profile-content">
-                <p>Manage employee profiles, add new employees, update information...</p>
-            </div>
+            {% include 'admin_profile.html' %}
         </div>
         
         <div id="attendance-tab" class="tab-pane">
-            <h2>Attendance Management</h2>
-            <div id="attendance-content">
-                <p>View and manage employee attendance records...</p>
-            </div>
+            {% include 'admin_attendance.html' %}
         </div>
         
         <div id="leave-tab" class="tab-pane">
-            <h2>Leave Management</h2>
-            <div id="leave-content">
-                <p>Review and approve/reject leave requests...</p>
-            </div>
+            {% include 'admin_leave.html' %}
         </div>
         
         <div id="payroll-tab" class="tab-pane">
-            <h2>Payroll Management</h2>
-            <div id="payroll-content">
-                <p>Process payroll, generate payslips...</p>
-            </div>
+            {% include 'admin_payroll.html' %}
         </div>
         
         <div id="salary-history-tab" class="tab-pane">
-            <h2>Salary History</h2>
-            <div id="salary-history-content">
-                <p>View employee salary history and changes...</p>
-            </div>
+            {% include 'admin_salary_history.html' %}
         </div>
         
         <div id="bonus-tab" class="tab-pane">
-            <h2>Bonus Management</h2>
-            <div id="bonus-content">
-                <p>Manage employee bonuses...</p>
-            </div>
+            {% include 'admin_bonus.html' %}
         </div>
         
         <div id="training-tab" class="tab-pane">
-            <h2>Training Courses</h2>
-            <div id="training-content">
-                <p>Manage training courses and enrollments...</p>
-            </div>
+            {% include 'admin_training.html' %}
         </div>
         
         <div id="overseas-tab" class="tab-pane">
-            <h2>Overseas Work Trips</h2>
-            <div id="overseas-content">
-                <p>Manage overseas work trip requests...</p>
-            </div>
+            {% include 'admin_trips.html' %}
         </div>
         
         <div id="tax-tab" class="tab-pane">
-            <h2>Tax Configuration</h2>
-            <div id="tax-content">
-                <p>Configure tax rates and settings...</p>
-            </div>
+            {% include 'admin_tax_config.html' %}
         </div>
     </div>
 </div>
