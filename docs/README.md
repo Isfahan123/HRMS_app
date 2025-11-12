@@ -1,6 +1,6 @@
 # HRMS_app
 
-Human Resources Management System - A comprehensive HRMS application built with PyQt5 and Supabase.
+Human Resources Management System - A comprehensive HRMS application available as both a desktop application (PyQt5) and web application (Flask).
 
 ## Repository Structure
 
@@ -30,7 +30,9 @@ See [SETUP_GUIDE.md](SETUP_GUIDE.md) for installation and setup instructions.
 
 ## Running the Application
 
-### Windows
+### Desktop Application (PyQt5)
+
+#### Windows
 ```batch
 scripts\start_hrms.bat
 ```
@@ -40,10 +42,29 @@ Or using PowerShell:
 scripts\start_hrms.ps1
 ```
 
-### Python Direct
+#### Python Direct
 ```bash
 python main.py
 ```
+
+### Web Application (Flask)
+
+#### Quick Start (Linux/Mac)
+```bash
+./start_web.sh
+```
+
+#### Quick Start (Windows)
+```batch
+start_web.bat
+```
+
+#### Manual Start
+```bash
+python app.py
+```
+
+For detailed web application setup and deployment, see [WEB_APP_README.md](../WEB_APP_README.md).
 
 ## Key Features
 
@@ -58,8 +79,17 @@ python main.py
 
 ## Technology Stack
 
+### Desktop Application
 - **Frontend**: PyQt5
 - **Backend**: Python 3.x
 - **Database**: Supabase (PostgreSQL)
 - **PDF Generation**: ReportLab
 - **Authentication**: bcrypt
+
+### Web Application
+- **Frontend**: Bootstrap 5, jQuery, HTML/CSS/JavaScript
+- **Backend**: Flask (Python web framework)
+- **Database**: Supabase (PostgreSQL) - shared with desktop app
+- **Web Server**: Gunicorn (production)
+- **PDF Generation**: ReportLab
+- **Authentication**: bcrypt, Flask-Session

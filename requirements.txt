@@ -13,3 +13,8 @@ java-bridge==1.0.22
 num2words==0.5.13
 holidays==0.81
 
+# Web Application Dependencies
+Flask==3.0.0
+Flask-Session==0.5.0
+gunicorn==22.0.0
+

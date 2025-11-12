@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ error_code }} - HRMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+        <div class="col-md-6 text-center">
+            <i class="fas fa-exclamation-triangle fa-5x text-warning mb-4"></i>
+            <h1 class="display-4">Error {{ error_code }}</h1>
+            <p class="lead">{{ error_message }}</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">
+                <i class="fas fa-home"></i> Go to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
