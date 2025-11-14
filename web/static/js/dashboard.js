@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDashboard();
     setupTabs();
     setupLogout();
+    setupLeaveRequestForm();
+    setupProfileEdit();
     
     async function initializeDashboard() {
         try {
@@ -35,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('profileEmail').textContent = employee.email || '-';
                 document.getElementById('profileDepartment').textContent = employee.department || '-';
                 document.getElementById('profilePosition').textContent = employee.position || '-';
+                document.getElementById('profilePhone').textContent = employee.phone_number || '-';
+                document.getElementById('profileAddress').textContent = employee.address || '-';
             }
             
             // Load attendance data
@@ -269,6 +273,121 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Redirect to login
             window.location.href = '/';
+        });
+    }
+    
+    function setupLeaveRequestForm() {
+        const form = document.getElementById('leaveRequestForm');
+        const messageDiv = document.getElementById('leaveFormMessage');
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                employee_email: userEmail,
+                leave_type: document.getElementById('leaveType').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                title: document.getElementById('leaveTitle').value,
+                is_half_day: document.getElementById('isHalfDay').checked
+            };
+            
+            try {
+                const response = await fetch('/api/leave-requests/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                messageDiv.style.display = 'block';
+                if (data.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    form.reset();
+                    // Reload leave requests
+                    loadLeaveRequests();
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message;
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error submitting leave request';
+                console.error('Error:', error);
+            }
+        });
+    }
+    
+    function setupProfileEdit() {
+        const editBtn = document.getElementById('editProfileBtn');
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        const profileView = document.getElementById('profileView');
+        const profileForm = document.getElementById('profileEditForm');
+        const messageDiv = document.getElementById('profileEditMessage');
+        
+        editBtn.addEventListener('click', function() {
+            // Populate form with current values
+            document.getElementById('editFullName').value = document.getElementById('profileName').textContent;
+            document.getElementById('editPhone').value = document.getElementById('profilePhone').textContent !== '-' ? document.getElementById('profilePhone').textContent : '';
+            document.getElementById('editAddress').value = document.getElementById('profileAddress').textContent !== '-' ? document.getElementById('profileAddress').textContent : '';
+            
+            profileView.style.display = 'none';
+            profileForm.style.display = 'block';
+        });
+        
+        cancelBtn.addEventListener('click', function() {
+            profileView.style.display = 'block';
+            profileForm.style.display = 'none';
+            messageDiv.style.display = 'none';
+        });
+        
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                full_name: document.getElementById('editFullName').value,
+                phone_number: document.getElementById('editPhone').value,
+                address: document.getElementById('editAddress').value
+            };
+            
+            try {
+                const response = await fetch(`/api/employee/${userEmail}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                messageDiv.style.display = 'block';
+                if (data.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    
+                    // Update profile display
+                    document.getElementById('profileName').textContent = formData.full_name;
+                    document.getElementById('profilePhone').textContent = formData.phone_number || '-';
+                    document.getElementById('profileAddress').textContent = formData.address || '-';
+                    
+                    // Switch back to view mode after a delay
+                    setTimeout(() => {
+                        profileView.style.display = 'block';
+                        profileForm.style.display = 'none';
+                        messageDiv.style.display = 'none';
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message;
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error updating profile';
+                console.error('Error:', error);
+            }
         });
     }
 });

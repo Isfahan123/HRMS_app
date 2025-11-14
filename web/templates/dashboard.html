@@ -45,12 +45,40 @@
                 <!-- Profile Tab -->
                 <div id="profileTab" class="tab-pane">
                     <h2>Your Profile</h2>
-                    <div class="profile-info">
+                    
+                    <div id="profileView" class="profile-info">
                         <p><strong>Name:</strong> <span id="profileName">-</span></p>
                         <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
                         <p><strong>Department:</strong> <span id="profileDepartment">-</span></p>
                         <p><strong>Position:</strong> <span id="profilePosition">-</span></p>
+                        <p><strong>Phone:</strong> <span id="profilePhone">-</span></p>
+                        <p><strong>Address:</strong> <span id="profileAddress">-</span></p>
+                        <button id="editProfileBtn" class="btn-primary" style="margin-top: 15px;">Edit Profile</button>
                     </div>
+                    
+                    <form id="profileEditForm" class="profile-edit-form" style="display: none;">
+                        <div class="form-group">
+                            <label for="editFullName">Full Name:</label>
+                            <input type="text" id="editFullName" name="full_name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPhone">Phone:</label>
+                            <input type="tel" id="editPhone" name="phone_number">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editAddress">Address:</label>
+                            <textarea id="editAddress" name="address" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Save Changes</button>
+                            <button type="button" id="cancelEditBtn" class="btn-secondary">Cancel</button>
+                        </div>
+                        
+                        <div id="profileEditMessage" style="display: none; margin-top: 10px;"></div>
+                    </form>
                 </div>
                 
                 <!-- Attendance Tab -->
@@ -62,7 +90,58 @@
                 <!-- Leave Tab -->
                 <div id="leaveTab" class="tab-pane">
                     <h2>Leave Requests</h2>
-                    <div id="leaveRequests">Loading...</div>
+                    
+                    <!-- Leave Request Submission Form -->
+                    <div class="form-section">
+                        <h3>Submit New Leave Request</h3>
+                        <form id="leaveRequestForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="leaveType">Leave Type:</label>
+                                    <select id="leaveType" name="leave_type" required>
+                                        <option value="">Select leave type</option>
+                                        <option value="annual">Annual Leave</option>
+                                        <option value="sick">Sick Leave</option>
+                                        <option value="emergency">Emergency Leave</option>
+                                        <option value="unpaid">Unpaid Leave</option>
+                                        <option value="maternity">Maternity Leave</option>
+                                        <option value="paternity">Paternity Leave</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="startDate">Start Date:</label>
+                                    <input type="date" id="startDate" name="start_date" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="endDate">End Date:</label>
+                                    <input type="date" id="endDate" name="end_date" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="leaveTitle">Reason:</label>
+                                <input type="text" id="leaveTitle" name="title" placeholder="Brief reason for leave" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="isHalfDay" name="is_half_day">
+                                    Half Day
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary">Submit Leave Request</button>
+                            <div id="leaveFormMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                    
+                    <!-- Existing Leave Requests -->
+                    <div style="margin-top: 30px;">
+                        <h3>My Leave Requests</h3>
+                        <div id="leaveRequests">Loading...</div>
+                    </div>
                 </div>
                 
                 <!-- Payroll Tab -->

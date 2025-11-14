@@ -21,7 +21,10 @@ from services.supabase_service import (
     get_employee_payroll_history,
     get_all_attendance_records,
     update_leave_request_status,
-    get_payroll_runs
+    get_payroll_runs,
+    submit_leave_request,
+    insert_employee,
+    update_employee
 )
 from services.supabase_engagements import fetch_engagements
 from services.supabase_training_overseas import (
@@ -282,6 +285,105 @@ async def reject_leave_request(leave_id: str):
             return {"success": False, "message": "Failed to reject leave request"}
     except Exception as e:
         print(f"Error rejecting leave: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/leave-requests/submit")
+async def submit_new_leave_request(request: Request):
+    """
+    Submit a new leave request
+    """
+    try:
+        data = await request.json()
+        employee_email = data.get("employee_email")
+        leave_type = data.get("leave_type")
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        title = data.get("title", "Leave Request")
+        is_half_day = data.get("is_half_day", False)
+        half_day_period = data.get("half_day_period")
+        
+        if not all([employee_email, leave_type, start_date, end_date]):
+            return {"success": False, "message": "Missing required fields"}
+        
+        success = submit_leave_request(
+            employee_email=employee_email,
+            leave_type=leave_type,
+            start_date=start_date,
+            end_date=end_date,
+            title=title,
+            is_half_day=is_half_day,
+            half_day_period=half_day_period
+        )
+        
+        if success:
+            return {"success": True, "message": "Leave request submitted successfully"}
+        else:
+            return {"success": False, "message": "Failed to submit leave request"}
+    except Exception as e:
+        print(f"Error submitting leave request: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/employee/{email}")
+async def update_employee_profile(email: str, request: Request):
+    """
+    Update employee profile information
+    """
+    try:
+        data = await request.json()
+        
+        # Get employee_id first
+        emp_response = supabase.table("employees").select("id").eq("email", email.lower()).execute()
+        if not emp_response.data or len(emp_response.data) == 0:
+            return {"success": False, "message": "Employee not found"}
+        
+        employee_id = emp_response.data[0]["id"]
+        
+        # Update employee
+        result = update_employee(employee_id, data)
+        
+        if result:
+            return {"success": True, "message": "Profile updated successfully", "data": result}
+        else:
+            return {"success": False, "message": "Failed to update profile"}
+    except Exception as e:
+        print(f"Error updating employee: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/employees")
+async def create_new_employee(request: Request):
+    """
+    Create a new employee (admin only)
+    """
+    try:
+        data = await request.json()
+        password = data.pop("password", None)
+        
+        result = insert_employee(data, password)
+        
+        if result:
+            return {"success": True, "message": "Employee created successfully", "data": result}
+        else:
+            return {"success": False, "message": "Failed to create employee"}
+    except Exception as e:
+        print(f"Error creating employee: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/employees/{employee_id}")
+async def update_employee_admin(employee_id: str, request: Request):
+    """
+    Update employee information (admin only)
+    """
+    try:
+        data = await request.json()
+        
+        result = update_employee(employee_id, data)
+        
+        if result:
+            return {"success": True, "message": "Employee updated successfully", "data": result}
+        else:
+            return {"success": False, "message": "Failed to update employee"}
+    except Exception as e:
+        print(f"Error updating employee: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.get("/api/admin/payroll-runs")

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAdminDashboard();
     setupTabs();
     setupLogout();
+    setupEmployeeManagement();
     
     async function initializeAdminDashboard() {
         try {
@@ -253,6 +254,75 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Redirect to login
             window.location.href = '/';
+        });
+    }
+    
+    function setupEmployeeManagement() {
+        const addBtn = document.getElementById('addEmployeeBtn');
+        const cancelBtn = document.getElementById('cancelAddEmployeeBtn');
+        const addForm = document.getElementById('addEmployeeForm');
+        const newEmployeeForm = document.getElementById('newEmployeeForm');
+        const messageDiv = document.getElementById('addEmployeeMessage');
+        
+        addBtn.addEventListener('click', function() {
+            addForm.style.display = 'block';
+            addBtn.style.display = 'none';
+        });
+        
+        cancelBtn.addEventListener('click', function() {
+            addForm.style.display = 'none';
+            addBtn.style.display = 'inline-block';
+            newEmployeeForm.reset();
+            messageDiv.style.display = 'none';
+        });
+        
+        newEmployeeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                full_name: document.getElementById('newEmpName').value,
+                email: document.getElementById('newEmpEmail').value,
+                department: document.getElementById('newEmpDepartment').value,
+                position: document.getElementById('newEmpPosition').value,
+                password: document.getElementById('newEmpPassword').value,
+                role: document.getElementById('newEmpRole').value,
+                employment_status: 'active'
+            };
+            
+            try {
+                const response = await fetch('/api/admin/employees', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                messageDiv.style.display = 'block';
+                if (data.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    newEmployeeForm.reset();
+                    
+                    // Reload employee list
+                    loadEmployeeList();
+                    
+                    // Hide form after a delay
+                    setTimeout(() => {
+                        addForm.style.display = 'none';
+                        addBtn.style.display = 'inline-block';
+                        messageDiv.style.display = 'none';
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message;
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error creating employee';
+                console.error('Error:', error);
+            }
         });
     }
 });
