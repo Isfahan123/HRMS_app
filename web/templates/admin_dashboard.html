@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>HRMS Admin Dashboard</h1>
+            <div class="user-info">
+                <span id="welcomeMessage">Welcome, Admin</span>
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </header>
+        
+        <div class="dashboard-content">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="employees">👥 Employees</button>
+                <button class="tab-button" data-tab="attendance">📅 Attendance</button>
+                <button class="tab-button" data-tab="leave">📬 Leave Management</button>
+                <button class="tab-button" data-tab="payroll">💸 Payroll</button>
+                <button class="tab-button" data-tab="bonus">🎁 Bonus</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Employees Tab -->
+                <div id="employeesTab" class="tab-pane active">
+                    <h2>Employee List</h2>
+                    <div id="employeeTable">Loading...</div>
+                </div>
+                
+                <!-- Attendance Tab -->
+                <div id="attendanceTab" class="tab-pane">
+                    <h2>Attendance Management</h2>
+                    <p>Attendance management features coming soon...</p>
+                </div>
+                
+                <!-- Leave Tab -->
+                <div id="leaveTab" class="tab-pane">
+                    <h2>Leave Approval</h2>
+                    <p>Leave approval features coming soon...</p>
+                </div>
+                
+                <!-- Payroll Tab -->
+                <div id="payrollTab" class="tab-pane">
+                    <h2>Payroll Processing</h2>
+                    <p>Payroll processing features coming soon...</p>
+                </div>
+                
+                <!-- Bonus Tab -->
+                <div id="bonusTab" class="tab-pane">
+                    <h2>Bonus Management</h2>
+                    <p>Bonus management features coming soon...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/admin_dashboard.js"></script>
+</body>
+</html>

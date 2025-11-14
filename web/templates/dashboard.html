@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>HRMS Dashboard</h1>
+            <div class="user-info">
+                <span id="welcomeMessage">Welcome</span>
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </header>
+        
+        <div class="dashboard-content">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="home">🏠 Home</button>
+                <button class="tab-button" data-tab="profile">👤 Profile</button>
+                <button class="tab-button" data-tab="attendance">📅 Attendance</button>
+                <button class="tab-button" data-tab="leave">📬 Leave Request</button>
+                <button class="tab-button" data-tab="payroll">💸 Payroll</button>
+                <button class="tab-button" data-tab="engagements">🗂 Engagements</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Home Tab -->
+                <div id="homeTab" class="tab-pane active">
+                    <h2>Your Summary</h2>
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <h3>📅 Attendance</h3>
+                            <p id="attendanceSummary">Loading...</p>
+                        </div>
+                        <div class="summary-card">
+                            <h3>📬 Leave Requests</h3>
+                            <p id="leaveSummary">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profile Tab -->
+                <div id="profileTab" class="tab-pane">
+                    <h2>Your Profile</h2>
+                    <div class="profile-info">
+                        <p><strong>Name:</strong> <span id="profileName">-</span></p>
+                        <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
+                        <p><strong>Department:</strong> <span id="profileDepartment">-</span></p>
+                        <p><strong>Position:</strong> <span id="profilePosition">-</span></p>
+                    </div>
+                </div>
+                
+                <!-- Attendance Tab -->
+                <div id="attendanceTab" class="tab-pane">
+                    <h2>Attendance History</h2>
+                    <div id="attendanceTable">Loading...</div>
+                </div>
+                
+                <!-- Leave Tab -->
+                <div id="leaveTab" class="tab-pane">
+                    <h2>Leave Requests</h2>
+                    <div id="leaveRequests">Loading...</div>
+                </div>
+                
+                <!-- Payroll Tab -->
+                <div id="payrollTab" class="tab-pane">
+                    <h2>Payroll Information</h2>
+                    <p>Payroll details coming soon...</p>
+                </div>
+                
+                <!-- Engagements Tab -->
+                <div id="engagementsTab" class="tab-pane">
+                    <h2>Training & Trips</h2>
+                    <p>Engagement details coming soon...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
