@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEmployeeManagement();
     setupPayrollProcessing();
     setupBonusManagement();
+    setupExportHandlers();
     
     async function initializeAdminDashboard() {
         try {
@@ -489,6 +490,78 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             }
         });
+    }
+    
+    function setupExportHandlers() {
+        // Export attendance to CSV
+        const exportAttendanceBtn = document.getElementById('exportAttendanceCSVBtn');
+        if (exportAttendanceBtn) {
+            exportAttendanceBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/admin/attendance/export/csv');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        downloadBlob(blob, `attendance_${new Date().toISOString().split('T')[0]}.csv`);
+                    } else {
+                        alert('Failed to export attendance data');
+                    }
+                } catch (error) {
+                    console.error('Error exporting attendance:', error);
+                    alert('Error exporting attendance data');
+                }
+            });
+        }
+        
+        // Export leave requests to CSV
+        const exportLeaveRequestsBtn = document.getElementById('exportLeaveRequestsCSVBtn');
+        if (exportLeaveRequestsBtn) {
+            exportLeaveRequestsBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/admin/leave-requests/export/csv');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        downloadBlob(blob, `leave_requests_${new Date().toISOString().split('T')[0]}.csv`);
+                    } else {
+                        alert('Failed to export leave requests');
+                    }
+                } catch (error) {
+                    console.error('Error exporting leave requests:', error);
+                    alert('Error exporting leave requests');
+                }
+            });
+        }
+        
+        // Export payroll runs to CSV
+        const exportPayrollBtn = document.getElementById('exportPayrollCSVBtn');
+        if (exportPayrollBtn) {
+            exportPayrollBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/admin/payroll/export/csv');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        downloadBlob(blob, `payroll_runs_${new Date().toISOString().split('T')[0]}.csv`);
+                    } else {
+                        alert('Failed to export payroll data');
+                    }
+                } catch (error) {
+                    console.error('Error exporting payroll:', error);
+                    alert('Error exporting payroll data');
+                }
+            });
+        }
+    }
+    
+    // Helper function to download blob as file
+    function downloadBlob(blob, filename) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
     }
     
     // Global functions for bonus actions

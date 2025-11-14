@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupLogout();
     setupLeaveRequestForm();
     setupProfileEdit();
+    setupPayslipDownload();
     
     async function initializeDashboard() {
         try {
@@ -161,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function buildPayrollTable(records) {
         let html = '<table><thead><tr>';
-        html += '<th>Month</th><th>Basic Salary</th><th>Net Pay</th><th>Status</th>';
+        html += '<th>Month</th><th>Basic Salary</th><th>Net Pay</th><th>Status</th><th>Actions</th>';
         html += '</tr></thead><tbody>';
         
         records.forEach(record => {
@@ -170,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<td>RM ${parseFloat(record.basic_salary || 0).toFixed(2)}</td>`;
             html += `<td>RM ${parseFloat(record.net_pay || 0).toFixed(2)}</td>`;
             html += `<td>${record.status || '-'}</td>`;
+            html += `<td><button class="btn-primary" onclick="downloadPayslip('${record.id}', '${record.month_year}')">Download PDF</button></td>`;
             html += '</tr>';
         });
         
@@ -390,4 +392,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    function setupPayslipDownload() {
+        // Payslip download will be attached to payroll table rows
+        // We'll add download buttons dynamically when building the payroll table
+    }
+    
+    // Helper function to download blob as file
+    function downloadBlob(blob, filename) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }
+    
+    // Global function for payslip download
+    window.downloadPayslip = async function(payrollRunId, monthYear) {
+        try {
+            const response = await fetch(`/api/employee/payslip/download/${payrollRunId}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                downloadBlob(blob, `payslip_${monthYear.replace(/[\/\s]/g, '_')}.pdf`);
+            } else {
+                alert('Failed to download payslip');
+            }
+        } catch (error) {
+            console.error('Error downloading payslip:', error);
+            alert('Error downloading payslip');
+        }
+    };
 });

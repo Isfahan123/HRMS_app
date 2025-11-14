@@ -23,6 +23,7 @@
                 <button class="tab-button" data-tab="leave">📬 Leave Management</button>
                 <button class="tab-button" data-tab="payroll">💸 Payroll</button>
                 <button class="tab-button" data-tab="bonus">🎁 Bonus</button>
+                <button class="tab-button" data-tab="config">⚙️ Configuration</button>
             </div>
             
             <div class="tab-content">
@@ -90,13 +91,47 @@
                 <!-- Attendance Tab -->
                 <div id="attendanceTab" class="tab-pane">
                     <h2>Attendance Management</h2>
-                    <p>Attendance management features coming soon...</p>
+                    
+                    <!-- Export buttons and filters -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <button id="exportAttendanceCSVBtn" class="btn-secondary">Export to CSV</button>
+                        </div>
+                        <div>
+                            <input type="date" id="attendanceStartDate" placeholder="Start Date">
+                            <input type="date" id="attendanceEndDate" placeholder="End Date">
+                            <button id="filterAttendanceBtn" class="btn-primary">Filter</button>
+                            <button id="clearAttendanceFilterBtn" class="btn-secondary">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div id="allAttendanceTable">Loading...</div>
                 </div>
                 
                 <!-- Leave Tab -->
                 <div id="leaveTab" class="tab-pane">
                     <h2>Leave Approval</h2>
-                    <p>Leave approval features coming soon...</p>
+                    
+                    <!-- Export buttons and filters -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <button id="exportLeaveRequestsCSVBtn" class="btn-secondary">Export Leave Requests</button>
+                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">Export Leave Balances</button>
+                            <button id="exportSickLeaveBalancesCSVBtn" class="btn-secondary">Export Sick Leave Balances</button>
+                        </div>
+                        <div>
+                            <select id="leaveStatusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                            <button id="filterLeaveBtn" class="btn-primary">Filter</button>
+                            <button id="clearLeaveFilterBtn" class="btn-secondary">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div id="leaveRequestsTable">Loading...</div>
                 </div>
                 
                 <!-- Payroll Tab -->
@@ -120,6 +155,11 @@
                     
                     <div style="margin-top: 30px;">
                         <h3>Payroll Runs</h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <button id="exportPayrollCSVBtn" class="btn-secondary">Export Payroll to CSV</button>
+                        </div>
+                        
                         <div id="payrollRunsTable">Loading...</div>
                     </div>
                 </div>
@@ -196,6 +236,72 @@
                     </div>
                     
                     <div id="bonusTable">Loading...</div>
+                </div>
+                
+                <!-- Configuration Tab -->
+                <div id="configTab" class="tab-pane">
+                    <h2>System Configuration</h2>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h3>LHDN Relief Settings</h3>
+                        <button id="loadLHDNSettingsBtn" class="btn-primary">Load LHDN Settings</button>
+                        <div id="lhdnReliefForm" style="display:none; margin-top: 20px;">
+                            <form id="lhdnReliefSettingsForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Self Relief (RM):</label>
+                                        <input type="number" id="lhdnSelfRelief" name="self_relief" step="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Spouse Relief (RM):</label>
+                                        <input type="number" id="lhdnSpouseRelief" name="spouse_relief" step="100">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Child Relief (RM per child):</label>
+                                        <input type="number" id="lhdnChildRelief" name="child_relief" step="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Disabled Child Relief (RM):</label>
+                                        <input type="number" id="lhdnDisabledChildRelief" name="disabled_child_relief" step="100">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary">Save LHDN Settings</button>
+                                <button type="button" id="cancelLHDNBtn" class="btn-secondary">Cancel</button>
+                            </form>
+                        </div>
+                        <div id="lhdnSettingsMessage" class="message"></div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h3>Leave Types Management</h3>
+                        <button id="showAddLeaveTypeBtn" class="btn-primary">+ Add Leave Type</button>
+                        
+                        <div id="addLeaveTypeForm" style="display:none; margin-top: 20px;">
+                            <form id="leaveTypeForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Leave Type Name:</label>
+                                        <input type="text" id="leaveTypeName" name="name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Annual Entitlement (Days):</label>
+                                        <input type="number" id="leaveTypeEntitlement" name="entitlement" min="0" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description:</label>
+                                    <textarea id="leaveTypeDescription" name="description" rows="3"></textarea>
+                                </div>
+                                <button type="submit" class="btn-primary">Save Leave Type</button>
+                                <button type="button" id="cancelLeaveTypeBtn" class="btn-secondary">Cancel</button>
+                            </form>
+                        </div>
+                        <div id="leaveTypeMessage" class="message"></div>
+                        
+                        <div id="leaveTypesTable" style="margin-top: 20px;">Loading...</div>
+                    </div>
                 </div>
             </div>
         </div>
