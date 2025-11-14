@@ -17,7 +17,16 @@ from services.supabase_service import (
     supabase, 
     get_attendance_history, 
     fetch_user_leave_requests,
-    convert_utc_to_kl
+    convert_utc_to_kl,
+    get_employee_payroll_history,
+    get_all_attendance_records,
+    update_leave_request_status,
+    get_payroll_runs
+)
+from services.supabase_engagements import fetch_engagements
+from services.supabase_training_overseas import (
+    fetch_training_course_records,
+    fetch_overseas_work_trip_records
 )
 from core.employee_service import calculate_cumulative_service
 
@@ -176,6 +185,116 @@ async def list_employees():
     except Exception as e:
         print(f"Error listing employees: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/payroll/{employee_id}")
+async def get_payroll_history(employee_id: str):
+    """
+    Get payroll history for employee
+    Reuses existing get_employee_payroll_history function
+    """
+    try:
+        payroll_data = get_employee_payroll_history(employee_id)
+        return {"success": True, "data": payroll_data}
+    except Exception as e:
+        print(f"Error fetching payroll: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/engagements/{employee_id}")
+async def get_engagements(employee_id: str):
+    """
+    Get engagements (training & trips) for employee
+    """
+    try:
+        # Fetch engagements
+        engagements = fetch_engagements(employee_id=employee_id)
+        
+        # Fetch training courses
+        training = fetch_training_course_records(employee_id=employee_id)
+        
+        # Fetch overseas trips
+        trips = fetch_overseas_work_trip_records(employee_id=employee_id)
+        
+        return {
+            "success": True, 
+            "data": {
+                "engagements": engagements or [],
+                "training": training or [],
+                "trips": trips or []
+            }
+        }
+    except Exception as e:
+        print(f"Error fetching engagements: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/attendance")
+async def get_all_attendance():
+    """
+    Get all attendance records (admin only)
+    """
+    try:
+        attendance_data = get_all_attendance_records()
+        return {"success": True, "data": attendance_data}
+    except Exception as e:
+        print(f"Error fetching all attendance: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/leave-requests")
+async def get_all_leave_requests():
+    """
+    Get all leave requests for admin approval
+    """
+    try:
+        response = supabase.table("leave_requests").select("*, employees(full_name, email)").order("created_at", desc=True).execute()
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        print(f"Error fetching leave requests: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-requests/{leave_id}/approve")
+async def approve_leave_request(leave_id: str):
+    """
+    Approve a leave request
+    """
+    try:
+        # Get admin email from session (for now using a placeholder)
+        admin_email = "admin@hrms.com"
+        success = update_leave_request_status(leave_id, "approved", admin_email)
+        if success:
+            return {"success": True, "message": "Leave request approved"}
+        else:
+            return {"success": False, "message": "Failed to approve leave request"}
+    except Exception as e:
+        print(f"Error approving leave: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-requests/{leave_id}/reject")
+async def reject_leave_request(leave_id: str):
+    """
+    Reject a leave request
+    """
+    try:
+        # Get admin email from session (for now using a placeholder)
+        admin_email = "admin@hrms.com"
+        success = update_leave_request_status(leave_id, "rejected", admin_email)
+        if success:
+            return {"success": True, "message": "Leave request rejected"}
+        else:
+            return {"success": False, "message": "Failed to reject leave request"}
+    except Exception as e:
+        print(f"Error rejecting leave: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/payroll-runs")
+async def get_all_payroll_runs():
+    """
+    Get all payroll runs (admin only)
+    """
+    try:
+        payroll_runs = get_payroll_runs()
+        return {"success": True, "data": payroll_runs}
+    except Exception as e:
+        print(f"Error fetching payroll runs: {str(e)}")
+        return {"success": False, "message": str(e)}
 
 @app.get("/health")
 async def health_check():

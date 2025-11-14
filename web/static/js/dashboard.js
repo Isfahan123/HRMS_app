@@ -43,6 +43,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Load leave requests
             loadLeaveRequests();
             
+            // Load payroll data
+            loadPayrollData();
+            
+            // Load engagements data
+            loadEngagementsData();
+            
         } catch (error) {
             console.error('Error initializing dashboard:', error);
         }
@@ -125,6 +131,111 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<td>${request.end_date || '-'}</td>`;
             html += `<td>${request.leave_type || '-'}</td>`;
             html += `<td>${request.status || '-'}</td>`;
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        return html;
+    }
+    
+    async function loadPayrollData() {
+        try {
+            const response = await fetch(`/api/payroll/${userEmail}`);
+            const data = await response.json();
+            
+            if (data.success && data.data && data.data.length > 0) {
+                const tableHtml = buildPayrollTable(data.data);
+                document.getElementById('payrollTab').innerHTML = '<h2>Payroll Information</h2>' + tableHtml;
+            } else {
+                document.getElementById('payrollTab').innerHTML = '<h2>Payroll Information</h2><p>No payroll records found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading payroll:', error);
+            document.getElementById('payrollTab').innerHTML = '<h2>Payroll Information</h2><p>Error loading payroll data.</p>';
+        }
+    }
+    
+    function buildPayrollTable(records) {
+        let html = '<table><thead><tr>';
+        html += '<th>Month</th><th>Basic Salary</th><th>Net Pay</th><th>Status</th>';
+        html += '</tr></thead><tbody>';
+        
+        records.forEach(record => {
+            html += '<tr>';
+            html += `<td>${record.month_year || '-'}</td>`;
+            html += `<td>RM ${parseFloat(record.basic_salary || 0).toFixed(2)}</td>`;
+            html += `<td>RM ${parseFloat(record.net_pay || 0).toFixed(2)}</td>`;
+            html += `<td>${record.status || '-'}</td>`;
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        return html;
+    }
+    
+    async function loadEngagementsData() {
+        try {
+            const response = await fetch(`/api/engagements/${userEmail}`);
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                let html = '<h2>Training & Trips</h2>';
+                
+                // Training courses
+                if (data.data.training && data.data.training.length > 0) {
+                    html += '<h3>Training Courses</h3>';
+                    html += buildTrainingTable(data.data.training);
+                } else {
+                    html += '<h3>Training Courses</h3><p>No training courses found.</p>';
+                }
+                
+                // Overseas trips
+                if (data.data.trips && data.data.trips.length > 0) {
+                    html += '<h3>Overseas Work Trips</h3>';
+                    html += buildTripsTable(data.data.trips);
+                } else {
+                    html += '<h3>Overseas Work Trips</h3><p>No overseas trips found.</p>';
+                }
+                
+                document.getElementById('engagementsTab').innerHTML = html;
+            } else {
+                document.getElementById('engagementsTab').innerHTML = '<h2>Training & Trips</h2><p>No engagement records found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading engagements:', error);
+            document.getElementById('engagementsTab').innerHTML = '<h2>Training & Trips</h2><p>Error loading engagement data.</p>';
+        }
+    }
+    
+    function buildTrainingTable(records) {
+        let html = '<table><thead><tr>';
+        html += '<th>Course Name</th><th>Start Date</th><th>End Date</th><th>Status</th>';
+        html += '</tr></thead><tbody>';
+        
+        records.forEach(record => {
+            html += '<tr>';
+            html += `<td>${record.course_name || '-'}</td>`;
+            html += `<td>${record.start_date || '-'}</td>`;
+            html += `<td>${record.end_date || '-'}</td>`;
+            html += `<td>${record.status || '-'}</td>`;
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        return html;
+    }
+    
+    function buildTripsTable(records) {
+        let html = '<table><thead><tr>';
+        html += '<th>Destination</th><th>Start Date</th><th>End Date</th><th>Purpose</th>';
+        html += '</tr></thead><tbody>';
+        
+        records.forEach(record => {
+            html += '<tr>';
+            html += `<td>${record.destination || '-'}</td>`;
+            html += `<td>${record.start_date || '-'}</td>`;
+            html += `<td>${record.end_date || '-'}</td>`;
+            html += `<td>${record.purpose || '-'}</td>`;
             html += '</tr>';
         });
         
