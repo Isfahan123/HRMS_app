@@ -24,7 +24,8 @@ from services.supabase_service import (
     get_payroll_runs,
     submit_leave_request,
     insert_employee,
-    update_employee
+    update_employee,
+    run_payroll
 )
 from services.supabase_engagements import fetch_engagements
 from services.supabase_training_overseas import (
@@ -396,6 +397,92 @@ async def get_all_payroll_runs():
         return {"success": True, "data": payroll_runs}
     except Exception as e:
         print(f"Error fetching payroll runs: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/payroll/run")
+async def run_payroll_processing(request: Request):
+    """
+    Run payroll for a specific month/year (admin only)
+    """
+    try:
+        data = await request.json()
+        payroll_date = data.get("payroll_date")  # Format: YYYY-MM
+        
+        if not payroll_date:
+            return {"success": False, "message": "Payroll date is required"}
+        
+        success = run_payroll(payroll_date)
+        
+        if success:
+            return {"success": True, "message": f"Payroll processed successfully for {payroll_date}"}
+        else:
+            return {"success": False, "message": "Failed to process payroll"}
+    except Exception as e:
+        print(f"Error running payroll: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/bonuses")
+async def get_all_bonuses():
+    """
+    Get all bonus records (admin only)
+    """
+    try:
+        response = supabase.table("bonuses").select("*, employees(full_name, email)").order("created_at", desc=True).execute()
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        print(f"Error fetching bonuses: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/bonuses")
+async def create_bonus(request: Request):
+    """
+    Create a new bonus record (admin only)
+    """
+    try:
+        data = await request.json()
+        
+        response = supabase.table("bonuses").insert(data).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Bonus created successfully", "data": response.data}
+        else:
+            return {"success": False, "message": "Failed to create bonus"}
+    except Exception as e:
+        print(f"Error creating bonus: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/bonuses/{bonus_id}")
+async def update_bonus(bonus_id: str, request: Request):
+    """
+    Update a bonus record (admin only)
+    """
+    try:
+        data = await request.json()
+        
+        response = supabase.table("bonuses").update(data).eq("id", bonus_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Bonus updated successfully", "data": response.data}
+        else:
+            return {"success": False, "message": "Failed to update bonus"}
+    except Exception as e:
+        print(f"Error updating bonus: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/bonuses/{bonus_id}")
+async def delete_bonus(bonus_id: str):
+    """
+    Delete a bonus record (admin only)
+    """
+    try:
+        response = supabase.table("bonuses").delete().eq("id", bonus_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Bonus deleted successfully"}
+        else:
+            return {"success": False, "message": "Failed to delete bonus"}
+    except Exception as e:
+        print(f"Error deleting bonus: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.get("/health")

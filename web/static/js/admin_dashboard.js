@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setupTabs();
     setupLogout();
     setupEmployeeManagement();
+    setupPayrollProcessing();
+    setupBonusManagement();
     
     async function initializeAdminDashboard() {
         try {
@@ -31,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Load payroll runs
             loadPayrollRuns();
+            
+            // Load bonuses
+            loadBonuses();
             
         } catch (error) {
             console.error('Error initializing admin dashboard:', error);
@@ -325,4 +330,192 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    function setupPayrollProcessing() {
+        const payrollForm = document.getElementById('runPayrollForm');
+        const messageDiv = document.getElementById('payrollMessage');
+        
+        payrollForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const payrollDate = document.getElementById('payrollMonth').value;
+            
+            if (!payrollDate) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Please select a month';
+                return;
+            }
+            
+            // Show loading message
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'success-message';
+            messageDiv.textContent = 'Processing payroll... This may take a few minutes.';
+            
+            try {
+                const response = await fetch('/api/admin/payroll/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payroll_date: payrollDate })
+                });
+                
+                const data = await response.json();
+                
+                messageDiv.style.display = 'block';
+                if (data.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    
+                    // Reload payroll runs
+                    loadPayrollRuns();
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message;
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error processing payroll';
+                console.error('Error:', error);
+            }
+        });
+    }
+    
+    async function loadBonuses() {
+        try {
+            const response = await fetch('/api/admin/bonuses');
+            const data = await response.json();
+            
+            if (data.success && data.data && data.data.length > 0) {
+                const tableHtml = buildBonusesTable(data.data);
+                document.getElementById('bonusTable').innerHTML = tableHtml;
+            } else {
+                document.getElementById('bonusTable').innerHTML = '<p>No bonus records found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading bonuses:', error);
+            document.getElementById('bonusTable').innerHTML = '<p>Error loading bonus data.</p>';
+        }
+    }
+    
+    function buildBonusesTable(bonuses) {
+        let html = '<table><thead><tr>';
+        html += '<th>Employee</th><th>Type</th><th>Amount</th><th>Effective Date</th><th>Expiry Date</th><th>Status</th><th>Actions</th>';
+        html += '</tr></thead><tbody>';
+        
+        bonuses.forEach(bonus => {
+            html += '<tr>';
+            html += `<td>${bonus.employees?.full_name || bonus.employee_id}</td>`;
+            html += `<td>${bonus.bonus_type || '-'}</td>`;
+            html += `<td>RM ${parseFloat(bonus.amount || 0).toFixed(2)}</td>`;
+            html += `<td>${bonus.effective_date || '-'}</td>`;
+            html += `<td>${bonus.expiry_date || '-'}</td>`;
+            html += `<td>${bonus.status || '-'}</td>`;
+            html += '<td>';
+            html += `<button class="btn-approve" onclick="editBonus('${bonus.id}')">Edit</button> `;
+            html += `<button class="btn-reject" onclick="deleteBonus('${bonus.id}')">Delete</button>`;
+            html += '</td>';
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        return html;
+    }
+    
+    function setupBonusManagement() {
+        const addBtn = document.getElementById('addBonusBtn');
+        const cancelBtn = document.getElementById('cancelAddBonusBtn');
+        const addForm = document.getElementById('addBonusForm');
+        const newBonusForm = document.getElementById('newBonusForm');
+        const messageDiv = document.getElementById('addBonusMessage');
+        
+        addBtn.addEventListener('click', function() {
+            addForm.style.display = 'block';
+            addBtn.style.display = 'none';
+        });
+        
+        cancelBtn.addEventListener('click', function() {
+            addForm.style.display = 'none';
+            addBtn.style.display = 'inline-block';
+            newBonusForm.reset();
+            messageDiv.style.display = 'none';
+        });
+        
+        newBonusForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                employee_id: document.getElementById('bonusEmployeeId').value,
+                bonus_type: document.getElementById('bonusType').value,
+                amount: parseFloat(document.getElementById('bonusAmount').value),
+                status: document.getElementById('bonusStatus').value,
+                effective_date: document.getElementById('bonusEffectiveDate').value,
+                expiry_date: document.getElementById('bonusExpiryDate').value,
+                remarks: document.getElementById('bonusRemarks').value
+            };
+            
+            try {
+                const response = await fetch('/api/admin/bonuses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                messageDiv.style.display = 'block';
+                if (data.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    newBonusForm.reset();
+                    
+                    // Reload bonus list
+                    loadBonuses();
+                    
+                    // Hide form after a delay
+                    setTimeout(() => {
+                        addForm.style.display = 'none';
+                        addBtn.style.display = 'inline-block';
+                        messageDiv.style.display = 'none';
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message;
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error creating bonus';
+                console.error('Error:', error);
+            }
+        });
+    }
+    
+    // Global functions for bonus actions
+    window.editBonus = async function(bonusId) {
+        alert('Edit functionality: Bonus ID ' + bonusId + '. Full edit dialog will be implemented in next iteration.');
+    };
+    
+    window.deleteBonus = async function(bonusId) {
+        if (!confirm('Are you sure you want to delete this bonus?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/bonuses/${bonusId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Bonus deleted successfully');
+                loadBonuses(); // Reload the table
+            } else {
+                alert('Failed to delete bonus: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error deleting bonus:', error);
+            alert('Error deleting bonus');
+        }
+    };
 });
