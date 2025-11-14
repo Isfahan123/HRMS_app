@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>HRMS Admin Dashboard</h1>
+            <div class="user-info">
+                <span id="welcomeMessage">Welcome, Admin</span>
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </header>
+        
+        <div class="dashboard-content">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="employees">👥 Employees</button>
+                <button class="tab-button" data-tab="attendance">📅 Attendance</button>
+                <button class="tab-button" data-tab="leave">📬 Leave Management</button>
+                <button class="tab-button" data-tab="payroll">💸 Payroll</button>
+                <button class="tab-button" data-tab="bonus">🎁 Bonus</button>
+                <button class="tab-button" data-tab="config">⚙️ Configuration</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Employees Tab -->
+                <div id="employeesTab" class="tab-pane active">
+                    <h2>Employee Management</h2>
+                    
+                    <button id="addEmployeeBtn" class="btn-primary" style="margin-bottom: 20px;">Add New Employee</button>
+                    
+                    <!-- Add Employee Form (hidden by default) -->
+                    <div id="addEmployeeForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                        <h3>Add New Employee</h3>
+                        <form id="newEmployeeForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpName">Full Name:</label>
+                                    <input type="text" id="newEmpName" name="full_name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="newEmpEmail">Email:</label>
+                                    <input type="email" id="newEmpEmail" name="email" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpDepartment">Department:</label>
+                                    <input type="text" id="newEmpDepartment" name="department">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="newEmpPosition">Position:</label>
+                                    <input type="text" id="newEmpPosition" name="position">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpPassword">Password:</label>
+                                    <input type="password" id="newEmpPassword" name="password" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="newEmpRole">Role:</label>
+                                    <select id="newEmpRole" name="role">
+                                        <option value="employee">Employee</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Create Employee</button>
+                                <button type="button" id="cancelAddEmployeeBtn" class="btn-secondary">Cancel</button>
+                            </div>
+                            
+                            <div id="addEmployeeMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                    
+                    <div id="employeeTable">Loading...</div>
+                </div>
+                
+                <!-- Attendance Tab -->
+                <div id="attendanceTab" class="tab-pane">
+                    <h2>Attendance Management</h2>
+                    
+                    <!-- Export buttons and filters -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <button id="exportAttendanceCSVBtn" class="btn-secondary">Export to CSV</button>
+                        </div>
+                        <div>
+                            <input type="date" id="attendanceStartDate" placeholder="Start Date">
+                            <input type="date" id="attendanceEndDate" placeholder="End Date">
+                            <button id="filterAttendanceBtn" class="btn-primary">Filter</button>
+                            <button id="clearAttendanceFilterBtn" class="btn-secondary">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div id="allAttendanceTable">Loading...</div>
+                </div>
+                
+                <!-- Leave Tab -->
+                <div id="leaveTab" class="tab-pane">
+                    <h2>Leave Approval</h2>
+                    
+                    <!-- Export buttons and filters -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <button id="exportLeaveRequestsCSVBtn" class="btn-secondary">Export Leave Requests</button>
+                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">Export Leave Balances</button>
+                            <button id="exportSickLeaveBalancesCSVBtn" class="btn-secondary">Export Sick Leave Balances</button>
+                        </div>
+                        <div>
+                            <select id="leaveStatusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                            <button id="filterLeaveBtn" class="btn-primary">Filter</button>
+                            <button id="clearLeaveFilterBtn" class="btn-secondary">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div id="leaveRequestsTable">Loading...</div>
+                </div>
+                
+                <!-- Payroll Tab -->
+                <div id="payrollTab" class="tab-pane">
+                    <h2>Payroll Processing</h2>
+                    
+                    <div class="form-section">
+                        <h3>Run Payroll</h3>
+                        <form id="runPayrollForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="payrollMonth">Month:</label>
+                                    <input type="month" id="payrollMonth" name="payroll_date" required>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary">Run Payroll</button>
+                            <div id="payrollMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h3>Payroll Runs</h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <button id="exportPayrollCSVBtn" class="btn-secondary">Export Payroll to CSV</button>
+                        </div>
+                        
+                        <div id="payrollRunsTable">Loading...</div>
+                    </div>
+                </div>
+                
+                <!-- Bonus Tab -->
+                <div id="bonusTab" class="tab-pane">
+                    <h2>Bonus Management</h2>
+                    
+                    <button id="addBonusBtn" class="btn-primary" style="margin-bottom: 20px;">Add New Bonus</button>
+                    
+                    <!-- Add Bonus Form -->
+                    <div id="addBonusForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                        <h3>Add New Bonus</h3>
+                        <form id="newBonusForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="bonusEmployeeId">Employee ID:</label>
+                                    <input type="text" id="bonusEmployeeId" name="employee_id" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="bonusType">Bonus Type:</label>
+                                    <select id="bonusType" name="bonus_type" required>
+                                        <option value="">Select type</option>
+                                        <option value="Performance">Performance</option>
+                                        <option value="Festival">Festival</option>
+                                        <option value="Year-end">Year-end</option>
+                                        <option value="Project">Project</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="bonusAmount">Amount (RM):</label>
+                                    <input type="number" id="bonusAmount" name="amount" step="0.01" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="bonusStatus">Status:</label>
+                                    <select id="bonusStatus" name="status" required>
+                                        <option value="Active">Active</option>
+                                        <option value="Expired">Expired</option>
+                                        <option value="Pending">Pending</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="bonusEffectiveDate">Effective Date:</label>
+                                    <input type="date" id="bonusEffectiveDate" name="effective_date" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="bonusExpiryDate">Expiry Date:</label>
+                                    <input type="date" id="bonusExpiryDate" name="expiry_date" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="bonusRemarks">Remarks:</label>
+                                <textarea id="bonusRemarks" name="remarks" rows="2"></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Create Bonus</button>
+                                <button type="button" id="cancelAddBonusBtn" class="btn-secondary">Cancel</button>
+                            </div>
+                            
+                            <div id="addBonusMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                    
+                    <div id="bonusTable">Loading...</div>
+                </div>
+                
+                <!-- Configuration Tab -->
+                <div id="configTab" class="tab-pane">
+                    <h2>System Configuration</h2>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h3>LHDN Relief Settings</h3>
+                        <button id="loadLHDNSettingsBtn" class="btn-primary">Load LHDN Settings</button>
+                        <div id="lhdnReliefForm" style="display:none; margin-top: 20px;">
+                            <form id="lhdnReliefSettingsForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Self Relief (RM):</label>
+                                        <input type="number" id="lhdnSelfRelief" name="self_relief" step="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Spouse Relief (RM):</label>
+                                        <input type="number" id="lhdnSpouseRelief" name="spouse_relief" step="100">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Child Relief (RM per child):</label>
+                                        <input type="number" id="lhdnChildRelief" name="child_relief" step="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Disabled Child Relief (RM):</label>
+                                        <input type="number" id="lhdnDisabledChildRelief" name="disabled_child_relief" step="100">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary">Save LHDN Settings</button>
+                                <button type="button" id="cancelLHDNBtn" class="btn-secondary">Cancel</button>
+                            </form>
+                        </div>
+                        <div id="lhdnSettingsMessage" class="message"></div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h3>Leave Types Management</h3>
+                        <button id="showAddLeaveTypeBtn" class="btn-primary">+ Add Leave Type</button>
+                        
+                        <div id="addLeaveTypeForm" style="display:none; margin-top: 20px;">
+                            <form id="leaveTypeForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Leave Type Name:</label>
+                                        <input type="text" id="leaveTypeName" name="name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Annual Entitlement (Days):</label>
+                                        <input type="number" id="leaveTypeEntitlement" name="entitlement" min="0" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description:</label>
+                                    <textarea id="leaveTypeDescription" name="description" rows="3"></textarea>
+                                </div>
+                                <button type="submit" class="btn-primary">Save Leave Type</button>
+                                <button type="button" id="cancelLeaveTypeBtn" class="btn-secondary">Cancel</button>
+                            </form>
+                        </div>
+                        <div id="leaveTypeMessage" class="message"></div>
+                        
+                        <div id="leaveTypesTable" style="margin-top: 20px;">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/admin_dashboard.js"></script>
+</body>
+</html>
