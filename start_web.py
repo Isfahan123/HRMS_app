@@ -6,6 +6,10 @@ This script starts the FastAPI web server
 
 import sys
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Ensure we're in the correct directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -14,23 +18,31 @@ try:
     import uvicorn
     from web_app import app
     
+    # Get configuration from environment variables
+    host = os.getenv("WEB_HOST", "0.0.0.0")
+    port = int(os.getenv("WEB_PORT", "8000"))
+    reload = os.getenv("WEB_RELOAD", "false").lower() == "true"
+    environment = os.getenv("ENVIRONMENT", "production")
+    
     print("=" * 60)
     print("HRMS Web Application")
     print("=" * 60)
+    print(f"\nEnvironment: {environment}")
     print("\nStarting web server...")
     print("\nAccess the application at:")
-    print("  → http://localhost:8000")
+    print(f"  → http://localhost:{port}")
     print("\nAPI documentation at:")
-    print("  → http://localhost:8000/docs (Swagger UI)")
-    print("  → http://localhost:8000/redoc (ReDoc)")
+    print(f"  → http://localhost:{port}/docs (Swagger UI)")
+    print(f"  → http://localhost:{port}/redoc (ReDoc)")
     print("\nPress Ctrl+C to stop the server")
     print("=" * 60)
     print()
     
     uvicorn.run(
         app, 
-        host="0.0.0.0", 
-        port=8000,
+        host=host, 
+        port=port,
+        reload=reload,
         log_level="info"
     )
     

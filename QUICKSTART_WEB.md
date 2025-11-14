@@ -1,18 +1,29 @@
 # HRMS Web Application - Quick Start Guide
 
-## 🚀 Get Started in 3 Steps
+## 🚀 Get Started in 4 Steps
 
 ### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Start the Web Server
+### 2. Configure Environment (Optional)
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit with your Supabase credentials (optional - defaults provided)
+nano .env
+```
+
+**Note:** The application works out-of-the-box with default credentials. Only configure `.env` if you need custom Supabase credentials or deployment settings.
+
+### 3. Start the Web Server
 ```bash
 python start_web.py
 ```
 
-### 3. Open Your Browser
+### 4. Open Your Browser
 Navigate to: **http://localhost:8000**
 
 That's it! 🎉
@@ -82,14 +93,48 @@ Interactive API documentation with:
 
 ## ⚙️ Configuration
 
+### Environment Variables
+
+Create a `.env` file for custom configuration:
+
+```bash
+cp .env.example .env
+```
+
+Available settings:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SUPABASE_URL` | Your Supabase project URL | Default provided |
+| `SUPABASE_KEY` | Your Supabase service role key | Default provided |
+| `WEB_HOST` | Host to bind the server | `0.0.0.0` |
+| `WEB_PORT` | Port for the server | `8000` |
+| `WEB_RELOAD` | Enable auto-reload (dev mode) | `false` |
+| `ENVIRONMENT` | Environment name | `production` |
+
 ### Change Port
-Edit `start_web.py` or run:
+
+Option 1 - Using `.env`:
+```bash
+# In .env file
+WEB_PORT=8001
+```
+
+Option 2 - Command line:
 ```bash
 uvicorn web_app:app --port 8001
 ```
 
-### Environment Variables
-The web application uses the same `.env` file as the desktop version for Supabase credentials.
+### Development Mode
+
+For auto-reload during development:
+```bash
+# In .env file
+WEB_RELOAD=true
+ENVIRONMENT=development
+```
+
+**See `docs/DEPLOYMENT_GUIDE.md` for production deployment instructions.**
 
 ---
 
