@@ -197,6 +197,7 @@
                     <div class="subtabs">
                         <button class="subtab-button active" data-subtab="leaveSubmit">Submit Leave Request</button>
                         <button class="subtab-button" data-subtab="leaveMyRequests">My Leave Requests</button>
+                        <button class="subtab-button" data-subtab="leaveCalendar">📅 Calendar View</button>
                     </div>
                     
                     <!-- Submit Leave Request Subtab -->
@@ -251,6 +252,13 @@
                     <div id="leaveMyRequestsSubtab" class="subtab-content">
                         <h3>My Leave Requests</h3>
                         <div id="leaveRequests">Loading...</div>
+                    </div>
+                    
+                    <!-- Calendar View Subtab -->
+                    <div id="leaveCalendarSubtab" class="subtab-content">
+                        <h3>📅 Leave Calendar</h3>
+                        <p style="color: #666; margin-bottom: 20px;">View your leave requests and holidays on the calendar</p>
+                        <div id="leaveCalendar"></div>
                     </div>
                 </div>
                 
@@ -318,5 +326,6 @@
     </div>
     
     <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/calendar.js"></script>
 </body>
 </html>
