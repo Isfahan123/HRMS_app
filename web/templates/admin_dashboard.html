@@ -31,32 +31,172 @@
             <div class="tab-content">
                 <!-- Employees Tab -->
                 <div id="employeesTab" class="tab-pane active">
-                    <h2>Employee Management</h2>
+                    <h2>👥 Employee Management</h2>
+                    
+                    <!-- Search and Filter Bar -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="employeeSearchInput" placeholder="🔍 Search employees..." style="padding: 8px; min-width: 250px;">
+                        
+                        <select id="departmentFilter" style="padding: 8px;">
+                            <option value="">All Departments</option>
+                            <option value="IT">IT</option>
+                            <option value="HR">HR</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+                        
+                        <select id="religionFilter" style="padding: 8px;">
+                            <option value="">All Religions</option>
+                            <option value="Islam">Islam</option>
+                            <option value="Christianity">Christianity</option>
+                            <option value="Buddhism">Buddhism</option>
+                            <option value="Hinduism">Hinduism</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        
+                        <button id="clearFiltersBtn" class="btn-secondary">Clear Filters</button>
+                        <button id="refreshEmployeesBtn" class="btn-secondary">🔄 Refresh</button>
+                        <button id="exportEmployeesCSVBtn" class="btn-secondary">📤 Export CSV</button>
+                    </div>
                     
                     <button id="addEmployeeBtn" class="btn-primary" style="margin-bottom: 20px;">Add New Employee</button>
                     
                     <!-- Add Employee Form (hidden by default) -->
                     <div id="addEmployeeForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                        <h3>Add New Employee</h3>
+                        <h3>Add New Employee - Comprehensive Profile</h3>
                         <form id="newEmployeeForm">
+                            <!-- Basic Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Basic Information</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="newEmpName">Full Name:</label>
+                                    <label for="newEmpName">Full Name:*</label>
                                     <input type="text" id="newEmpName" name="full_name" required>
                                 </div>
-                                
                                 <div class="form-group">
-                                    <label for="newEmpEmail">Email:</label>
+                                    <label for="newEmpEmail">Email:*</label>
                                     <input type="email" id="newEmpEmail" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpPassword">Password:*</label>
+                                    <input type="password" id="newEmpPassword" name="password" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Personal Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Personal Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpGender">Gender:</label>
+                                    <select id="newEmpGender" name="gender">
+                                        <option value="">Select</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpDOB">Date of Birth:</label>
+                                    <input type="date" id="newEmpDOB" name="date_of_birth">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpNRIC">NRIC:</label>
+                                    <input type="text" id="newEmpNRIC" name="nric">
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="newEmpNationality">Nationality:</label>
+                                    <input type="text" id="newEmpNationality" name="nationality">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpCitizenship">Citizenship:</label>
+                                    <select id="newEmpCitizenship" name="citizenship">
+                                        <option value="">Select</option>
+                                        <option value="Citizen">Citizen</option>
+                                        <option value="Non-citizen">Non-citizen</option>
+                                        <option value="Permanent Resident">Permanent Resident</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpRace">Race:</label>
+                                    <input type="text" id="newEmpRace" name="race">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpReligion">Religion:</label>
+                                    <input type="text" id="newEmpReligion" name="religion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpMaritalStatus">Marital Status:</label>
+                                    <select id="newEmpMaritalStatus" name="marital_status">
+                                        <option value="">Select</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Divorced">Divorced</option>
+                                        <option value="Widowed">Widowed</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpChildren">Number of Children:</label>
+                                    <select id="newEmpChildren" name="number_of_children">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Contact Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Contact Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpPhone">Phone:</label>
+                                    <input type="tel" id="newEmpPhone" name="phone_number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpAddress">Address:</label>
+                                    <input type="text" id="newEmpAddress" name="address">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpCity">City:</label>
+                                    <input type="text" id="newEmpCity" name="city">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpState">State:</label>
+                                    <input type="text" id="newEmpState" name="state">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpZipcode">Zipcode:</label>
+                                    <input type="text" id="newEmpZipcode" name="zipcode">
+                                </div>
+                            </div>
+                            
+                            <!-- Employment Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Employment Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpEmployeeID">Employee ID:</label>
+                                    <input type="text" id="newEmpEmployeeID" name="employee_id">
+                                </div>
+                                <div class="form-group">
                                     <label for="newEmpDepartment">Department:</label>
                                     <input type="text" id="newEmpDepartment" name="department">
                                 </div>
-                                
                                 <div class="form-group">
                                     <label for="newEmpPosition">Position:</label>
                                     <input type="text" id="newEmpPosition" name="position">
@@ -65,16 +205,40 @@
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="newEmpPassword">Password:</label>
-                                    <input type="password" id="newEmpPassword" name="password" required>
-                                </div>
-                                
-                                <div class="form-group">
                                     <label for="newEmpRole">Role:</label>
                                     <select id="newEmpRole" name="role">
                                         <option value="employee">Employee</option>
                                         <option value="admin">Admin</option>
                                     </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpStatus">Employment Status:</label>
+                                    <select id="newEmpStatus" name="employment_status">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Terminated">Terminated</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpJoinDate">Join Date:</label>
+                                    <input type="date" id="newEmpJoinDate" name="join_date">
+                                </div>
+                            </div>
+                            
+                            <!-- EPF/SOCSO Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">EPF/SOCSO Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpEPFNumber">EPF Number:</label>
+                                    <input type="text" id="newEmpEPFNumber" name="epf_number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSOCSONumber">SOCSO Number:</label>
+                                    <input type="text" id="newEmpSOCSONumber" name="socso_number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpIncomeTaxNumber">Income Tax Number:</label>
+                                    <input type="text" id="newEmpIncomeTaxNumber" name="income_tax_number">
                                 </div>
                             </div>
                             
@@ -92,22 +256,47 @@
                 
                 <!-- Attendance Tab -->
                 <div id="attendanceTab" class="tab-pane">
-                    <h2>Attendance Management</h2>
+                    <h2>🗂️ Attendance Management</h2>
                     
-                    <!-- Export buttons and filters -->
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                        <div>
-                            <button id="exportAttendanceCSVBtn" class="btn-secondary">Export to CSV</button>
-                        </div>
-                        <div>
-                            <input type="date" id="attendanceStartDate" placeholder="Start Date">
-                            <input type="date" id="attendanceEndDate" placeholder="End Date">
-                            <button id="filterAttendanceBtn" class="btn-primary">Filter</button>
-                            <button id="clearAttendanceFilterBtn" class="btn-secondary">Clear</button>
-                        </div>
+                    <!-- Filters and Search -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                        <label>🗓️ From:</label>
+                        <input type="date" id="attendanceStartDate" style="padding: 8px;">
+                        <label>To:</label>
+                        <input type="date" id="attendanceEndDate" style="padding: 8px;">
+                        
+                        <label>🔍 Filter by:</label>
+                        <select id="attendanceFilterField" style="padding: 8px;">
+                            <option value="email">Email</option>
+                            <option value="date">Date</option>
+                        </select>
+                        <input type="text" id="attendanceSearchInput" placeholder="Search..." style="padding: 8px; min-width: 200px;">
+                        
+                        <button id="exportAttendanceCSVBtn" class="btn-secondary">📤 Export to CSV</button>
                     </div>
                     
-                    <div id="allAttendanceTable">Loading...</div>
+                    <div id="allAttendanceTable" style="margin-bottom: 30px;">Loading...</div>
+                    
+                    <!-- Working Hours Settings Section -->
+                    <div class="form-section" style="margin-top: 30px;">
+                        <h3>🛠️ Set Official Working Hours</h3>
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div>
+                                <label for="clockInTime">Clock-in:</label>
+                                <input type="time" id="clockInTime" value="09:00" style="padding: 8px; margin-left: 5px;">
+                            </div>
+                            <div>
+                                <label for="clockOutTime">Clock-out:</label>
+                                <input type="time" id="clockOutTime" value="18:00" style="padding: 8px; margin-left: 5px;">
+                            </div>
+                            <div>
+                                <label for="clockInLimit">Clock-in Limit:</label>
+                                <input type="time" id="clockInLimit" value="09:30" style="padding: 8px; margin-left: 5px;">
+                            </div>
+                            <button id="saveWorkingHoursBtn" class="btn-primary">Save</button>
+                        </div>
+                        <div id="workingHoursMessage" style="display: none; margin-top: 10px;"></div>
+                    </div>
                 </div>
                 
                 <!-- Leave Tab -->

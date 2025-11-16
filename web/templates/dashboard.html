@@ -44,24 +44,98 @@
                 
                 <!-- Profile Tab -->
                 <div id="profileTab" class="tab-pane">
-                    <h2>Your Profile</h2>
+                    <h2>👤 Your Profile</h2>
                     
                     <div id="profileView" class="profile-info">
+                        <!-- Basic Information -->
+                        <h3 style="color: #667eea; border-bottom: 2px solid #eee; padding-bottom: 10px;">Basic Information</h3>
                         <p><strong>Name:</strong> <span id="profileName">-</span></p>
                         <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
-                        <p><strong>Department:</strong> <span id="profileDepartment">-</span></p>
-                        <p><strong>Position:</strong> <span id="profilePosition">-</span></p>
+                        <p><strong>Employee ID:</strong> <span id="profileEmployeeID">-</span></p>
+                        <p><strong>Gender:</strong> <span id="profileGender">-</span></p>
+                        <p><strong>Date of Birth:</strong> <span id="profileDOB">-</span></p>
+                        <p><strong>NRIC:</strong> <span id="profileNRIC">-</span></p>
+                        <p><strong>Nationality:</strong> <span id="profileNationality">-</span></p>
+                        <p><strong>Citizenship:</strong> <span id="profileCitizenship">-</span></p>
+                        <p><strong>Race:</strong> <span id="profileRace">-</span></p>
+                        <p><strong>Religion:</strong> <span id="profileReligion">-</span></p>
+                        <p><strong>Marital Status:</strong> <span id="profileMaritalStatus">-</span></p>
+                        <p><strong>Number of Children:</strong> <span id="profileChildren">-</span></p>
+                        
+                        <!-- Contact Information -->
+                        <h3 style="color: #667eea; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 20px;">Contact Information</h3>
                         <p><strong>Phone:</strong> <span id="profilePhone">-</span></p>
                         <p><strong>Address:</strong> <span id="profileAddress">-</span></p>
+                        <p><strong>City:</strong> <span id="profileCity">-</span></p>
+                        <p><strong>State:</strong> <span id="profileState">-</span></p>
+                        <p><strong>Zipcode:</strong> <span id="profileZipcode">-</span></p>
+                        
+                        <!-- Employment Information -->
+                        <h3 style="color: #667eea; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 20px;">Employment Information</h3>
+                        <p><strong>Department:</strong> <span id="profileDepartment">-</span></p>
+                        <p><strong>Position:</strong> <span id="profilePosition">-</span></p>
+                        <p><strong>Employment Status:</strong> <span id="profileStatus">-</span></p>
+                        <p><strong>Join Date:</strong> <span id="profileJoinDate">-</span></p>
+                        
+                        <!-- EPF/SOCSO Information -->
+                        <h3 style="color: #667eea; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 20px;">EPF/SOCSO Information</h3>
+                        <p><strong>EPF Number:</strong> <span id="profileEPFNumber">-</span></p>
+                        <p><strong>SOCSO Number:</strong> <span id="profileSOCSONumber">-</span></p>
+                        <p><strong>Income Tax Number:</strong> <span id="profileTaxNumber">-</span></p>
+                        
                         <button id="editProfileBtn" class="btn-primary" style="margin-top: 15px;">Edit Profile</button>
                     </div>
                     
                     <form id="profileEditForm" class="profile-edit-form" style="display: none;">
+                        <h3 style="color: #667eea;">Edit Profile Information</h3>
+                        
+                        <!-- Personal Information (Editable) -->
+                        <h4 style="margin-top: 20px;">Personal Information</h4>
                         <div class="form-group">
                             <label for="editFullName">Full Name:</label>
                             <input type="text" id="editFullName" name="full_name">
                         </div>
                         
+                        <div class="form-group">
+                            <label for="editGender">Gender:</label>
+                            <select id="editGender" name="gender">
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editMaritalStatus">Marital Status:</label>
+                            <select id="editMaritalStatus" name="marital_status">
+                                <option value="">Select</option>
+                                <option value="Single">Single</option>
+                                <option value="Married">Married</option>
+                                <option value="Divorced">Divorced</option>
+                                <option value="Widowed">Widowed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editChildren">Number of Children:</label>
+                            <select id="editChildren" name="number_of_children">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editReligion">Religion:</label>
+                            <input type="text" id="editReligion" name="religion">
+                        </div>
+                        
+                        <!-- Contact Information (Editable) -->
+                        <h4 style="margin-top: 20px;">Contact Information</h4>
                         <div class="form-group">
                             <label for="editPhone">Phone:</label>
                             <input type="tel" id="editPhone" name="phone_number">
@@ -69,7 +143,22 @@
                         
                         <div class="form-group">
                             <label for="editAddress">Address:</label>
-                            <textarea id="editAddress" name="address" rows="3"></textarea>
+                            <textarea id="editAddress" name="address" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editCity">City:</label>
+                            <input type="text" id="editCity" name="city">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editState">State:</label>
+                            <input type="text" id="editState" name="state">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editZipcode">Zipcode:</label>
+                            <input type="text" id="editZipcode" name="zipcode">
                         </div>
                         
                         <div class="form-actions">
