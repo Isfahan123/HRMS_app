@@ -12,6 +12,7 @@
             <h1>HRMS Admin Dashboard</h1>
             <div class="user-info">
                 <span id="welcomeMessage">Welcome, Admin</span>
+                <button id="openCalendarBtn" class="btn-secondary" style="margin-right: 10px;">📅 Open Calendar</button>
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
             </div>
         </header>
@@ -270,11 +271,33 @@
                         <div style="margin-top: 30px;">
                             <h4>Payroll Runs</h4>
                             
+                            <!-- Year Filter -->
                             <div style="margin-bottom: 15px;">
+                                <label for="adminPayrollYearFilter">Year:</label>
+                                <select id="adminPayrollYearFilter" style="margin-left: 10px; margin-right: 20px;">
+                                    <option value="">All Years</option>
+                                </select>
                                 <button id="exportPayrollCSVBtn" class="btn-secondary">Export Payroll to CSV</button>
                             </div>
                             
-                            <div id="payrollRunsTable">Loading...</div>
+                            <!-- Month Subtabs -->
+                            <div class="subtabs" style="margin-top: 15px; border-bottom: 1px solid #ddd;">
+                                <button class="subtab-button active" data-month="all">All</button>
+                                <button class="subtab-button" data-month="1">Jan</button>
+                                <button class="subtab-button" data-month="2">Feb</button>
+                                <button class="subtab-button" data-month="3">Mar</button>
+                                <button class="subtab-button" data-month="4">Apr</button>
+                                <button class="subtab-button" data-month="5">May</button>
+                                <button class="subtab-button" data-month="6">Jun</button>
+                                <button class="subtab-button" data-month="7">Jul</button>
+                                <button class="subtab-button" data-month="8">Aug</button>
+                                <button class="subtab-button" data-month="9">Sep</button>
+                                <button class="subtab-button" data-month="10">Oct</button>
+                                <button class="subtab-button" data-month="11">Nov</button>
+                                <button class="subtab-button" data-month="12">Dec</button>
+                            </div>
+                            
+                            <div id="payrollRunsTable" style="margin-top: 20px;">Loading...</div>
                         </div>
                     </div>
                     
