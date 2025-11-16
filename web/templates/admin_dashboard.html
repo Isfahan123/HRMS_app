@@ -628,20 +628,100 @@
                         
                         <!-- Tax Rates Sub-subtab -->
                         <div id="lhdnTaxRatesSubtab" class="subtab-content active">
-                            <h4>Tax Rates</h4>
-                            <p>Tax rates configuration coming soon...</p>
+                            <h4>📊 Malaysian Income Tax Rates (Year of Assessment)</h4>
+                            <p style="color: #666; margin-bottom: 20px;">Configure progressive tax rates for residents and non-residents</p>
+                            
+                            <!-- Resident Tax Rates -->
+                            <div style="margin-bottom: 30px;">
+                                <h5 style="color: #667eea;">Resident Tax Rates</h5>
+                                <button class="btn-primary btn-sm" onclick="addTaxBracket('resident')" style="margin-bottom: 10px;">➕ Add Tax Bracket</button>
+                                
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 10px;">Chargeable Income From (RM)</th>
+                                            <th style="padding: 10px;">To (RM)</th>
+                                            <th style="padding: 10px;">Rate (%)</th>
+                                            <th style="padding: 10px;">Tax on Band (RM)</th>
+                                            <th style="padding: 10px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="residentTaxRatesBody">
+                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Non-Resident Tax Rates -->
+                            <div style="margin-top: 40px;">
+                                <h5 style="color: #667eea;">Non-Resident Tax Rates</h5>
+                                <button class="btn-primary btn-sm" onclick="addTaxBracket('non-resident')" style="margin-bottom: 10px;">➕ Add Tax Bracket</button>
+                                
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 10px;">Chargeable Income From (RM)</th>
+                                            <th style="padding: 10px;">To (RM)</th>
+                                            <th style="padding: 10px;">Rate (%)</th>
+                                            <th style="padding: 10px;">Tax on Band (RM)</th>
+                                            <th style="padding: 10px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="nonResidentTaxRatesBody">
+                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Flat 30% for non-residents</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         
                         <!-- Tax Relief Max Sub-subtab -->
                         <div id="lhdnReliefMaxSubtab" class="subtab-content">
-                            <h4>Tax Relief Max</h4>
-                            <p>Tax relief maximums configuration coming soon...</p>
+                            <h4>💼 Tax Relief Maximum Amounts</h4>
+                            <p style="color: #666; margin-bottom: 20px;">Configure maximum relief amounts for various categories</p>
+                            
+                            <button class="btn-primary" onclick="editAllReliefs()" style="margin-bottom: 15px;">✏️ Edit All Reliefs</button>
+                            
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 10px; text-align: left;">Relief Category</th>
+                                        <th style="padding: 10px; text-align: right;">Maximum Amount (RM)</th>
+                                        <th style="padding: 10px; text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reliefMaxBody">
+                                    <tr><td colspan="3" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                         
                         <!-- Relief Overrides Sub-subtab -->
                         <div id="lhdnReliefOverridesSubtab" class="subtab-content">
-                            <h4>Relief Overrides</h4>
-                            <p>Relief overrides configuration coming soon...</p>
+                            <h4>🔧 Employee-Specific Relief Overrides</h4>
+                            <p style="color: #666; margin-bottom: 20px;">Override relief amounts for specific employees (e.g., special circumstances)</p>
+                            
+                            <button class="btn-primary" onclick="addReliefOverride()" style="margin-bottom: 15px;">➕ Add Override</button>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label>Filter by Employee:</label>
+                                <input type="text" id="reliefOverrideSearch" placeholder="Search employee name or ID..." 
+                                       style="padding: 8px; width: 300px; margin-left: 10px;">
+                            </div>
+                            
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 10px; text-align: left;">Employee</th>
+                                        <th style="padding: 10px; text-align: left;">Relief Category</th>
+                                        <th style="padding: 10px; text-align: right;">Override Amount (RM)</th>
+                                        <th style="padding: 10px; text-align: center;">Effective Period</th>
+                                        <th style="padding: 10px; text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reliefOverridesBody">
+                                    <tr><td colspan="5" style="padding: 15px; text-align: center;">No overrides configured</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -767,5 +847,6 @@
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>
     <script src="/static/js/leave_config.js"></script>
+    <script src="/static/js/lhdn_config.js"></script>
 </body>
 </html>
