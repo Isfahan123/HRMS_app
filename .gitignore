@@ -51,3 +51,4 @@ htmlcov/
 .env
 .env.local
 web/nodejs_modules/node_modules/
+tmp/
