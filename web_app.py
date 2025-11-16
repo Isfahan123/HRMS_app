@@ -3,7 +3,7 @@ Web application entry point for HRMS
 This provides a web-based interface using HTML/JavaScript with Python backend
 """
 from fastapi import FastAPI, HTTPException, Request, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -484,6 +484,107 @@ async def delete_bonus(bonus_id: str):
     except Exception as e:
         print(f"Error deleting bonus: {str(e)}")
         return {"success": False, "message": str(e)}
+
+@app.get("/api/payroll/payslip/{employee_id}/{payroll_run_id}")
+async def generate_payslip(employee_id: str, payroll_run_id: str):
+    """
+    Generate and download payslip PDF for an employee
+    Uses Node.js payslip generator module
+    """
+    try:
+        import subprocess
+        import json
+        import tempfile
+        from fastapi.responses import FileResponse
+        
+        # Get employee data
+        employee_response = supabase.table("employees").select("*").eq("id", employee_id).execute()
+        if not employee_response.data:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        
+        employee = employee_response.data[0]
+        
+        # Get payroll run data
+        payroll_response = supabase.table("payroll_runs").select("*").eq("id", payroll_run_id).execute()
+        if not payroll_response.data:
+            raise HTTPException(status_code=404, detail="Payroll run not found")
+        
+        payroll = payroll_response.data[0]
+        
+        # Prepare payslip data
+        payslip_data = {
+            "employee_name": employee.get("full_name", ""),
+            "employee_id": employee.get("employee_id", ""),
+            "department": employee.get("department", ""),
+            "position": employee.get("position", ""),
+            "pay_period": payroll.get("month_year", ""),
+            "pay_date": payroll.get("created_at", "")[:10] if payroll.get("created_at") else "",
+            "basic_salary": float(payroll.get("basic_salary", 0)),
+            "allowances": float(payroll.get("allowances", 0)),
+            "bonuses": float(payroll.get("bonuses", 0)),
+            "epf_employee": float(payroll.get("epf_employee", 0)),
+            "socso_employee": float(payroll.get("socso_employee", 0)),
+            "eis": float(payroll.get("eis", 0)),
+            "pcb": float(payroll.get("pcb", 0)),
+            "unpaid_leave_deduction": float(payroll.get("unpaid_leave_deduction", 0))
+        }
+        
+        # Create temp directory for output
+        temp_dir = tempfile.gettempdir()
+        output_filename = f"payslip_{employee.get('employee_id', employee_id)}_{payroll.get('month_year', 'unknown').replace('/', '_')}.pdf"
+        output_path = os.path.join(temp_dir, output_filename)
+        
+        # Write data to temp JSON file
+        data_file = os.path.join(temp_dir, f"payslip_data_{employee_id}.json")
+        with open(data_file, 'w') as f:
+            json.dump(payslip_data, f)
+        
+        # Call Node.js to generate PDF
+        node_script = f"""
+const {{ generatePayslip }} = require('./web/nodejs_modules/payslip_generator');
+const fs = require('fs');
+const data = JSON.parse(fs.readFileSync('{data_file}', 'utf8'));
+generatePayslip(data, '{output_path}')
+    .then(() => {{ console.log('PDF generated'); process.exit(0); }})
+    .catch(err => {{ console.error('Error:', err); process.exit(1); }});
+"""
+        
+        # Run the Node.js script
+        result = subprocess.run(
+            ['node', '-e', node_script],
+            cwd=os.path.dirname(__file__),
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        # Clean up temp data file
+        try:
+            os.remove(data_file)
+        except:
+            pass
+        
+        if result.returncode != 0:
+            print(f"Node.js error: {result.stderr}")
+            raise HTTPException(status_code=500, detail=f"Failed to generate payslip: {result.stderr}")
+        
+        # Check if PDF was created
+        if not os.path.exists(output_path):
+            raise HTTPException(status_code=500, detail="Payslip PDF was not generated")
+        
+        # Return the PDF file
+        return FileResponse(
+            output_path,
+            media_type="application/pdf",
+            filename=output_filename,
+            headers={"Content-Disposition": f"attachment; filename={output_filename}"}
+        )
+        
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="Payslip generation timed out")
+    except Exception as e:
+        print(f"Error generating payslip: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
