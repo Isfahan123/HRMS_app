@@ -479,16 +479,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Global function for payslip download
     window.downloadPayslip = async function(payrollRunId, monthYear) {
         try {
-            const response = await fetch(`/api/employee/payslip/download/${payrollRunId}`);
+            // Get employee ID from profile data
+            const employeeResponse = await fetch(`/api/employee/${userEmail}`);
+            const employeeData = await employeeResponse.json();
+            
+            if (!employeeData.success || !employeeData.data) {
+                alert('Failed to get employee information');
+                return;
+            }
+            
+            const employeeId = employeeData.data.id;
+            
+            // Download payslip PDF
+            const response = await fetch(`/api/payroll/payslip/${employeeId}/${payrollRunId}`);
             if (response.ok) {
                 const blob = await response.blob();
-                downloadBlob(blob, `payslip_${monthYear.replace(/[\/\s]/g, '_')}.pdf`);
+                const filename = `payslip_${monthYear.replace(/[\/\s]/g, '_')}.pdf`;
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
             } else {
-                alert('Failed to download payslip');
+                const errorData = await response.json();
+                alert(`Failed to download payslip: ${errorData.detail || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error downloading payslip:', error);
-            alert('Error downloading payslip');
+            alert('Error downloading payslip: ' + error.message);
         }
     };
 });

@@ -679,4 +679,272 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error deleting bonus');
         }
     };
+    
+    // Load leave balances
+    async function loadLeaveBalances() {
+        try {
+            const response = await fetch('/api/admin/leave-balances');
+            const data = await response.json();
+            
+            const tbody = document.getElementById('annualLeaveBalanceTable');
+            if (!tbody) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Employee ID</th>';
+                html += '<th style="padding: 10px;">Name</th>';
+                html += '<th style="padding: 10px; text-align: center;">Total Entitled</th>';
+                html += '<th style="padding: 10px; text-align: center;">Used</th>';
+                html += '<th style="padding: 10px; text-align: center;">Pending</th>';
+                html += '<th style="padding: 10px; text-align: center;">Remaining</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(balance => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${balance.employee_id || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${balance.full_name || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${balance.total_leave || 0}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${balance.used_leave || 0}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${balance.pending_leave || 0}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;"><strong>${balance.remaining_leave || 0}</strong></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<p>No leave balance data available.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading leave balances:', error);
+            const tbody = document.getElementById('annualLeaveBalanceTable');
+            if (tbody) tbody.innerHTML = '<p>Error loading leave balances.</p>';
+        }
+    }
+    
+    async function loadSickLeaveBalances() {
+        try {
+            const response = await fetch('/api/admin/sick-leave-balances');
+            const data = await response.json();
+            
+            const tbody = document.getElementById('sickLeaveBalanceTable');
+            if (!tbody) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Employee ID</th>';
+                html += '<th style="padding: 10px;">Name</th>';
+                html += '<th style="padding: 10px; text-align: center;">Total Sick Leave</th>';
+                html += '<th style="padding: 10px; text-align: center;">Used</th>';
+                html += '<th style="padding: 10px; text-align: center;">Remaining</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(balance => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${balance.employee_id || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${balance.full_name || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${balance.total_sick_leave || 14}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${balance.used_sick_leave || 0}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;"><strong>${balance.remaining_sick_leave || 14}</strong></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<p>No sick leave balance data available.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading sick leave balances:', error);
+            const tbody = document.getElementById('sickLeaveBalanceTable');
+            if (tbody) tbody.innerHTML = '<p>Error loading sick leave balances.</p>';
+        }
+    }
+    
+    async function loadUnpaidLeaveSummary() {
+        try {
+            const response = await fetch('/api/admin/unpaid-leave-summary');
+            const data = await response.json();
+            
+            const tbody = document.getElementById('unpaidLeaveTable');
+            if (!tbody) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Employee ID</th>';
+                html += '<th style="padding: 10px;">Name</th>';
+                html += '<th style="padding: 10px; text-align: center;">Total Unpaid Days (Year)</th>';
+                html += '<th style="padding: 10px;">Monthly Breakdown</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(summary => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${summary.employee_id || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${summary.full_name || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;"><strong>${summary.total_unpaid_days || 0}</strong></td>`;
+                    
+                    // Monthly breakdown
+                    let breakdown = '';
+                    if (summary.monthly_breakdown && summary.monthly_breakdown.length > 0) {
+                        const months = summary.monthly_breakdown.filter(m => m.unpaid_days > 0);
+                        breakdown = months.map(m => `${m.month}/${m.year}: ${m.unpaid_days} days`).join(', ');
+                    }
+                    html += `<td style="padding: 10px;"><small>${breakdown || 'None'}</small></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<p>No unpaid leave data available.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading unpaid leave summary:', error);
+            const tbody = document.getElementById('unpaidLeaveTable');
+            if (tbody) tbody.innerHTML = '<p>Error loading unpaid leave data.</p>';
+        }
+    }
+    
+    async function loadPayrollContributions() {
+        try {
+            const response = await fetch('/api/admin/payroll-contributions');
+            const data = await response.json();
+            
+            const container = document.getElementById('payrollContributionsSubtab');
+            if (!container) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<h3>View Contributions</h3>';
+                html += '<p style="color: #666; margin-bottom: 15px;">EPF, SOCSO, and EIS contributions summary</p>';
+                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Employee</th>';
+                html += '<th style="padding: 10px;">Period</th>';
+                html += '<th style="padding: 10px; text-align: right;">EPF (Employee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EPF (Employer)</th>';
+                html += '<th style="padding: 10px; text-align: right;">SOCSO (Employee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">SOCSO (Employer)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EIS</th>';
+                html += '<th style="padding: 10px; text-align: right;">PCB</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(contrib => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${contrib.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${contrib.month_year || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.epf_employee.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.epf_employer.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.socso_employee.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.socso_employer.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.eis.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.pcb.toFixed(2)}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<h3>View Contributions</h3><p>No contribution data available.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading contributions:', error);
+            const container = document.getElementById('payrollContributionsSubtab');
+            if (container) container.innerHTML = '<h3>View Contributions</h3><p>Error loading contributions.</p>';
+        }
+    }
+    
+    async function loadSalaryHistory() {
+        try {
+            const response = await fetch('/api/admin/salary-history');
+            const data = await response.json();
+            
+            const container = document.getElementById('salaryHistoryTab');
+            if (!container) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<h2>📈 Salary History</h2>';
+                html += '<p style="color: #666; margin-bottom: 15px;">Track salary changes, promotions, and increments</p>';
+                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Date</th>';
+                html += '<th style="padding: 10px;">Employee</th>';
+                html += '<th style="padding: 10px;">Change Type</th>';
+                html += '<th style="padding: 10px;">Previous</th>';
+                html += '<th style="padding: 10px;">New</th>';
+                html += '<th style="padding: 10px;">Reason</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(record => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.change_type || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${record.reason || '-'}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<h2>📈 Salary History</h2><p>No salary history records found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading salary history:', error);
+            const container = document.getElementById('salaryHistoryTab');
+            if (container) container.innerHTML = '<h2>📈 Salary History</h2><p>Error loading salary history.</p>';
+        }
+    }
+    
+    async function loadEmployeeHistory() {
+        try {
+            const response = await fetch('/api/admin/employee-history');
+            const data = await response.json();
+            
+            const container = document.getElementById('employeeHistoryTab');
+            if (!container) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<h2>🧾 Employment History</h2>';
+                html += '<p style="color: #666; margin-bottom: 15px;">Complete history of employee changes</p>';
+                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Date</th>';
+                html += '<th style="padding: 10px;">Employee</th>';
+                html += '<th style="padding: 10px;">Change Type</th>';
+                html += '<th style="padding: 10px;">Field</th>';
+                html += '<th style="padding: 10px;">Previous</th>';
+                html += '<th style="padding: 10px;">New</th>';
+                html += '<th style="padding: 10px;">Reason</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(record => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.change_type || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.field_changed || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<h2>🧾 Employment History</h2><p>No employment history records found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading employee history:', error);
+            const container = document.getElementById('employeeHistoryTab');
+            if (container) container.innerHTML = '<h2>🧾 Employment History</h2><p>Error loading employment history.</p>';
+        }
+    }
+    
+    // Load all new data on init
+    loadLeaveBalances();
+    loadSickLeaveBalances();
+    loadUnpaidLeaveSummary();
+    loadPayrollContributions();
+    loadSalaryHistory();
+    loadEmployeeHistory();
 });
