@@ -6,13 +6,17 @@ You reported: "I see no subtab etc on payroll or any other tabs, so many functio
 
 ## What We Found
 
-**Good news:** All subtabs and functions (including "Run Payroll") ARE actually implemented in the code! 
+**IMPORTANT CLARIFICATION:** 
+- ✅ Subtabs ARE implemented in the HTML
+- ✅ SOME functions exist (Run Payroll, Leave Management, etc.)
+- ❌ MANY functions are NOT implemented yet (Edit Employee, Upload PDF for rates, Variable Percentage, View Contributions, etc.)
 
-The issue was that:
+The issues were:
 1. The user interface wasn't clear enough about how to navigate
 2. Only one tab shows at a time, which may confuse first-time users
 3. Tabs needed better visual indicators to show they're clickable
 4. No instructions were provided on how to use the interface
+5. **Many features show "coming soon..." placeholders** - they exist in desktop GUI but not web version yet
 
 ## What We Fixed
 
@@ -149,12 +153,19 @@ If you answered "No" to any question above:
 ## Summary
 
 ✅ **All subtabs exist** - They're in the HTML, CSS, and JavaScript
-✅ **All functions exist** - Run Payroll, Edit, etc. are all implemented
-✅ **Now more visible** - Enhanced styling makes everything clearer
+✅ **SOME functions exist** - Run Payroll, Leave Management are implemented
+❌ **MANY functions missing** - Edit Employee, Upload PDF rates, Variable %, View Contributions, etc.
+✅ **Now more visible** - Enhanced styling makes tabs/subtabs clearer
 ✅ **Now documented** - Complete user guide available
 ✅ **Now debuggable** - Console logs help identify issues
 
-The issue was about **user interface clarity and documentation**, not missing functionality. Everything you need is there - it just needed to be more obvious!
+**IMPORTANT**: This PR only fixed UI/UX issues. Many features mentioned in your comment are NOT implemented yet:
+- ❌ Edit Employee functionality
+- ❌ Upload PDF for EPF/SOCSO/EIS fixed rates
+- ❌ Variable Percentage configuration
+- ❌ View Contributions (EPF, SOCSO, EIS details)
+
+See `MISSING_FEATURES_ANALYSIS.md` for complete list of features that need implementation.
 
 ---
 
