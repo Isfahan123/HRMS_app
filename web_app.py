@@ -586,6 +586,154 @@ generatePayslip(data, '{output_path}')
         print(f"Error generating payslip: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/admin/leave-balances")
+async def get_leave_balances():
+    """
+    Get annual leave balances for all employees
+    """
+    try:
+        from services.supabase_service import get_employee_leave_balances
+        current_year = datetime.now().year
+        balances = get_employee_leave_balances(current_year)
+        return {"success": True, "data": balances}
+    except Exception as e:
+        print(f"Error getting leave balances: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/sick-leave-balances")
+async def get_sick_leave_balances():
+    """
+    Get sick leave balances for all employees
+    """
+    try:
+        # Query employees and their sick leave balances
+        current_year = datetime.now().year
+        response = supabase.table("employees").select("id, employee_id, full_name, email").execute()
+        
+        if not response.data:
+            return {"success": True, "data": []}
+        
+        balances = []
+        for employee in response.data:
+            from services.supabase_service import get_individual_employee_sick_leave_balance
+            balance = get_individual_employee_sick_leave_balance(employee['email'], current_year)
+            balances.append({
+                "employee_id": employee['employee_id'],
+                "full_name": employee['full_name'],
+                "email": employee['email'],
+                "total_sick_leave": balance.get('total_sick_leave', 14),
+                "used_sick_leave": balance.get('used_sick_leave', 0),
+                "remaining_sick_leave": balance.get('remaining_sick_leave', 14)
+            })
+        
+        return {"success": True, "data": balances}
+    except Exception as e:
+        print(f"Error getting sick leave balances: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/unpaid-leave-summary")
+async def get_unpaid_leave_summary():
+    """
+    Get unpaid leave summary for all employees
+    """
+    try:
+        from services.supabase_service import get_monthly_unpaid_leave_summary
+        current_year = datetime.now().year
+        
+        # Get all employees
+        response = supabase.table("employees").select("id, employee_id, full_name, email").execute()
+        
+        if not response.data:
+            return {"success": True, "data": []}
+        
+        summaries = []
+        for employee in response.data:
+            summary = get_monthly_unpaid_leave_summary(employee['id'], current_year)
+            total_unpaid = sum([month.get('unpaid_days', 0) for month in summary])
+            summaries.append({
+                "employee_id": employee['employee_id'],
+                "full_name": employee['full_name'],
+                "email": employee['email'],
+                "total_unpaid_days": total_unpaid,
+                "monthly_breakdown": summary
+            })
+        
+        return {"success": True, "data": summaries}
+    except Exception as e:
+        print(f"Error getting unpaid leave summary: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/payroll-contributions")
+async def get_payroll_contributions():
+    """
+    Get EPF, SOCSO, EIS contributions summary
+    """
+    try:
+        # Get all payroll runs
+        response = supabase.table("payroll_runs").select("*").order("created_at", desc=True).limit(100).execute()
+        
+        if not response.data:
+            return {"success": True, "data": []}
+        
+        contributions = []
+        for run in response.data:
+            contributions.append({
+                "employee_name": run.get('employee_name', ''),
+                "month_year": run.get('month_year', ''),
+                "epf_employee": float(run.get('epf_employee', 0)),
+                "epf_employer": float(run.get('epf_employer', 0)),
+                "socso_employee": float(run.get('socso_employee', 0)),
+                "socso_employer": float(run.get('socso_employer', 0)),
+                "eis": float(run.get('eis', 0)),
+                "pcb": float(run.get('pcb', 0)),
+                "total_employee": float(run.get('epf_employee', 0)) + float(run.get('socso_employee', 0)) + float(run.get('eis', 0)),
+                "total_employer": float(run.get('epf_employer', 0)) + float(run.get('socso_employer', 0))
+            })
+        
+        return {"success": True, "data": contributions}
+    except Exception as e:
+        print(f"Error getting contributions: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/salary-history")
+async def get_salary_history():
+    """
+    Get salary change history for employees
+    """
+    try:
+        # Query salary history from employee_history table
+        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(100).execute()
+        
+        if not response.data:
+            return {"success": True, "data": []}
+        
+        # Filter for salary-related changes
+        salary_changes = [
+            record for record in response.data 
+            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']
+        ]
+        
+        return {"success": True, "data": salary_changes}
+    except Exception as e:
+        print(f"Error getting salary history: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/employee-history")
+async def get_employee_history():
+    """
+    Get complete employee history (all changes)
+    """
+    try:
+        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(200).execute()
+        
+        if not response.data:
+            return {"success": True, "data": []}
+        
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        print(f"Error getting employee history: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
