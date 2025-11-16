@@ -21,9 +21,14 @@ from reportlab.lib.units import cm
 from datetime import timedelta, date
 import pandas as pd
 from decimal import Decimal, ROUND_HALF_UP, ROUND_CEILING
+from dotenv import load_dotenv
 
-url: str = "https://wxaerkdmpxriveyknfov.supabase.co"
-key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4YWVya2RtcHhyaXZleWtuZm92Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc2ODkxOSwiZXhwIjoyMDY5MzQ0OTE5fQ.Wsu46SgMRGkPe9HmtlVETktRD5kRP0o0zGzMB1BzPX8"
+# Load environment variables from .env file
+load_dotenv()
+
+# Get Supabase credentials from environment variables with fallback to defaults
+url: str = os.getenv("SUPABASE_URL", "https://wxaerkdmpxriveyknfov.supabase.co")
+key: str = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4YWVya2RtcHhyaXZleWtuZm92Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc2ODkxOSwiZXhwIjoyMDY5MzQ0OTE5fQ.Wsu46SgMRGkPe9HmtlVETktRD5kRP0o0zGzMB1BzPX8")
 supabase: Client = create_client(url, key)
 KL_TZ = pytz.timezone('Asia/Kuala_Lumpur')
 

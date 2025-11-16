@@ -30,7 +30,9 @@ See [SETUP_GUIDE.md](SETUP_GUIDE.md) for installation and setup instructions.
 
 ## Running the Application
 
-### Windows
+### Desktop Application (PyQt5)
+
+#### Windows
 ```batch
 scripts\start_hrms.bat
 ```
@@ -40,10 +42,26 @@ Or using PowerShell:
 scripts\start_hrms.ps1
 ```
 
-### Python Direct
+#### Python Direct
 ```bash
 python main.py
 ```
+
+### Web Application (HTML/JavaScript)
+
+Start the web server:
+```bash
+python start_web.py
+```
+
+Or using uvicorn directly:
+```bash
+uvicorn web_app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Access at: **http://localhost:8000**
+
+See [web/README.md](../web/README.md) for detailed web application documentation.
 
 ## Key Features
 
@@ -58,8 +76,16 @@ python main.py
 
 ## Technology Stack
 
+### Desktop Application
 - **Frontend**: PyQt5
 - **Backend**: Python 3.x
 - **Database**: Supabase (PostgreSQL)
 - **PDF Generation**: ReportLab
 - **Authentication**: bcrypt
+
+### Web Application
+- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+- **Backend**: FastAPI (Python 3.x)
+- **Database**: Supabase (PostgreSQL) - shared with desktop
+- **Business Logic**: Reuses `/core` and `/services` from desktop app
+- **Authentication**: bcrypt (same as desktop)

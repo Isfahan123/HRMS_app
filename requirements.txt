@@ -12,4 +12,8 @@ PyPDF2==3.0.1
 java-bridge==1.0.22
 num2words==0.5.13
 holidays==0.81
+fastapi==0.115.5
+uvicorn==0.32.1
+jinja2==3.1.4
+python-multipart==0.0.18
 
