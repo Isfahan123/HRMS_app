@@ -313,6 +313,7 @@
                         <button class="subtab-button" data-subtab="leaveSickBalance">Sick Leave Balance</button>
                         <button class="subtab-button" data-subtab="leaveUnpaid">📊 Unpaid Leave</button>
                         <button class="subtab-button" data-subtab="leaveCalendar">Calendar / Holidays</button>
+                        <button class="subtab-button" data-subtab="leaveConfig">⚙️ Configuration</button>
                     </div>
                     
                     <!-- Pending Leave Subtab -->
@@ -423,6 +424,104 @@
                         <h3>📅 Leave Calendar & Holidays</h3>
                         <p style="color: #666; margin-bottom: 20px;">View all employee leave requests and holidays on the calendar</p>
                         <div id="leaveCalendar"></div>
+                    </div>
+                    
+                    <!-- Leave Configuration Subtab -->
+                    <div id="leaveConfigSubtab" class="subtab-content">
+                        <h3>⚙️ Leave Types & Entitlements Configuration</h3>
+                        
+                        <!-- Leave Types Section -->
+                        <div style="margin-bottom: 30px;">
+                            <h4 style="color: #667eea;">Leave Types</h4>
+                            <p style="color: #666; margin-bottom: 15px;">Manage leave types available in the system</p>
+                            
+                            <button id="addLeaveTypeBtn" class="btn-primary" style="margin-bottom: 15px;">➕ Add Leave Type</button>
+                            
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 12px; text-align: left;">Leave Type</th>
+                                        <th style="padding: 12px; text-align: left;">Description</th>
+                                        <th style="padding: 12px; text-align: center;">Requires Approval</th>
+                                        <th style="padding: 12px; text-align: center;">Max Days</th>
+                                        <th style="padding: 12px; text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaveTypesTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 20px;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Leave Entitlements Section -->
+                        <div style="margin-top: 40px;">
+                            <h4 style="color: #667eea;">Leave Entitlements by Position</h4>
+                            <p style="color: #666; margin-bottom: 15px;">Configure annual leave entitlements based on position/level</p>
+                            
+                            <button id="addEntitlementBtn" class="btn-primary" style="margin-bottom: 15px;">➕ Add Entitlement Rule</button>
+                            
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 12px; text-align: left;">Position/Level</th>
+                                        <th style="padding: 12px; text-align: center;">Annual Leave Days</th>
+                                        <th style="padding: 12px; text-align: center;">Sick Leave Days</th>
+                                        <th style="padding: 12px; text-align: center;">Carry Forward Max</th>
+                                        <th style="padding: 12px; text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="entitlementsTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 20px;">
+                                            Common entitlements: Junior (14 days), Senior (18 days), Manager (21 days)
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Leave Type Modal -->
+                        <div id="leaveTypeModal" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3 id="leaveTypeModalTitle">Add Leave Type</h3>
+                                    <span class="modal-close" onclick="closeLeaveTypeModal()">&times;</span>
+                                </div>
+                                <form id="leaveTypeForm">
+                                    <input type="hidden" id="leaveTypeId">
+                                    <div class="form-group">
+                                        <label for="leaveTypeName">Leave Type Name: *</label>
+                                        <input type="text" id="leaveTypeName" required style="width: 100%; padding: 8px;" 
+                                               placeholder="e.g., Annual Leave, Sick Leave">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="leaveTypeDescription">Description:</label>
+                                        <textarea id="leaveTypeDescription" rows="3" style="width: 100%; padding: 8px;"
+                                                  placeholder="Brief description of this leave type"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="leaveTypeRequiresApproval" checked>
+                                            Requires Manager Approval
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="leaveTypeMaxDays">Maximum Days (0 for unlimited):</label>
+                                        <input type="number" id="leaveTypeMaxDays" min="0" value="0" style="width: 100%; padding: 8px;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="leaveTypeColor">Display Color:</label>
+                                        <input type="color" id="leaveTypeColor" value="#667eea" style="width: 100px; height: 40px;">
+                                    </div>
+                                    <div style="margin-top: 20px;">
+                                        <button type="submit" class="btn-primary">Save</button>
+                                        <button type="button" class="btn-secondary" onclick="closeLeaveTypeModal()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -667,5 +766,6 @@
     <script src="/static/js/admin_dashboard.js"></script>
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>
+    <script src="/static/js/leave_config.js"></script>
 </body>
 </html>
