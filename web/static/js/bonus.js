@@ -385,8 +385,8 @@ let bonusManager;
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    const bonusContainer = document.getElementById('bonusManagement');
-    if (bonusContainer) {
+    const bonusTab = document.getElementById('bonusTab');
+    if (bonusTab) {
         bonusManager = new BonusManager();
         bonusManager.init();
     }

@@ -23,6 +23,7 @@
                 <button class="tab-button" data-tab="attendance">📋 Attendance</button>
                 <button class="tab-button" data-tab="leave">📅 Leaves</button>
                 <button class="tab-button" data-tab="payroll">💸 Payroll</button>
+                <button class="tab-button" data-tab="bonus">💰 Bonuses</button>
                 <button class="tab-button" data-tab="salaryHistory">📈 Salary History</button>
                 <button class="tab-button" data-tab="engagements">📚 Activities (Training & Trips)</button>
                 <button class="tab-button" data-tab="employeeHistory">🧾 Employment History</button>
@@ -574,6 +575,85 @@
                     </div>
                 </div>
                 
+                <!-- Bonus Management Tab -->
+                <div id="bonusTab" class="tab-pane">
+                    <h2>💰 Bonus Management</h2>
+                    
+                    <div id="bonusSummary"></div>
+                    
+                    <div class="bonus-controls" style="margin-bottom: 20px;">
+                        <button id="addBonusBtn" class="btn-primary">➕ Add Bonus</button>
+                    </div>
+                    
+                    <table class="bonus-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding: 12px;">Employee</th>
+                                <th style="text-align: left; padding: 12px;">Type</th>
+                                <th style="text-align: right; padding: 12px;">Amount</th>
+                                <th style="text-align: left; padding: 12px;">Description</th>
+                                <th style="text-align: left; padding: 12px;">Pay Period</th>
+                                <th style="text-align: center; padding: 12px;">Status</th>
+                                <th style="text-align: left; padding: 12px;">Approved By</th>
+                                <th style="text-align: center; padding: 12px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bonusTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 20px;">
+                                    Loading bonuses...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Bonus Modal -->
+                    <div id="bonusModal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="modalTitle">Add Bonus</h3>
+                                <span class="modal-close" onclick="bonusManager.closeModal()">&times;</span>
+                            </div>
+                            <form id="bonusForm">
+                                <input type="hidden" id="bonusId">
+                                <div class="form-group">
+                                    <label for="bonusEmployeeId">Employee: *</label>
+                                    <select id="bonusEmployeeId" required style="width: 100%; padding: 8px;">
+                                        <option value="">Select Employee</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bonusType">Bonus Type: *</label>
+                                    <select id="bonusType" required style="width: 100%; padding: 8px;">
+                                        <option value="Performance Bonus">Performance Bonus</option>
+                                        <option value="Annual Bonus">Annual Bonus</option>
+                                        <option value="Festive Bonus">Festive Bonus</option>
+                                        <option value="Project Completion Bonus">Project Completion Bonus</option>
+                                        <option value="Perfect Attendance Bonus">Perfect Attendance Bonus</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bonusAmount">Amount (RM): *</label>
+                                    <input type="number" id="bonusAmount" step="0.01" min="0.01" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bonusDescription">Description:</label>
+                                    <textarea id="bonusDescription" rows="3" style="width: 100%; padding: 8px;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bonusPayPeriod">Pay Period: *</label>
+                                    <input type="month" id="bonusPayPeriod" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div style="margin-top: 20px;">
+                                    <button type="submit" class="btn-primary">Save Bonus</button>
+                                    <button type="button" class="btn-secondary" onclick="bonusManager.closeModal()">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Employee History Tab -->
                 <div id="employeeHistoryTab" class="tab-pane">
                     <h2>🧾 Employment History</h2>
@@ -584,5 +664,6 @@
     </div>
     
     <script src="/static/js/admin_dashboard.js"></script>
+    <script src="/static/js/bonus.js"></script>
 </body>
 </html>
