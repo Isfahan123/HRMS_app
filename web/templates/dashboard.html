@@ -172,7 +172,20 @@
                 
                 <!-- Attendance Tab -->
                 <div id="attendanceTab" class="tab-pane">
-                    <h2>Attendance History</h2>
+                    <h2>📅 Attendance</h2>
+                    
+                    <!-- Clock In/Out Buttons -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 30px;">
+                        <button id="clockInBtn" class="btn-primary" style="font-size: 16px; padding: 12px 24px;">
+                            🕒 Clock In
+                        </button>
+                        <button id="clockOutBtn" class="btn-secondary" style="font-size: 16px; padding: 12px 24px;">
+                            🕔 Clock Out
+                        </button>
+                        <div id="clockMessage" style="display: none; padding: 12px; border-radius: 5px; margin-left: 20px;"></div>
+                    </div>
+                    
+                    <h3>Attendance History</h3>
                     <div id="attendanceTable">Loading...</div>
                 </div>
                 
