@@ -251,6 +251,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById(tabName + 'Tab').classList.add('active');
             });
         });
+        
+        // Setup subtabs
+        setupSubtabs();
+    }
+    
+    function setupSubtabs() {
+        const subtabButtons = document.querySelectorAll('.subtab-button');
+        
+        subtabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const subtabName = this.getAttribute('data-subtab');
+                
+                // Get parent tab to scope subtab switching
+                const parentContainer = this.closest('.tab-pane');
+                if (!parentContainer) return;
+                
+                // Remove active class from all subtab buttons and content in this container
+                const containerSubtabButtons = parentContainer.querySelectorAll('.subtab-button');
+                const containerSubtabContents = parentContainer.querySelectorAll('.subtab-content');
+                
+                containerSubtabButtons.forEach(btn => btn.classList.remove('active'));
+                containerSubtabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                this.classList.add('active');
+                const subtabContent = document.getElementById(subtabName + 'Subtab');
+                if (subtabContent) {
+                    subtabContent.classList.add('active');
+                }
+            });
+        });
     }
     
     function setupLogout() {
