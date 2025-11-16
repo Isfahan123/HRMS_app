@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAdminDashboard();
     setupTabs();
     setupLogout();
+    setupOpenCalendar();
     setupEmployeeManagement();
     setupPayrollProcessing();
     setupBonusManagement();
@@ -251,6 +252,72 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById(tabName + 'Tab').classList.add('active');
             });
         });
+        
+        // Setup subtabs
+        setupSubtabs();
+    }
+    
+    function setupSubtabs() {
+        const subtabButtons = document.querySelectorAll('.subtab-button');
+        
+        subtabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const subtabName = this.getAttribute('data-subtab');
+                const monthValue = this.getAttribute('data-month');
+                
+                // Get parent tab to scope subtab switching
+                const parentContainer = this.closest('.tab-pane');
+                if (!parentContainer) return;
+                
+                // If this is a month tab (for payroll history)
+                if (monthValue) {
+                    // Handle month tab switching
+                    const monthButtons = parentContainer.querySelectorAll('[data-month]');
+                    monthButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Filter payroll table by month
+                    filterPayrollByMonth(monthValue);
+                    return;
+                }
+                
+                // Regular subtab switching
+                const containerSubtabButtons = parentContainer.querySelectorAll('.subtab-button:not([data-month])');
+                const containerSubtabContents = parentContainer.querySelectorAll('.subtab-content');
+                
+                containerSubtabButtons.forEach(btn => btn.classList.remove('active'));
+                containerSubtabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                this.classList.add('active');
+                const subtabContent = document.getElementById(subtabName + 'Subtab');
+                if (subtabContent) {
+                    subtabContent.classList.add('active');
+                }
+            });
+        });
+        
+        // Setup year filter for admin payroll
+        const yearFilter = document.getElementById('adminPayrollYearFilter');
+        if (yearFilter) {
+            yearFilter.addEventListener('change', function() {
+                filterPayrollByMonth(document.querySelector('[data-month].active')?.getAttribute('data-month') || 'all');
+            });
+        }
+    }
+    
+    function filterPayrollByMonth(month) {
+        // This function will filter the payroll table based on selected month
+        // Implementation depends on how payroll data is structured
+        console.log('Filtering payroll by month:', month);
+        
+        const table = document.getElementById('payrollRunsTable');
+        if (!table) return;
+        
+        const year = document.getElementById('adminPayrollYearFilter')?.value;
+        
+        // For now, just log - actual filtering would be done when loading data
+        console.log('Filter by year:', year, 'month:', month);
     }
     
     function setupLogout() {
@@ -261,6 +328,27 @@ document.addEventListener('DOMContentLoaded', function() {
             // Redirect to login
             window.location.href = '/';
         });
+    }
+    
+    function setupOpenCalendar() {
+        const calendarBtn = document.getElementById('openCalendarBtn');
+        if (calendarBtn) {
+            calendarBtn.addEventListener('click', function() {
+                // Switch to Leave tab and then to Calendar subtab
+                const leaveTabButton = document.querySelector('[data-tab="leave"]');
+                if (leaveTabButton) {
+                    leaveTabButton.click();
+                    
+                    // Wait a bit for tab to switch, then click calendar subtab
+                    setTimeout(() => {
+                        const calendarSubtab = document.querySelector('[data-subtab="leaveCalendar"]');
+                        if (calendarSubtab) {
+                            calendarSubtab.click();
+                        }
+                    }, 100);
+                }
+            });
+        }
     }
     
     function setupEmployeeManagement() {

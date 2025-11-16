@@ -12,49 +12,191 @@
             <h1>HRMS Admin Dashboard</h1>
             <div class="user-info">
                 <span id="welcomeMessage">Welcome, Admin</span>
+                <button id="openCalendarBtn" class="btn-secondary" style="margin-right: 10px;">📅 Open Calendar</button>
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
             </div>
         </header>
         
         <div class="dashboard-content">
             <div class="tabs">
-                <button class="tab-button active" data-tab="employees">👥 Employees</button>
-                <button class="tab-button" data-tab="attendance">📅 Attendance</button>
-                <button class="tab-button" data-tab="leave">📬 Leave Management</button>
+                <button class="tab-button active" data-tab="employees">👥 Profiles</button>
+                <button class="tab-button" data-tab="attendance">📋 Attendance</button>
+                <button class="tab-button" data-tab="leave">📅 Leaves</button>
                 <button class="tab-button" data-tab="payroll">💸 Payroll</button>
-                <button class="tab-button" data-tab="bonus">🎁 Bonus</button>
-                <button class="tab-button" data-tab="config">⚙️ Configuration</button>
+                <button class="tab-button" data-tab="salaryHistory">📈 Salary History</button>
+                <button class="tab-button" data-tab="engagements">📚 Activities (Training & Trips)</button>
+                <button class="tab-button" data-tab="employeeHistory">🧾 Employment History</button>
             </div>
             
             <div class="tab-content">
                 <!-- Employees Tab -->
                 <div id="employeesTab" class="tab-pane active">
-                    <h2>Employee Management</h2>
+                    <h2>👥 Employee Management</h2>
+                    
+                    <!-- Search and Filter Bar -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="employeeSearchInput" placeholder="🔍 Search employees..." style="padding: 8px; min-width: 250px;">
+                        
+                        <select id="departmentFilter" style="padding: 8px;">
+                            <option value="">All Departments</option>
+                            <option value="IT">IT</option>
+                            <option value="HR">HR</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+                        
+                        <select id="religionFilter" style="padding: 8px;">
+                            <option value="">All Religions</option>
+                            <option value="Islam">Islam</option>
+                            <option value="Christianity">Christianity</option>
+                            <option value="Buddhism">Buddhism</option>
+                            <option value="Hinduism">Hinduism</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        
+                        <button id="clearFiltersBtn" class="btn-secondary">Clear Filters</button>
+                        <button id="refreshEmployeesBtn" class="btn-secondary">🔄 Refresh</button>
+                        <button id="exportEmployeesCSVBtn" class="btn-secondary">📤 Export CSV</button>
+                    </div>
                     
                     <button id="addEmployeeBtn" class="btn-primary" style="margin-bottom: 20px;">Add New Employee</button>
                     
                     <!-- Add Employee Form (hidden by default) -->
                     <div id="addEmployeeForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                        <h3>Add New Employee</h3>
+                        <h3>Add New Employee - Comprehensive Profile</h3>
                         <form id="newEmployeeForm">
+                            <!-- Basic Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Basic Information</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="newEmpName">Full Name:</label>
+                                    <label for="newEmpName">Full Name:*</label>
                                     <input type="text" id="newEmpName" name="full_name" required>
                                 </div>
-                                
                                 <div class="form-group">
-                                    <label for="newEmpEmail">Email:</label>
+                                    <label for="newEmpEmail">Email:*</label>
                                     <input type="email" id="newEmpEmail" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpPassword">Password:*</label>
+                                    <input type="password" id="newEmpPassword" name="password" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Personal Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Personal Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpGender">Gender:</label>
+                                    <select id="newEmpGender" name="gender">
+                                        <option value="">Select</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpDOB">Date of Birth:</label>
+                                    <input type="date" id="newEmpDOB" name="date_of_birth">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpNRIC">NRIC:</label>
+                                    <input type="text" id="newEmpNRIC" name="nric">
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="newEmpNationality">Nationality:</label>
+                                    <input type="text" id="newEmpNationality" name="nationality">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpCitizenship">Citizenship:</label>
+                                    <select id="newEmpCitizenship" name="citizenship">
+                                        <option value="">Select</option>
+                                        <option value="Citizen">Citizen</option>
+                                        <option value="Non-citizen">Non-citizen</option>
+                                        <option value="Permanent Resident">Permanent Resident</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpRace">Race:</label>
+                                    <input type="text" id="newEmpRace" name="race">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpReligion">Religion:</label>
+                                    <input type="text" id="newEmpReligion" name="religion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpMaritalStatus">Marital Status:</label>
+                                    <select id="newEmpMaritalStatus" name="marital_status">
+                                        <option value="">Select</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Divorced">Divorced</option>
+                                        <option value="Widowed">Widowed</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpChildren">Number of Children:</label>
+                                    <select id="newEmpChildren" name="number_of_children">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Contact Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Contact Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpPhone">Phone:</label>
+                                    <input type="tel" id="newEmpPhone" name="phone_number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpAddress">Address:</label>
+                                    <input type="text" id="newEmpAddress" name="address">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpCity">City:</label>
+                                    <input type="text" id="newEmpCity" name="city">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpState">State:</label>
+                                    <input type="text" id="newEmpState" name="state">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpZipcode">Zipcode:</label>
+                                    <input type="text" id="newEmpZipcode" name="zipcode">
+                                </div>
+                            </div>
+                            
+                            <!-- Employment Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Employment Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpEmployeeID">Employee ID:</label>
+                                    <input type="text" id="newEmpEmployeeID" name="employee_id">
+                                </div>
+                                <div class="form-group">
                                     <label for="newEmpDepartment">Department:</label>
                                     <input type="text" id="newEmpDepartment" name="department">
                                 </div>
-                                
                                 <div class="form-group">
                                     <label for="newEmpPosition">Position:</label>
                                     <input type="text" id="newEmpPosition" name="position">
@@ -63,16 +205,40 @@
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="newEmpPassword">Password:</label>
-                                    <input type="password" id="newEmpPassword" name="password" required>
-                                </div>
-                                
-                                <div class="form-group">
                                     <label for="newEmpRole">Role:</label>
                                     <select id="newEmpRole" name="role">
                                         <option value="employee">Employee</option>
                                         <option value="admin">Admin</option>
                                     </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpStatus">Employment Status:</label>
+                                    <select id="newEmpStatus" name="employment_status">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Terminated">Terminated</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpJoinDate">Join Date:</label>
+                                    <input type="date" id="newEmpJoinDate" name="join_date">
+                                </div>
+                            </div>
+                            
+                            <!-- EPF/SOCSO Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">EPF/SOCSO Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpEPFNumber">EPF Number:</label>
+                                    <input type="text" id="newEmpEPFNumber" name="epf_number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSOCSONumber">SOCSO Number:</label>
+                                    <input type="text" id="newEmpSOCSONumber" name="socso_number">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpIncomeTaxNumber">Income Tax Number:</label>
+                                    <input type="text" id="newEmpIncomeTaxNumber" name="income_tax_number">
                                 </div>
                             </div>
                             
@@ -90,218 +256,328 @@
                 
                 <!-- Attendance Tab -->
                 <div id="attendanceTab" class="tab-pane">
-                    <h2>Attendance Management</h2>
+                    <h2>🗂️ Attendance Management</h2>
                     
-                    <!-- Export buttons and filters -->
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                        <div>
-                            <button id="exportAttendanceCSVBtn" class="btn-secondary">Export to CSV</button>
-                        </div>
-                        <div>
-                            <input type="date" id="attendanceStartDate" placeholder="Start Date">
-                            <input type="date" id="attendanceEndDate" placeholder="End Date">
-                            <button id="filterAttendanceBtn" class="btn-primary">Filter</button>
-                            <button id="clearAttendanceFilterBtn" class="btn-secondary">Clear</button>
-                        </div>
+                    <!-- Filters and Search -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                        <label>🗓️ From:</label>
+                        <input type="date" id="attendanceStartDate" style="padding: 8px;">
+                        <label>To:</label>
+                        <input type="date" id="attendanceEndDate" style="padding: 8px;">
+                        
+                        <label>🔍 Filter by:</label>
+                        <select id="attendanceFilterField" style="padding: 8px;">
+                            <option value="email">Email</option>
+                            <option value="date">Date</option>
+                        </select>
+                        <input type="text" id="attendanceSearchInput" placeholder="Search..." style="padding: 8px; min-width: 200px;">
+                        
+                        <button id="exportAttendanceCSVBtn" class="btn-secondary">📤 Export to CSV</button>
                     </div>
                     
-                    <div id="allAttendanceTable">Loading...</div>
+                    <div id="allAttendanceTable" style="margin-bottom: 30px;">Loading...</div>
+                    
+                    <!-- Working Hours Settings Section -->
+                    <div class="form-section" style="margin-top: 30px;">
+                        <h3>🛠️ Set Official Working Hours</h3>
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div>
+                                <label for="clockInTime">Clock-in:</label>
+                                <input type="time" id="clockInTime" value="09:00" style="padding: 8px; margin-left: 5px;">
+                            </div>
+                            <div>
+                                <label for="clockOutTime">Clock-out:</label>
+                                <input type="time" id="clockOutTime" value="18:00" style="padding: 8px; margin-left: 5px;">
+                            </div>
+                            <div>
+                                <label for="clockInLimit">Clock-in Limit:</label>
+                                <input type="time" id="clockInLimit" value="09:30" style="padding: 8px; margin-left: 5px;">
+                            </div>
+                            <button id="saveWorkingHoursBtn" class="btn-primary">Save</button>
+                        </div>
+                        <div id="workingHoursMessage" style="display: none; margin-top: 10px;"></div>
+                    </div>
                 </div>
                 
                 <!-- Leave Tab -->
                 <div id="leaveTab" class="tab-pane">
-                    <h2>Leave Approval</h2>
+                    <h2>Leave Management</h2>
                     
-                    <!-- Export buttons and filters -->
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                        <div>
-                            <button id="exportLeaveRequestsCSVBtn" class="btn-secondary">Export Leave Requests</button>
-                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">Export Leave Balances</button>
-                            <button id="exportSickLeaveBalancesCSVBtn" class="btn-secondary">Export Sick Leave Balances</button>
+                    <!-- Leave Subtabs -->
+                    <div class="subtabs">
+                        <button class="subtab-button active" data-subtab="leavePending">Pending</button>
+                        <button class="subtab-button" data-subtab="leaveApprovedRejected">Approved/Rejected</button>
+                        <button class="subtab-button" data-subtab="leaveSubmit">Submit Leave Request</button>
+                        <button class="subtab-button" data-subtab="leaveAnnualBalance">Annual Leave Balance</button>
+                        <button class="subtab-button" data-subtab="leaveSickBalance">Sick Leave Balance</button>
+                        <button class="subtab-button" data-subtab="leaveUnpaid">📊 Unpaid Leave</button>
+                        <button class="subtab-button" data-subtab="leaveCalendar">Calendar / Holidays</button>
+                    </div>
+                    
+                    <!-- Pending Leave Subtab -->
+                    <div id="leavePendingSubtab" class="subtab-content active">
+                        <h3>Pending Leave Requests</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button id="exportPendingLeaveCSVBtn" class="btn-secondary">Export to CSV</button>
                         </div>
-                        <div>
-                            <select id="leaveStatusFilter">
-                                <option value="">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                            <button id="filterLeaveBtn" class="btn-primary">Filter</button>
-                            <button id="clearLeaveFilterBtn" class="btn-secondary">Clear</button>
+                        <div id="pendingLeaveRequestsTable">Loading...</div>
+                    </div>
+                    
+                    <!-- Approved/Rejected Leave Subtab -->
+                    <div id="leaveApprovedRejectedSubtab" class="subtab-content">
+                        <h3>Approved/Rejected Leave Requests</h3>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                            <div>
+                                <button id="exportLeaveRequestsCSVBtn" class="btn-secondary">Export to CSV</button>
+                            </div>
+                            <div>
+                                <select id="leaveStatusFilter">
+                                    <option value="">All Statuses</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <button id="filterLeaveBtn" class="btn-primary">Filter</button>
+                                <button id="clearLeaveFilterBtn" class="btn-secondary">Clear</button>
+                            </div>
+                        </div>
+                        <div id="approvedRejectedLeaveRequestsTable">Loading...</div>
+                    </div>
+                    
+                    <!-- Submit Leave Request Subtab -->
+                    <div id="leaveSubmitSubtab" class="subtab-content">
+                        <h3>Submit Leave Request (Admin)</h3>
+                        <div class="form-section">
+                            <form id="adminLeaveRequestForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="adminLeaveEmployeeId">Employee ID:</label>
+                                        <input type="text" id="adminLeaveEmployeeId" name="employee_id" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adminLeaveType">Leave Type:</label>
+                                        <select id="adminLeaveType" name="leave_type" required>
+                                            <option value="">Select leave type</option>
+                                            <option value="annual">Annual Leave</option>
+                                            <option value="sick">Sick Leave</option>
+                                            <option value="emergency">Emergency Leave</option>
+                                            <option value="unpaid">Unpaid Leave</option>
+                                            <option value="maternity">Maternity Leave</option>
+                                            <option value="paternity">Paternity Leave</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="adminLeaveStartDate">Start Date:</label>
+                                        <input type="date" id="adminLeaveStartDate" name="start_date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adminLeaveEndDate">End Date:</label>
+                                        <input type="date" id="adminLeaveEndDate" name="end_date" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminLeaveTitle">Reason:</label>
+                                    <input type="text" id="adminLeaveTitle" name="title" placeholder="Brief reason for leave" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="adminLeaveHalfDay" name="is_half_day">
+                                        Half Day
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn-primary">Submit Leave Request</button>
+                                <div id="adminLeaveFormMessage" style="display: none; margin-top: 10px;"></div>
+                            </form>
                         </div>
                     </div>
                     
-                    <div id="leaveRequestsTable">Loading...</div>
+                    <!-- Annual Leave Balance Subtab -->
+                    <div id="leaveAnnualBalanceSubtab" class="subtab-content">
+                        <h3>Annual Leave Balance</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">Export to CSV</button>
+                        </div>
+                        <div id="annualLeaveBalanceTable">Loading...</div>
+                    </div>
+                    
+                    <!-- Sick Leave Balance Subtab -->
+                    <div id="leaveSickBalanceSubtab" class="subtab-content">
+                        <h3>Sick Leave Balance</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button id="exportSickLeaveBalancesCSVBtn" class="btn-secondary">Export to CSV</button>
+                        </div>
+                        <div id="sickLeaveBalanceTable">Loading...</div>
+                    </div>
+                    
+                    <!-- Unpaid Leave Subtab -->
+                    <div id="leaveUnpaidSubtab" class="subtab-content">
+                        <h3>📊 Unpaid Leave</h3>
+                        <div id="unpaidLeaveTable">Loading...</div>
+                    </div>
+                    
+                    <!-- Calendar / Holidays Subtab -->
+                    <div id="leaveCalendarSubtab" class="subtab-content">
+                        <h3>Calendar / Holidays</h3>
+                        <p>Calendar and holidays management coming soon...</p>
+                    </div>
                 </div>
                 
                 <!-- Payroll Tab -->
                 <div id="payrollTab" class="tab-pane">
                     <h2>Payroll Processing</h2>
                     
-                    <div class="form-section">
-                        <h3>Run Payroll</h3>
-                        <form id="runPayrollForm">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="payrollMonth">Month:</label>
-                                    <input type="month" id="payrollMonth" name="payroll_date" required>
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="btn-primary">Run Payroll</button>
-                            <div id="payrollMessage" style="display: none; margin-top: 10px;"></div>
-                        </form>
+                    <!-- Payroll Subtabs -->
+                    <div class="subtabs">
+                        <button class="subtab-button active" data-subtab="payrollHistory">Payroll History</button>
+                        <button class="subtab-button" data-subtab="payrollSkipped">Skipped Payroll</button>
+                        <button class="subtab-button" data-subtab="payrollContributions">View Contributions</button>
+                        <button class="subtab-button" data-subtab="payrollBonuses">💰 Bonuses</button>
+                        <button class="subtab-button" data-subtab="payrollVariable">📊 Variable %</button>
+                        <button class="subtab-button" data-subtab="payrollLHDN">🏛️ LHDN Tax</button>
                     </div>
                     
-                    <div style="margin-top: 30px;">
-                        <h3>Payroll Runs</h3>
+                    <!-- Payroll History Subtab -->
+                    <div id="payrollHistorySubtab" class="subtab-content active">
+                        <h3>Payroll History</h3>
                         
-                        <div style="margin-bottom: 15px;">
-                            <button id="exportPayrollCSVBtn" class="btn-secondary">Export Payroll to CSV</button>
+                        <div class="form-section">
+                            <h4>Run Payroll</h4>
+                            <form id="runPayrollForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="payrollMonth">Month:</label>
+                                        <input type="month" id="payrollMonth" name="payroll_date" required>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn-primary">Run Payroll</button>
+                                <div id="payrollMessage" style="display: none; margin-top: 10px;"></div>
+                            </form>
                         </div>
                         
-                        <div id="payrollRunsTable">Loading...</div>
+                        <div style="margin-top: 30px;">
+                            <h4>Payroll Runs</h4>
+                            
+                            <!-- Year Filter -->
+                            <div style="margin-bottom: 15px;">
+                                <label for="adminPayrollYearFilter">Year:</label>
+                                <select id="adminPayrollYearFilter" style="margin-left: 10px; margin-right: 20px;">
+                                    <option value="">All Years</option>
+                                </select>
+                                <button id="exportPayrollCSVBtn" class="btn-secondary">Export Payroll to CSV</button>
+                            </div>
+                            
+                            <!-- Month Subtabs -->
+                            <div class="subtabs" style="margin-top: 15px; border-bottom: 1px solid #ddd;">
+                                <button class="subtab-button active" data-month="all">All</button>
+                                <button class="subtab-button" data-month="1">Jan</button>
+                                <button class="subtab-button" data-month="2">Feb</button>
+                                <button class="subtab-button" data-month="3">Mar</button>
+                                <button class="subtab-button" data-month="4">Apr</button>
+                                <button class="subtab-button" data-month="5">May</button>
+                                <button class="subtab-button" data-month="6">Jun</button>
+                                <button class="subtab-button" data-month="7">Jul</button>
+                                <button class="subtab-button" data-month="8">Aug</button>
+                                <button class="subtab-button" data-month="9">Sep</button>
+                                <button class="subtab-button" data-month="10">Oct</button>
+                                <button class="subtab-button" data-month="11">Nov</button>
+                                <button class="subtab-button" data-month="12">Dec</button>
+                            </div>
+                            
+                            <div id="payrollRunsTable" style="margin-top: 20px;">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skipped Payroll Subtab -->
+                    <div id="payrollSkippedSubtab" class="subtab-content">
+                        <h3>Skipped Payroll</h3>
+                        <p>Skipped payroll records coming soon...</p>
+                    </div>
+                    
+                    <!-- View Contributions Subtab -->
+                    <div id="payrollContributionsSubtab" class="subtab-content">
+                        <h3>View Contributions</h3>
+                        <p>EPF, SOCSO, and EIS contributions coming soon...</p>
+                    </div>
+                    
+                    <!-- Bonuses Subtab -->
+                    <div id="payrollBonusesSubtab" class="subtab-content">
+                        <h3>💰 Bonuses</h3>
+                        <p>Bonus management is available in the Bonus tab</p>
+                    </div>
+                    
+                    <!-- Variable % Subtab -->
+                    <div id="payrollVariableSubtab" class="subtab-content">
+                        <h3>📊 Variable %</h3>
+                        <p>Variable percentage configuration coming soon...</p>
+                    </div>
+                    
+                    <!-- LHDN Tax Subtab -->
+                    <div id="payrollLHDNSubtab" class="subtab-content">
+                        <h3>🏛️ LHDN Tax Configuration</h3>
+                        
+                        <!-- LHDN Sub-subtabs -->
+                        <div class="subtabs" style="margin-top: 15px;">
+                            <button class="subtab-button active" data-subtab="lhdnTaxRates">📊 Tax Rates</button>
+                            <button class="subtab-button" data-subtab="lhdnReliefMax">💼 Tax Relief Max</button>
+                            <button class="subtab-button" data-subtab="lhdnReliefOverrides">Relief Overrides</button>
+                        </div>
+                        
+                        <!-- Tax Rates Sub-subtab -->
+                        <div id="lhdnTaxRatesSubtab" class="subtab-content active">
+                            <h4>Tax Rates</h4>
+                            <p>Tax rates configuration coming soon...</p>
+                        </div>
+                        
+                        <!-- Tax Relief Max Sub-subtab -->
+                        <div id="lhdnReliefMaxSubtab" class="subtab-content">
+                            <h4>Tax Relief Max</h4>
+                            <p>Tax relief maximums configuration coming soon...</p>
+                        </div>
+                        
+                        <!-- Relief Overrides Sub-subtab -->
+                        <div id="lhdnReliefOverridesSubtab" class="subtab-content">
+                            <h4>Relief Overrides</h4>
+                            <p>Relief overrides configuration coming soon...</p>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Bonus Tab -->
-                <div id="bonusTab" class="tab-pane">
-                    <h2>Bonus Management</h2>
-                    
-                    <button id="addBonusBtn" class="btn-primary" style="margin-bottom: 20px;">Add New Bonus</button>
-                    
-                    <!-- Add Bonus Form -->
-                    <div id="addBonusForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                        <h3>Add New Bonus</h3>
-                        <form id="newBonusForm">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="bonusEmployeeId">Employee ID:</label>
-                                    <input type="text" id="bonusEmployeeId" name="employee_id" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="bonusType">Bonus Type:</label>
-                                    <select id="bonusType" name="bonus_type" required>
-                                        <option value="">Select type</option>
-                                        <option value="Performance">Performance</option>
-                                        <option value="Festival">Festival</option>
-                                        <option value="Year-end">Year-end</option>
-                                        <option value="Project">Project</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="bonusAmount">Amount (RM):</label>
-                                    <input type="number" id="bonusAmount" name="amount" step="0.01" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="bonusStatus">Status:</label>
-                                    <select id="bonusStatus" name="status" required>
-                                        <option value="Active">Active</option>
-                                        <option value="Expired">Expired</option>
-                                        <option value="Pending">Pending</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="bonusEffectiveDate">Effective Date:</label>
-                                    <input type="date" id="bonusEffectiveDate" name="effective_date" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="bonusExpiryDate">Expiry Date:</label>
-                                    <input type="date" id="bonusExpiryDate" name="expiry_date" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="bonusRemarks">Remarks:</label>
-                                <textarea id="bonusRemarks" name="remarks" rows="2"></textarea>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button type="submit" class="btn-primary">Create Bonus</button>
-                                <button type="button" id="cancelAddBonusBtn" class="btn-secondary">Cancel</button>
-                            </div>
-                            
-                            <div id="addBonusMessage" style="display: none; margin-top: 10px;"></div>
-                        </form>
-                    </div>
-                    
-                    <div id="bonusTable">Loading...</div>
+                <!-- Salary History Tab -->
+                <div id="salaryHistoryTab" class="tab-pane">
+                    <h2>📈 Salary History</h2>
+                    <p>Salary history management coming soon...</p>
                 </div>
                 
-                <!-- Configuration Tab -->
-                <div id="configTab" class="tab-pane">
-                    <h2>System Configuration</h2>
+                <!-- Engagements Tab -->
+                <div id="engagementsTab" class="tab-pane">
+                    <h2>📚 Activities (Training & Trips)</h2>
                     
-                    <div style="margin-bottom: 30px;">
-                        <h3>LHDN Relief Settings</h3>
-                        <button id="loadLHDNSettingsBtn" class="btn-primary">Load LHDN Settings</button>
-                        <div id="lhdnReliefForm" style="display:none; margin-top: 20px;">
-                            <form id="lhdnReliefSettingsForm">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Self Relief (RM):</label>
-                                        <input type="number" id="lhdnSelfRelief" name="self_relief" step="100">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Spouse Relief (RM):</label>
-                                        <input type="number" id="lhdnSpouseRelief" name="spouse_relief" step="100">
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Child Relief (RM per child):</label>
-                                        <input type="number" id="lhdnChildRelief" name="child_relief" step="100">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Disabled Child Relief (RM):</label>
-                                        <input type="number" id="lhdnDisabledChildRelief" name="disabled_child_relief" step="100">
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn-primary">Save LHDN Settings</button>
-                                <button type="button" id="cancelLHDNBtn" class="btn-secondary">Cancel</button>
-                            </form>
-                        </div>
-                        <div id="lhdnSettingsMessage" class="message"></div>
+                    <!-- Engagements Subtabs -->
+                    <div class="subtabs">
+                        <button class="subtab-button active" data-subtab="engagementsSubmit">Submit</button>
+                        <button class="subtab-button" data-subtab="engagementsView">View All</button>
                     </div>
                     
-                    <div style="margin-top: 30px;">
-                        <h3>Leave Types Management</h3>
-                        <button id="showAddLeaveTypeBtn" class="btn-primary">+ Add Leave Type</button>
-                        
-                        <div id="addLeaveTypeForm" style="display:none; margin-top: 20px;">
-                            <form id="leaveTypeForm">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Leave Type Name:</label>
-                                        <input type="text" id="leaveTypeName" name="name" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Annual Entitlement (Days):</label>
-                                        <input type="number" id="leaveTypeEntitlement" name="entitlement" min="0" required>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Description:</label>
-                                    <textarea id="leaveTypeDescription" name="description" rows="3"></textarea>
-                                </div>
-                                <button type="submit" class="btn-primary">Save Leave Type</button>
-                                <button type="button" id="cancelLeaveTypeBtn" class="btn-secondary">Cancel</button>
-                            </form>
-                        </div>
-                        <div id="leaveTypeMessage" class="message"></div>
-                        
-                        <div id="leaveTypesTable" style="margin-top: 20px;">Loading...</div>
+                    <!-- Submit Engagement Subtab -->
+                    <div id="engagementsSubmitSubtab" class="subtab-content active">
+                        <h3>Submit New Engagement</h3>
+                        <p>Submit training, courses, trips, or work assignments coming soon...</p>
                     </div>
+                    
+                    <!-- View All Engagements Subtab -->
+                    <div id="engagementsViewSubtab" class="subtab-content">
+                        <h3>All Engagements</h3>
+                        <p>View all training, courses, trips, and work assignments coming soon...</p>
+                    </div>
+                </div>
+                
+                <!-- Employee History Tab -->
+                <div id="employeeHistoryTab" class="tab-pane">
+                    <h2>🧾 Employment History</h2>
+                    <p>Employment history management coming soon...</p>
                 </div>
             </div>
         </div>
