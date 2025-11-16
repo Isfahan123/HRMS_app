@@ -239,9 +239,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabPanes = document.querySelectorAll('.tab-pane');
         
+        console.log('🔧 Setting up tabs:', tabButtons.length, 'tab buttons found');
+        console.log('🔧 Tab panes:', tabPanes.length, 'panes found');
+        
         tabButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const tabName = this.getAttribute('data-tab');
+                console.log('✅ Tab clicked:', tabName);
                 
                 // Remove active class from all buttons and panes
                 tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -249,7 +253,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add active class to clicked button and corresponding pane
                 this.classList.add('active');
-                document.getElementById(tabName + 'Tab').classList.add('active');
+                const targetPane = document.getElementById(tabName + 'Tab');
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                    console.log('✅ Activated tab pane:', tabName + 'Tab');
+                } else {
+                    console.error('❌ Tab pane not found:', tabName + 'Tab');
+                }
             });
         });
         
@@ -260,14 +270,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupSubtabs() {
         const subtabButtons = document.querySelectorAll('.subtab-button');
         
+        console.log('🔧 Setting up subtabs:', subtabButtons.length, 'subtab buttons found');
+        
         subtabButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const subtabName = this.getAttribute('data-subtab');
                 const monthValue = this.getAttribute('data-month');
                 
+                console.log('✅ Subtab clicked:', subtabName || 'Month: ' + monthValue);
+                
                 // Get parent tab to scope subtab switching
                 const parentContainer = this.closest('.tab-pane');
-                if (!parentContainer) return;
+                if (!parentContainer) {
+                    console.error('❌ Parent container not found for subtab');
+                    return;
+                }
                 
                 // If this is a month tab (for payroll history)
                 if (monthValue) {
@@ -275,6 +292,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const monthButtons = parentContainer.querySelectorAll('[data-month]');
                     monthButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
+                    
+                    console.log('✅ Month filter activated:', monthValue);
                     
                     // Filter payroll table by month
                     filterPayrollByMonth(monthValue);

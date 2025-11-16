@@ -83,6 +83,22 @@ async def admin_dashboard(request: Request):
     """Serve the admin dashboard page"""
     return templates.TemplateResponse("admin_dashboard.html", {"request": request})
 
+@app.get("/demo", response_class=HTMLResponse)
+async def demo_dashboard(request: Request):
+    """Serve the demo dashboard page (for testing UI without auth)"""
+    return templates.TemplateResponse("demo_dashboard.html", {"request": request})
+
+@app.get("/WEB_INTERFACE_GUIDE.md")
+async def serve_guide():
+    """Serve the web interface guide"""
+    import os
+    guide_path = os.path.join(os.path.dirname(__file__), "WEB_INTERFACE_GUIDE.md")
+    if os.path.exists(guide_path):
+        with open(guide_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"content": content, "format": "markdown"}
+    return {"error": "Guide not found"}
+
 # API Endpoints
 @app.post("/api/login", response_model=LoginResponse)
 async def api_login(login_data: LoginRequest):
