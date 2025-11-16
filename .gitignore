@@ -50,3 +50,4 @@ htmlcov/
 # Environment variables
 .env
 .env.local
+web/nodejs_modules/node_modules/
