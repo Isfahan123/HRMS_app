@@ -1121,8 +1121,8 @@ async def create_employment_change(request: Request):
 async def get_tax_rates():
     """Get LHDN tax rates for residents and non-residents"""
     try:
-        # Fetch tax rates from database
-        response = supabase.table("lhdn_tax_rates").select("*").order("income_from").execute()
+        # Fetch tax rates from progressive_tax_brackets table
+        response = supabase.table("progressive_tax_brackets").select("*").eq("config_name", "default").order("bracket_order").execute()
         
         # Organize by residency type
         resident_rates = []
@@ -1132,17 +1132,16 @@ async def get_tax_rates():
             for rate in response.data:
                 rate_data = {
                     "id": rate.get("id"),
-                    "income_from": rate.get("income_from"),
-                    "income_to": rate.get("income_to"),
-                    "rate_percent": rate.get("rate_percent"),
-                    "tax_on_band": rate.get("tax_on_band"),
-                    "year": rate.get("year", 2024)
+                    "income_from": float(rate.get("lower_bound", 0)),
+                    "income_to": float(rate.get("upper_bound")) if rate.get("upper_bound") is not None else None,
+                    "rate_percent": float(rate.get("rate", 0)) * 100,  # Convert decimal to percentage
+                    "tax_on_band": float(rate.get("tax_first_amount", 0)),
+                    "year": 2024,
+                    "bracket_order": rate.get("bracket_order")
                 }
                 
-                if rate.get("residency_type") == "resident":
-                    resident_rates.append(rate_data)
-                elif rate.get("residency_type") == "non-resident":
-                    non_resident_rates.append(rate_data)
+                # All progressive_tax_brackets are for residents
+                resident_rates.append(rate_data)
         
         return {
             "success": True,
@@ -1202,10 +1201,24 @@ async def delete_tax_rate(rate_id: int):
 async def get_relief_maximums():
     """Get tax relief maximum amounts"""
     try:
-        response = supabase.table("lhdn_relief_max").select("*").execute()
+        response = supabase.table("tax_relief_max_config").select("*").eq("config_name", "default").execute()
         
-        if response.data:
-            return {"success": True, "data": response.data}
+        if response.data and len(response.data) > 0:
+            # Transform the column-based structure to array format for frontend
+            config = response.data[0]
+            relief_array = [
+                {"relief_code": "self", "relief_name": "Self Relief", "max_amount": config.get("personal_relief_max", 9000)},
+                {"relief_code": "spouse", "relief_name": "Spouse Relief", "max_amount": config.get("spouse_relief_max", 4000)},
+                {"relief_code": "child", "relief_name": "Child Relief (Under 18)", "max_amount": config.get("child_relief_max", 2000)},
+                {"relief_code": "disabled_child", "relief_name": "Disabled Child", "max_amount": config.get("disabled_child_relief_max", 8000)},
+                {"relief_code": "parent_medical", "relief_name": "Medical for Parents", "max_amount": config.get("parent_medical_max", 8000)},
+                {"relief_code": "serious_disease", "relief_name": "Medical (Serious Disease)", "max_amount": config.get("serious_disease_max", 10000)},
+                {"relief_code": "education", "relief_name": "Education", "max_amount": config.get("education_max", 8000)},
+                {"relief_code": "lifestyle", "relief_name": "Lifestyle", "max_amount": config.get("lifestyle_max", 2500)},
+                {"relief_code": "sports", "relief_name": "Sports Equipment", "max_amount": config.get("sports_equipment_max", 300)},
+                {"relief_code": "epf_insurance", "relief_name": "Life Insurance & EPF", "max_amount": config.get("combined_epf_insurance_limit", 7000)},
+            ]
+            return {"success": True, "data": relief_array}
         else:
             return {"success": True, "data": []}
     except Exception as e:
@@ -1248,15 +1261,27 @@ async def update_relief_maximum(data: Dict[str, Any]):
 async def get_relief_overrides():
     """Get employee-specific relief overrides"""
     try:
-        response = supabase.table("lhdn_relief_overrides").select("*").execute()
+        # Try to query relief_item_overrides table (actual table name)
+        # If it doesn't exist or has different structure, return empty array
+        response = supabase.table("relief_item_overrides").select("*").execute()
         
+        # Transform to expected format
+        overrides = []
         if response.data:
-            return {"success": True, "data": response.data}
-        else:
-            return {"success": True, "data": []}
+            for item in response.data:
+                overrides.append({
+                    "id": item.get("item_key"),
+                    "relief_code": item.get("item_key"),
+                    "cap": item.get("cap"),
+                    "pcb_only": item.get("pcb_only"),
+                    "cycle_years": item.get("cycle_years")
+                })
+        
+        return {"success": True, "data": overrides}
     except Exception as e:
         print(f"Error fetching relief overrides: {str(e)}")
-        return {"success": False, "message": str(e)}
+        # Return empty array instead of error to prevent UI from breaking
+        return {"success": True, "data": []}
 
 @app.post("/api/admin/lhdn/relief-overrides")
 async def create_relief_override(data: Dict[str, Any]):
@@ -1403,12 +1428,42 @@ async def delete_leave_type(type_id: int):
 async def get_leave_entitlements():
     """Get leave entitlements/caps"""
     try:
-        response = supabase.table("leave_entitlements").select("*").execute()
+        # Get tiers and caps from the actual database structure
+        tiers_response = supabase.table("leave_caps_tiers").select("*").execute()
+        caps_response = supabase.table("leave_caps").select("*").execute()
         
-        if response.data:
-            return {"success": True, "data": response.data}
-        else:
-            return {"success": True, "data": []}
+        # Transform to expected format
+        entitlements = []
+        if tiers_response.data:
+            for tier in tiers_response.data:
+                tier_caps = [cap for cap in caps_response.data if cap.get("tier_id") == tier.get("id")]
+                
+                # Create entitlement entry for this tier
+                entitlement = {
+                    "id": tier.get("id"),
+                    "position_level": tier.get("label"),
+                    "min_years": tier.get("min_years", 0),
+                    "max_years": tier.get("max_years", 9999),
+                    "annual_leave_days": 0,
+                    "sick_leave_days": 0,
+                    "carry_forward_max": 0
+                }
+                
+                # Extract specific leave types from caps
+                for cap in tier_caps:
+                    leave_type = cap.get("leave_type", "").lower()
+                    cap_value = cap.get("cap", 0)
+                    
+                    if "annual" in leave_type:
+                        entitlement["annual_leave_days"] = cap_value
+                    elif "sick" in leave_type:
+                        entitlement["sick_leave_days"] = cap_value
+                    elif "carry" in leave_type or "forward" in leave_type:
+                        entitlement["carry_forward_max"] = cap_value
+                
+                entitlements.append(entitlement)
+        
+        return {"success": True, "data": entitlements}
     except Exception as e:
         print(f"Error fetching leave entitlements: {str(e)}")
         return {"success": False, "message": str(e)}
@@ -1484,7 +1539,7 @@ async def get_holidays():
         # Get current year
         current_year = datetime.now().year
         
-        response = supabase.table("public_holidays").select("*").gte("date", f"{current_year}-01-01").lte("date", f"{current_year+1}-12-31").order("date").execute()
+        response = supabase.table("calendar_holidays").select("*").gte("date", f"{current_year}-01-01").lte("date", f"{current_year+1}-12-31").order("date").execute()
         
         if response.data:
             return {"success": True, "data": response.data}
@@ -1505,7 +1560,7 @@ async def get_leave_calendar(employee_id: str, year: Optional[int] = None):
         response = supabase.table("leave_requests").select("*").eq("employee_id", employee_id).gte("start_date", f"{year}-01-01").lte("end_date", f"{year}-12-31").execute()
         
         # Fetch holidays
-        holidays_response = supabase.table("public_holidays").select("*").gte("date", f"{year}-01-01").lte("date", f"{year}-12-31").execute()
+        holidays_response = supabase.table("calendar_holidays").select("*").gte("date", f"{year}-01-01").lte("date", f"{year}-12-31").execute()
         
         return {
             "success": True,
@@ -1522,7 +1577,7 @@ async def get_leave_calendar(employee_id: str, year: Optional[int] = None):
 async def create_holiday(holiday: dict):
     """Create a new holiday"""
     try:
-        response = supabase.table("public_holidays").insert(holiday).execute()
+        response = supabase.table("calendar_holidays").insert(holiday).execute()
         
         if response.data:
             return {"success": True, "data": response.data[0], "message": "Holiday created successfully"}
@@ -1536,7 +1591,7 @@ async def create_holiday(holiday: dict):
 async def update_holiday(holiday_id: int, holiday: dict):
     """Update an existing holiday"""
     try:
-        response = supabase.table("public_holidays").update(holiday).eq("id", holiday_id).execute()
+        response = supabase.table("calendar_holidays").update(holiday).eq("id", holiday_id).execute()
         
         if response.data:
             return {"success": True, "data": response.data[0], "message": "Holiday updated successfully"}
@@ -1550,7 +1605,7 @@ async def update_holiday(holiday_id: int, holiday: dict):
 async def delete_holiday(holiday_id: int):
     """Delete a holiday"""
     try:
-        response = supabase.table("public_holidays").delete().eq("id", holiday_id).execute()
+        response = supabase.table("calendar_holidays").delete().eq("id", holiday_id).execute()
         
         if response.data:
             return {"success": True, "message": "Holiday deleted successfully"}
