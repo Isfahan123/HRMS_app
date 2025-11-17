@@ -929,6 +929,58 @@ async def get_salary_history():
         print(f"Error getting salary history: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/admin/salary-history")
+async def create_salary_change(request: Request):
+    """
+    Record a salary change for an employee
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['employee_email', 'previous_salary', 'new_salary', 'effective_date', 'change_type']
+        for field in required_fields:
+            if field not in data or data[field] == '':
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Validate salary values
+        try:
+            prev_salary = float(data['previous_salary'])
+            new_salary = float(data['new_salary'])
+            if prev_salary < 0 or new_salary < 0:
+                return {"success": False, "message": "Salary values must be positive"}
+        except ValueError:
+            return {"success": False, "message": "Invalid salary values"}
+        
+        # Calculate change amount and percentage
+        change_amount = new_salary - prev_salary
+        change_percentage = (change_amount / prev_salary * 100) if prev_salary > 0 else 0
+        
+        # Create salary history record
+        history_record = {
+            "employee_email": data['employee_email'],
+            "change_type": data['change_type'],
+            "field_changed": "salary",
+            "previous_value": str(prev_salary),
+            "new_value": str(new_salary),
+            "effective_date": data['effective_date'],
+            "reason": data.get('reason', f"Salary changed from RM {prev_salary:.2f} to RM {new_salary:.2f} ({change_percentage:+.1f}%)"),
+            "change_amount": change_amount,
+            "change_percentage": change_percentage,
+            "created_at": datetime.utcnow().isoformat(),
+            "created_by": "admin"
+        }
+        
+        response = supabase.table("employee_history").insert(history_record).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Salary change recorded successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to record salary change"}
+    except Exception as e:
+        print(f"Error creating salary change: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/admin/employee-history")
 async def get_employee_history():
     """

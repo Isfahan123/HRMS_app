@@ -999,48 +999,150 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('CSV export functionality will be implemented soon');
     };
     
+    // Salary History Management Functions
+    window.showAddSalaryChangeForm = function() {
+        document.getElementById('addSalaryChangeForm').style.display = 'block';
+    };
+    
+    window.hideAddSalaryChangeForm = function() {
+        document.getElementById('addSalaryChangeForm').style.display = 'none';
+        document.getElementById('newSalaryChangeForm').reset();
+        document.getElementById('addSalaryChangeMessage').style.display = 'none';
+    };
+    
     async function loadSalaryHistory() {
         try {
             const response = await fetch('/api/admin/salary-history');
             const data = await response.json();
             
-            const container = document.getElementById('salaryHistoryTab');
-            if (!container) return;
+            const tableContainer = document.getElementById('salaryHistoryTable');
+            if (!tableContainer) return;
             
             if (data.success && data.data && data.data.length > 0) {
-                let html = '<h2>📈 Salary History</h2>';
-                html += '<p style="color: #666; margin-bottom: 15px;">Track salary changes, promotions, and increments</p>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Date</th>';
+                // Apply filters
+                const employeeFilter = document.getElementById('salaryHistoryEmployeeFilter')?.value.toLowerCase() || '';
+                const typeFilter = document.getElementById('salaryHistoryTypeFilter')?.value || '';
+                const yearFilter = document.getElementById('salaryHistoryYearFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        ((r.employee_name || '').toLowerCase().includes(employeeFilter)) ||
+                        ((r.employee_email || '').toLowerCase().includes(employeeFilter))
+                    );
+                }
+                
+                if (typeFilter) {
+                    filteredData = filteredData.filter(r => r.change_type === typeFilter);
+                }
+                
+                if (yearFilter) {
+                    filteredData = filteredData.filter(r => {
+                        const date = r.effective_date || '';
+                        return date.startsWith(yearFilter);
+                    });
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No salary history records found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Effective Date</th>';
                 html += '<th style="padding: 10px;">Employee</th>';
                 html += '<th style="padding: 10px;">Change Type</th>';
-                html += '<th style="padding: 10px;">Previous</th>';
-                html += '<th style="padding: 10px;">New</th>';
+                html += '<th style="padding: 10px;">Previous Salary</th>';
+                html += '<th style="padding: 10px;">New Salary</th>';
+                html += '<th style="padding: 10px;">Change</th>';
                 html += '<th style="padding: 10px;">Reason</th>';
                 html += '</tr></thead><tbody>';
                 
-                data.data.forEach(record => {
+                filteredData.forEach(record => {
+                    const prevSalary = parseFloat(record.previous_value) || 0;
+                    const newSalary = parseFloat(record.new_value) || 0;
+                    const change = newSalary - prevSalary;
+                    const changePercent = prevSalary > 0 ? (change / prevSalary * 100) : 0;
+                    const changeColor = change >= 0 ? '#2e7d32' : '#c62828';
+                    
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.change_type || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
-                    html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">${record.reason || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; color: #1976d2; font-size: 12px;">${record.change_type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;">RM ${prevSalary.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px;"><strong>RM ${newSalary.toFixed(2)}</strong></td>`;
+                    html += `<td style="padding: 10px; color: ${changeColor};"><strong>${change >= 0 ? '+' : ''}RM ${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)</strong></td>`;
+                    html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
                     html += '</tr>';
                 });
                 
                 html += '</tbody></table>';
-                container.innerHTML = html;
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} salary change record(s)</p>`;
+                tableContainer.innerHTML = html;
             } else {
-                container.innerHTML = '<h2>📈 Salary History</h2><p>No salary history records found.</p>';
+                tableContainer.innerHTML = '<p style="color: #666;">No salary history records found. Record salary changes using the "Record Salary Change" button above.</p>';
             }
         } catch (error) {
             console.error('Error loading salary history:', error);
-            const container = document.getElementById('salaryHistoryTab');
-            if (container) container.innerHTML = '<h2>📈 Salary History</h2><p>Error loading salary history.</p>';
+            const tableContainer = document.getElementById('salaryHistoryTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading salary history data.</p>';
         }
     }
+    
+    // Handle new salary change form submission
+    const newSalaryChangeForm = document.getElementById('newSalaryChangeForm');
+    if (newSalaryChangeForm) {
+        newSalaryChangeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(newSalaryChangeForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/salary-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('addSalaryChangeMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Salary change recorded successfully!';
+                    
+                    setTimeout(() => {
+                        hideAddSalaryChangeForm();
+                        loadSalaryHistory();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to record salary change';
+                }
+            } catch (error) {
+                console.error('Error recording salary change:', error);
+                const messageDiv = document.getElementById('addSalaryChangeMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error recording salary change';
+            }
+        });
+    }
+    
+    window.exportSalaryHistoryCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
     
     async function loadEmployeeHistory() {
         try {
