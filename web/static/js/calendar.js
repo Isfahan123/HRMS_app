@@ -26,17 +26,30 @@ class LeaveCalendar {
      */
     async loadHolidays() {
         try {
-            // TODO: Implement API call to fetch holidays
-            // For now, using sample data
-            this.holidays = [
-                '2024-01-01', // New Year
-                '2024-02-10', // Chinese New Year
-                '2024-05-01', // Labour Day
-                '2024-08-31', // Merdeka Day
-                '2024-12-25'  // Christmas
-            ];
+            const response = await fetch('/api/holidays');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                // Extract just the dates from the holiday data
+                this.holidays = data.data.map(h => h.date);
+                this.holidayDetails = data.data; // Store full details for tooltip
+            } else {
+                // Fall back to sample data
+                this.holidays = [
+                    '2024-01-01', // New Year
+                    '2024-02-10', // Chinese New Year
+                    '2024-05-01', // Labour Day
+                    '2024-08-31', // Merdeka Day
+                    '2024-12-25'  // Christmas
+                ];
+            }
         } catch (error) {
             console.error('Error loading holidays:', error);
+            // Fall back to sample data on error
+            this.holidays = [
+                '2024-01-01', '2024-02-10', '2024-05-01',
+                '2024-08-31', '2024-12-25'
+            ];
         }
     }
 
@@ -46,7 +59,16 @@ class LeaveCalendar {
     async loadLeaveRequests() {
         try {
             const userEmail = sessionStorage.getItem('userEmail');
-            if (!userEmail) return;
+            if (!userEmail) {
+                // For admin view, fetch all leave requests
+                const response = await fetch('/api/admin/leave-requests');
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.leaveRequests = data.data || [];
+                }
+                return;
+            }
 
             const response = await fetch(`/api/leave-requests/${userEmail}`);
             const data = await response.json();
