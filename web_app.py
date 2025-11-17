@@ -1113,6 +1113,411 @@ async def create_employment_change(request: Request):
         print(f"Error creating employment change: {str(e)}")
         return {"success": False, "message": str(e)}
 
+# ====================
+# LHDN Tax Configuration Endpoints
+# ====================
+
+@app.get("/api/admin/lhdn/tax-rates")
+async def get_tax_rates():
+    """Get LHDN tax rates for residents and non-residents"""
+    try:
+        # Fetch tax rates from database
+        response = supabase.table("lhdn_tax_rates").select("*").order("income_from").execute()
+        
+        # Organize by residency type
+        resident_rates = []
+        non_resident_rates = []
+        
+        if response.data:
+            for rate in response.data:
+                rate_data = {
+                    "id": rate.get("id"),
+                    "income_from": rate.get("income_from"),
+                    "income_to": rate.get("income_to"),
+                    "rate_percent": rate.get("rate_percent"),
+                    "tax_on_band": rate.get("tax_on_band"),
+                    "year": rate.get("year", 2024)
+                }
+                
+                if rate.get("residency_type") == "resident":
+                    resident_rates.append(rate_data)
+                elif rate.get("residency_type") == "non-resident":
+                    non_resident_rates.append(rate_data)
+        
+        return {
+            "success": True,
+            "data": {
+                "resident": resident_rates,
+                "non_resident": non_resident_rates
+            }
+        }
+    except Exception as e:
+        print(f"Error fetching tax rates: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/lhdn/tax-rates")
+async def create_tax_rate(data: Dict[str, Any]):
+    """Create or update a tax rate bracket"""
+    try:
+        tax_rate = {
+            "residency_type": data.get("residency_type", "resident"),
+            "income_from": data["income_from"],
+            "income_to": data["income_to"],
+            "rate_percent": data["rate_percent"],
+            "tax_on_band": data.get("tax_on_band", 0),
+            "year": data.get("year", 2024),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        # Check if updating existing rate
+        if data.get("id"):
+            response = supabase.table("lhdn_tax_rates").update(tax_rate).eq("id", data["id"]).execute()
+        else:
+            tax_rate["created_at"] = datetime.utcnow().isoformat()
+            response = supabase.table("lhdn_tax_rates").insert(tax_rate).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Tax rate saved successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to save tax rate"}
+    except Exception as e:
+        print(f"Error saving tax rate: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/lhdn/tax-rates/{rate_id}")
+async def delete_tax_rate(rate_id: int):
+    """Delete a tax rate bracket"""
+    try:
+        response = supabase.table("lhdn_tax_rates").delete().eq("id", rate_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Tax rate deleted successfully"}
+        else:
+            return {"success": False, "message": "Tax rate not found"}
+    except Exception as e:
+        print(f"Error deleting tax rate: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/lhdn/relief-max")
+async def get_relief_maximums():
+    """Get tax relief maximum amounts"""
+    try:
+        response = supabase.table("lhdn_relief_max").select("*").execute()
+        
+        if response.data:
+            return {"success": True, "data": response.data}
+        else:
+            return {"success": True, "data": []}
+    except Exception as e:
+        print(f"Error fetching relief maximums: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/lhdn/relief-max")
+async def update_relief_maximum(data: Dict[str, Any]):
+    """Update a tax relief maximum amount"""
+    try:
+        relief_data = {
+            "relief_code": data["relief_code"],
+            "relief_name": data["relief_name"],
+            "max_amount": data["max_amount"],
+            "description": data.get("description", ""),
+            "year": data.get("year", 2024),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        # Check if relief exists
+        existing = supabase.table("lhdn_relief_max").select("*").eq("relief_code", data["relief_code"]).eq("year", data.get("year", 2024)).execute()
+        
+        if existing.data:
+            # Update existing
+            response = supabase.table("lhdn_relief_max").update(relief_data).eq("id", existing.data[0]["id"]).execute()
+        else:
+            # Create new
+            relief_data["created_at"] = datetime.utcnow().isoformat()
+            response = supabase.table("lhdn_relief_max").insert(relief_data).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Relief maximum updated successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to update relief maximum"}
+    except Exception as e:
+        print(f"Error updating relief maximum: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/lhdn/relief-overrides")
+async def get_relief_overrides():
+    """Get employee-specific relief overrides"""
+    try:
+        response = supabase.table("lhdn_relief_overrides").select("*").execute()
+        
+        if response.data:
+            return {"success": True, "data": response.data}
+        else:
+            return {"success": True, "data": []}
+    except Exception as e:
+        print(f"Error fetching relief overrides: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/lhdn/relief-overrides")
+async def create_relief_override(data: Dict[str, Any]):
+    """Create an employee-specific relief override"""
+    try:
+        override = {
+            "employee_id": data["employee_id"],
+            "relief_code": data["relief_code"],
+            "override_amount": data["override_amount"],
+            "effective_period": data.get("effective_period", "2024"),
+            "reason": data.get("reason", ""),
+            "created_at": datetime.utcnow().isoformat(),
+            "created_by": "admin"
+        }
+        
+        response = supabase.table("lhdn_relief_overrides").insert(override).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Relief override created successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to create relief override"}
+    except Exception as e:
+        print(f"Error creating relief override: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/lhdn/relief-overrides/{override_id}")
+async def update_relief_override(override_id: int, data: Dict[str, Any]):
+    """Update an employee-specific relief override"""
+    try:
+        override = {
+            "override_amount": data["override_amount"],
+            "effective_period": data.get("effective_period"),
+            "reason": data.get("reason", ""),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("lhdn_relief_overrides").update(override).eq("id", override_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Relief override updated successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Relief override not found"}
+    except Exception as e:
+        print(f"Error updating relief override: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/lhdn/relief-overrides/{override_id}")
+async def delete_relief_override(override_id: int):
+    """Delete an employee-specific relief override"""
+    try:
+        response = supabase.table("lhdn_relief_overrides").delete().eq("id", override_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Relief override deleted successfully"}
+        else:
+            return {"success": False, "message": "Relief override not found"}
+    except Exception as e:
+        print(f"Error deleting relief override: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+# ====================
+# Leave Configuration Endpoints
+# ====================
+
+@app.get("/api/admin/leave-types")
+async def get_leave_types():
+    """Get all leave types"""
+    try:
+        response = supabase.table("leave_types").select("*").execute()
+        
+        if response.data:
+            return {"success": True, "data": response.data}
+        else:
+            return {"success": True, "data": []}
+    except Exception as e:
+        print(f"Error fetching leave types: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-types")
+async def create_leave_type(data: Dict[str, Any]):
+    """Create a new leave type"""
+    try:
+        leave_type = {
+            "name": data["name"],
+            "code": data["code"],
+            "color": data.get("color", "#3498db"),
+            "description": data.get("description", ""),
+            "requires_approval": data.get("requires_approval", True),
+            "is_paid": data.get("is_paid", True),
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("leave_types").insert(leave_type).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Leave type created successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to create leave type"}
+    except Exception as e:
+        print(f"Error creating leave type: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/leave-types/{type_id}")
+async def update_leave_type(type_id: int, data: Dict[str, Any]):
+    """Update a leave type"""
+    try:
+        leave_type = {
+            "name": data.get("name"),
+            "color": data.get("color"),
+            "description": data.get("description"),
+            "requires_approval": data.get("requires_approval"),
+            "is_paid": data.get("is_paid"),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        # Remove None values
+        leave_type = {k: v for k, v in leave_type.items() if v is not None}
+        
+        response = supabase.table("leave_types").update(leave_type).eq("id", type_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Leave type updated successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Leave type not found"}
+    except Exception as e:
+        print(f"Error updating leave type: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/leave-types/{type_id}")
+async def delete_leave_type(type_id: int):
+    """Delete a leave type"""
+    try:
+        response = supabase.table("leave_types").delete().eq("id", type_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Leave type deleted successfully"}
+        else:
+            return {"success": False, "message": "Leave type not found"}
+    except Exception as e:
+        print(f"Error deleting leave type: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/leave-entitlements")
+async def get_leave_entitlements():
+    """Get leave entitlements/caps"""
+    try:
+        response = supabase.table("leave_entitlements").select("*").execute()
+        
+        if response.data:
+            return {"success": True, "data": response.data}
+        else:
+            return {"success": True, "data": []}
+    except Exception as e:
+        print(f"Error fetching leave entitlements: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-entitlements")
+async def create_leave_entitlement(data: Dict[str, Any]):
+    """Create a leave entitlement rule"""
+    try:
+        entitlement = {
+            "leave_type_id": data["leave_type_id"],
+            "employee_level": data.get("employee_level", "all"),
+            "annual_days": data["annual_days"],
+            "carry_forward_days": data.get("carry_forward_days", 0),
+            "effective_year": data.get("effective_year", 2024),
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("leave_entitlements").insert(entitlement).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Leave entitlement created successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to create leave entitlement"}
+    except Exception as e:
+        print(f"Error creating leave entitlement: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/leave-entitlements/{entitlement_id}")
+async def update_leave_entitlement(entitlement_id: int, data: Dict[str, Any]):
+    """Update a leave entitlement rule"""
+    try:
+        entitlement = {
+            "annual_days": data.get("annual_days"),
+            "carry_forward_days": data.get("carry_forward_days"),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        # Remove None values
+        entitlement = {k: v for k, v in entitlement.items() if v is not None}
+        
+        response = supabase.table("leave_entitlements").update(entitlement).eq("id", entitlement_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Leave entitlement not found"}
+    except Exception as e:
+        print(f"Error updating leave entitlement: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/leave-entitlements/{entitlement_id}")
+async def delete_leave_entitlement(entitlement_id: int):
+    """Delete a leave entitlement rule"""
+    try:
+        response = supabase.table("leave_entitlements").delete().eq("id", entitlement_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Leave entitlement deleted successfully"}
+        else:
+            return {"success": False, "message": "Leave entitlement not found"}
+    except Exception as e:
+        print(f"Error deleting leave entitlement: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+# ====================
+# Calendar & Holidays Endpoints
+# ====================
+
+@app.get("/api/holidays")
+async def get_holidays():
+    """Get public holidays"""
+    try:
+        # Get current year
+        current_year = datetime.now().year
+        
+        response = supabase.table("public_holidays").select("*").gte("date", f"{current_year}-01-01").lte("date", f"{current_year+1}-12-31").order("date").execute()
+        
+        if response.data:
+            return {"success": True, "data": response.data}
+        else:
+            return {"success": True, "data": []}
+    except Exception as e:
+        print(f"Error fetching holidays: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/leave-calendar/{employee_id}")
+async def get_leave_calendar(employee_id: str, year: Optional[int] = None):
+    """Get leave calendar for an employee"""
+    try:
+        if not year:
+            year = datetime.now().year
+        
+        # Fetch leave requests for the year
+        response = supabase.table("leave_requests").select("*").eq("employee_id", employee_id).gte("start_date", f"{year}-01-01").lte("end_date", f"{year}-12-31").execute()
+        
+        # Fetch holidays
+        holidays_response = supabase.table("public_holidays").select("*").gte("date", f"{year}-01-01").lte("date", f"{year}-12-31").execute()
+        
+        return {
+            "success": True,
+            "data": {
+                "leave_requests": response.data if response.data else [],
+                "holidays": holidays_response.data if holidays_response.data else []
+            }
+        }
+    except Exception as e:
+        print(f"Error fetching leave calendar: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

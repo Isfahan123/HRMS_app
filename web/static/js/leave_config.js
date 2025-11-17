@@ -49,44 +49,61 @@ async function loadLeaveTypes() {
     if (!tbody) return;
     
     try {
-        // For now, show default leave types
-        // In production, this would call an API endpoint
-        const defaultTypes = [
-            {
-                id: 1,
-                name: 'Annual Leave',
-                description: 'Regular annual leave entitlement',
-                requires_approval: true,
-                max_days: 0
-            },
-            {
-                id: 2,
-                name: 'Sick Leave',
-                description: 'Medical leave with certificate',
-                requires_approval: true,
-                max_days: 14
-            },
-            {
-                id: 3,
-                name: 'Emergency Leave',
-                description: 'Urgent personal matters',
-                requires_approval: true,
-                max_days: 5
-            },
-            {
-                id: 4,
-                name: 'Unpaid Leave',
-                description: 'Leave without pay',
-                requires_approval: true,
-                max_days: 0
-            },
-            {
-                id: 5,
-                name: 'Maternity Leave',
-                description: 'Maternity leave (as per law)',
-                requires_approval: false,
-                max_days: 90
-            },
+        // Fetch leave types from API
+        const response = await fetch('/api/admin/leave-types');
+        const data = await response.json();
+        
+        let leaveTypes = [];
+        if (data.success && data.data.length > 0) {
+            leaveTypes = data.data;
+        } else {
+            // Fall back to default leave types
+            leaveTypes = [
+                {
+                    id: 1,
+                    name: 'Annual Leave',
+                    code: 'annual',
+                    color: '#3498db',
+                    description: 'Regular annual leave entitlement',
+                    requires_approval: true,
+                    is_paid: true
+                },
+                {
+                    id: 2,
+                    name: 'Sick Leave',
+                    code: 'sick',
+                    color: '#e74c3c',
+                    description: 'Medical leave with certificate',
+                    requires_approval: true,
+                    is_paid: true
+                },
+                {
+                    id: 3,
+                    name: 'Emergency Leave',
+                    code: 'emergency',
+                    color: '#f39c12',
+                    description: 'Urgent personal matters',
+                    requires_approval: true,
+                    is_paid: true
+                },
+                {
+                    id: 4,
+                    name: 'Unpaid Leave',
+                    code: 'unpaid',
+                    color: '#95a5a6',
+                    description: 'Leave without pay',
+                    requires_approval: true,
+                    is_paid: false
+                },
+                {
+                    id: 5,
+                    name: 'Maternity Leave',
+                    code: 'maternity',
+                    color: '#e91e63',
+                    description: 'Maternity leave (as per law)',
+                    requires_approval: false,
+                    is_paid: true
+                },
             {
                 id: 6,
                 name: 'Paternity Leave',

@@ -39,37 +39,68 @@ const TAX_RELIEF_CATEGORIES = [
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Load tax rates
-    loadResidentTaxRates();
-    loadNonResidentTaxRates();
+    // Load tax rates from API
+    loadTaxRatesFromAPI();
     
-    // Load relief maximums
-    loadReliefMaximums();
+    // Load relief maximums from API
+    loadReliefMaximumsFromAPI();
     
-    // Load relief overrides
-    loadReliefOverrides();
+    // Load relief overrides from API
+    loadReliefOverridesFromAPI();
 });
+
+/**
+ * Load tax rates from API
+ */
+async function loadTaxRatesFromAPI() {
+    try {
+        const response = await fetch('/api/admin/lhdn/tax-rates');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Use API data if available, otherwise fall back to hardcoded
+            const residentRates = data.data.resident.length > 0 ? data.data.resident : RESIDENT_TAX_RATES;
+            const nonResidentRates = data.data.non_resident.length > 0 ? data.data.non_resident : [];
+            
+            loadResidentTaxRates(residentRates);
+            loadNonResidentTaxRates(nonResidentRates);
+        } else {
+            // Fall back to hardcoded rates
+            loadResidentTaxRates(RESIDENT_TAX_RATES);
+            loadNonResidentTaxRates([]);
+        }
+    } catch (error) {
+        console.error('Error loading tax rates from API:', error);
+        // Fall back to hardcoded rates
+        loadResidentTaxRates(RESIDENT_TAX_RATES);
+        loadNonResidentTaxRates([]);
+    }
+}
 
 /**
  * Load resident tax rates
  */
-function loadResidentTaxRates() {
+function loadResidentTaxRates(rates) {
     const tbody = document.getElementById('residentTaxRatesBody');
     if (!tbody) return;
     
     let html = '';
-    let cumulativeTax = 0;
     
-    RESIDENT_TAX_RATES.forEach((bracket, index) => {
-        const bandAmount = bracket.to - bracket.from;
-        const taxAmount = (bandAmount * bracket.rate / 100).toFixed(2);
-        cumulativeTax += parseFloat(taxAmount);
+    // Handle both API format and hardcoded format
+    rates.forEach((bracket, index) => {
+        const from = bracket.income_from || bracket.from;
+        const to = bracket.income_to || bracket.to;
+        const rate = bracket.rate_percent || bracket.rate;
+        const taxOnBand = bracket.tax_on_band || bracket.taxOnBand || 0;
+        
+        const bandAmount = to - from;
+        const taxAmount = taxOnBand || (bandAmount * rate / 100).toFixed(2);
         
         html += `
             <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">${formatMoney(bracket.from)}</td>
-                <td style="padding: 10px;">${bracket.to === 999999999 ? 'Above' : formatMoney(bracket.to)}</td>
-                <td style="padding: 10px; text-align: center;"><strong>${bracket.rate}%</strong></td>
+                <td style="padding: 10px;">${formatMoney(from)}</td>
+                <td style="padding: 10px;">${to > 900000000 ? 'Above' : formatMoney(to)}</td>
+                <td style="padding: 10px; text-align: center;"><strong>${rate}%</strong></td>
                 <td style="padding: 10px; text-align: right;">${formatMoney(parseFloat(taxAmount))}</td>
                 <td style="padding: 10px; text-align: center;">
                     <button class="btn-sm btn-secondary" onclick="editTaxBracket('resident', ${index})">Edit</button>
@@ -78,7 +109,7 @@ function loadResidentTaxRates() {
         `;
     });
     
-    tbody.innerHTML = html;
+    tbody.innerHTML = html || '<tr><td colspan="5" style="padding: 15px; text-align: center;">No tax rates configured</td></tr>';
 }
 
 /**
@@ -103,27 +134,115 @@ function loadNonResidentTaxRates() {
 }
 
 /**
+ * Load relief maximums from API
+ */
+async function loadReliefMaximumsFromAPI() {
+    try {
+        const response = await fetch('/api/admin/lhdn/relief-max');
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            loadReliefMaximums(data.data);
+        } else {
+            // Fall back to hardcoded relief categories
+            loadReliefMaximums(TAX_RELIEF_CATEGORIES.map(r => ({
+                relief_code: r.id,
+                relief_name: r.name,
+                max_amount: r.max,
+                description: r.description
+            })));
+        }
+    } catch (error) {
+        console.error('Error loading relief maximums from API:', error);
+        // Fall back to hardcoded relief categories
+        loadReliefMaximums(TAX_RELIEF_CATEGORIES.map(r => ({
+            relief_code: r.id,
+            relief_name: r.name,
+            max_amount: r.max,
+            description: r.description
+        })));
+    }
+}
+
+/**
  * Load relief maximums
  */
-function loadReliefMaximums() {
+function loadReliefMaximums(reliefs) {
     const tbody = document.getElementById('reliefMaxBody');
     if (!tbody) return;
     
     let html = '';
     
-    TAX_RELIEF_CATEGORIES.forEach(relief => {
+    reliefs.forEach(relief => {
+        const code = relief.relief_code || relief.id;
+        const name = relief.relief_name || relief.name;
+        const maxAmount = relief.max_amount || relief.max;
+        const description = relief.description || '';
+        
         html += `
             <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 10px;">
-                    <strong>${relief.name}</strong>
+                    <strong>${name}</strong>
                     <br>
-                    <small style="color: #666;">${relief.description}</small>
+                    <small style="color: #666;">${description}</small>
                 </td>
                 <td style="padding: 10px; text-align: right;">
-                    <strong style="color: #667eea;">RM ${formatMoney(relief.max)}</strong>
+                    <strong style="color: #667eea;">RM ${formatMoney(maxAmount)}</strong>
                 </td>
                 <td style="padding: 10px; text-align: center;">
-                    <button class="btn-sm btn-secondary" onclick="editRelief('${relief.id}')">Edit</button>
+                    <button class="btn-sm btn-secondary" onclick="editRelief('${code}')">Edit</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html || '<tr><td colspan="3" style="padding: 15px; text-align: center;">No relief maximums configured</td></tr>';
+}
+
+/**
+ * Load relief overrides from API
+ */
+async function loadReliefOverridesFromAPI() {
+    try {
+        const response = await fetch('/api/admin/lhdn/relief-overrides');
+        const data = await response.json();
+        
+        if (data.success) {
+            loadReliefOverrides(data.data || []);
+        } else {
+            loadReliefOverrides([]);
+        }
+    } catch (error) {
+        console.error('Error loading relief overrides from API:', error);
+        loadReliefOverrides([]);
+    }
+}
+
+/**
+ * Load relief overrides
+ */
+function loadReliefOverrides(overrides) {
+    const tbody = document.getElementById('reliefOverridesBody');
+    if (!tbody) return;
+    
+    if (overrides.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding: 15px; text-align: center;">No relief overrides configured</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    
+    overrides.forEach(override => {
+        html += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px;">${override.employee_name || override.employee_id}</td>
+                <td style="padding: 10px;">${override.employee_id}</td>
+                <td style="padding: 10px;">${override.relief_category || override.relief_code}</td>
+                <td style="padding: 10px; text-align: right;">RM ${formatMoney(override.override_amount)}</td>
+                <td style="padding: 10px;">${override.effective_period}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <button class="btn-sm btn-secondary" onclick="editReliefOverride(${override.id})">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="deleteReliefOverride(${override.id})">Delete</button>
                 </td>
             </tr>
         `;
@@ -132,15 +251,8 @@ function loadReliefMaximums() {
     tbody.innerHTML = html;
 }
 
-/**
- * Load relief overrides
- */
-function loadReliefOverrides() {
-    const tbody = document.getElementById('reliefOverridesBody');
-    if (!tbody) return;
-    
-    // Sample data - in production this would come from database
-    const sampleOverrides = [
+// Sample data for backward compatibility (if needed)
+const sampleOverrides = [
         {
             id: 1,
             employee_name: 'John Doe',
