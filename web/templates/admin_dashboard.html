@@ -1576,6 +1576,133 @@
         </div>
     </div>
     
+    <!-- LHDN Tax Configuration Modals -->
+    <div id="taxBracketModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeTaxBracketModal()">&times;</span>
+            <h3 id="taxBracketModalTitle">Add Tax Bracket</h3>
+            <form id="taxBracketForm">
+                <input type="hidden" id="taxBracketType" value="">
+                <input type="hidden" id="taxBracketIndex" value="">
+                <input type="hidden" id="taxBracketId" value="">
+                
+                <div class="form-group">
+                    <label for="taxBracketFrom">Chargeable Income From (RM):*</label>
+                    <input type="number" id="taxBracketFrom" step="0.01" min="0" required>
+                    <small style="color: #666;">Starting amount for this tax bracket</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketTo">Income To (RM):*</label>
+                    <input type="number" id="taxBracketTo" step="0.01" min="0" required>
+                    <small style="color: #666;">Ending amount (use 999999999 for "Above")</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketRate">Tax Rate (%):*</label>
+                    <input type="number" id="taxBracketRate" step="0.01" min="0" max="100" required>
+                    <small style="color: #666;">Tax percentage for this bracket</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketAmount">Tax on Band (RM):</label>
+                    <input type="number" id="taxBracketAmount" step="0.01" min="0">
+                    <small style="color: #666;">Tax amount for the full band (auto-calculated)</small>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">💾 Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeTaxBracketModal()">Cancel</button>
+                </div>
+                
+                <div id="taxBracketMessage" style="display: none; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="reliefEditModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeReliefEditModal()">&times;</span>
+            <h3>Edit Tax Relief Maximum</h3>
+            <form id="reliefEditForm">
+                <input type="hidden" id="reliefCode" value="">
+                <input type="hidden" id="reliefIndex" value="">
+                
+                <div class="form-group">
+                    <label for="reliefName">Relief Category:</label>
+                    <input type="text" id="reliefName" readonly style="background: #f5f5f5;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="reliefDescription">Description:</label>
+                    <textarea id="reliefDescription" rows="2" readonly style="background: #f5f5f5;"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reliefMaxAmount">Maximum Amount (RM):*</label>
+                    <input type="number" id="reliefMaxAmount" step="0.01" min="0" required>
+                    <small style="color: #666;">Maximum deductible amount for this relief category</small>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">💾 Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeReliefEditModal()">Cancel</button>
+                </div>
+                
+                <div id="reliefEditMessage" style="display: none; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="reliefOverrideModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeReliefOverrideModal()">&times;</span>
+            <h3 id="reliefOverrideModalTitle">Add Relief Override</h3>
+            <form id="reliefOverrideForm">
+                <input type="hidden" id="reliefOverrideId" value="">
+                
+                <div class="form-group">
+                    <label for="overrideEmployeeId">Employee:*</label>
+                    <select id="overrideEmployeeId" required>
+                        <option value="">Select Employee</option>
+                    </select>
+                    <small style="color: #666;">Choose employee for relief override</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideReliefCategory">Relief Category:*</label>
+                    <select id="overrideReliefCategory" required>
+                        <option value="">Select Relief Category</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideAmount">Override Amount (RM):*</label>
+                    <input type="number" id="overrideAmount" step="0.01" min="0" required>
+                    <small style="color: #666;">Custom relief amount for this employee</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideYear">Effective Year:*</label>
+                    <input type="number" id="overrideYear" min="2020" max="2030" required value="2024">
+                    <small style="color: #666;">Tax year for this override</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideReason">Reason/Notes:</label>
+                    <textarea id="overrideReason" rows="3" placeholder="Optional: Explain why this override is needed"></textarea>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">💾 Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeReliefOverrideModal()">Cancel</button>
+                </div>
+                
+                <div id="reliefOverrideMessage" style="display: none; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/js/admin_dashboard.js"></script>
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>
