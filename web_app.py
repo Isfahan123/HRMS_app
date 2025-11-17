@@ -343,8 +343,35 @@ async def get_all_leave_requests():
     Get all leave requests for admin approval
     """
     try:
-        response = supabase.table("leave_requests").select("*, employees(full_name, email)").order("created_at", desc=True).execute()
-        return {"success": True, "data": response.data}
+        # Fetch leave requests without join to avoid foreign key relationship requirement
+        response = supabase.table("leave_requests").select("*").order("created_at", desc=True).execute()
+        
+        if not response.data:
+            return {"success": True, "data": []}
+        
+        # Enrich leave requests with employee names
+        leave_requests = response.data
+        
+        # Get unique employee emails
+        employee_emails = list(set([lr.get("employee_email") for lr in leave_requests if lr.get("employee_email")]))
+        
+        # Fetch employee data for all relevant employees
+        employee_map = {}
+        if employee_emails:
+            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            if employees_response.data:
+                employee_map = {emp["email"]: emp for emp in employees_response.data}
+        
+        # Merge employee data into leave requests
+        for lr in leave_requests:
+            employee_email = lr.get("employee_email")
+            if employee_email and employee_email in employee_map:
+                # Add nested employees object to match frontend expectations
+                lr["employees"] = employee_map[employee_email]
+            # Also set email field as fallback for frontend
+            lr["email"] = employee_email
+        
+        return {"success": True, "data": leave_requests}
     except Exception as e:
         print(f"Error fetching leave requests: {str(e)}")
         return {"success": False, "message": str(e)}
@@ -522,7 +549,8 @@ async def get_all_bonuses():
     Get all bonus records (admin only)
     """
     try:
-        response = supabase.table("bonuses").select("*, employees(full_name, email)").order("created_at", desc=True).execute()
+        # Fetch bonuses without join - bonuses table already has employee_name field
+        response = supabase.table("bonuses").select("*").order("created_at", desc=True).execute()
         return {"success": True, "data": response.data}
     except Exception as e:
         print(f"Error fetching bonuses: {str(e)}")
