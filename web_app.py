@@ -88,6 +88,11 @@ async def demo_dashboard(request: Request):
     """Serve the demo dashboard page (for testing UI without auth)"""
     return templates.TemplateResponse("demo_dashboard.html", {"request": request})
 
+@app.get("/admin-preview", response_class=HTMLResponse)
+async def admin_preview(request: Request):
+    """Serve the full admin dashboard for preview (no auth required)"""
+    return templates.TemplateResponse("admin_dashboard.html", {"request": request})
+
 @app.get("/WEB_INTERFACE_GUIDE.md")
 async def serve_guide():
     """Serve the web interface guide"""

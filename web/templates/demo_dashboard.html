@@ -34,7 +34,82 @@
                 <!-- Employees Tab -->
                 <div id="employeesTab" class="tab-pane active">
                     <h2>👥 Employee Management</h2>
-                    <p>This is the Employees tab content. Click on other tabs to see their content.</p>
+                    <p>This tab shows employee list with search, filters, add/edit functionality.</p>
+                    <p style="color: #666; margin-top: 10px;">Features: Search employees, filter by department/religion, add new employees, edit existing profiles, export to CSV.</p>
+                </div>
+                
+                <!-- Attendance Tab -->
+                <div id="attendanceTab" class="tab-pane">
+                    <h2>📋 Attendance Management</h2>
+                    <p>View and manage employee attendance records.</p>
+                    <p style="color: #666; margin-top: 10px;">Features: View attendance history, date range filtering, search by email/date, export to CSV, set official working hours.</p>
+                </div>
+                
+                <!-- Leaves Tab -->
+                <div id="leaveTab" class="tab-pane">
+                    <h2>📅 Leave Management</h2>
+                    
+                    <!-- Leave Subtabs -->
+                    <div class="subtabs">
+                        <button class="subtab-button active" data-subtab="leavePending">Pending</button>
+                        <button class="subtab-button" data-subtab="leaveApproved">Approved/Rejected</button>
+                        <button class="subtab-button" data-subtab="leaveSubmit">Submit Leave</button>
+                        <button class="subtab-button" data-subtab="leaveAnnual">Annual Balance</button>
+                        <button class="subtab-button" data-subtab="leaveSick">Sick Balance</button>
+                        <button class="subtab-button" data-subtab="leaveUnpaid">Unpaid Leave</button>
+                        <button class="subtab-button" data-subtab="leaveCalendar">Calendar</button>
+                        <button class="subtab-button" data-subtab="leaveConfig">⚙️ Configuration</button>
+                    </div>
+                    
+                    <!-- Pending Leave Subtab -->
+                    <div id="leavePendingSubtab" class="subtab-content active">
+                        <h3>Pending Leave Requests</h3>
+                        <p>View and approve/reject pending leave requests from employees.</p>
+                        <p style="color: #666; margin-top: 10px;">This subtab shows all pending leave requests that require admin approval.</p>
+                    </div>
+                    
+                    <!-- Approved/Rejected Subtab -->
+                    <div id="leaveApprovedSubtab" class="subtab-content">
+                        <h3>Approved/Rejected Leave Requests</h3>
+                        <p>View leave requests that have been processed (approved, rejected, or cancelled).</p>
+                    </div>
+                    
+                    <!-- Submit Leave Subtab -->
+                    <div id="leaveSubmitSubtab" class="subtab-content">
+                        <h3>Submit Leave Request (Admin)</h3>
+                        <p>Submit a leave request on behalf of an employee.</p>
+                    </div>
+                    
+                    <!-- Annual Balance Subtab -->
+                    <div id="leaveAnnualSubtab" class="subtab-content">
+                        <h3>Annual Leave Balance</h3>
+                        <p>View annual leave balance for all employees.</p>
+                    </div>
+                    
+                    <!-- Sick Balance Subtab -->
+                    <div id="leaveSickSubtab" class="subtab-content">
+                        <h3>Sick Leave Balance</h3>
+                        <p>View sick leave balance for all employees.</p>
+                    </div>
+                    
+                    <!-- Unpaid Leave Subtab -->
+                    <div id="leaveUnpaidSubtab" class="subtab-content">
+                        <h3>Unpaid Leave Records</h3>
+                        <p>View unpaid leave records for all employees.</p>
+                    </div>
+                    
+                    <!-- Calendar Subtab -->
+                    <div id="leaveCalendarSubtab" class="subtab-content">
+                        <h3>📅 Leave Calendar & Holidays</h3>
+                        <p>Interactive calendar showing all employee leave requests and public holidays.</p>
+                    </div>
+                    
+                    <!-- Configuration Subtab -->
+                    <div id="leaveConfigSubtab" class="subtab-content">
+                        <h3>⚙️ Leave Configuration</h3>
+                        <p>Configure leave types and entitlements by position/tier.</p>
+                        <p style="color: #666; margin-top: 10px;">Manage: Leave types (annual, sick, emergency, etc.), entitlement rules by employee tier.</p>
+                    </div>
                 </div>
                 
                 <!-- Payroll Tab -->
@@ -95,6 +170,13 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Bonuses Tab -->
+                <div id="bonusTab" class="tab-pane">
+                    <h2>💰 Bonus Management</h2>
+                    <p>Manage employee bonuses - add, view, approve, and track bonus payments.</p>
+                    <p style="color: #666; margin-top: 10px;">Features: Add bonuses for employees, view bonus history, approve pending bonuses, filter by type/status.</p>
                 </div>
             </div>
         </div>
