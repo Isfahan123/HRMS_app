@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function buildEmployeeTable(employees) {
         let html = '<table><thead><tr>';
-        html += '<th>Name</th><th>Email</th><th>Department</th><th>Position</th><th>Status</th>';
+        html += '<th>Name</th><th>Email</th><th>Department</th><th>Position</th><th>Status</th><th>Actions</th>';
         html += '</tr></thead><tbody>';
         
         employees.forEach(employee => {
@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<td>${employee.department || '-'}</td>`;
             html += `<td>${employee.position || '-'}</td>`;
             html += `<td>${employee.employment_status || '-'}</td>`;
+            html += `<td><button class="btn-secondary btn-sm" onclick="openEditEmployeeModal('${employee.id || employee.email}')">✏️ Edit</button></td>`;
             html += '</tr>';
         });
         
@@ -957,6 +958,120 @@ document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('employeeHistoryTab');
             if (container) container.innerHTML = '<h2>🧾 Employment History</h2><p>Error loading employment history.</p>';
         }
+    }
+    
+    // Edit Employee Functions
+    window.openEditEmployeeModal = async function(employeeId) {
+        try {
+            console.log('Opening edit modal for employee:', employeeId);
+            
+            // Fetch employee data
+            const response = await fetch(`/api/employees`);
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                // Find the employee by ID or email
+                const employee = data.data.find(emp => emp.id === employeeId || emp.email === employeeId);
+                
+                if (!employee) {
+                    alert('Employee not found');
+                    return;
+                }
+                
+                // Populate the form
+                document.getElementById('editEmpId').value = employee.id || employee.email;
+                document.getElementById('editEmpName').value = employee.full_name || '';
+                document.getElementById('editEmpEmail').value = employee.email || '';
+                document.getElementById('editEmpEmployeeID').value = employee.employee_id || '';
+                document.getElementById('editEmpGender').value = employee.gender || '';
+                document.getElementById('editEmpDOB').value = employee.date_of_birth || '';
+                document.getElementById('editEmpNRIC').value = employee.nric || '';
+                document.getElementById('editEmpNationality').value = employee.nationality || '';
+                document.getElementById('editEmpCitizenship').value = employee.citizenship || '';
+                document.getElementById('editEmpRace').value = employee.race || '';
+                document.getElementById('editEmpReligion').value = employee.religion || '';
+                document.getElementById('editEmpMaritalStatus').value = employee.marital_status || '';
+                document.getElementById('editEmpChildren').value = employee.number_of_children || '0';
+                document.getElementById('editEmpPhone').value = employee.phone_number || '';
+                document.getElementById('editEmpAddress').value = employee.address || '';
+                document.getElementById('editEmpCity').value = employee.city || '';
+                document.getElementById('editEmpState').value = employee.state || '';
+                document.getElementById('editEmpZipcode').value = employee.zipcode || '';
+                document.getElementById('editEmpDepartment').value = employee.department || '';
+                document.getElementById('editEmpPosition').value = employee.position || '';
+                document.getElementById('editEmpRole').value = employee.role || 'employee';
+                document.getElementById('editEmpStatus').value = employee.employment_status || 'Active';
+                document.getElementById('editEmpJoinDate').value = employee.join_date || '';
+                document.getElementById('editEmpEPFNumber').value = employee.epf_number || '';
+                document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
+                document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
+                
+                // Show the modal
+                document.getElementById('editEmployeeModal').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading employee data:', error);
+            alert('Error loading employee data');
+        }
+    };
+    
+    window.closeEditEmployeeModal = function() {
+        document.getElementById('editEmployeeModal').style.display = 'none';
+        document.getElementById('editEmployeeMessage').style.display = 'none';
+    };
+    
+    // Handle edit employee form submission
+    const editEmployeeForm = document.getElementById('editEmployeeForm');
+    if (editEmployeeForm) {
+        editEmployeeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('editEmpId').value;
+            const formData = new FormData(editEmployeeForm);
+            const data = {};
+            
+            // Convert FormData to object
+            for (let [key, value] of formData.entries()) {
+                if (key !== 'employee_id_display') { // Skip the display-only field
+                    data[key] = value;
+                }
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/employees/${employeeId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('editEmployeeMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = 'Employee updated successfully!';
+                    
+                    // Refresh the employee list
+                    setTimeout(() => {
+                        closeEditEmployeeModal();
+                        loadEmployeeList();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to update employee';
+                }
+            } catch (error) {
+                console.error('Error updating employee:', error);
+                const messageDiv = document.getElementById('editEmployeeMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error updating employee';
+            }
+        });
     }
     
     // Load all new data on init

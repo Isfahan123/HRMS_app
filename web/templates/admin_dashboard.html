@@ -258,6 +258,198 @@
                         </form>
                     </div>
                     
+                    <!-- Edit Employee Modal -->
+                    <div id="editEmployeeModal" class="modal" style="display: none;">
+                        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                            <div class="modal-header">
+                                <h3>Edit Employee</h3>
+                                <span class="modal-close" onclick="closeEditEmployeeModal()">&times;</span>
+                            </div>
+                            <form id="editEmployeeForm">
+                                <input type="hidden" id="editEmpId" name="employee_id">
+                                
+                                <!-- Basic Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Basic Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpName">Full Name:*</label>
+                                        <input type="text" id="editEmpName" name="full_name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpEmail">Email:*</label>
+                                        <input type="email" id="editEmpEmail" name="email" required readonly style="background: #f5f5f5;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpEmployeeID">Employee ID:</label>
+                                        <input type="text" id="editEmpEmployeeID" name="employee_id_display" readonly style="background: #f5f5f5;">
+                                    </div>
+                                </div>
+                                
+                                <!-- Personal Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Personal Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpGender">Gender:</label>
+                                        <select id="editEmpGender" name="gender">
+                                            <option value="">Select</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpDOB">Date of Birth:</label>
+                                        <input type="date" id="editEmpDOB" name="date_of_birth">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpNRIC">NRIC:</label>
+                                        <input type="text" id="editEmpNRIC" name="nric">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpNationality">Nationality:</label>
+                                        <input type="text" id="editEmpNationality" name="nationality">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpCitizenship">Citizenship:</label>
+                                        <select id="editEmpCitizenship" name="citizenship">
+                                            <option value="">Select</option>
+                                            <option value="Citizen">Citizen</option>
+                                            <option value="Non-citizen">Non-citizen</option>
+                                            <option value="Permanent Resident">Permanent Resident</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpRace">Race:</label>
+                                        <input type="text" id="editEmpRace" name="race">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpReligion">Religion:</label>
+                                        <input type="text" id="editEmpReligion" name="religion">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpMaritalStatus">Marital Status:</label>
+                                        <select id="editEmpMaritalStatus" name="marital_status">
+                                            <option value="">Select</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Divorced">Divorced</option>
+                                            <option value="Widowed">Widowed</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpChildren">Number of Children:</label>
+                                        <select id="editEmpChildren" name="number_of_children">
+                                            <option value="0">0</option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                            <option value="6">6</option>
+                                            <option value="7">7</option>
+                                            <option value="8">8</option>
+                                            <option value="9">9</option>
+                                            <option value="10">10</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contact Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Contact Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpPhone">Phone:</label>
+                                        <input type="tel" id="editEmpPhone" name="phone_number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpAddress">Address:</label>
+                                        <input type="text" id="editEmpAddress" name="address">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpCity">City:</label>
+                                        <input type="text" id="editEmpCity" name="city">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpState">State:</label>
+                                        <input type="text" id="editEmpState" name="state">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpZipcode">Zipcode:</label>
+                                        <input type="text" id="editEmpZipcode" name="zipcode">
+                                    </div>
+                                </div>
+                                
+                                <!-- Employment Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Employment Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpDepartment">Department:</label>
+                                        <input type="text" id="editEmpDepartment" name="department">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpPosition">Position:</label>
+                                        <input type="text" id="editEmpPosition" name="position">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpRole">Role:</label>
+                                        <select id="editEmpRole" name="role">
+                                            <option value="employee">Employee</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpStatus">Employment Status:</label>
+                                        <select id="editEmpStatus" name="employment_status">
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                            <option value="Terminated">Terminated</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpJoinDate">Join Date:</label>
+                                        <input type="date" id="editEmpJoinDate" name="join_date">
+                                    </div>
+                                </div>
+                                
+                                <!-- EPF/SOCSO Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">EPF/SOCSO Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpEPFNumber">EPF Number:</label>
+                                        <input type="text" id="editEmpEPFNumber" name="epf_number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSOCSONumber">SOCSO Number:</label>
+                                        <input type="text" id="editEmpSOCSONumber" name="socso_number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpIncomeTaxNumber">Income Tax Number:</label>
+                                        <input type="text" id="editEmpIncomeTaxNumber" name="income_tax_number">
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px;">
+                                    <button type="submit" class="btn-primary">Save Changes</button>
+                                    <button type="button" class="btn-secondary" onclick="closeEditEmployeeModal()">Cancel</button>
+                                </div>
+                                
+                                <div id="editEmployeeMessage" style="display: none; margin-top: 10px;"></div>
+                            </form>
+                        </div>
+                    </div>
+                    
                     <div id="employeeTable">Loading...</div>
                 </div>
                 
