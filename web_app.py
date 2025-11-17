@@ -1518,6 +1518,48 @@ async def get_leave_calendar(employee_id: str, year: Optional[int] = None):
         print(f"Error fetching leave calendar: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/holidays")
+async def create_holiday(holiday: dict):
+    """Create a new holiday"""
+    try:
+        response = supabase.table("public_holidays").insert(holiday).execute()
+        
+        if response.data:
+            return {"success": True, "data": response.data[0], "message": "Holiday created successfully"}
+        else:
+            return {"success": False, "message": "Failed to create holiday"}
+    except Exception as e:
+        print(f"Error creating holiday: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/holidays/{holiday_id}")
+async def update_holiday(holiday_id: int, holiday: dict):
+    """Update an existing holiday"""
+    try:
+        response = supabase.table("public_holidays").update(holiday).eq("id", holiday_id).execute()
+        
+        if response.data:
+            return {"success": True, "data": response.data[0], "message": "Holiday updated successfully"}
+        else:
+            return {"success": False, "message": "Failed to update holiday"}
+    except Exception as e:
+        print(f"Error updating holiday: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/holidays/{holiday_id}")
+async def delete_holiday(holiday_id: int):
+    """Delete a holiday"""
+    try:
+        response = supabase.table("public_holidays").delete().eq("id", holiday_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Holiday deleted successfully"}
+        else:
+            return {"success": False, "message": "Failed to delete holiday"}
+    except Exception as e:
+        print(f"Error deleting holiday: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

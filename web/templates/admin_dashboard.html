@@ -1785,6 +1785,94 @@
         </div>
     </div>
 
+    <!-- Holiday Add/Edit Modal -->
+    <div id="holidayModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="leaveCalendar.closeHolidayModal()">&times;</span>
+            <h2 id="holidayModalTitle">➕ Add Holiday</h2>
+            
+            <form id="holidayForm" onsubmit="event.preventDefault(); leaveCalendar.saveHoliday();">
+                <input type="hidden" id="holidayId">
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Date: *</label>
+                    <input type="date" id="holidayDate" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Holiday Name: *</label>
+                    <input type="text" id="holidayName" required placeholder="e.g. New Year's Day" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Type:</label>
+                    <select id="holidayType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="national">🇲🇾 National</option>
+                        <option value="state">📍 State Specific</option>
+                        <option value="company">🏢 Company</option>
+                        <option value="other">📅 Other</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">State (if applicable):</label>
+                    <input type="text" id="holidayState" placeholder="e.g. Selangor, Penang" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <small style="color: #666;">Leave empty for national holidays</small>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="holidayObservance" style="margin-right: 8px;">
+                        <span>👁️ This is an observance (not a day off)</span>
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">💾 Save Holiday</button>
+                    <button type="button" class="btn-secondary" onclick="leaveCalendar.closeHolidayModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Holiday List Management Modal -->
+    <div id="holidayListModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="leaveCalendar.closeHolidayListModal()">&times;</span>
+            <h2>📋 Manage Holidays</h2>
+            <p style="color: #666; margin-bottom: 20px;">View, edit, and delete holidays</p>
+            
+            <button onclick="leaveCalendar.showAddHolidayModal(); leaveCalendar.closeHolidayListModal();" class="btn-primary" style="margin-bottom: 15px;">
+                ➕ Add New Holiday
+            </button>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 10px; text-align: left;">Date</th>
+                            <th style="padding: 10px; text-align: left;">Holiday Name</th>
+                            <th style="padding: 10px; text-align: left;">Type</th>
+                            <th style="padding: 10px; text-align: center;">Observance</th>
+                            <th style="padding: 10px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: #666;">
+                                Loading holidays...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn-secondary" onclick="leaveCalendar.closeHolidayListModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/admin_dashboard.js"></script>
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>
