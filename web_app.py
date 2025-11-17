@@ -2,7 +2,7 @@
 Web application entry point for HRMS
 This provides a web-based interface using HTML/JavaScript with Python backend
 """
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -82,6 +82,22 @@ async def dashboard(request: Request):
 async def admin_dashboard(request: Request):
     """Serve the admin dashboard page"""
     return templates.TemplateResponse("admin_dashboard.html", {"request": request})
+
+@app.get("/demo", response_class=HTMLResponse)
+async def demo_dashboard(request: Request):
+    """Serve the demo dashboard page (for testing UI without auth)"""
+    return templates.TemplateResponse("demo_dashboard.html", {"request": request})
+
+@app.get("/WEB_INTERFACE_GUIDE.md")
+async def serve_guide():
+    """Serve the web interface guide"""
+    import os
+    guide_path = os.path.join(os.path.dirname(__file__), "WEB_INTERFACE_GUIDE.md")
+    if os.path.exists(guide_path):
+        with open(guide_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"content": content, "format": "markdown"}
+    return {"error": "Guide not found"}
 
 # API Endpoints
 @app.post("/api/login", response_model=LoginResponse)
@@ -229,6 +245,85 @@ async def get_engagements(employee_id: str):
     except Exception as e:
         print(f"Error fetching engagements: {str(e)}")
         return {"success": False, "message": str(e)}
+
+@app.post("/api/engagements")
+async def create_engagement(request: Request):
+    """
+    Create a new engagement (training/course/trip) record
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['type', 'title', 'start_date', 'end_date']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Add timestamps and default status
+        data['created_at'] = datetime.utcnow().isoformat()
+        if 'status' not in data:
+            data['status'] = 'pending'  # For employee submissions
+        
+        # Determine which table to insert into based on type
+        if data['type'] in ['training', 'course']:
+            table_name = "training_courses"
+        elif data['type'] == 'overseas_trip':
+            table_name = "overseas_trips"
+        else:
+            table_name = "engagements"
+        
+        response = supabase.table(table_name).insert(data).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Engagement submitted successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to submit engagement"}
+    except Exception as e:
+        print(f"Error creating engagement: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/engagements/all")
+async def get_all_engagements():
+    """
+    Get all engagements across all employees (admin only)
+    """
+    try:
+        all_data = []
+        
+        # Fetch from all engagement tables
+        try:
+            training_response = supabase.table("training_courses").select("*").order("created_at", desc=True).limit(100).execute()
+            if training_response.data:
+                for record in training_response.data:
+                    record['type'] = 'training'
+                    all_data.append(record)
+        except:
+            pass
+        
+        try:
+            trips_response = supabase.table("overseas_trips").select("*").order("created_at", desc=True).limit(100).execute()
+            if trips_response.data:
+                for record in trips_response.data:
+                    record['type'] = 'overseas_trip'
+                    all_data.append(record)
+        except:
+            pass
+        
+        try:
+            eng_response = supabase.table("engagements").select("*").order("created_at", desc=True).limit(100).execute()
+            if eng_response.data:
+                all_data.extend(eng_response.data)
+        except:
+            pass
+        
+        # Sort by date
+        all_data.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        return {"success": True, "data": all_data}
+    except Exception as e:
+        print(f"Error getting all engagements: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
 
 @app.get("/api/admin/attendance")
 async def get_all_attendance():
@@ -695,6 +790,201 @@ async def get_payroll_contributions():
         print(f"Error getting contributions: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/admin/contributions/upload-rates")
+async def upload_contribution_rates(contribution_type: str, file: UploadFile = File(...)):
+    """
+    Upload PDF containing EPF/SOCSO/EIS contribution rate tables
+    """
+    try:
+        # Validate contribution type
+        if contribution_type not in ['epf', 'socso', 'eis']:
+            return {"success": False, "message": "Invalid contribution type. Must be epf, socso, or eis"}
+        
+        # Validate file type
+        if not file.filename.endswith('.pdf'):
+            return {"success": False, "message": "Only PDF files are supported"}
+        
+        # Save the uploaded file temporarily
+        import tempfile
+        import shutil
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            shutil.copyfileobj(file.file, tmp_file)
+            tmp_path = tmp_file.name
+        
+        try:
+            # For EPF, use the dedicated parser if available
+            if contribution_type == 'epf':
+                try:
+                    from services.epf_pdf_parser import upload_and_parse_epf_pdf
+                    upload_and_parse_epf_pdf(tmp_path, supabase)
+                    return {"success": True, "message": f"EPF rates uploaded and parsed successfully"}
+                except ImportError:
+                    # Fall back to generic parsing
+                    pass
+            
+            # Generic PDF parsing for SOCSO/EIS or EPF fallback
+            # For now, just acknowledge the upload
+            # TODO: Implement PDF parsing for SOCSO and EIS
+            return {
+                "success": True, 
+                "message": f"{contribution_type.upper()} rate table uploaded successfully. Parsing functionality will be implemented soon.",
+                "note": "Manual rate verification recommended until parsing is fully implemented"
+            }
+        finally:
+            # Clean up temporary file
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            
+    except Exception as e:
+        print(f"Error uploading contribution rates: {str(e)}")
+        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+
+# Variable Percentage API Endpoints
+@app.get("/api/admin/variable-percentage")
+async def get_variable_percentage_rules():
+    """
+    Get all variable percentage rules
+    """
+    try:
+        response = supabase.table("variable_percentage_rules").select("*").order("created_at", desc=True).execute()
+        return {"success": True, "data": response.data or []}
+    except Exception as e:
+        print(f"Error getting variable percentage rules: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
+
+@app.post("/api/admin/variable-percentage")
+async def create_variable_percentage_rule(request: Request):
+    """
+    Create a new variable percentage rule
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['name', 'type', 'percentage', 'apply_to', 'base_on', 'frequency', 'status']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Validate percentage
+        try:
+            percentage = float(data['percentage'])
+            if percentage < 0 or percentage > 100:
+                return {"success": False, "message": "Percentage must be between 0 and 100"}
+        except ValueError:
+            return {"success": False, "message": "Invalid percentage value"}
+        
+        # Add timestamp
+        data['created_at'] = datetime.utcnow().isoformat()
+        
+        response = supabase.table("variable_percentage_rules").insert(data).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Variable percentage rule created successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to create rule"}
+    except Exception as e:
+        print(f"Error creating variable percentage rule: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/variable-percentage/{rule_id}")
+async def update_variable_percentage_rule(rule_id: str, request: Request):
+    """
+    Update an existing variable percentage rule
+    """
+    try:
+        data = await request.json()
+        
+        # Remove fields that shouldn't be updated
+        data.pop('id', None)
+        data.pop('created_at', None)
+        
+        # Add updated timestamp
+        data['updated_at'] = datetime.utcnow().isoformat()
+        
+        response = supabase.table("variable_percentage_rules").update(data).eq("id", rule_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Rule updated successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to update rule"}
+    except Exception as e:
+        print(f"Error updating variable percentage rule: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/variable-percentage/{rule_id}")
+async def delete_variable_percentage_rule(rule_id: str):
+    """
+    Delete a variable percentage rule
+    """
+    try:
+        response = supabase.table("variable_percentage_rules").delete().eq("id", rule_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Rule deleted successfully"}
+        else:
+            return {"success": False, "message": "Failed to delete rule"}
+    except Exception as e:
+        print(f"Error deleting variable percentage rule: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+# Skipped Payroll API Endpoint
+@app.get("/api/admin/skipped-payroll")
+async def get_skipped_payroll():
+    """
+    Get skipped payroll records
+    """
+    try:
+        # Query skipped payroll from payroll_skipped table or payroll_runs with skip flag
+        # For now, we'll create mock data structure since table might not exist yet
+        response = supabase.table("payroll_runs").select("*").eq("status", "skipped").order("created_at", desc=True).limit(100).execute()
+        
+        if not response.data:
+            # If no skipped records in payroll_runs, return empty array
+            return {"success": True, "data": []}
+        
+        skipped_records = []
+        for record in response.data:
+            skipped_records.append({
+                "id": record.get('id'),
+                "employee_name": record.get('employee_name', ''),
+                "employee_email": record.get('employee_email', ''),
+                "month_year": record.get('month_year', ''),
+                "reason": record.get('skip_reason', 'Not specified'),
+                "skipped_date": record.get('created_at', ''),
+                "notes": record.get('notes', ''),
+                "can_include": record.get('can_include_next', True)
+            })
+        
+        return {"success": True, "data": skipped_records}
+    except Exception as e:
+        print(f"Error getting skipped payroll: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
+
+@app.post("/api/admin/skipped-payroll/{record_id}/include")
+async def include_skipped_in_next_payroll(record_id: str):
+    """
+    Mark a skipped payroll record to be included in next run
+    """
+    try:
+        # Update the record to mark it for inclusion in next payroll
+        data = {
+            "can_include_next": True,
+            "status": "pending_inclusion",
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("payroll_runs").update(data).eq("id", record_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Record marked for inclusion in next payroll"}
+        else:
+            return {"success": False, "message": "Failed to update record"}
+    except Exception as e:
+        print(f"Error including skipped payroll: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/admin/salary-history")
 async def get_salary_history():
     """
@@ -718,6 +1008,58 @@ async def get_salary_history():
         print(f"Error getting salary history: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/admin/salary-history")
+async def create_salary_change(request: Request):
+    """
+    Record a salary change for an employee
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['employee_email', 'previous_salary', 'new_salary', 'effective_date', 'change_type']
+        for field in required_fields:
+            if field not in data or data[field] == '':
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Validate salary values
+        try:
+            prev_salary = float(data['previous_salary'])
+            new_salary = float(data['new_salary'])
+            if prev_salary < 0 or new_salary < 0:
+                return {"success": False, "message": "Salary values must be positive"}
+        except ValueError:
+            return {"success": False, "message": "Invalid salary values"}
+        
+        # Calculate change amount and percentage
+        change_amount = new_salary - prev_salary
+        change_percentage = (change_amount / prev_salary * 100) if prev_salary > 0 else 0
+        
+        # Create salary history record
+        history_record = {
+            "employee_email": data['employee_email'],
+            "change_type": data['change_type'],
+            "field_changed": "salary",
+            "previous_value": str(prev_salary),
+            "new_value": str(new_salary),
+            "effective_date": data['effective_date'],
+            "reason": data.get('reason', f"Salary changed from RM {prev_salary:.2f} to RM {new_salary:.2f} ({change_percentage:+.1f}%)"),
+            "change_amount": change_amount,
+            "change_percentage": change_percentage,
+            "created_at": datetime.utcnow().isoformat(),
+            "created_by": "admin"
+        }
+        
+        response = supabase.table("employee_history").insert(history_record).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Salary change recorded successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to record salary change"}
+    except Exception as e:
+        print(f"Error creating salary change: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/admin/employee-history")
 async def get_employee_history():
     """
@@ -732,6 +1074,43 @@ async def get_employee_history():
         return {"success": True, "data": response.data}
     except Exception as e:
         print(f"Error getting employee history: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/employee-history")
+async def create_employment_change(request: Request):
+    """
+    Record an employment change (promotion, transfer, status change, etc.)
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['employee_email', 'change_type', 'field_changed', 'effective_date', 'previous_value', 'new_value']
+        for field in required_fields:
+            if field not in data or data[field] == '':
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Create employment history record
+        history_record = {
+            "employee_email": data['employee_email'],
+            "change_type": data['change_type'],
+            "field_changed": data['field_changed'],
+            "previous_value": data['previous_value'],
+            "new_value": data['new_value'],
+            "effective_date": data['effective_date'],
+            "reason": data.get('reason', f"{data['field_changed']} changed from {data['previous_value']} to {data['new_value']}"),
+            "created_at": datetime.utcnow().isoformat(),
+            "created_by": "admin"
+        }
+        
+        response = supabase.table("employee_history").insert(history_record).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Employment change recorded successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to record employment change"}
+    except Exception as e:
+        print(f"Error creating employment change: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.get("/health")

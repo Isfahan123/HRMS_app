@@ -29,6 +29,12 @@
                 <button class="tab-button" data-tab="employeeHistory">🧾 Employment History</button>
             </div>
             
+            <!-- Navigation Help -->
+            <div style="background: #e3f2fd; padding: 12px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
+                <strong>💡 Tip:</strong> Click on the tabs above to access different sections. Many tabs have additional subtabs inside them.
+                <span style="margin-left: 15px;">📘 <a href="/WEB_INTERFACE_GUIDE.md" target="_blank" style="color: #1976d2; text-decoration: none;">View Full User Guide</a></span>
+            </div>
+            
             <div class="tab-content">
                 <!-- Employees Tab -->
                 <div id="employeesTab" class="tab-pane active">
@@ -250,6 +256,198 @@
                             
                             <div id="addEmployeeMessage" style="display: none; margin-top: 10px;"></div>
                         </form>
+                    </div>
+                    
+                    <!-- Edit Employee Modal -->
+                    <div id="editEmployeeModal" class="modal" style="display: none;">
+                        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                            <div class="modal-header">
+                                <h3>Edit Employee</h3>
+                                <span class="modal-close" onclick="closeEditEmployeeModal()">&times;</span>
+                            </div>
+                            <form id="editEmployeeForm">
+                                <input type="hidden" id="editEmpId" name="employee_id">
+                                
+                                <!-- Basic Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Basic Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpName">Full Name:*</label>
+                                        <input type="text" id="editEmpName" name="full_name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpEmail">Email:*</label>
+                                        <input type="email" id="editEmpEmail" name="email" required readonly style="background: #f5f5f5;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpEmployeeID">Employee ID:</label>
+                                        <input type="text" id="editEmpEmployeeID" name="employee_id_display" readonly style="background: #f5f5f5;">
+                                    </div>
+                                </div>
+                                
+                                <!-- Personal Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Personal Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpGender">Gender:</label>
+                                        <select id="editEmpGender" name="gender">
+                                            <option value="">Select</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpDOB">Date of Birth:</label>
+                                        <input type="date" id="editEmpDOB" name="date_of_birth">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpNRIC">NRIC:</label>
+                                        <input type="text" id="editEmpNRIC" name="nric">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpNationality">Nationality:</label>
+                                        <input type="text" id="editEmpNationality" name="nationality">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpCitizenship">Citizenship:</label>
+                                        <select id="editEmpCitizenship" name="citizenship">
+                                            <option value="">Select</option>
+                                            <option value="Citizen">Citizen</option>
+                                            <option value="Non-citizen">Non-citizen</option>
+                                            <option value="Permanent Resident">Permanent Resident</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpRace">Race:</label>
+                                        <input type="text" id="editEmpRace" name="race">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpReligion">Religion:</label>
+                                        <input type="text" id="editEmpReligion" name="religion">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpMaritalStatus">Marital Status:</label>
+                                        <select id="editEmpMaritalStatus" name="marital_status">
+                                            <option value="">Select</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Divorced">Divorced</option>
+                                            <option value="Widowed">Widowed</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpChildren">Number of Children:</label>
+                                        <select id="editEmpChildren" name="number_of_children">
+                                            <option value="0">0</option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                            <option value="6">6</option>
+                                            <option value="7">7</option>
+                                            <option value="8">8</option>
+                                            <option value="9">9</option>
+                                            <option value="10">10</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contact Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Contact Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpPhone">Phone:</label>
+                                        <input type="tel" id="editEmpPhone" name="phone_number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpAddress">Address:</label>
+                                        <input type="text" id="editEmpAddress" name="address">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpCity">City:</label>
+                                        <input type="text" id="editEmpCity" name="city">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpState">State:</label>
+                                        <input type="text" id="editEmpState" name="state">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpZipcode">Zipcode:</label>
+                                        <input type="text" id="editEmpZipcode" name="zipcode">
+                                    </div>
+                                </div>
+                                
+                                <!-- Employment Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Employment Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpDepartment">Department:</label>
+                                        <input type="text" id="editEmpDepartment" name="department">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpPosition">Position:</label>
+                                        <input type="text" id="editEmpPosition" name="position">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpRole">Role:</label>
+                                        <select id="editEmpRole" name="role">
+                                            <option value="employee">Employee</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpStatus">Employment Status:</label>
+                                        <select id="editEmpStatus" name="employment_status">
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                            <option value="Terminated">Terminated</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpJoinDate">Join Date:</label>
+                                        <input type="date" id="editEmpJoinDate" name="join_date">
+                                    </div>
+                                </div>
+                                
+                                <!-- EPF/SOCSO Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">EPF/SOCSO Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpEPFNumber">EPF Number:</label>
+                                        <input type="text" id="editEmpEPFNumber" name="epf_number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSOCSONumber">SOCSO Number:</label>
+                                        <input type="text" id="editEmpSOCSONumber" name="socso_number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpIncomeTaxNumber">Income Tax Number:</label>
+                                        <input type="text" id="editEmpIncomeTaxNumber" name="income_tax_number">
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px;">
+                                    <button type="submit" class="btn-primary">Save Changes</button>
+                                    <button type="button" class="btn-secondary" onclick="closeEditEmployeeModal()">Cancel</button>
+                                </div>
+                                
+                                <div id="editEmployeeMessage" style="display: none; margin-top: 10px;"></div>
+                            </form>
+                        </div>
                     </div>
                     
                     <div id="employeeTable">Loading...</div>
@@ -593,14 +791,130 @@
                     
                     <!-- Skipped Payroll Subtab -->
                     <div id="payrollSkippedSubtab" class="subtab-content">
-                        <h3>Skipped Payroll</h3>
-                        <p>Skipped payroll records coming soon...</p>
+                        <h3>⏭️ Skipped Payroll Records</h3>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            View and manage employees who were skipped from payroll runs due to unpaid leave, suspension, or other reasons.
+                        </p>
+                        
+                        <!-- Filter Section -->
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="skippedMonthFilter">Month:</label>
+                                <input type="month" id="skippedMonthFilter">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="skippedEmployeeFilter">Employee:</label>
+                                <input type="text" id="skippedEmployeeFilter" placeholder="Search by name...">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="skippedReasonFilter">Reason:</label>
+                                <select id="skippedReasonFilter">
+                                    <option value="">All Reasons</option>
+                                    <option value="unpaid_leave">Unpaid Leave</option>
+                                    <option value="suspension">Suspension</option>
+                                    <option value="on_hold">On Hold</option>
+                                    <option value="terminated">Terminated</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="loadSkippedPayroll()">🔍 Search</button>
+                            <button class="btn-secondary" onclick="exportSkippedPayrollCSV()">📤 Export CSV</button>
+                        </div>
+                        
+                        <!-- Skipped Payroll Table -->
+                        <div id="skippedPayrollTable">
+                            <p style="color: #666;">Select filters and click Search to view skipped payroll records...</p>
+                        </div>
                     </div>
                     
                     <!-- View Contributions Subtab -->
                     <div id="payrollContributionsSubtab" class="subtab-content">
-                        <h3>View Contributions</h3>
-                        <p>EPF, SOCSO, and EIS contributions coming soon...</p>
+                        <h3>📊 View Contributions (EPF, SOCSO, EIS)</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Manage and view statutory contribution rates and details</p>
+                        
+                        <!-- Upload Rate Tables Section -->
+                        <div class="form-section" style="margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                            <h4 style="color: #667eea; margin-bottom: 15px;">📤 Upload Contribution Rate Tables (PDF)</h4>
+                            <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+                                Upload official PDF rate tables from KWSP (EPF), PERKESO (SOCSO), and PERKESO (EIS) to automatically update contribution rates.
+                            </p>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">EPF Rate Table</label>
+                                    <input type="file" id="epfRateFile" accept=".pdf" style="margin-bottom: 8px;">
+                                    <button class="btn-primary btn-sm" onclick="uploadRatePDF('epf')">Upload EPF PDF</button>
+                                </div>
+                                
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">SOCSO Rate Table</label>
+                                    <input type="file" id="socsoRateFile" accept=".pdf" style="margin-bottom: 8px;">
+                                    <button class="btn-primary btn-sm" onclick="uploadRatePDF('socso')">Upload SOCSO PDF</button>
+                                </div>
+                                
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">EIS Rate Table</label>
+                                    <input type="file" id="eisRateFile" accept=".pdf" style="margin-bottom: 8px;">
+                                    <button class="btn-primary btn-sm" onclick="uploadRatePDF('eis')">Upload EIS PDF</button>
+                                </div>
+                            </div>
+                            
+                            <div id="uploadRateMessage" style="display: none; margin-top: 15px; padding: 10px; border-radius: 5px;"></div>
+                        </div>
+                        
+                        <!-- Filter Section -->
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="contribMonthFilter">Month:</label>
+                                <input type="month" id="contribMonthFilter">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="contribEmployeeFilter">Employee:</label>
+                                <input type="text" id="contribEmployeeFilter" placeholder="Search by name or email...">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="contribCitizenFilter">Citizenship:</label>
+                                <select id="contribCitizenFilter">
+                                    <option value="">All</option>
+                                    <option value="Citizen">Citizen</option>
+                                    <option value="Non-citizen">Non-citizen</option>
+                                    <option value="Permanent Resident">Permanent Resident</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="loadContributions()">🔍 Search</button>
+                            <button class="btn-secondary" onclick="exportContributionsCSV()">📤 Export CSV</button>
+                        </div>
+                        
+                        <!-- Current Rates Display -->
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="color: #1976d2; margin-bottom: 10px;">Current Contribution Rates (2025)</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 14px;">
+                                <div>
+                                    <strong>EPF (Citizen):</strong><br>
+                                    Employee: 11% | Employer: 13%
+                                </div>
+                                <div>
+                                    <strong>EPF (Non-citizen):</strong><br>
+                                    Employee: 5% | Employer: 5%
+                                </div>
+                                <div>
+                                    <strong>SOCSO:</strong><br>
+                                    Employee: 0.5% | Employer: 1.75%
+                                </div>
+                                <div>
+                                    <strong>EIS:</strong><br>
+                                    Employee: 0.2% | Employer: 0.2%
+                                </div>
+                            </div>
+                            <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                                <em>Note: Rates may vary by salary band. Upload official PDFs for accurate calculations.</em>
+                            </p>
+                        </div>
+                        
+                        <!-- Contributions Table -->
+                        <div id="contributionsTable">
+                            <p style="color: #666;">Select filters and click Search to view contributions...</p>
+                        </div>
                     </div>
                     
                     <!-- Bonuses Subtab -->
@@ -611,8 +925,128 @@
                     
                     <!-- Variable % Subtab -->
                     <div id="payrollVariableSubtab" class="subtab-content">
-                        <h3>📊 Variable %</h3>
-                        <p>Variable percentage configuration coming soon...</p>
+                        <h3>📊 Variable Percentage Configuration</h3>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            Configure variable percentage bonuses and allowances for employees. These can be performance-based, 
+                            department-based, or applied company-wide.
+                        </p>
+                        
+                        <!-- Add Variable % Button -->
+                        <button class="btn-primary" onclick="showAddVariablePercentageForm()" style="margin-bottom: 20px;">
+                            ➕ Add Variable Percentage Rule
+                        </button>
+                        
+                        <!-- Add Variable % Form (hidden by default) -->
+                        <div id="addVariablePercentageForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                            <h4>Add Variable Percentage Rule</h4>
+                            <form id="newVariablePercentageForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctName">Rule Name:*</label>
+                                        <input type="text" id="varPctName" name="name" required placeholder="e.g., Q1 Performance Bonus">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctType">Type:*</label>
+                                        <select id="varPctType" name="type" required>
+                                            <option value="">Select Type</option>
+                                            <option value="bonus">Bonus</option>
+                                            <option value="allowance">Allowance</option>
+                                            <option value="commission">Commission</option>
+                                            <option value="incentive">Incentive</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctPercentage">Percentage:*</label>
+                                        <input type="number" id="varPctPercentage" name="percentage" required min="0" max="100" step="0.01" placeholder="e.g., 5.5">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctApplyTo">Apply To:*</label>
+                                        <select id="varPctApplyTo" name="apply_to" required onchange="toggleEmployeeSelection()">
+                                            <option value="">Select</option>
+                                            <option value="all">All Employees</option>
+                                            <option value="department">Department</option>
+                                            <option value="individual">Individual Employee</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="varPctDepartmentGroup" style="display: none;">
+                                        <label for="varPctDepartment">Department:</label>
+                                        <select id="varPctDepartment" name="department">
+                                            <option value="">Select Department</option>
+                                            <option value="IT">IT</option>
+                                            <option value="HR">HR</option>
+                                            <option value="Finance">Finance</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Operations">Operations</option>
+                                            <option value="Sales">Sales</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="varPctEmployeeGroup" style="display: none;">
+                                        <label for="varPctEmployee">Employee Email:</label>
+                                        <input type="email" id="varPctEmployee" name="employee_email" placeholder="employee@company.com">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctBaseOn">Calculate Based On:*</label>
+                                        <select id="varPctBaseOn" name="base_on" required>
+                                            <option value="">Select</option>
+                                            <option value="basic_salary">Basic Salary</option>
+                                            <option value="gross_salary">Gross Salary</option>
+                                            <option value="net_salary">Net Salary</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctFrequency">Frequency:*</label>
+                                        <select id="varPctFrequency" name="frequency" required>
+                                            <option value="">Select</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="quarterly">Quarterly</option>
+                                            <option value="annually">Annually</option>
+                                            <option value="one-time">One-Time</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctStatus">Status:*</label>
+                                        <select id="varPctStatus" name="status" required>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctStartDate">Start Date:</label>
+                                        <input type="date" id="varPctStartDate" name="start_date">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctEndDate">End Date:</label>
+                                        <input type="date" id="varPctEndDate" name="end_date">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="varPctDescription">Description:</label>
+                                    <textarea id="varPctDescription" name="description" rows="3" placeholder="Optional description of this variable percentage rule"></textarea>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <button type="submit" class="btn-primary">Save Rule</button>
+                                    <button type="button" class="btn-secondary" onclick="hideAddVariablePercentageForm()">Cancel</button>
+                                </div>
+                                
+                                <div id="addVariablePercentageMessage" style="display: none; margin-top: 10px;"></div>
+                            </form>
+                        </div>
+                        
+                        <!-- Variable % Rules Table -->
+                        <div id="variablePercentageRulesTable">
+                            <p style="color: #666;">Loading variable percentage rules...</p>
+                        </div>
                     </div>
                     
                     <!-- LHDN Tax Subtab -->
@@ -729,7 +1163,99 @@
                 <!-- Salary History Tab -->
                 <div id="salaryHistoryTab" class="tab-pane">
                     <h2>📈 Salary History</h2>
-                    <p>Salary history management coming soon...</p>
+                    <p style="color: #666; margin-bottom: 20px;">Track and manage salary changes over time for all employees.</p>
+                    
+                    <!-- Add Salary Change Button -->
+                    <button class="btn-primary" onclick="showAddSalaryChangeForm()" style="margin-bottom: 20px;">
+                        ➕ Record Salary Change
+                    </button>
+                    
+                    <!-- Add Salary Change Form (hidden by default) -->
+                    <div id="addSalaryChangeForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                        <h3>Record Salary Change</h3>
+                        <form id="newSalaryChangeForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="salaryChangeEmployee">Employee Email:*</label>
+                                    <input type="email" id="salaryChangeEmployee" name="employee_email" required placeholder="employee@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryChangePrevious">Previous Salary:*</label>
+                                    <input type="number" id="salaryChangePrevious" name="previous_salary" required min="0" step="0.01" placeholder="e.g., 5000.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryChangeNew">New Salary:*</label>
+                                    <input type="number" id="salaryChangeNew" name="new_salary" required min="0" step="0.01" placeholder="e.g., 5500.00">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="salaryChangeEffectiveDate">Effective Date:*</label>
+                                    <input type="date" id="salaryChangeEffectiveDate" name="effective_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryChangeType">Change Type:*</label>
+                                    <select id="salaryChangeType" name="change_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="promotion">Promotion</option>
+                                        <option value="increment">Annual Increment</option>
+                                        <option value="adjustment">Salary Adjustment</option>
+                                        <option value="correction">Correction</option>
+                                        <option value="demotion">Demotion</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="salaryChangeReason">Reason/Notes:</label>
+                                <textarea id="salaryChangeReason" name="reason" rows="3" placeholder="Optional notes about this salary change"></textarea>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <button type="submit" class="btn-primary">Save Salary Change</button>
+                                <button type="button" class="btn-secondary" onclick="hideAddSalaryChangeForm()">Cancel</button>
+                            </div>
+                            
+                            <div id="addSalaryChangeMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                    
+                    <!-- Filter Section -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="salaryHistoryEmployeeFilter">Employee:</label>
+                            <input type="text" id="salaryHistoryEmployeeFilter" placeholder="Search by name or email...">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="salaryHistoryTypeFilter">Change Type:</label>
+                            <select id="salaryHistoryTypeFilter">
+                                <option value="">All Types</option>
+                                <option value="promotion">Promotion</option>
+                                <option value="increment">Annual Increment</option>
+                                <option value="adjustment">Salary Adjustment</option>
+                                <option value="correction">Correction</option>
+                                <option value="demotion">Demotion</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="salaryHistoryYearFilter">Year:</label>
+                            <select id="salaryHistoryYearFilter">
+                                <option value="">All Years</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" onclick="loadSalaryHistory()">🔍 Search</button>
+                        <button class="btn-secondary" onclick="exportSalaryHistoryCSV()">📤 Export CSV</button>
+                    </div>
+                    
+                    <!-- Salary History Table -->
+                    <div id="salaryHistoryTable">
+                        <p style="color: #666;">Loading salary history records...</p>
+                    </div>
                 </div>
                 
                 <!-- Engagements Tab -->
@@ -744,14 +1270,113 @@
                     
                     <!-- Submit Engagement Subtab -->
                     <div id="engagementsSubmitSubtab" class="subtab-content active">
-                        <h3>Submit New Engagement</h3>
-                        <p>Submit training, courses, trips, or work assignments coming soon...</p>
+                        <h3>📚 Submit New Engagement (Admin)</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Record training, courses, overseas trips, or work assignments for employees.</p>
+                        
+                        <form id="adminEngagementForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="adminEngType">Type:*</label>
+                                    <select id="adminEngType" name="type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="training">Training</option>
+                                        <option value="course">Course</option>
+                                        <option value="overseas_trip">Overseas Work Trip</option>
+                                        <option value="assignment">Work Assignment</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngEmployeeEmail">Employee Email:*</label>
+                                    <input type="email" id="adminEngEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngTitle">Title/Name:*</label>
+                                    <input type="text" id="adminEngTitle" name="title" required placeholder="e.g., Project Management Course">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="adminEngStartDate">Start Date:*</label>
+                                    <input type="date" id="adminEngStartDate" name="start_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngEndDate">End Date:*</label>
+                                    <input type="date" id="adminEngEndDate" name="end_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngLocation">Location/Venue:</label>
+                                    <input type="text" id="adminEngLocation" name="location" placeholder="e.g., Kuala Lumpur">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="adminEngOrganizer">Organizer/Provider:</label>
+                                    <input type="text" id="adminEngOrganizer" name="organizer" placeholder="e.g., Training Institute">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngCost">Cost (RM):</label>
+                                    <input type="number" id="adminEngCost" name="cost" min="0" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngStatus">Status:*</label>
+                                    <select id="adminEngStatus" name="status" required>
+                                        <option value="approved">Approved</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="adminEngDescription">Description/Notes:</label>
+                                <textarea id="adminEngDescription" name="description" rows="3" placeholder="Optional details about this engagement"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary">Submit Engagement</button>
+                            <div id="adminEngagementMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
                     </div>
                     
                     <!-- View All Engagements Subtab -->
                     <div id="engagementsViewSubtab" class="subtab-content">
-                        <h3>All Engagements</h3>
-                        <p>View all training, courses, trips, and work assignments coming soon...</p>
+                        <h3>📊 All Engagements</h3>
+                        <p style="color: #666; margin-bottom: 20px;">View all training, courses, trips, and work assignments across all employees.</p>
+                        
+                        <!-- Filter Section -->
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="engTypeFilter">Type:</label>
+                                <select id="engTypeFilter">
+                                    <option value="">All Types</option>
+                                    <option value="training">Training</option>
+                                    <option value="course">Course</option>
+                                    <option value="overseas_trip">Overseas Trip</option>
+                                    <option value="assignment">Assignment</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="engEmployeeFilter">Employee:</label>
+                                <input type="text" id="engEmployeeFilter" placeholder="Search by name or email...">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="engStatusFilter">Status:</label>
+                                <select id="engStatusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="loadAllEngagements()">🔍 Search</button>
+                            <button class="btn-secondary" onclick="exportEngagementsCSV()">📤 Export CSV</button>
+                        </div>
+                        
+                        <!-- Engagements Table -->
+                        <div id="allEngagementsTable">
+                            <p style="color: #666;">Click Search to view engagements...</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -837,7 +1462,115 @@
                 <!-- Employee History Tab -->
                 <div id="employeeHistoryTab" class="tab-pane">
                     <h2>🧾 Employment History</h2>
-                    <p>Employment history management coming soon...</p>
+                    <p style="color: #666; margin-bottom: 20px;">Track changes in employee positions, departments, status, and other employment details.</p>
+                    
+                    <!-- Add Employment Change Button -->
+                    <button class="btn-primary" onclick="showAddEmploymentChangeForm()" style="margin-bottom: 20px;">
+                        ➕ Record Employment Change
+                    </button>
+                    
+                    <!-- Add Employment Change Form (hidden by default) -->
+                    <div id="addEmploymentChangeForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                        <h3>Record Employment Change</h3>
+                        <form id="newEmploymentChangeForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryEmployeeEmail">Employee Email:*</label>
+                                    <input type="email" id="empHistoryEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryChangeType">Change Type:*</label>
+                                    <select id="empHistoryChangeType" name="change_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="promotion">Promotion</option>
+                                        <option value="transfer">Department Transfer</option>
+                                        <option value="position_change">Position Change</option>
+                                        <option value="status_change">Status Change</option>
+                                        <option value="demotion">Demotion</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryFieldChanged">Field Changed:*</label>
+                                    <select id="empHistoryFieldChanged" name="field_changed" required>
+                                        <option value="">Select Field</option>
+                                        <option value="position">Position</option>
+                                        <option value="department">Department</option>
+                                        <option value="status">Employment Status</option>
+                                        <option value="role">Role/Level</option>
+                                        <option value="location">Location</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryEffectiveDate">Effective Date:*</label>
+                                    <input type="date" id="empHistoryEffectiveDate" name="effective_date" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryPreviousValue">Previous Value:*</label>
+                                    <input type="text" id="empHistoryPreviousValue" name="previous_value" required placeholder="e.g., Software Engineer">
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryNewValue">New Value:*</label>
+                                    <input type="text" id="empHistoryNewValue" name="new_value" required placeholder="e.g., Senior Software Engineer">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="empHistoryReason">Reason/Notes:</label>
+                                <textarea id="empHistoryReason" name="reason" rows="3" placeholder="Optional details about this employment change"></textarea>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <button type="submit" class="btn-primary">Save Employment Change</button>
+                                <button type="button" class="btn-secondary" onclick="hideAddEmploymentChangeForm()">Cancel</button>
+                            </div>
+                            
+                            <div id="addEmploymentChangeMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                    
+                    <!-- Filter Section -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="empHistoryEmployeeFilter">Employee:</label>
+                            <input type="text" id="empHistoryEmployeeFilter" placeholder="Search by name or email...">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="empHistoryTypeFilter">Change Type:</label>
+                            <select id="empHistoryTypeFilter">
+                                <option value="">All Types</option>
+                                <option value="promotion">Promotion</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="position_change">Position Change</option>
+                                <option value="status_change">Status Change</option>
+                                <option value="demotion">Demotion</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="empHistoryYearFilter">Year:</label>
+                            <select id="empHistoryYearFilter">
+                                <option value="">All Years</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" onclick="loadEmployeeHistory()">🔍 Search</button>
+                        <button class="btn-secondary" onclick="exportEmployeeHistoryCSV()">📤 Export CSV</button>
+                    </div>
+                    
+                    <!-- Employment History Table -->
+                    <div id="employeeHistoryTable">
+                        <p style="color: #666;">Loading employment history records...</p>
+                    </div>
                 </div>
             </div>
         </div>

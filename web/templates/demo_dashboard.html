@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS Admin Dashboard - Demo</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>HRMS Admin Dashboard</h1>
+            <div class="user-info">
+                <span id="welcomeMessage">Welcome, Admin</span>
+            </div>
+        </header>
+        
+        <div class="dashboard-content">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="employees">👥 Profiles</button>
+                <button class="tab-button" data-tab="attendance">📋 Attendance</button>
+                <button class="tab-button" data-tab="leave">📅 Leaves</button>
+                <button class="tab-button" data-tab="payroll">💸 Payroll</button>
+                <button class="tab-button" data-tab="bonus">💰 Bonuses</button>
+            </div>
+            
+            <!-- Navigation Help -->
+            <div style="background: #e3f2fd; padding: 12px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
+                <strong>💡 Tip:</strong> Click on the tabs above to access different sections. Many tabs have additional subtabs inside them.
+                <span style="margin-left: 15px;">📘 <a href="/WEB_INTERFACE_GUIDE.md" target="_blank" style="color: #1976d2; text-decoration: none;">View Full User Guide</a></span>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Employees Tab -->
+                <div id="employeesTab" class="tab-pane active">
+                    <h2>👥 Employee Management</h2>
+                    <p>This is the Employees tab content. Click on other tabs to see their content.</p>
+                </div>
+                
+                <!-- Payroll Tab -->
+                <div id="payrollTab" class="tab-pane">
+                    <h2>Payroll Processing</h2>
+                    
+                    <!-- Payroll Subtabs -->
+                    <div class="subtabs">
+                        <button class="subtab-button active" data-subtab="payrollHistory">Payroll History</button>
+                        <button class="subtab-button" data-subtab="payrollSkipped">Skipped Payroll</button>
+                        <button class="subtab-button" data-subtab="payrollContributions">View Contributions</button>
+                        <button class="subtab-button" data-subtab="payrollBonuses">💰 Bonuses</button>
+                        <button class="subtab-button" data-subtab="payrollVariable">📊 Variable %</button>
+                        <button class="subtab-button" data-subtab="payrollLHDN">🏛️ LHDN Tax</button>
+                    </div>
+                    
+                    <!-- Payroll History Subtab -->
+                    <div id="payrollHistorySubtab" class="subtab-content active">
+                        <h3>Payroll History</h3>
+                        
+                        <div class="form-section">
+                            <h4>Run Payroll</h4>
+                            <form id="runPayrollForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="payrollMonth">Month:</label>
+                                        <input type="month" id="payrollMonth" name="payroll_date" required>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn-primary">Run Payroll</button>
+                                <div id="payrollMessage" style="display: none; margin-top: 10px;"></div>
+                            </form>
+                        </div>
+                        
+                        <div style="margin-top: 30px;">
+                            <h4>Payroll Runs</h4>
+                            
+                            <!-- Month Subtabs -->
+                            <div class="subtabs" style="margin-top: 15px; border-bottom: 1px solid #ddd;">
+                                <button class="subtab-button active" data-month="all">All</button>
+                                <button class="subtab-button" data-month="1">Jan</button>
+                                <button class="subtab-button" data-month="2">Feb</button>
+                                <button class="subtab-button" data-month="3">Mar</button>
+                                <button class="subtab-button" data-month="4">Apr</button>
+                                <button class="subtab-button" data-month="5">May</button>
+                                <button class="subtab-button" data-month="6">Jun</button>
+                                <button class="subtab-button" data-month="7">Jul</button>
+                                <button class="subtab-button" data-month="8">Aug</button>
+                                <button class="subtab-button" data-month="9">Sep</button>
+                                <button class="subtab-button" data-month="10">Oct</button>
+                                <button class="subtab-button" data-month="11">Nov</button>
+                                <button class="subtab-button" data-month="12">Dec</button>
+                            </div>
+                            
+                            <div id="payrollRunsTable" style="margin-top: 20px;">
+                                <p>Payroll runs table would appear here...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple tab switching for demo
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    const targetPane = document.getElementById(tabName + 'Tab');
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                    }
+                });
+            });
+            
+            // Subtab switching for demo
+            const subtabButtons = document.querySelectorAll('.subtab-button[data-subtab]');
+            subtabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const subtabName = this.getAttribute('data-subtab');
+                    const parentContainer = this.closest('.tab-pane');
+                    if (!parentContainer) return;
+                    
+                    const containerSubtabButtons = parentContainer.querySelectorAll('.subtab-button:not([data-month])');
+                    const containerSubtabContents = parentContainer.querySelectorAll('.subtab-content');
+                    
+                    containerSubtabButtons.forEach(btn => btn.classList.remove('active'));
+                    containerSubtabContents.forEach(content => content.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    const subtabContent = document.getElementById(subtabName + 'Subtab');
+                    if (subtabContent) {
+                        subtabContent.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function buildEmployeeTable(employees) {
         let html = '<table><thead><tr>';
-        html += '<th>Name</th><th>Email</th><th>Department</th><th>Position</th><th>Status</th>';
+        html += '<th>Name</th><th>Email</th><th>Department</th><th>Position</th><th>Status</th><th>Actions</th>';
         html += '</tr></thead><tbody>';
         
         employees.forEach(employee => {
@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<td>${employee.department || '-'}</td>`;
             html += `<td>${employee.position || '-'}</td>`;
             html += `<td>${employee.employment_status || '-'}</td>`;
+            html += `<td><button class="btn-secondary btn-sm" onclick="openEditEmployeeModal('${employee.id || employee.email}')">✏️ Edit</button></td>`;
             html += '</tr>';
         });
         
@@ -239,9 +240,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabPanes = document.querySelectorAll('.tab-pane');
         
+        console.log('🔧 Setting up tabs:', tabButtons.length, 'tab buttons found');
+        console.log('🔧 Tab panes:', tabPanes.length, 'panes found');
+        
         tabButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const tabName = this.getAttribute('data-tab');
+                console.log('✅ Tab clicked:', tabName);
                 
                 // Remove active class from all buttons and panes
                 tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -249,7 +254,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add active class to clicked button and corresponding pane
                 this.classList.add('active');
-                document.getElementById(tabName + 'Tab').classList.add('active');
+                const targetPane = document.getElementById(tabName + 'Tab');
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                    console.log('✅ Activated tab pane:', tabName + 'Tab');
+                } else {
+                    console.error('❌ Tab pane not found:', tabName + 'Tab');
+                }
             });
         });
         
@@ -260,14 +271,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupSubtabs() {
         const subtabButtons = document.querySelectorAll('.subtab-button');
         
+        console.log('🔧 Setting up subtabs:', subtabButtons.length, 'subtab buttons found');
+        
         subtabButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const subtabName = this.getAttribute('data-subtab');
                 const monthValue = this.getAttribute('data-month');
                 
+                console.log('✅ Subtab clicked:', subtabName || 'Month: ' + monthValue);
+                
                 // Get parent tab to scope subtab switching
                 const parentContainer = this.closest('.tab-pane');
-                if (!parentContainer) return;
+                if (!parentContainer) {
+                    console.error('❌ Parent container not found for subtab');
+                    return;
+                }
                 
                 // If this is a month tab (for payroll history)
                 if (monthValue) {
@@ -275,6 +293,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const monthButtons = parentContainer.querySelectorAll('[data-month]');
                     monthButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
+                    
+                    console.log('✅ Month filter activated:', monthValue);
                     
                     // Filter payroll table by month
                     filterPayrollByMonth(monthValue);
@@ -805,123 +825,536 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    async function loadPayrollContributions() {
+    // Contributions Management Functions
+    window.loadContributions = async function() {
         try {
             const response = await fetch('/api/admin/payroll-contributions');
             const data = await response.json();
             
-            const container = document.getElementById('payrollContributionsSubtab');
-            if (!container) return;
+            const tableContainer = document.getElementById('contributionsTable');
+            if (!tableContainer) return;
             
             if (data.success && data.data && data.data.length > 0) {
-                let html = '<h3>View Contributions</h3>';
-                html += '<p style="color: #666; margin-bottom: 15px;">EPF, SOCSO, and EIS contributions summary</p>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                // Apply filters
+                const monthFilter = document.getElementById('contribMonthFilter')?.value || '';
+                const employeeFilter = document.getElementById('contribEmployeeFilter')?.value.toLowerCase() || '';
+                const citizenFilter = document.getElementById('contribCitizenFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (monthFilter) {
+                    const [year, month] = monthFilter.split('-');
+                    const filterMonthYear = `${month}/${year}`;
+                    filteredData = filteredData.filter(c => c.month_year === filterMonthYear);
+                }
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(c => 
+                        (c.employee_name || '').toLowerCase().includes(employeeFilter)
+                    );
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No contributions found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
                 html += '<th style="padding: 10px;">Employee</th>';
                 html += '<th style="padding: 10px;">Period</th>';
-                html += '<th style="padding: 10px; text-align: right;">EPF (Employee)</th>';
-                html += '<th style="padding: 10px; text-align: right;">EPF (Employer)</th>';
-                html += '<th style="padding: 10px; text-align: right;">SOCSO (Employee)</th>';
-                html += '<th style="padding: 10px; text-align: right;">SOCSO (Employer)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EPF (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EPF (Er)</th>';
+                html += '<th style="padding: 10px; text-align: right;">SOCSO (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">SOCSO (Er)</th>';
                 html += '<th style="padding: 10px; text-align: right;">EIS</th>';
                 html += '<th style="padding: 10px; text-align: right;">PCB</th>';
+                html += '<th style="padding: 10px; text-align: right;">Total (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">Total (Er)</th>';
                 html += '</tr></thead><tbody>';
                 
-                data.data.forEach(contrib => {
+                let totalEpfEe = 0, totalEpfEr = 0, totalSocsoEe = 0, totalSocsoEr = 0, totalEis = 0, totalPcb = 0;
+                
+                filteredData.forEach(contrib => {
+                    const epfEe = parseFloat(contrib.epf_employee) || 0;
+                    const epfEr = parseFloat(contrib.epf_employer) || 0;
+                    const socsoEe = parseFloat(contrib.socso_employee) || 0;
+                    const socsoEr = parseFloat(contrib.socso_employer) || 0;
+                    const eis = parseFloat(contrib.eis) || 0;
+                    const pcb = parseFloat(contrib.pcb) || 0;
+                    const totalEe = epfEe + socsoEe + eis;
+                    const totalEr = epfEr + socsoEr;
+                    
+                    totalEpfEe += epfEe;
+                    totalEpfEr += epfEr;
+                    totalSocsoEe += socsoEe;
+                    totalSocsoEr += socsoEr;
+                    totalEis += eis;
+                    totalPcb += pcb;
+                    
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${contrib.employee_name || '-'}</td>`;
                     html += `<td style="padding: 10px;">${contrib.month_year || '-'}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.epf_employee.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.epf_employer.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.socso_employee.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.socso_employer.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.eis.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.pcb.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${epfEe.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${epfEr.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${socsoEe.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${socsoEr.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${eis.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${pcb.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEe.toFixed(2)}</strong></td>`;
+                    html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEr.toFixed(2)}</strong></td>`;
                     html += '</tr>';
                 });
                 
+                // Add totals row
+                html += '<tr style="background: #f0f0f0; font-weight: bold;">';
+                html += '<td style="padding: 10px;" colspan="2">TOTAL</td>';
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEpfEe.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEpfEr.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEe.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEr.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEis.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalPcb.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEe + totalSocsoEe + totalEis).toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEr + totalSocsoEr).toFixed(2)}</td>`;
+                html += '</tr>';
+                
                 html += '</tbody></table>';
-                container.innerHTML = html;
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} contribution record(s)</p>`;
+                tableContainer.innerHTML = html;
             } else {
-                container.innerHTML = '<h3>View Contributions</h3><p>No contribution data available.</p>';
+                tableContainer.innerHTML = '<p style="color: #666;">No contribution data available. Run payroll first.</p>';
             }
         } catch (error) {
             console.error('Error loading contributions:', error);
-            const container = document.getElementById('payrollContributionsSubtab');
-            if (container) container.innerHTML = '<h3>View Contributions</h3><p>Error loading contributions.</p>';
+            const tableContainer = document.getElementById('contributionsTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading contributions data.</p>';
         }
-    }
+    };
+    
+    window.uploadRatePDF = async function(contributionType) {
+        const fileInput = document.getElementById(`${contributionType}RateFile`);
+        const messageDiv = document.getElementById('uploadRateMessage');
+        
+        if (!fileInput.files || fileInput.files.length === 0) {
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'error-message';
+            messageDiv.style.background = '#ffebee';
+            messageDiv.style.color = '#c62828';
+            messageDiv.textContent = 'Please select a PDF file first';
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        
+        if (!file.name.endsWith('.pdf')) {
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'error-message';
+            messageDiv.style.background = '#ffebee';
+            messageDiv.style.color = '#c62828';
+            messageDiv.textContent = 'Only PDF files are supported';
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('contribution_type', contributionType);
+        
+        try {
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = '#e3f2fd';
+            messageDiv.style.color = '#1976d2';
+            messageDiv.textContent = `Uploading ${contributionType.toUpperCase()} rate table...`;
+            
+            const response = await fetch(`/api/admin/contributions/upload-rates?contribution_type=${contributionType}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                messageDiv.style.background = '#e8f5e9';
+                messageDiv.style.color = '#2e7d32';
+                messageDiv.textContent = `✅ ${result.message}`;
+                if (result.note) {
+                    messageDiv.textContent += ` Note: ${result.note}`;
+                }
+                fileInput.value = ''; // Clear the file input
+            } else {
+                messageDiv.style.background = '#ffebee';
+                messageDiv.style.color = '#c62828';
+                messageDiv.textContent = `❌ ${result.message}`;
+            }
+        } catch (error) {
+            console.error('Error uploading rate PDF:', error);
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = '#ffebee';
+            messageDiv.style.color = '#c62828';
+            messageDiv.textContent = `❌ Error uploading file: ${error.message}`;
+        }
+    };
+    
+    window.exportContributionsCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
+    
+    // Salary History Management Functions
+    window.showAddSalaryChangeForm = function() {
+        document.getElementById('addSalaryChangeForm').style.display = 'block';
+    };
+    
+    window.hideAddSalaryChangeForm = function() {
+        document.getElementById('addSalaryChangeForm').style.display = 'none';
+        document.getElementById('newSalaryChangeForm').reset();
+        document.getElementById('addSalaryChangeMessage').style.display = 'none';
+    };
     
     async function loadSalaryHistory() {
         try {
             const response = await fetch('/api/admin/salary-history');
             const data = await response.json();
             
-            const container = document.getElementById('salaryHistoryTab');
-            if (!container) return;
+            const tableContainer = document.getElementById('salaryHistoryTable');
+            if (!tableContainer) return;
             
             if (data.success && data.data && data.data.length > 0) {
-                let html = '<h2>📈 Salary History</h2>';
-                html += '<p style="color: #666; margin-bottom: 15px;">Track salary changes, promotions, and increments</p>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Date</th>';
+                // Apply filters
+                const employeeFilter = document.getElementById('salaryHistoryEmployeeFilter')?.value.toLowerCase() || '';
+                const typeFilter = document.getElementById('salaryHistoryTypeFilter')?.value || '';
+                const yearFilter = document.getElementById('salaryHistoryYearFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        ((r.employee_name || '').toLowerCase().includes(employeeFilter)) ||
+                        ((r.employee_email || '').toLowerCase().includes(employeeFilter))
+                    );
+                }
+                
+                if (typeFilter) {
+                    filteredData = filteredData.filter(r => r.change_type === typeFilter);
+                }
+                
+                if (yearFilter) {
+                    filteredData = filteredData.filter(r => {
+                        const date = r.effective_date || '';
+                        return date.startsWith(yearFilter);
+                    });
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No salary history records found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Effective Date</th>';
                 html += '<th style="padding: 10px;">Employee</th>';
                 html += '<th style="padding: 10px;">Change Type</th>';
-                html += '<th style="padding: 10px;">Previous</th>';
-                html += '<th style="padding: 10px;">New</th>';
+                html += '<th style="padding: 10px;">Previous Salary</th>';
+                html += '<th style="padding: 10px;">New Salary</th>';
+                html += '<th style="padding: 10px;">Change</th>';
                 html += '<th style="padding: 10px;">Reason</th>';
                 html += '</tr></thead><tbody>';
                 
-                data.data.forEach(record => {
+                filteredData.forEach(record => {
+                    const prevSalary = parseFloat(record.previous_value) || 0;
+                    const newSalary = parseFloat(record.new_value) || 0;
+                    const change = newSalary - prevSalary;
+                    const changePercent = prevSalary > 0 ? (change / prevSalary * 100) : 0;
+                    const changeColor = change >= 0 ? '#2e7d32' : '#c62828';
+                    
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.change_type || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
-                    html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">${record.reason || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; color: #1976d2; font-size: 12px;">${record.change_type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;">RM ${prevSalary.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px;"><strong>RM ${newSalary.toFixed(2)}</strong></td>`;
+                    html += `<td style="padding: 10px; color: ${changeColor};"><strong>${change >= 0 ? '+' : ''}RM ${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)</strong></td>`;
+                    html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
                     html += '</tr>';
                 });
                 
                 html += '</tbody></table>';
-                container.innerHTML = html;
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} salary change record(s)</p>`;
+                tableContainer.innerHTML = html;
             } else {
-                container.innerHTML = '<h2>📈 Salary History</h2><p>No salary history records found.</p>';
+                tableContainer.innerHTML = '<p style="color: #666;">No salary history records found. Record salary changes using the "Record Salary Change" button above.</p>';
             }
         } catch (error) {
             console.error('Error loading salary history:', error);
-            const container = document.getElementById('salaryHistoryTab');
-            if (container) container.innerHTML = '<h2>📈 Salary History</h2><p>Error loading salary history.</p>';
+            const tableContainer = document.getElementById('salaryHistoryTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading salary history data.</p>';
         }
     }
+    
+    // Handle new salary change form submission
+    const newSalaryChangeForm = document.getElementById('newSalaryChangeForm');
+    if (newSalaryChangeForm) {
+        newSalaryChangeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(newSalaryChangeForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/salary-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('addSalaryChangeMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Salary change recorded successfully!';
+                    
+                    setTimeout(() => {
+                        hideAddSalaryChangeForm();
+                        loadSalaryHistory();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to record salary change';
+                }
+            } catch (error) {
+                console.error('Error recording salary change:', error);
+                const messageDiv = document.getElementById('addSalaryChangeMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error recording salary change';
+            }
+        });
+    }
+    
+    window.exportSalaryHistoryCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
+    
+    // Engagements Management Functions (Admin)
+    const adminEngagementForm = document.getElementById('adminEngagementForm');
+    if (adminEngagementForm) {
+        adminEngagementForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(adminEngagementForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/engagements', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('adminEngagementMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Engagement submitted successfully!';
+                    adminEngagementForm.reset();
+                    
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 3000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to submit engagement';
+                }
+            } catch (error) {
+                console.error('Error submitting engagement:', error);
+                const messageDiv = document.getElementById('adminEngagementMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error submitting engagement';
+            }
+        });
+    }
+    
+    window.loadAllEngagements = async function() {
+        try {
+            const response = await fetch('/api/admin/engagements/all');
+            const data = await response.json();
+            
+            const tableContainer = document.getElementById('allEngagementsTable');
+            if (!tableContainer) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Apply filters
+                const typeFilter = document.getElementById('engTypeFilter')?.value || '';
+                const employeeFilter = document.getElementById('engEmployeeFilter')?.value.toLowerCase() || '';
+                const statusFilter = document.getElementById('engStatusFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (typeFilter) {
+                    filteredData = filteredData.filter(r => r.type === typeFilter);
+                }
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        ((r.employee_email || '').toLowerCase().includes(employeeFilter)) ||
+                        ((r.employee_name || '').toLowerCase().includes(employeeFilter))
+                    );
+                }
+                
+                if (statusFilter) {
+                    filteredData = filteredData.filter(r => r.status === statusFilter);
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No engagements found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Type</th>';
+                html += '<th style="padding: 10px;">Title</th>';
+                html += '<th style="padding: 10px;">Employee</th>';
+                html += '<th style="padding: 10px;">Start Date</th>';
+                html += '<th style="padding: 10px;">End Date</th>';
+                html += '<th style="padding: 10px;">Location</th>';
+                html += '<th style="padding: 10px;">Cost</th>';
+                html += '<th style="padding: 10px;">Status</th>';
+                html += '</tr></thead><tbody>';
+                
+                filteredData.forEach(record => {
+                    const statusColors = {
+                        'approved': '#2e7d32',
+                        'completed': '#1976d2',
+                        'pending': '#f57c00',
+                        'cancelled': '#c62828'
+                    };
+                    const statusColor = statusColors[record.status] || '#666';
+                    
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${record.type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;"><strong>${record.title || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.start_date || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.end_date || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.location || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.cost ? 'RM ' + parseFloat(record.cost).toFixed(2) : '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="color: ${statusColor}; font-weight: bold;">${record.status || '-'}</span></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} engagement(s)</p>`;
+                tableContainer.innerHTML = html;
+            } else {
+                tableContainer.innerHTML = '<p style="color: #666;">No engagements found. Submit engagements using the form above.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading engagements:', error);
+            const tableContainer = document.getElementById('allEngagementsTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading engagements data.</p>';
+        }
+    };
+    
+    window.exportEngagementsCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
+    
+    // Employment History Management Functions
+    window.showAddEmploymentChangeForm = function() {
+        document.getElementById('addEmploymentChangeForm').style.display = 'block';
+    };
+    
+    window.hideAddEmploymentChangeForm = function() {
+        document.getElementById('addEmploymentChangeForm').style.display = 'none';
+        document.getElementById('newEmploymentChangeForm').reset();
+        document.getElementById('addEmploymentChangeMessage').style.display = 'none';
+    };
     
     async function loadEmployeeHistory() {
         try {
             const response = await fetch('/api/admin/employee-history');
             const data = await response.json();
             
-            const container = document.getElementById('employeeHistoryTab');
-            if (!container) return;
+            const tableContainer = document.getElementById('employeeHistoryTable');
+            if (!tableContainer) return;
             
             if (data.success && data.data && data.data.length > 0) {
-                let html = '<h2>🧾 Employment History</h2>';
-                html += '<p style="color: #666; margin-bottom: 15px;">Complete history of employee changes</p>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Date</th>';
+                // Apply filters
+                const employeeFilter = document.getElementById('empHistoryEmployeeFilter')?.value.toLowerCase() || '';
+                const typeFilter = document.getElementById('empHistoryTypeFilter')?.value || '';
+                const yearFilter = document.getElementById('empHistoryYearFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        ((r.employee_name || '').toLowerCase().includes(employeeFilter)) ||
+                        ((r.employee_email || '').toLowerCase().includes(employeeFilter))
+                    );
+                }
+                
+                if (typeFilter) {
+                    filteredData = filteredData.filter(r => r.change_type === typeFilter);
+                }
+                
+                if (yearFilter) {
+                    filteredData = filteredData.filter(r => {
+                        const date = r.effective_date || '';
+                        return date.startsWith(yearFilter);
+                    });
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No employment history records found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Effective Date</th>';
                 html += '<th style="padding: 10px;">Employee</th>';
                 html += '<th style="padding: 10px;">Change Type</th>';
-                html += '<th style="padding: 10px;">Field</th>';
-                html += '<th style="padding: 10px;">Previous</th>';
-                html += '<th style="padding: 10px;">New</th>';
+                html += '<th style="padding: 10px;">Field Changed</th>';
+                html += '<th style="padding: 10px;">Previous Value</th>';
+                html += '<th style="padding: 10px;">New Value</th>';
                 html += '<th style="padding: 10px;">Reason</th>';
                 html += '</tr></thead><tbody>';
                 
-                data.data.forEach(record => {
+                filteredData.forEach(record => {
+                    const typeColors = {
+                        'promotion': '#2e7d32',
+                        'transfer': '#1976d2',
+                        'position_change': '#f57c00',
+                        'status_change': '#7b1fa2',
+                        'demotion': '#c62828',
+                        'other': '#666'
+                    };
+                    const typeColor = typeColors[record.change_type] || '#666';
+                    
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.change_type || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.field_changed || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="background: ${typeColor}20; padding: 4px 8px; border-radius: 4px; color: ${typeColor}; font-size: 12px; font-weight: bold;">${record.change_type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;"><em>${record.field_changed || '-'}</em></td>`;
                     html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
                     html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
                     html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
@@ -929,16 +1362,454 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 html += '</tbody></table>';
-                container.innerHTML = html;
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} employment change record(s)</p>`;
+                tableContainer.innerHTML = html;
             } else {
-                container.innerHTML = '<h2>🧾 Employment History</h2><p>No employment history records found.</p>';
+                tableContainer.innerHTML = '<p style="color: #666;">No employment history records found. Record employment changes using the "Record Employment Change" button above.</p>';
             }
         } catch (error) {
             console.error('Error loading employee history:', error);
-            const container = document.getElementById('employeeHistoryTab');
-            if (container) container.innerHTML = '<h2>🧾 Employment History</h2><p>Error loading employment history.</p>';
+            const tableContainer = document.getElementById('employeeHistoryTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading employment history data.</p>';
         }
     }
+    
+    // Handle new employment change form submission
+    const newEmploymentChangeForm = document.getElementById('newEmploymentChangeForm');
+    if (newEmploymentChangeForm) {
+        newEmploymentChangeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(newEmploymentChangeForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/employee-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('addEmploymentChangeMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Employment change recorded successfully!';
+                    
+                    setTimeout(() => {
+                        hideAddEmploymentChangeForm();
+                        loadEmployeeHistory();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to record employment change';
+                }
+            } catch (error) {
+                console.error('Error recording employment change:', error);
+                const messageDiv = document.getElementById('addEmploymentChangeMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error recording employment change';
+            }
+        });
+    }
+    
+    window.exportEmployeeHistoryCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
+    
+    // Edit Employee Functions
+    window.openEditEmployeeModal = async function(employeeId) {
+        try {
+            console.log('Opening edit modal for employee:', employeeId);
+            
+            // Fetch employee data
+            const response = await fetch(`/api/employees`);
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                // Find the employee by ID or email
+                const employee = data.data.find(emp => emp.id === employeeId || emp.email === employeeId);
+                
+                if (!employee) {
+                    alert('Employee not found');
+                    return;
+                }
+                
+                // Populate the form
+                document.getElementById('editEmpId').value = employee.id || employee.email;
+                document.getElementById('editEmpName').value = employee.full_name || '';
+                document.getElementById('editEmpEmail').value = employee.email || '';
+                document.getElementById('editEmpEmployeeID').value = employee.employee_id || '';
+                document.getElementById('editEmpGender').value = employee.gender || '';
+                document.getElementById('editEmpDOB').value = employee.date_of_birth || '';
+                document.getElementById('editEmpNRIC').value = employee.nric || '';
+                document.getElementById('editEmpNationality').value = employee.nationality || '';
+                document.getElementById('editEmpCitizenship').value = employee.citizenship || '';
+                document.getElementById('editEmpRace').value = employee.race || '';
+                document.getElementById('editEmpReligion').value = employee.religion || '';
+                document.getElementById('editEmpMaritalStatus').value = employee.marital_status || '';
+                document.getElementById('editEmpChildren').value = employee.number_of_children || '0';
+                document.getElementById('editEmpPhone').value = employee.phone_number || '';
+                document.getElementById('editEmpAddress').value = employee.address || '';
+                document.getElementById('editEmpCity').value = employee.city || '';
+                document.getElementById('editEmpState').value = employee.state || '';
+                document.getElementById('editEmpZipcode').value = employee.zipcode || '';
+                document.getElementById('editEmpDepartment').value = employee.department || '';
+                document.getElementById('editEmpPosition').value = employee.position || '';
+                document.getElementById('editEmpRole').value = employee.role || 'employee';
+                document.getElementById('editEmpStatus').value = employee.employment_status || 'Active';
+                document.getElementById('editEmpJoinDate').value = employee.join_date || '';
+                document.getElementById('editEmpEPFNumber').value = employee.epf_number || '';
+                document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
+                document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
+                
+                // Show the modal
+                document.getElementById('editEmployeeModal').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading employee data:', error);
+            alert('Error loading employee data');
+        }
+    };
+    
+    window.closeEditEmployeeModal = function() {
+        document.getElementById('editEmployeeModal').style.display = 'none';
+        document.getElementById('editEmployeeMessage').style.display = 'none';
+    };
+    
+    // Handle edit employee form submission
+    const editEmployeeForm = document.getElementById('editEmployeeForm');
+    if (editEmployeeForm) {
+        editEmployeeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('editEmpId').value;
+            const formData = new FormData(editEmployeeForm);
+            const data = {};
+            
+            // Convert FormData to object
+            for (let [key, value] of formData.entries()) {
+                if (key !== 'employee_id_display') { // Skip the display-only field
+                    data[key] = value;
+                }
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/employees/${employeeId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('editEmployeeMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = 'Employee updated successfully!';
+                    
+                    // Refresh the employee list
+                    setTimeout(() => {
+                        closeEditEmployeeModal();
+                        loadEmployeeList();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to update employee';
+                }
+            } catch (error) {
+                console.error('Error updating employee:', error);
+                const messageDiv = document.getElementById('editEmployeeMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error updating employee';
+            }
+        });
+    }
+    
+    // Variable Percentage Management Functions
+    window.showAddVariablePercentageForm = function() {
+        document.getElementById('addVariablePercentageForm').style.display = 'block';
+    };
+    
+    window.hideAddVariablePercentageForm = function() {
+        document.getElementById('addVariablePercentageForm').style.display = 'none';
+        document.getElementById('newVariablePercentageForm').reset();
+        document.getElementById('addVariablePercentageMessage').style.display = 'none';
+    };
+    
+    window.toggleEmployeeSelection = function() {
+        const applyTo = document.getElementById('varPctApplyTo').value;
+        const deptGroup = document.getElementById('varPctDepartmentGroup');
+        const empGroup = document.getElementById('varPctEmployeeGroup');
+        
+        if (applyTo === 'department') {
+            deptGroup.style.display = 'block';
+            empGroup.style.display = 'none';
+        } else if (applyTo === 'individual') {
+            deptGroup.style.display = 'none';
+            empGroup.style.display = 'block';
+        } else {
+            deptGroup.style.display = 'none';
+            empGroup.style.display = 'none';
+        }
+    };
+    
+    async function loadVariablePercentageRules() {
+        try {
+            const response = await fetch('/api/admin/variable-percentage');
+            const data = await response.json();
+            
+            const container = document.getElementById('variablePercentageRulesTable');
+            if (!container) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<h4 style="margin-top: 20px; margin-bottom: 15px;">Active Variable Percentage Rules</h4>';
+                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Rule Name</th>';
+                html += '<th style="padding: 10px;">Type</th>';
+                html += '<th style="padding: 10px;">Percentage</th>';
+                html += '<th style="padding: 10px;">Apply To</th>';
+                html += '<th style="padding: 10px;">Base On</th>';
+                html += '<th style="padding: 10px;">Frequency</th>';
+                html += '<th style="padding: 10px;">Status</th>';
+                html += '<th style="padding: 10px;">Actions</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(rule => {
+                    const statusClass = rule.status === 'active' ? 'color: #2e7d32;' : 'color: #f57c00;';
+                    const applyToText = rule.apply_to === 'all' ? 'All Employees' : 
+                                      rule.apply_to === 'department' ? `Dept: ${rule.department || '-'}` :
+                                      rule.apply_to === 'individual' ? `Emp: ${rule.employee_email || '-'}` : '-';
+                    
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;"><strong>${rule.name || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${rule.type || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${rule.percentage}%</strong></td>`;
+                    html += `<td style="padding: 10px;">${applyToText}</td>`;
+                    html += `<td style="padding: 10px;">${(rule.base_on || '').replace('_', ' ') || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${rule.frequency || '-'}</td>`;
+                    html += `<td style="padding: 10px; ${statusClass}"><strong>${rule.status || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">`;
+                    html += `<button class="btn-secondary btn-sm" onclick="editVariablePercentageRule('${rule.id}')">✏️ Edit</button> `;
+                    html += `<button class="btn-secondary btn-sm" onclick="deleteVariablePercentageRule('${rule.id}')">🗑️ Delete</button>`;
+                    html += `</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 10px; color: #666; font-size: 14px;">${data.data.length} rule(s) configured</p>`;
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p style="color: #666;">No variable percentage rules configured yet. Click "Add Variable Percentage Rule" to create one.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading variable percentage rules:', error);
+            const container = document.getElementById('variablePercentageRulesTable');
+            if (container) container.innerHTML = '<p style="color: #f44336;">Error loading rules.</p>';
+        }
+    }
+    
+    // Handle new variable percentage form submission
+    const newVariablePercentageForm = document.getElementById('newVariablePercentageForm');
+    if (newVariablePercentageForm) {
+        newVariablePercentageForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(newVariablePercentageForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/variable-percentage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('addVariablePercentageMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Variable percentage rule created successfully!';
+                    
+                    setTimeout(() => {
+                        hideAddVariablePercentageForm();
+                        loadVariablePercentageRules();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to create rule';
+                }
+            } catch (error) {
+                console.error('Error creating variable percentage rule:', error);
+                const messageDiv = document.getElementById('addVariablePercentageMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error creating rule';
+            }
+        });
+    }
+    
+    window.editVariablePercentageRule = function(ruleId) {
+        // TODO: Implement edit functionality
+        alert('Edit functionality will be implemented in the next iteration. For now, you can delete and recreate the rule.');
+    };
+    
+    window.deleteVariablePercentageRule = async function(ruleId) {
+        if (!confirm('Are you sure you want to delete this variable percentage rule?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/variable-percentage/${ruleId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ Rule deleted successfully');
+                loadVariablePercentageRules();
+            } else {
+                alert(`❌ ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error deleting variable percentage rule:', error);
+            alert('❌ Error deleting rule');
+        }
+    };
+    
+    // Skipped Payroll Management Functions
+    window.loadSkippedPayroll = async function() {
+        try {
+            const response = await fetch('/api/admin/skipped-payroll');
+            const data = await response.json();
+            
+            const tableContainer = document.getElementById('skippedPayrollTable');
+            if (!tableContainer) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Apply filters
+                const monthFilter = document.getElementById('skippedMonthFilter')?.value || '';
+                const employeeFilter = document.getElementById('skippedEmployeeFilter')?.value.toLowerCase() || '';
+                const reasonFilter = document.getElementById('skippedReasonFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (monthFilter) {
+                    const [year, month] = monthFilter.split('-');
+                    const filterMonthYear = `${month}/${year}`;
+                    filteredData = filteredData.filter(r => r.month_year === filterMonthYear);
+                }
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        (r.employee_name || '').toLowerCase().includes(employeeFilter)
+                    );
+                }
+                
+                if (reasonFilter) {
+                    filteredData = filteredData.filter(r => r.reason === reasonFilter);
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No skipped payroll records found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Employee</th>';
+                html += '<th style="padding: 10px;">Email</th>';
+                html += '<th style="padding: 10px;">Period</th>';
+                html += '<th style="padding: 10px;">Reason</th>';
+                html += '<th style="padding: 10px;">Skipped Date</th>';
+                html += '<th style="padding: 10px;">Notes</th>';
+                html += '<th style="padding: 10px;">Actions</th>';
+                html += '</tr></thead><tbody>';
+                
+                filteredData.forEach(record => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.month_year || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="background: #ffebee; padding: 4px 8px; border-radius: 4px; color: #c62828; font-size: 12px;">${record.reason || 'Not specified'}</span></td>`;
+                    html += `<td style="padding: 10px;">${record.skipped_date ? new Date(record.skipped_date).toLocaleDateString() : '-'}</td>`;
+                    html += `<td style="padding: 10px;"><small>${record.notes || '-'}</small></td>`;
+                    html += `<td style="padding: 10px;">`;
+                    if (record.can_include) {
+                        html += `<button class="btn-primary btn-sm" onclick="includeInNextPayroll('${record.id}')">Include in Next Run</button>`;
+                    } else {
+                        html += `<span style="color: #666; font-size: 12px;">Already included</span>`;
+                    }
+                    html += `</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} skipped record(s)</p>`;
+                tableContainer.innerHTML = html;
+            } else {
+                tableContainer.innerHTML = '<p style="color: #666;">No skipped payroll records found. Employees who are skipped during payroll runs will appear here.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading skipped payroll:', error);
+            const tableContainer = document.getElementById('skippedPayrollTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading skipped payroll data.</p>';
+        }
+    };
+    
+    window.includeInNextPayroll = async function(recordId) {
+        if (!confirm('Mark this employee to be included in the next payroll run?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/skipped-payroll/${recordId}/include`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ ' + result.message);
+                loadSkippedPayroll();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error including in next payroll:', error);
+            alert('❌ Error updating record');
+        }
+    };
+    
+    window.exportSkippedPayrollCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
     
     // Load all new data on init
     loadLeaveBalances();
@@ -947,4 +1818,5 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPayrollContributions();
     loadSalaryHistory();
     loadEmployeeHistory();
+    loadVariablePercentageRules();
 });
