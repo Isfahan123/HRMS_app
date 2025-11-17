@@ -1270,14 +1270,113 @@
                     
                     <!-- Submit Engagement Subtab -->
                     <div id="engagementsSubmitSubtab" class="subtab-content active">
-                        <h3>Submit New Engagement</h3>
-                        <p>Submit training, courses, trips, or work assignments coming soon...</p>
+                        <h3>📚 Submit New Engagement (Admin)</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Record training, courses, overseas trips, or work assignments for employees.</p>
+                        
+                        <form id="adminEngagementForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="adminEngType">Type:*</label>
+                                    <select id="adminEngType" name="type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="training">Training</option>
+                                        <option value="course">Course</option>
+                                        <option value="overseas_trip">Overseas Work Trip</option>
+                                        <option value="assignment">Work Assignment</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngEmployeeEmail">Employee Email:*</label>
+                                    <input type="email" id="adminEngEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngTitle">Title/Name:*</label>
+                                    <input type="text" id="adminEngTitle" name="title" required placeholder="e.g., Project Management Course">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="adminEngStartDate">Start Date:*</label>
+                                    <input type="date" id="adminEngStartDate" name="start_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngEndDate">End Date:*</label>
+                                    <input type="date" id="adminEngEndDate" name="end_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngLocation">Location/Venue:</label>
+                                    <input type="text" id="adminEngLocation" name="location" placeholder="e.g., Kuala Lumpur">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="adminEngOrganizer">Organizer/Provider:</label>
+                                    <input type="text" id="adminEngOrganizer" name="organizer" placeholder="e.g., Training Institute">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngCost">Cost (RM):</label>
+                                    <input type="number" id="adminEngCost" name="cost" min="0" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEngStatus">Status:*</label>
+                                    <select id="adminEngStatus" name="status" required>
+                                        <option value="approved">Approved</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="adminEngDescription">Description/Notes:</label>
+                                <textarea id="adminEngDescription" name="description" rows="3" placeholder="Optional details about this engagement"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary">Submit Engagement</button>
+                            <div id="adminEngagementMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
                     </div>
                     
                     <!-- View All Engagements Subtab -->
                     <div id="engagementsViewSubtab" class="subtab-content">
-                        <h3>All Engagements</h3>
-                        <p>View all training, courses, trips, and work assignments coming soon...</p>
+                        <h3>📊 All Engagements</h3>
+                        <p style="color: #666; margin-bottom: 20px;">View all training, courses, trips, and work assignments across all employees.</p>
+                        
+                        <!-- Filter Section -->
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="engTypeFilter">Type:</label>
+                                <select id="engTypeFilter">
+                                    <option value="">All Types</option>
+                                    <option value="training">Training</option>
+                                    <option value="course">Course</option>
+                                    <option value="overseas_trip">Overseas Trip</option>
+                                    <option value="assignment">Assignment</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="engEmployeeFilter">Employee:</label>
+                                <input type="text" id="engEmployeeFilter" placeholder="Search by name or email...">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="engStatusFilter">Status:</label>
+                                <select id="engStatusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="loadAllEngagements()">🔍 Search</button>
+                            <button class="btn-secondary" onclick="exportEngagementsCSV()">📤 Export CSV</button>
+                        </div>
+                        
+                        <!-- Engagements Table -->
+                        <div id="allEngagementsTable">
+                            <p style="color: #666;">Click Search to view engagements...</p>
+                        </div>
                     </div>
                 </div>
                 

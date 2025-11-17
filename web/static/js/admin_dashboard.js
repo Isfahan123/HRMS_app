@@ -1144,6 +1144,141 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('CSV export functionality will be implemented soon');
     };
     
+    // Engagements Management Functions (Admin)
+    const adminEngagementForm = document.getElementById('adminEngagementForm');
+    if (adminEngagementForm) {
+        adminEngagementForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(adminEngagementForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/engagements', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('adminEngagementMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Engagement submitted successfully!';
+                    adminEngagementForm.reset();
+                    
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 3000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to submit engagement';
+                }
+            } catch (error) {
+                console.error('Error submitting engagement:', error);
+                const messageDiv = document.getElementById('adminEngagementMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error submitting engagement';
+            }
+        });
+    }
+    
+    window.loadAllEngagements = async function() {
+        try {
+            const response = await fetch('/api/admin/engagements/all');
+            const data = await response.json();
+            
+            const tableContainer = document.getElementById('allEngagementsTable');
+            if (!tableContainer) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Apply filters
+                const typeFilter = document.getElementById('engTypeFilter')?.value || '';
+                const employeeFilter = document.getElementById('engEmployeeFilter')?.value.toLowerCase() || '';
+                const statusFilter = document.getElementById('engStatusFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (typeFilter) {
+                    filteredData = filteredData.filter(r => r.type === typeFilter);
+                }
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        ((r.employee_email || '').toLowerCase().includes(employeeFilter)) ||
+                        ((r.employee_name || '').toLowerCase().includes(employeeFilter))
+                    );
+                }
+                
+                if (statusFilter) {
+                    filteredData = filteredData.filter(r => r.status === statusFilter);
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No engagements found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Type</th>';
+                html += '<th style="padding: 10px;">Title</th>';
+                html += '<th style="padding: 10px;">Employee</th>';
+                html += '<th style="padding: 10px;">Start Date</th>';
+                html += '<th style="padding: 10px;">End Date</th>';
+                html += '<th style="padding: 10px;">Location</th>';
+                html += '<th style="padding: 10px;">Cost</th>';
+                html += '<th style="padding: 10px;">Status</th>';
+                html += '</tr></thead><tbody>';
+                
+                filteredData.forEach(record => {
+                    const statusColors = {
+                        'approved': '#2e7d32',
+                        'completed': '#1976d2',
+                        'pending': '#f57c00',
+                        'cancelled': '#c62828'
+                    };
+                    const statusColor = statusColors[record.status] || '#666';
+                    
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${record.type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;"><strong>${record.title || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.start_date || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.end_date || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.location || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.cost ? 'RM ' + parseFloat(record.cost).toFixed(2) : '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="color: ${statusColor}; font-weight: bold;">${record.status || '-'}</span></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} engagement(s)</p>`;
+                tableContainer.innerHTML = html;
+            } else {
+                tableContainer.innerHTML = '<p style="color: #666;">No engagements found. Submit engagements using the form above.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading engagements:', error);
+            const tableContainer = document.getElementById('allEngagementsTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading engagements data.</p>';
+        }
+    };
+    
+    window.exportEngagementsCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
+    
     async function loadEmployeeHistory() {
         try {
             const response = await fetch('/api/admin/employee-history');

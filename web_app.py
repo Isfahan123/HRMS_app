@@ -246,6 +246,85 @@ async def get_engagements(employee_id: str):
         print(f"Error fetching engagements: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/engagements")
+async def create_engagement(request: Request):
+    """
+    Create a new engagement (training/course/trip) record
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['type', 'title', 'start_date', 'end_date']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Add timestamps and default status
+        data['created_at'] = datetime.utcnow().isoformat()
+        if 'status' not in data:
+            data['status'] = 'pending'  # For employee submissions
+        
+        # Determine which table to insert into based on type
+        if data['type'] in ['training', 'course']:
+            table_name = "training_courses"
+        elif data['type'] == 'overseas_trip':
+            table_name = "overseas_trips"
+        else:
+            table_name = "engagements"
+        
+        response = supabase.table(table_name).insert(data).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Engagement submitted successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to submit engagement"}
+    except Exception as e:
+        print(f"Error creating engagement: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/engagements/all")
+async def get_all_engagements():
+    """
+    Get all engagements across all employees (admin only)
+    """
+    try:
+        all_data = []
+        
+        # Fetch from all engagement tables
+        try:
+            training_response = supabase.table("training_courses").select("*").order("created_at", desc=True).limit(100).execute()
+            if training_response.data:
+                for record in training_response.data:
+                    record['type'] = 'training'
+                    all_data.append(record)
+        except:
+            pass
+        
+        try:
+            trips_response = supabase.table("overseas_trips").select("*").order("created_at", desc=True).limit(100).execute()
+            if trips_response.data:
+                for record in trips_response.data:
+                    record['type'] = 'overseas_trip'
+                    all_data.append(record)
+        except:
+            pass
+        
+        try:
+            eng_response = supabase.table("engagements").select("*").order("created_at", desc=True).limit(100).execute()
+            if eng_response.data:
+                all_data.extend(eng_response.data)
+        except:
+            pass
+        
+        # Sort by date
+        all_data.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        return {"success": True, "data": all_data}
+    except Exception as e:
+        print(f"Error getting all engagements: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
+
 @app.get("/api/admin/attendance")
 async def get_all_attendance():
     """

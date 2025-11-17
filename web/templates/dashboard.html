@@ -317,14 +317,65 @@
                     
                     <!-- Submit Engagement Subtab -->
                     <div id="engagementsSubmitSubtab" class="subtab-content active">
-                        <h3>Submit New Engagement</h3>
-                        <p>Submit training, courses, trips, or work assignments coming soon...</p>
+                        <h3>📚 Request Training/Course/Trip</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Submit a request for training, course attendance, or work trip.</p>
+                        
+                        <form id="employeeEngagementForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empEngType">Type:*</label>
+                                    <select id="empEngType" name="type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="training">Training Request</option>
+                                        <option value="course">Course Request</option>
+                                        <option value="overseas_trip">Overseas Trip Request</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empEngTitle">Title/Name:*</label>
+                                    <input type="text" id="empEngTitle" name="title" required placeholder="e.g., Advanced Excel Training">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empEngStartDate">Proposed Start Date:*</label>
+                                    <input type="date" id="empEngStartDate" name="start_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empEngEndDate">Proposed End Date:*</label>
+                                    <input type="date" id="empEngEndDate" name="end_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empEngLocation">Location/Venue:</label>
+                                    <input type="text" id="empEngLocation" name="location" placeholder="e.g., Kuala Lumpur">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="empEngOrganizer">Organizer/Provider:</label>
+                                <input type="text" id="empEngOrganizer" name="organizer" placeholder="e.g., Training Institute">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="empEngReason">Reason for Request:*</label>
+                                <textarea id="empEngReason" name="description" rows="3" required placeholder="Please explain why you want to attend this training/course/trip and how it will benefit your work"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary">Submit Request</button>
+                            <div id="employeeEngagementMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
                     </div>
                     
                     <!-- View Engagements Subtab -->
                     <div id="engagementsViewSubtab" class="subtab-content">
-                        <h3>My Engagements</h3>
-                        <p>View your training, courses, trips, and work assignments coming soon...</p>
+                        <h3>📊 My Engagements</h3>
+                        <p style="color: #666; margin-bottom: 20px;">View your training, courses, and trips history.</p>
+                        
+                        <!-- My Engagements Table -->
+                        <div id="myEngagementsTable">
+                            <p style="color: #666;">Loading your engagements...</p>
+                        </div>
                     </div>
                 </div>
             </div>
