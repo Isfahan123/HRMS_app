@@ -850,6 +850,62 @@ async def delete_variable_percentage_rule(rule_id: str):
         print(f"Error deleting variable percentage rule: {str(e)}")
         return {"success": False, "message": str(e)}
 
+# Skipped Payroll API Endpoint
+@app.get("/api/admin/skipped-payroll")
+async def get_skipped_payroll():
+    """
+    Get skipped payroll records
+    """
+    try:
+        # Query skipped payroll from payroll_skipped table or payroll_runs with skip flag
+        # For now, we'll create mock data structure since table might not exist yet
+        response = supabase.table("payroll_runs").select("*").eq("status", "skipped").order("created_at", desc=True).limit(100).execute()
+        
+        if not response.data:
+            # If no skipped records in payroll_runs, return empty array
+            return {"success": True, "data": []}
+        
+        skipped_records = []
+        for record in response.data:
+            skipped_records.append({
+                "id": record.get('id'),
+                "employee_name": record.get('employee_name', ''),
+                "employee_email": record.get('employee_email', ''),
+                "month_year": record.get('month_year', ''),
+                "reason": record.get('skip_reason', 'Not specified'),
+                "skipped_date": record.get('created_at', ''),
+                "notes": record.get('notes', ''),
+                "can_include": record.get('can_include_next', True)
+            })
+        
+        return {"success": True, "data": skipped_records}
+    except Exception as e:
+        print(f"Error getting skipped payroll: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
+
+@app.post("/api/admin/skipped-payroll/{record_id}/include")
+async def include_skipped_in_next_payroll(record_id: str):
+    """
+    Mark a skipped payroll record to be included in next run
+    """
+    try:
+        # Update the record to mark it for inclusion in next payroll
+        data = {
+            "can_include_next": True,
+            "status": "pending_inclusion",
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("payroll_runs").update(data).eq("id", record_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Record marked for inclusion in next payroll"}
+        else:
+            return {"success": False, "message": "Failed to update record"}
+    except Exception as e:
+        print(f"Error including skipped payroll: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/admin/salary-history")
 async def get_salary_history():
     """

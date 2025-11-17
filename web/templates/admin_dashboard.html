@@ -791,8 +791,40 @@
                     
                     <!-- Skipped Payroll Subtab -->
                     <div id="payrollSkippedSubtab" class="subtab-content">
-                        <h3>Skipped Payroll</h3>
-                        <p>Skipped payroll records coming soon...</p>
+                        <h3>⏭️ Skipped Payroll Records</h3>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            View and manage employees who were skipped from payroll runs due to unpaid leave, suspension, or other reasons.
+                        </p>
+                        
+                        <!-- Filter Section -->
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="skippedMonthFilter">Month:</label>
+                                <input type="month" id="skippedMonthFilter">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="skippedEmployeeFilter">Employee:</label>
+                                <input type="text" id="skippedEmployeeFilter" placeholder="Search by name...">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="skippedReasonFilter">Reason:</label>
+                                <select id="skippedReasonFilter">
+                                    <option value="">All Reasons</option>
+                                    <option value="unpaid_leave">Unpaid Leave</option>
+                                    <option value="suspension">Suspension</option>
+                                    <option value="on_hold">On Hold</option>
+                                    <option value="terminated">Terminated</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="loadSkippedPayroll()">🔍 Search</button>
+                            <button class="btn-secondary" onclick="exportSkippedPayrollCSV()">📤 Export CSV</button>
+                        </div>
+                        
+                        <!-- Skipped Payroll Table -->
+                        <div id="skippedPayrollTable">
+                            <p style="color: #666;">Select filters and click Search to view skipped payroll records...</p>
+                        </div>
                     </div>
                     
                     <!-- View Contributions Subtab -->

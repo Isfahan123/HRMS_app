@@ -1362,6 +1362,114 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Skipped Payroll Management Functions
+    window.loadSkippedPayroll = async function() {
+        try {
+            const response = await fetch('/api/admin/skipped-payroll');
+            const data = await response.json();
+            
+            const tableContainer = document.getElementById('skippedPayrollTable');
+            if (!tableContainer) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Apply filters
+                const monthFilter = document.getElementById('skippedMonthFilter')?.value || '';
+                const employeeFilter = document.getElementById('skippedEmployeeFilter')?.value.toLowerCase() || '';
+                const reasonFilter = document.getElementById('skippedReasonFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (monthFilter) {
+                    const [year, month] = monthFilter.split('-');
+                    const filterMonthYear = `${month}/${year}`;
+                    filteredData = filteredData.filter(r => r.month_year === filterMonthYear);
+                }
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        (r.employee_name || '').toLowerCase().includes(employeeFilter)
+                    );
+                }
+                
+                if (reasonFilter) {
+                    filteredData = filteredData.filter(r => r.reason === reasonFilter);
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No skipped payroll records found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Employee</th>';
+                html += '<th style="padding: 10px;">Email</th>';
+                html += '<th style="padding: 10px;">Period</th>';
+                html += '<th style="padding: 10px;">Reason</th>';
+                html += '<th style="padding: 10px;">Skipped Date</th>';
+                html += '<th style="padding: 10px;">Notes</th>';
+                html += '<th style="padding: 10px;">Actions</th>';
+                html += '</tr></thead><tbody>';
+                
+                filteredData.forEach(record => {
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.month_year || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="background: #ffebee; padding: 4px 8px; border-radius: 4px; color: #c62828; font-size: 12px;">${record.reason || 'Not specified'}</span></td>`;
+                    html += `<td style="padding: 10px;">${record.skipped_date ? new Date(record.skipped_date).toLocaleDateString() : '-'}</td>`;
+                    html += `<td style="padding: 10px;"><small>${record.notes || '-'}</small></td>`;
+                    html += `<td style="padding: 10px;">`;
+                    if (record.can_include) {
+                        html += `<button class="btn-primary btn-sm" onclick="includeInNextPayroll('${record.id}')">Include in Next Run</button>`;
+                    } else {
+                        html += `<span style="color: #666; font-size: 12px;">Already included</span>`;
+                    }
+                    html += `</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} skipped record(s)</p>`;
+                tableContainer.innerHTML = html;
+            } else {
+                tableContainer.innerHTML = '<p style="color: #666;">No skipped payroll records found. Employees who are skipped during payroll runs will appear here.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading skipped payroll:', error);
+            const tableContainer = document.getElementById('skippedPayrollTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading skipped payroll data.</p>';
+        }
+    };
+    
+    window.includeInNextPayroll = async function(recordId) {
+        if (!confirm('Mark this employee to be included in the next payroll run?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/skipped-payroll/${recordId}/include`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ ' + result.message);
+                loadSkippedPayroll();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error including in next payroll:', error);
+            alert('❌ Error updating record');
+        }
+    };
+    
+    window.exportSkippedPayrollCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
+    
     // Load all new data on init
     loadLeaveBalances();
     loadSickLeaveBalances();
