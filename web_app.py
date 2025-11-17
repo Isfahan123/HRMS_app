@@ -2,7 +2,7 @@
 Web application entry point for HRMS
 This provides a web-based interface using HTML/JavaScript with Python backend
 """
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -710,6 +710,56 @@ async def get_payroll_contributions():
     except Exception as e:
         print(f"Error getting contributions: {str(e)}")
         return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/contributions/upload-rates")
+async def upload_contribution_rates(contribution_type: str, file: UploadFile = File(...)):
+    """
+    Upload PDF containing EPF/SOCSO/EIS contribution rate tables
+    """
+    try:
+        # Validate contribution type
+        if contribution_type not in ['epf', 'socso', 'eis']:
+            return {"success": False, "message": "Invalid contribution type. Must be epf, socso, or eis"}
+        
+        # Validate file type
+        if not file.filename.endswith('.pdf'):
+            return {"success": False, "message": "Only PDF files are supported"}
+        
+        # Save the uploaded file temporarily
+        import tempfile
+        import shutil
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            shutil.copyfileobj(file.file, tmp_file)
+            tmp_path = tmp_file.name
+        
+        try:
+            # For EPF, use the dedicated parser if available
+            if contribution_type == 'epf':
+                try:
+                    from services.epf_pdf_parser import upload_and_parse_epf_pdf
+                    upload_and_parse_epf_pdf(tmp_path, supabase)
+                    return {"success": True, "message": f"EPF rates uploaded and parsed successfully"}
+                except ImportError:
+                    # Fall back to generic parsing
+                    pass
+            
+            # Generic PDF parsing for SOCSO/EIS or EPF fallback
+            # For now, just acknowledge the upload
+            # TODO: Implement PDF parsing for SOCSO and EIS
+            return {
+                "success": True, 
+                "message": f"{contribution_type.upper()} rate table uploaded successfully. Parsing functionality will be implemented soon.",
+                "note": "Manual rate verification recommended until parsing is fully implemented"
+            }
+        finally:
+            # Clean up temporary file
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            
+    except Exception as e:
+        print(f"Error uploading contribution rates: {str(e)}")
+        return {"success": False, "message": f"Error uploading file: {str(e)}"}
 
 @app.get("/api/admin/salary-history")
 async def get_salary_history():

@@ -825,52 +825,179 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    async function loadPayrollContributions() {
+    // Contributions Management Functions
+    window.loadContributions = async function() {
         try {
             const response = await fetch('/api/admin/payroll-contributions');
             const data = await response.json();
             
-            const container = document.getElementById('payrollContributionsSubtab');
-            if (!container) return;
+            const tableContainer = document.getElementById('contributionsTable');
+            if (!tableContainer) return;
             
             if (data.success && data.data && data.data.length > 0) {
-                let html = '<h3>View Contributions</h3>';
-                html += '<p style="color: #666; margin-bottom: 15px;">EPF, SOCSO, and EIS contributions summary</p>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                // Apply filters
+                const monthFilter = document.getElementById('contribMonthFilter')?.value || '';
+                const employeeFilter = document.getElementById('contribEmployeeFilter')?.value.toLowerCase() || '';
+                const citizenFilter = document.getElementById('contribCitizenFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (monthFilter) {
+                    const [year, month] = monthFilter.split('-');
+                    const filterMonthYear = `${month}/${year}`;
+                    filteredData = filteredData.filter(c => c.month_year === filterMonthYear);
+                }
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(c => 
+                        (c.employee_name || '').toLowerCase().includes(employeeFilter)
+                    );
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No contributions found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
                 html += '<th style="padding: 10px;">Employee</th>';
                 html += '<th style="padding: 10px;">Period</th>';
-                html += '<th style="padding: 10px; text-align: right;">EPF (Employee)</th>';
-                html += '<th style="padding: 10px; text-align: right;">EPF (Employer)</th>';
-                html += '<th style="padding: 10px; text-align: right;">SOCSO (Employee)</th>';
-                html += '<th style="padding: 10px; text-align: right;">SOCSO (Employer)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EPF (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EPF (Er)</th>';
+                html += '<th style="padding: 10px; text-align: right;">SOCSO (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">SOCSO (Er)</th>';
                 html += '<th style="padding: 10px; text-align: right;">EIS</th>';
                 html += '<th style="padding: 10px; text-align: right;">PCB</th>';
+                html += '<th style="padding: 10px; text-align: right;">Total (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">Total (Er)</th>';
                 html += '</tr></thead><tbody>';
                 
-                data.data.forEach(contrib => {
+                let totalEpfEe = 0, totalEpfEr = 0, totalSocsoEe = 0, totalSocsoEr = 0, totalEis = 0, totalPcb = 0;
+                
+                filteredData.forEach(contrib => {
+                    const epfEe = parseFloat(contrib.epf_employee) || 0;
+                    const epfEr = parseFloat(contrib.epf_employer) || 0;
+                    const socsoEe = parseFloat(contrib.socso_employee) || 0;
+                    const socsoEr = parseFloat(contrib.socso_employer) || 0;
+                    const eis = parseFloat(contrib.eis) || 0;
+                    const pcb = parseFloat(contrib.pcb) || 0;
+                    const totalEe = epfEe + socsoEe + eis;
+                    const totalEr = epfEr + socsoEr;
+                    
+                    totalEpfEe += epfEe;
+                    totalEpfEr += epfEr;
+                    totalSocsoEe += socsoEe;
+                    totalSocsoEr += socsoEr;
+                    totalEis += eis;
+                    totalPcb += pcb;
+                    
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${contrib.employee_name || '-'}</td>`;
                     html += `<td style="padding: 10px;">${contrib.month_year || '-'}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.epf_employee.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.epf_employer.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.socso_employee.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.socso_employer.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.eis.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${contrib.pcb.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${epfEe.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${epfEr.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${socsoEe.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${socsoEr.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${eis.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${pcb.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEe.toFixed(2)}</strong></td>`;
+                    html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEr.toFixed(2)}</strong></td>`;
                     html += '</tr>';
                 });
                 
+                // Add totals row
+                html += '<tr style="background: #f0f0f0; font-weight: bold;">';
+                html += '<td style="padding: 10px;" colspan="2">TOTAL</td>';
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEpfEe.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEpfEr.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEe.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEr.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEis.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalPcb.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEe + totalSocsoEe + totalEis).toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEr + totalSocsoEr).toFixed(2)}</td>`;
+                html += '</tr>';
+                
                 html += '</tbody></table>';
-                container.innerHTML = html;
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} contribution record(s)</p>`;
+                tableContainer.innerHTML = html;
             } else {
-                container.innerHTML = '<h3>View Contributions</h3><p>No contribution data available.</p>';
+                tableContainer.innerHTML = '<p style="color: #666;">No contribution data available. Run payroll first.</p>';
             }
         } catch (error) {
             console.error('Error loading contributions:', error);
-            const container = document.getElementById('payrollContributionsSubtab');
-            if (container) container.innerHTML = '<h3>View Contributions</h3><p>Error loading contributions.</p>';
+            const tableContainer = document.getElementById('contributionsTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading contributions data.</p>';
         }
-    }
+    };
+    
+    window.uploadRatePDF = async function(contributionType) {
+        const fileInput = document.getElementById(`${contributionType}RateFile`);
+        const messageDiv = document.getElementById('uploadRateMessage');
+        
+        if (!fileInput.files || fileInput.files.length === 0) {
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'error-message';
+            messageDiv.style.background = '#ffebee';
+            messageDiv.style.color = '#c62828';
+            messageDiv.textContent = 'Please select a PDF file first';
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        
+        if (!file.name.endsWith('.pdf')) {
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'error-message';
+            messageDiv.style.background = '#ffebee';
+            messageDiv.style.color = '#c62828';
+            messageDiv.textContent = 'Only PDF files are supported';
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('contribution_type', contributionType);
+        
+        try {
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = '#e3f2fd';
+            messageDiv.style.color = '#1976d2';
+            messageDiv.textContent = `Uploading ${contributionType.toUpperCase()} rate table...`;
+            
+            const response = await fetch(`/api/admin/contributions/upload-rates?contribution_type=${contributionType}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                messageDiv.style.background = '#e8f5e9';
+                messageDiv.style.color = '#2e7d32';
+                messageDiv.textContent = `✅ ${result.message}`;
+                if (result.note) {
+                    messageDiv.textContent += ` Note: ${result.note}`;
+                }
+                fileInput.value = ''; // Clear the file input
+            } else {
+                messageDiv.style.background = '#ffebee';
+                messageDiv.style.color = '#c62828';
+                messageDiv.textContent = `❌ ${result.message}`;
+            }
+        } catch (error) {
+            console.error('Error uploading rate PDF:', error);
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = '#ffebee';
+            messageDiv.style.color = '#c62828';
+            messageDiv.textContent = `❌ Error uploading file: ${error.message}`;
+        }
+    };
+    
+    window.exportContributionsCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
     
     async function loadSalaryHistory() {
         try {
