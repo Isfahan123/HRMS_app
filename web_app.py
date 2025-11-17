@@ -1076,6 +1076,43 @@ async def get_employee_history():
         print(f"Error getting employee history: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/admin/employee-history")
+async def create_employment_change(request: Request):
+    """
+    Record an employment change (promotion, transfer, status change, etc.)
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['employee_email', 'change_type', 'field_changed', 'effective_date', 'previous_value', 'new_value']
+        for field in required_fields:
+            if field not in data or data[field] == '':
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Create employment history record
+        history_record = {
+            "employee_email": data['employee_email'],
+            "change_type": data['change_type'],
+            "field_changed": data['field_changed'],
+            "previous_value": data['previous_value'],
+            "new_value": data['new_value'],
+            "effective_date": data['effective_date'],
+            "reason": data.get('reason', f"{data['field_changed']} changed from {data['previous_value']} to {data['new_value']}"),
+            "created_at": datetime.utcnow().isoformat(),
+            "created_by": "admin"
+        }
+        
+        response = supabase.table("employee_history").insert(history_record).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Employment change recorded successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to record employment change"}
+    except Exception as e:
+        print(f"Error creating employment change: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

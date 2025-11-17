@@ -1279,33 +1279,82 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('CSV export functionality will be implemented soon');
     };
     
+    // Employment History Management Functions
+    window.showAddEmploymentChangeForm = function() {
+        document.getElementById('addEmploymentChangeForm').style.display = 'block';
+    };
+    
+    window.hideAddEmploymentChangeForm = function() {
+        document.getElementById('addEmploymentChangeForm').style.display = 'none';
+        document.getElementById('newEmploymentChangeForm').reset();
+        document.getElementById('addEmploymentChangeMessage').style.display = 'none';
+    };
+    
     async function loadEmployeeHistory() {
         try {
             const response = await fetch('/api/admin/employee-history');
             const data = await response.json();
             
-            const container = document.getElementById('employeeHistoryTab');
-            if (!container) return;
+            const tableContainer = document.getElementById('employeeHistoryTable');
+            if (!tableContainer) return;
             
             if (data.success && data.data && data.data.length > 0) {
-                let html = '<h2>🧾 Employment History</h2>';
-                html += '<p style="color: #666; margin-bottom: 15px;">Complete history of employee changes</p>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Date</th>';
+                // Apply filters
+                const employeeFilter = document.getElementById('empHistoryEmployeeFilter')?.value.toLowerCase() || '';
+                const typeFilter = document.getElementById('empHistoryTypeFilter')?.value || '';
+                const yearFilter = document.getElementById('empHistoryYearFilter')?.value || '';
+                
+                let filteredData = data.data;
+                
+                if (employeeFilter) {
+                    filteredData = filteredData.filter(r => 
+                        ((r.employee_name || '').toLowerCase().includes(employeeFilter)) ||
+                        ((r.employee_email || '').toLowerCase().includes(employeeFilter))
+                    );
+                }
+                
+                if (typeFilter) {
+                    filteredData = filteredData.filter(r => r.change_type === typeFilter);
+                }
+                
+                if (yearFilter) {
+                    filteredData = filteredData.filter(r => {
+                        const date = r.effective_date || '';
+                        return date.startsWith(yearFilter);
+                    });
+                }
+                
+                if (filteredData.length === 0) {
+                    tableContainer.innerHTML = '<p style="color: #666;">No employment history records found matching the filters.</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Effective Date</th>';
                 html += '<th style="padding: 10px;">Employee</th>';
                 html += '<th style="padding: 10px;">Change Type</th>';
-                html += '<th style="padding: 10px;">Field</th>';
-                html += '<th style="padding: 10px;">Previous</th>';
-                html += '<th style="padding: 10px;">New</th>';
+                html += '<th style="padding: 10px;">Field Changed</th>';
+                html += '<th style="padding: 10px;">Previous Value</th>';
+                html += '<th style="padding: 10px;">New Value</th>';
                 html += '<th style="padding: 10px;">Reason</th>';
                 html += '</tr></thead><tbody>';
                 
-                data.data.forEach(record => {
+                filteredData.forEach(record => {
+                    const typeColors = {
+                        'promotion': '#2e7d32',
+                        'transfer': '#1976d2',
+                        'position_change': '#f57c00',
+                        'status_change': '#7b1fa2',
+                        'demotion': '#c62828',
+                        'other': '#666'
+                    };
+                    const typeColor = typeColors[record.change_type] || '#666';
+                    
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.employee_name || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.change_type || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.field_changed || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="background: ${typeColor}20; padding: 4px 8px; border-radius: 4px; color: ${typeColor}; font-size: 12px; font-weight: bold;">${record.change_type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;"><em>${record.field_changed || '-'}</em></td>`;
                     html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
                     html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
                     html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
@@ -1313,16 +1362,71 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 html += '</tbody></table>';
-                container.innerHTML = html;
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} employment change record(s)</p>`;
+                tableContainer.innerHTML = html;
             } else {
-                container.innerHTML = '<h2>🧾 Employment History</h2><p>No employment history records found.</p>';
+                tableContainer.innerHTML = '<p style="color: #666;">No employment history records found. Record employment changes using the "Record Employment Change" button above.</p>';
             }
         } catch (error) {
             console.error('Error loading employee history:', error);
-            const container = document.getElementById('employeeHistoryTab');
-            if (container) container.innerHTML = '<h2>🧾 Employment History</h2><p>Error loading employment history.</p>';
+            const tableContainer = document.getElementById('employeeHistoryTable');
+            if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading employment history data.</p>';
         }
     }
+    
+    // Handle new employment change form submission
+    const newEmploymentChangeForm = document.getElementById('newEmploymentChangeForm');
+    if (newEmploymentChangeForm) {
+        newEmploymentChangeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(newEmploymentChangeForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/employee-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('addEmploymentChangeMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Employment change recorded successfully!';
+                    
+                    setTimeout(() => {
+                        hideAddEmploymentChangeForm();
+                        loadEmployeeHistory();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to record employment change';
+                }
+            } catch (error) {
+                console.error('Error recording employment change:', error);
+                const messageDiv = document.getElementById('addEmploymentChangeMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error recording employment change';
+            }
+        });
+    }
+    
+    window.exportEmployeeHistoryCSV = function() {
+        // TODO: Implement CSV export
+        alert('CSV export functionality will be implemented soon');
+    };
     
     // Edit Employee Functions
     window.openEditEmployeeModal = async function(employeeId) {

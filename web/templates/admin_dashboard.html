@@ -1462,7 +1462,115 @@
                 <!-- Employee History Tab -->
                 <div id="employeeHistoryTab" class="tab-pane">
                     <h2>🧾 Employment History</h2>
-                    <p>Employment history management coming soon...</p>
+                    <p style="color: #666; margin-bottom: 20px;">Track changes in employee positions, departments, status, and other employment details.</p>
+                    
+                    <!-- Add Employment Change Button -->
+                    <button class="btn-primary" onclick="showAddEmploymentChangeForm()" style="margin-bottom: 20px;">
+                        ➕ Record Employment Change
+                    </button>
+                    
+                    <!-- Add Employment Change Form (hidden by default) -->
+                    <div id="addEmploymentChangeForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                        <h3>Record Employment Change</h3>
+                        <form id="newEmploymentChangeForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryEmployeeEmail">Employee Email:*</label>
+                                    <input type="email" id="empHistoryEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryChangeType">Change Type:*</label>
+                                    <select id="empHistoryChangeType" name="change_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="promotion">Promotion</option>
+                                        <option value="transfer">Department Transfer</option>
+                                        <option value="position_change">Position Change</option>
+                                        <option value="status_change">Status Change</option>
+                                        <option value="demotion">Demotion</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryFieldChanged">Field Changed:*</label>
+                                    <select id="empHistoryFieldChanged" name="field_changed" required>
+                                        <option value="">Select Field</option>
+                                        <option value="position">Position</option>
+                                        <option value="department">Department</option>
+                                        <option value="status">Employment Status</option>
+                                        <option value="role">Role/Level</option>
+                                        <option value="location">Location</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryEffectiveDate">Effective Date:*</label>
+                                    <input type="date" id="empHistoryEffectiveDate" name="effective_date" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryPreviousValue">Previous Value:*</label>
+                                    <input type="text" id="empHistoryPreviousValue" name="previous_value" required placeholder="e.g., Software Engineer">
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryNewValue">New Value:*</label>
+                                    <input type="text" id="empHistoryNewValue" name="new_value" required placeholder="e.g., Senior Software Engineer">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="empHistoryReason">Reason/Notes:</label>
+                                <textarea id="empHistoryReason" name="reason" rows="3" placeholder="Optional details about this employment change"></textarea>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <button type="submit" class="btn-primary">Save Employment Change</button>
+                                <button type="button" class="btn-secondary" onclick="hideAddEmploymentChangeForm()">Cancel</button>
+                            </div>
+                            
+                            <div id="addEmploymentChangeMessage" style="display: none; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                    
+                    <!-- Filter Section -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="empHistoryEmployeeFilter">Employee:</label>
+                            <input type="text" id="empHistoryEmployeeFilter" placeholder="Search by name or email...">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="empHistoryTypeFilter">Change Type:</label>
+                            <select id="empHistoryTypeFilter">
+                                <option value="">All Types</option>
+                                <option value="promotion">Promotion</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="position_change">Position Change</option>
+                                <option value="status_change">Status Change</option>
+                                <option value="demotion">Demotion</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="empHistoryYearFilter">Year:</label>
+                            <select id="empHistoryYearFilter">
+                                <option value="">All Years</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" onclick="loadEmployeeHistory()">🔍 Search</button>
+                        <button class="btn-secondary" onclick="exportEmployeeHistoryCSV()">📤 Export CSV</button>
+                    </div>
+                    
+                    <!-- Employment History Table -->
+                    <div id="employeeHistoryTable">
+                        <p style="color: #666;">Loading employment history records...</p>
+                    </div>
                 </div>
             </div>
         </div>
