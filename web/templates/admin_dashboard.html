@@ -638,16 +638,20 @@
                             <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
                                 <thead>
                                     <tr style="background: #667eea; color: white;">
-                                        <th style="padding: 12px; text-align: left;">Leave Type</th>
-                                        <th style="padding: 12px; text-align: left;">Description</th>
-                                        <th style="padding: 12px; text-align: center;">Requires Approval</th>
-                                        <th style="padding: 12px; text-align: center;">Max Days</th>
-                                        <th style="padding: 12px; text-align: center;">Actions</th>
+                                        <th style="padding: 8px;">Active</th>
+                                        <th style="padding: 8px;">Code</th>
+                                        <th style="padding: 8px;">Name</th>
+                                        <th style="padding: 8px;">Description</th>
+                                        <th style="padding: 8px; text-align: center;">Deduct From</th>
+                                        <th style="padding: 8px; text-align: center;">Approval</th>
+                                        <th style="padding: 8px; text-align: center;">Doc</th>
+                                        <th style="padding: 8px; text-align: center;">Duration</th>
+                                        <th style="padding: 8px; text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="leaveTypesTableBody">
                                     <tr>
-                                        <td colspan="5" style="text-align: center; padding: 20px;">Loading...</td>
+                                        <td colspan="9" style="text-align: center; padding: 20px;">Loading...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -663,18 +667,16 @@
                             <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
                                 <thead>
                                     <tr style="background: #667eea; color: white;">
-                                        <th style="padding: 12px; text-align: left;">Position/Level</th>
-                                        <th style="padding: 12px; text-align: center;">Annual Leave Days</th>
-                                        <th style="padding: 12px; text-align: center;">Sick Leave Days</th>
-                                        <th style="padding: 12px; text-align: center;">Carry Forward Max</th>
-                                        <th style="padding: 12px; text-align: center;">Actions</th>
+                                        <th style="padding: 8px; text-align: left;">Leave Type</th>
+                                        <th style="padding: 8px; text-align: left;">Employee Tier</th>
+                                        <th style="padding: 8px; text-align: center;">Days Entitlement</th>
+                                        <th style="padding: 8px; text-align: center;">Max Accumulation</th>
+                                        <th style="padding: 8px; text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="entitlementsTableBody">
                                     <tr>
-                                        <td colspan="5" style="text-align: center; padding: 20px;">
-                                            Common entitlements: Junior (14 days), Senior (18 days), Manager (21 days)
-                                        </td>
+                                        <td colspan="5" style="text-align: center; padding: 20px;">Loading...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -689,33 +691,113 @@
                                 </div>
                                 <form id="leaveTypeForm">
                                     <input type="hidden" id="leaveTypeId">
-                                    <div class="form-group">
-                                        <label for="leaveTypeName">Leave Type Name: *</label>
-                                        <input type="text" id="leaveTypeName" required style="width: 100%; padding: 8px;" 
-                                               placeholder="e.g., Annual Leave, Sick Leave">
+                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div class="form-group">
+                                            <label for="leaveTypeCode">Code: * (unique, lowercase)</label>
+                                            <input type="text" id="leaveTypeCode" required style="width: 100%; padding: 8px;" 
+                                                   placeholder="annual, sick, emergency">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="leaveTypeName">Name: *</label>
+                                            <input type="text" id="leaveTypeName" required style="width: 100%; padding: 8px;" 
+                                                   placeholder="Annual Leave">
+                                        </div>
                                     </div>
                                     <div class="form-group">
                                         <label for="leaveTypeDescription">Description:</label>
-                                        <textarea id="leaveTypeDescription" rows="3" style="width: 100%; padding: 8px;"
-                                                  placeholder="Brief description of this leave type"></textarea>
+                                        <textarea id="leaveTypeDescription" rows="2" style="width: 100%; padding: 8px;"
+                                                  placeholder="Brief description"></textarea>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div class="form-group">
+                                            <label for="leaveTypeColor">Display Color:</label>
+                                            <input type="color" id="leaveTypeColor" value="#3498db" style="width: 100px; height: 40px;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="leaveTypeDeductFrom">Deduct From:</label>
+                                            <select id="leaveTypeDeductFrom" style="width: 100%; padding: 8px;">
+                                                <option value="none">None</option>
+                                                <option value="annual">Annual Leave</option>
+                                                <option value="sick">Sick Leave</option>
+                                                <option value="unpaid">Unpaid Leave</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div class="form-group">
+                                            <label for="leaveTypeDefaultDuration">Default Duration (days):</label>
+                                            <input type="number" id="leaveTypeDefaultDuration" min="0.5" step="0.5" value="1.0" 
+                                                   style="width: 100%; padding: 8px;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="leaveTypeMaxDuration">Maximum Duration (days):</label>
+                                            <input type="number" id="leaveTypeMaxDuration" min="0.5" step="0.5" value="14.0" 
+                                                   style="width: 100%; padding: 8px;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="display: flex; gap: 20px;">
                                         <label>
                                             <input type="checkbox" id="leaveTypeRequiresApproval" checked>
-                                            Requires Manager Approval
+                                            Requires Approval
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" id="leaveTypeRequiresDocument">
+                                            Requires Document
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" id="leaveTypeIsPaid" checked>
+                                            Is Paid
                                         </label>
                                     </div>
+                                    <div style="margin-top: 20px;">
+                                        <button type="submit" class="btn-primary">💾 Save</button>
+                                        <button type="button" class="btn-secondary" onclick="closeLeaveTypeModal()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Entitlement Modal -->
+                        <div id="entitlementModal" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3 id="entitlementModalTitle">Add Entitlement</h3>
+                                    <span class="modal-close" onclick="closeEntitlementModal()">&times;</span>
+                                </div>
+                                <form id="entitlementForm">
+                                    <input type="hidden" id="entitlementId">
                                     <div class="form-group">
-                                        <label for="leaveTypeMaxDays">Maximum Days (0 for unlimited):</label>
-                                        <input type="number" id="leaveTypeMaxDays" min="0" value="0" style="width: 100%; padding: 8px;">
+                                        <label for="entitlementLeaveType">Leave Type: *</label>
+                                        <select id="entitlementLeaveType" required style="width: 100%; padding: 8px;">
+                                            <option value="">Select Leave Type</option>
+                                        </select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="leaveTypeColor">Display Color:</label>
-                                        <input type="color" id="leaveTypeColor" value="#667eea" style="width: 100px; height: 40px;">
+                                        <label for="entitlementTier">Employee Tier: *</label>
+                                        <select id="entitlementTier" required style="width: 100%; padding: 8px;">
+                                            <option value="">Select Tier</option>
+                                            <option value="junior">Junior Staff / Entry Level</option>
+                                            <option value="mid">Mid-Level Staff</option>
+                                            <option value="senior">Senior Staff</option>
+                                            <option value="manager">Manager / Team Lead</option>
+                                            <option value="director">Director / C-Level</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div class="form-group">
+                                            <label for="entitlementDays">Days Entitlement: *</label>
+                                            <input type="number" id="entitlementDays" min="0" step="0.5" required 
+                                                   style="width: 100%; padding: 8px;" placeholder="14">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="entitlementMaxAccumulation">Max Accumulation:</label>
+                                            <input type="number" id="entitlementMaxAccumulation" min="0" step="0.5" 
+                                                   style="width: 100%; padding: 8px;" placeholder="42">
+                                        </div>
                                     </div>
                                     <div style="margin-top: 20px;">
-                                        <button type="submit" class="btn-primary">Save</button>
-                                        <button type="button" class="btn-secondary" onclick="closeLeaveTypeModal()">Cancel</button>
+                                        <button type="submit" class="btn-primary">💾 Save</button>
+                                        <button type="button" class="btn-secondary" onclick="closeEntitlementModal()">Cancel</button>
                                     </div>
                                 </form>
                             </div>
@@ -1576,6 +1658,221 @@
         </div>
     </div>
     
+    <!-- LHDN Tax Configuration Modals -->
+    <div id="taxBracketModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeTaxBracketModal()">&times;</span>
+            <h3 id="taxBracketModalTitle">Add Tax Bracket</h3>
+            <form id="taxBracketForm">
+                <input type="hidden" id="taxBracketType" value="">
+                <input type="hidden" id="taxBracketIndex" value="">
+                <input type="hidden" id="taxBracketId" value="">
+                
+                <div class="form-group">
+                    <label for="taxBracketFrom">Chargeable Income From (RM):*</label>
+                    <input type="number" id="taxBracketFrom" step="0.01" min="0" required>
+                    <small style="color: #666;">Starting amount for this tax bracket</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketTo">Income To (RM):*</label>
+                    <input type="number" id="taxBracketTo" step="0.01" min="0" required>
+                    <small style="color: #666;">Ending amount (use 999999999 for "Above")</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketRate">Tax Rate (%):*</label>
+                    <input type="number" id="taxBracketRate" step="0.01" min="0" max="100" required>
+                    <small style="color: #666;">Tax percentage for this bracket</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketAmount">Tax on Band (RM):</label>
+                    <input type="number" id="taxBracketAmount" step="0.01" min="0">
+                    <small style="color: #666;">Tax amount for the full band (auto-calculated)</small>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">💾 Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeTaxBracketModal()">Cancel</button>
+                </div>
+                
+                <div id="taxBracketMessage" style="display: none; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="reliefEditModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeReliefEditModal()">&times;</span>
+            <h3>Edit Tax Relief Maximum</h3>
+            <form id="reliefEditForm">
+                <input type="hidden" id="reliefCode" value="">
+                <input type="hidden" id="reliefIndex" value="">
+                
+                <div class="form-group">
+                    <label for="reliefName">Relief Category:</label>
+                    <input type="text" id="reliefName" readonly style="background: #f5f5f5;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="reliefDescription">Description:</label>
+                    <textarea id="reliefDescription" rows="2" readonly style="background: #f5f5f5;"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reliefMaxAmount">Maximum Amount (RM):*</label>
+                    <input type="number" id="reliefMaxAmount" step="0.01" min="0" required>
+                    <small style="color: #666;">Maximum deductible amount for this relief category</small>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">💾 Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeReliefEditModal()">Cancel</button>
+                </div>
+                
+                <div id="reliefEditMessage" style="display: none; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="reliefOverrideModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeReliefOverrideModal()">&times;</span>
+            <h3 id="reliefOverrideModalTitle">Add Relief Override</h3>
+            <form id="reliefOverrideForm">
+                <input type="hidden" id="reliefOverrideId" value="">
+                
+                <div class="form-group">
+                    <label for="overrideEmployeeId">Employee:*</label>
+                    <select id="overrideEmployeeId" required>
+                        <option value="">Select Employee</option>
+                    </select>
+                    <small style="color: #666;">Choose employee for relief override</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideReliefCategory">Relief Category:*</label>
+                    <select id="overrideReliefCategory" required>
+                        <option value="">Select Relief Category</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideAmount">Override Amount (RM):*</label>
+                    <input type="number" id="overrideAmount" step="0.01" min="0" required>
+                    <small style="color: #666;">Custom relief amount for this employee</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideYear">Effective Year:*</label>
+                    <input type="number" id="overrideYear" min="2020" max="2030" required value="2024">
+                    <small style="color: #666;">Tax year for this override</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="overrideReason">Reason/Notes:</label>
+                    <textarea id="overrideReason" rows="3" placeholder="Optional: Explain why this override is needed"></textarea>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">💾 Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeReliefOverrideModal()">Cancel</button>
+                </div>
+                
+                <div id="reliefOverrideMessage" style="display: none; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Holiday Add/Edit Modal -->
+    <div id="holidayModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="leaveCalendar.closeHolidayModal()">&times;</span>
+            <h2 id="holidayModalTitle">➕ Add Holiday</h2>
+            
+            <form id="holidayForm" onsubmit="event.preventDefault(); leaveCalendar.saveHoliday();">
+                <input type="hidden" id="holidayId">
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Date: *</label>
+                    <input type="date" id="holidayDate" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Holiday Name: *</label>
+                    <input type="text" id="holidayName" required placeholder="e.g. New Year's Day" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Type:</label>
+                    <select id="holidayType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="national">🇲🇾 National</option>
+                        <option value="state">📍 State Specific</option>
+                        <option value="company">🏢 Company</option>
+                        <option value="other">📅 Other</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">State (if applicable):</label>
+                    <input type="text" id="holidayState" placeholder="e.g. Selangor, Penang" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <small style="color: #666;">Leave empty for national holidays</small>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="holidayObservance" style="margin-right: 8px;">
+                        <span>👁️ This is an observance (not a day off)</span>
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">💾 Save Holiday</button>
+                    <button type="button" class="btn-secondary" onclick="leaveCalendar.closeHolidayModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Holiday List Management Modal -->
+    <div id="holidayListModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="leaveCalendar.closeHolidayListModal()">&times;</span>
+            <h2>📋 Manage Holidays</h2>
+            <p style="color: #666; margin-bottom: 20px;">View, edit, and delete holidays</p>
+            
+            <button onclick="leaveCalendar.showAddHolidayModal(); leaveCalendar.closeHolidayListModal();" class="btn-primary" style="margin-bottom: 15px;">
+                ➕ Add New Holiday
+            </button>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 10px; text-align: left;">Date</th>
+                            <th style="padding: 10px; text-align: left;">Holiday Name</th>
+                            <th style="padding: 10px; text-align: left;">Type</th>
+                            <th style="padding: 10px; text-align: center;">Observance</th>
+                            <th style="padding: 10px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: #666;">
+                                Loading holidays...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn-secondary" onclick="leaveCalendar.closeHolidayListModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/admin_dashboard.js"></script>
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>

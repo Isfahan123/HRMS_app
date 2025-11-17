@@ -3,16 +3,45 @@
  * Handles leave types and entitlements configuration
  */
 
+// Global state
+let currentLeaveTypes = [];
+let currentEntitlements = [];
+let currentLeaveTypeId = null;
+let currentEntitlementId = null;
+
 // Global functions for leave type management
 function showAddLeaveTypeModal() {
     document.getElementById('leaveTypeModalTitle').textContent = 'Add Leave Type';
     document.getElementById('leaveTypeForm').reset();
     document.getElementById('leaveTypeId').value = '';
+    currentLeaveTypeId = null;
+    
+    // Set default values
+    document.getElementById('leaveTypeColor').value = '#3498db';
+    document.getElementById('leaveTypeRequiresApproval').checked = true;
+    document.getElementById('leaveTypeIsPaid').checked = true;
+    
     document.getElementById('leaveTypeModal').style.display = 'block';
 }
 
 function closeLeaveTypeModal() {
     document.getElementById('leaveTypeModal').style.display = 'none';
+}
+
+function showAddEntitlementModal() {
+    document.getElementById('entitlementModalTitle').textContent = 'Add Entitlement';
+    document.getElementById('entitlementForm').reset();
+    document.getElementById('entitlementId').value = '';
+    currentEntitlementId = null;
+    
+    // Populate leave type dropdown
+    populateLeaveTypeDropdown();
+    
+    document.getElementById('entitlementModal').style.display = 'block';
+}
+
+function closeEntitlementModal() {
+    document.getElementById('entitlementModal').style.display = 'none';
 }
 
 // Initialize when DOM is ready
@@ -27,12 +56,27 @@ document.addEventListener('DOMContentLoaded', function() {
         addLeaveTypeBtn.addEventListener('click', showAddLeaveTypeModal);
     }
     
+    // Add Entitlement button
+    const addEntitlementBtn = document.getElementById('addEntitlementBtn');
+    if (addEntitlementBtn) {
+        addEntitlementBtn.addEventListener('click', showAddEntitlementModal);
+    }
+    
     // Leave Type Form submission
     const leaveTypeForm = document.getElementById('leaveTypeForm');
     if (leaveTypeForm) {
         leaveTypeForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             await saveLeaveType();
+        });
+    }
+    
+    // Entitlement Form submission
+    const entitlementForm = document.getElementById('entitlementForm');
+    if (entitlementForm) {
+        entitlementForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await saveEntitlement();
         });
     }
     
@@ -49,78 +93,133 @@ async function loadLeaveTypes() {
     if (!tbody) return;
     
     try {
-        // For now, show default leave types
-        // In production, this would call an API endpoint
-        const defaultTypes = [
-            {
-                id: 1,
-                name: 'Annual Leave',
-                description: 'Regular annual leave entitlement',
-                requires_approval: true,
-                max_days: 0
-            },
-            {
-                id: 2,
-                name: 'Sick Leave',
-                description: 'Medical leave with certificate',
-                requires_approval: true,
-                max_days: 14
-            },
-            {
-                id: 3,
-                name: 'Emergency Leave',
-                description: 'Urgent personal matters',
-                requires_approval: true,
-                max_days: 5
-            },
-            {
-                id: 4,
-                name: 'Unpaid Leave',
-                description: 'Leave without pay',
-                requires_approval: true,
-                max_days: 0
-            },
-            {
-                id: 5,
-                name: 'Maternity Leave',
-                description: 'Maternity leave (as per law)',
-                requires_approval: false,
-                max_days: 90
-            },
-            {
-                id: 6,
-                name: 'Paternity Leave',
-                description: 'Paternity leave (as per law)',
-                requires_approval: false,
-                max_days: 7
-            }
-        ];
+        // Fetch leave types from API
+        const response = await fetch('/api/admin/leave-types');
+        const data = await response.json();
         
-        let html = '';
-        defaultTypes.forEach(type => {
-            html += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 12px;"><strong>${type.name}</strong></td>
-                    <td style="padding: 12px;">${type.description}</td>
-                    <td style="padding: 12px; text-align: center;">
-                        ${type.requires_approval ? '✅ Yes' : '❌ No'}
-                    </td>
-                    <td style="padding: 12px; text-align: center;">
-                        ${type.max_days === 0 ? 'Unlimited' : type.max_days + ' days'}
-                    </td>
-                    <td style="padding: 12px; text-align: center;">
-                        <button class="btn-sm btn-secondary" onclick="editLeaveType(${type.id})">Edit</button>
-                    </td>
-                </tr>
-            `;
-        });
+        if (data.success && data.data.length > 0) {
+            currentLeaveTypes = data.data;
+        } else {
+            // Fall back to default leave types
+            currentLeaveTypes = [
+                {
+                    id: 1,
+                    name: 'Annual Leave',
+                    code: 'annual',
+                    color: '#3498db',
+                    description: 'Regular annual leave entitlement',
+                    requires_approval: true,
+                    is_paid: true,
+                    requires_document: false,
+                    default_duration: 1.0,
+                    max_duration: 14.0,
+                    deduct_from: 'annual',
+                    is_active: true
+                },
+                {
+                    id: 2,
+                    name: 'Sick Leave',
+                    code: 'sick',
+                    color: '#e74c3c',
+                    description: 'Medical leave with certificate',
+                    requires_approval: true,
+                    is_paid: true,
+                    requires_document: true,
+                    default_duration: 1.0,
+                    max_duration: 14.0,
+                    deduct_from: 'sick',
+                    is_active: true
+                },
+                {
+                    id: 3,
+                    name: 'Emergency Leave',
+                    code: 'emergency',
+                    color: '#f39c12',
+                    description: 'Urgent personal matters',
+                    requires_approval: true,
+                    is_paid: true,
+                    requires_document: false,
+                    default_duration: 1.0,
+                    max_duration: 3.0,
+                    deduct_from: 'annual',
+                    is_active: true
+                },
+                {
+                    id: 4,
+                    name: 'Unpaid Leave',
+                    code: 'unpaid',
+                    color: '#95a5a6',
+                    description: 'Leave without pay',
+                    requires_approval: true,
+                    is_paid: false,
+                    requires_document: false,
+                    default_duration: 1.0,
+                    max_duration: 30.0,
+                    deduct_from: 'unpaid',
+                    is_active: true
+                },
+                {
+                    id: 5,
+                    name: 'Maternity Leave',
+                    code: 'maternity',
+                    color: '#e91e63',
+                    description: 'Maternity leave (as per law)',
+                    requires_approval: false,
+                    is_paid: true,
+                    requires_document: true,
+                    default_duration: 60.0,
+                    max_duration: 98.0,
+                    deduct_from: 'none',
+                    is_active: true
+                }
+            ];
+        }
         
-        tbody.innerHTML = html;
+        renderLeaveTypesTable();
         
     } catch (error) {
         console.error('Error loading leave types:', error);
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: red;">Error loading leave types</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading leave types</td></tr>';
     }
+}
+
+/**
+ * Render leave types table
+ */
+function renderLeaveTypesTable() {
+    const tbody = document.getElementById('leaveTypesTableBody');
+    if (!tbody) return;
+    
+    if (currentLeaveTypes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">No leave types found. Click "Add Leave Type" to create one.</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    currentLeaveTypes.forEach(type => {
+        const statusBadge = type.is_active ? '<span style="color: green;">✓ Active</span>' : '<span style="color: gray;">○ Inactive</span>';
+        html += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px;">${statusBadge}</td>
+                <td style="padding: 8px;"><strong>${type.code || '-'}</strong></td>
+                <td style="padding: 8px;">
+                    <span style="display: inline-block; width: 20px; height: 20px; background: ${type.color || '#ccc'}; border-radius: 3px; margin-right: 5px;"></span>
+                    ${type.name}
+                </td>
+                <td style="padding: 8px; font-size: 0.9em;">${type.description || '-'}</td>
+                <td style="padding: 8px; text-align: center;">${type.deduct_from || 'none'}</td>
+                <td style="padding: 8px; text-align: center;">${type.requires_approval ? '✓' : '○'}</td>
+                <td style="padding: 8px; text-align: center;">${type.requires_document ? '✓' : '○'}</td>
+                <td style="padding: 8px; text-align: center;">${type.default_duration || 1.0} / ${type.max_duration || '-'} days</td>
+                <td style="padding: 8px; text-align: center;">
+                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editLeaveType(${type.id})">✏️ Edit</button>
+                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteLeaveType(${type.id})">🗑️ Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
 }
 
 /**
@@ -131,62 +230,59 @@ async function loadEntitlements() {
     if (!tbody) return;
     
     try {
-        // For now, show default entitlements
-        // In production, this would call an API endpoint
-        const defaultEntitlements = [
-            {
-                id: 1,
-                position: 'Junior Staff / Entry Level',
-                annual_days: 14,
-                sick_days: 14,
-                carry_forward_max: 5
-            },
-            {
-                id: 2,
-                position: 'Senior Staff',
-                annual_days: 18,
-                sick_days: 14,
-                carry_forward_max: 7
-            },
-            {
-                id: 3,
-                position: 'Manager / Team Lead',
-                annual_days: 21,
-                sick_days: 14,
-                carry_forward_max: 10
-            },
-            {
-                id: 4,
-                position: 'Senior Manager',
-                annual_days: 24,
-                sick_days: 14,
-                carry_forward_max: 12
-            },
-            {
-                id: 5,
-                position: 'Director / C-Level',
-                annual_days: 28,
-                sick_days: 14,
-                carry_forward_max: 15
-            }
-        ];
+        // Fetch entitlements from API
+        const response = await fetch('/api/admin/leave-entitlements');
+        const data = await response.json();
         
-        let html = '';
-        defaultEntitlements.forEach(ent => {
-            html += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 12px;"><strong>${ent.position}</strong></td>
-                    <td style="padding: 12px; text-align: center;">${ent.annual_days} days</td>
-                    <td style="padding: 12px; text-align: center;">${ent.sick_days} days</td>
-                    <td style="padding: 12px; text-align: center;">${ent.carry_forward_max} days</td>
-                    <td style="padding: 12px; text-align: center;">
-                        <button class="btn-sm btn-secondary" onclick="editEntitlement(${ent.id})">Edit</button>
-                    </td>
-                </tr>
-            `;
-        });
+        if (data.success && data.data.length > 0) {
+            currentEntitlements = data.data;
+        } else {
+            // Fall back to default entitlements
+            currentEntitlements = [
+                {
+                    id: 1,
+                    leave_type_code: 'annual',
+                    leave_type_name: 'Annual Leave',
+                    employee_tier: 'junior',
+                    days_entitlement: 14,
+                    max_accumulation: 42
+                },
+                {
+                    id: 2,
+                    leave_type_code: 'sick',
+                    leave_type_name: 'Sick Leave',
+                    employee_tier: 'junior',
+                    days_entitlement: 14,
+                    max_accumulation: 60
+                },
+                {
+                    id: 3,
+                    leave_type_code: 'annual',
+                    leave_type_name: 'Annual Leave',
+                    employee_tier: 'senior',
+                    days_entitlement: 18,
+                    max_accumulation: 54
+                },
+                {
+                    id: 4,
+                    leave_type_code: 'sick',
+                    leave_type_name: 'Sick Leave',
+                    employee_tier: 'senior',
+                    days_entitlement: 14,
+                    max_accumulation: 60
+                },
+                {
+                    id: 5,
+                    leave_type_code: 'annual',
+                    leave_type_name: 'Annual Leave',
+                    employee_tier: 'manager',
+                    days_entitlement: 21,
+                    max_accumulation: 63
+                }
+            ];
+        }
         
-        tbody.innerHTML = html;
+        renderEntitlementsTable();
         
     } catch (error) {
         console.error('Error loading entitlements:', error);
@@ -195,31 +291,110 @@ async function loadEntitlements() {
 }
 
 /**
+ * Render entitlements table
+ */
+function renderEntitlementsTable() {
+    const tbody = document.getElementById('entitlementsTableBody');
+    if (!tbody) return;
+    
+    if (currentEntitlements.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No entitlements found. Click "Add Entitlement" to create one.</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    currentEntitlements.forEach(ent => {
+        const tierLabel = getTierLabel(ent.employee_tier);
+        html += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px;"><strong>${ent.leave_type_name || ent.leave_type_code || '-'}</strong></td>
+                <td style="padding: 8px;">${tierLabel}</td>
+                <td style="padding: 8px; text-align: center;">${ent.days_entitlement || 0} days</td>
+                <td style="padding: 8px; text-align: center;">${ent.max_accumulation || '-'} days</td>
+                <td style="padding: 8px; text-align: center;">
+                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editEntitlement(${ent.id})">✏️ Edit</button>
+                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteEntitlement(${ent.id})">🗑️ Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+/**
+ * Get tier label
+ */
+function getTierLabel(tier) {
+    const labels = {
+        'junior': 'Junior Staff / Entry Level',
+        'mid': 'Mid-Level Staff',
+        'senior': 'Senior Staff',
+        'manager': 'Manager / Team Lead',
+        'director': 'Director / C-Level'
+    };
+    return labels[tier] || tier;
+}
+
+/**
  * Save leave type
  */
 async function saveLeaveType() {
-    const leaveTypeId = document.getElementById('leaveTypeId').value;
     const formData = {
-        name: document.getElementById('leaveTypeName').value,
-        description: document.getElementById('leaveTypeDescription').value,
+        code: document.getElementById('leaveTypeCode').value.toLowerCase().trim(),
+        name: document.getElementById('leaveTypeName').value.trim(),
+        description: document.getElementById('leaveTypeDescription').value.trim(),
+        color: document.getElementById('leaveTypeColor').value,
+        deduct_from: document.getElementById('leaveTypeDeductFrom').value,
         requires_approval: document.getElementById('leaveTypeRequiresApproval').checked,
-        max_days: parseInt(document.getElementById('leaveTypeMaxDays').value),
-        color: document.getElementById('leaveTypeColor').value
+        requires_document: document.getElementById('leaveTypeRequiresDocument').checked,
+        is_paid: document.getElementById('leaveTypeIsPaid').checked,
+        default_duration: parseFloat(document.getElementById('leaveTypeDefaultDuration').value),
+        max_duration: parseFloat(document.getElementById('leaveTypeMaxDuration').value),
+        is_active: true
     };
     
+    // Validation
+    if (!formData.code || !formData.name) {
+        alert('⚠️ Code and Name are required fields');
+        return;
+    }
+    
+    if (formData.default_duration <= 0 || formData.max_duration <= 0) {
+        alert('⚠️ Duration values must be positive');
+        return;
+    }
+    
+    if (formData.default_duration > formData.max_duration) {
+        alert('⚠️ Default Duration cannot exceed Max Duration');
+        return;
+    }
+    
     try {
-        // In production, this would call an API endpoint
-        // const url = leaveTypeId ? `/api/admin/leave-types/${leaveTypeId}` : '/api/admin/leave-types';
-        // const method = leaveTypeId ? 'PUT' : 'POST';
-        // const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+        const url = currentLeaveTypeId ? `/api/admin/leave-types/${currentLeaveTypeId}` : '/api/admin/leave-types';
+        const method = currentLeaveTypeId ? 'PUT' : 'POST';
         
-        alert(`Leave type "${formData.name}" saved successfully!\n\nNote: This is a demo. In production, this would save to the database.`);
-        closeLeaveTypeModal();
-        loadLeaveTypes();
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`✅ Leave type "${formData.name}" saved successfully!`);
+            closeLeaveTypeModal();
+            await loadLeaveTypes();
+        } else {
+            alert(`❌ Error: ${data.message || 'Failed to save leave type'}`);
+        }
         
     } catch (error) {
         console.error('Error saving leave type:', error);
-        alert('Error saving leave type: ' + error.message);
+        alert('❌ Error saving leave type: ' + error.message);
     }
 }
 
@@ -227,14 +402,173 @@ async function saveLeaveType() {
  * Edit leave type
  */
 function editLeaveType(leaveTypeId) {
-    alert(`Edit leave type ID: ${leaveTypeId}\n\nThis would open the modal with existing data for editing.`);
-    // In production, fetch the leave type data and populate the modal
+    const leaveType = currentLeaveTypes.find(t => t.id === leaveTypeId);
+    if (!leaveType) return;
+    
+    // Populate form
+    currentLeaveTypeId = leaveType.id;
+    document.getElementById('leaveTypeId').value = leaveType.id;
+    document.getElementById('leaveTypeCode').value = leaveType.code || '';
+    document.getElementById('leaveTypeName').value = leaveType.name || '';
+    document.getElementById('leaveTypeDescription').value = leaveType.description || '';
+    document.getElementById('leaveTypeColor').value = leaveType.color || '#3498db';
+    document.getElementById('leaveTypeDeductFrom').value = leaveType.deduct_from || 'none';
+    document.getElementById('leaveTypeRequiresApproval').checked = leaveType.requires_approval !== false;
+    document.getElementById('leaveTypeRequiresDocument').checked = leaveType.requires_document === true;
+    document.getElementById('leaveTypeIsPaid').checked = leaveType.is_paid !== false;
+    document.getElementById('leaveTypeDefaultDuration').value = leaveType.default_duration || 1.0;
+    document.getElementById('leaveTypeMaxDuration').value = leaveType.max_duration || 14.0;
+    
+    document.getElementById('leaveTypeModalTitle').textContent = 'Edit Leave Type';
+    document.getElementById('leaveTypeModal').style.display = 'block';
+}
+
+/**
+ * Delete leave type
+ */
+async function deleteLeaveType(leaveTypeId) {
+    const leaveType = currentLeaveTypes.find(t => t.id === leaveTypeId);
+    if (!leaveType) return;
+    
+    if (!confirm(`⚠️ Are you sure you want to delete leave type "${leaveType.name}"?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/leave-types/${leaveTypeId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`✅ Leave type "${leaveType.name}" deleted successfully!`);
+            await loadLeaveTypes();
+        } else {
+            alert(`❌ Error: ${data.message || 'Failed to delete leave type'}`);
+        }
+    } catch (error) {
+        console.error('Error deleting leave type:', error);
+        alert('❌ Error deleting leave type: ' + error.message);
+    }
+}
+
+/**
+ * Populate leave type dropdown for entitlements
+ */
+function populateLeaveTypeDropdown() {
+    const select = document.getElementById('entitlementLeaveType');
+    if (!select) return;
+    
+    let html = '<option value="">Select Leave Type</option>';
+    currentLeaveTypes.forEach(type => {
+        if (type.is_active) {
+            html += `<option value="${type.code}">${type.name}</option>`;
+        }
+    });
+    
+    select.innerHTML = html;
+}
+
+/**
+ * Save entitlement
+ */
+async function saveEntitlement() {
+    const formData = {
+        leave_type_code: document.getElementById('entitlementLeaveType').value,
+        employee_tier: document.getElementById('entitlementTier').value,
+        days_entitlement: parseFloat(document.getElementById('entitlementDays').value),
+        max_accumulation: parseFloat(document.getElementById('entitlementMaxAccumulation').value)
+    };
+    
+    // Validation
+    if (!formData.leave_type_code || !formData.employee_tier) {
+        alert('⚠️ Leave Type and Employee Tier are required');
+        return;
+    }
+    
+    if (formData.days_entitlement <= 0) {
+        alert('⚠️ Days entitlement must be positive');
+        return;
+    }
+    
+    try {
+        const url = currentEntitlementId ? `/api/admin/leave-entitlements/${currentEntitlementId}` : '/api/admin/leave-entitlements';
+        const method = currentEntitlementId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`✅ Entitlement saved successfully!`);
+            closeEntitlementModal();
+            await loadEntitlements();
+        } else {
+            alert(`❌ Error: ${data.message || 'Failed to save entitlement'}`);
+        }
+        
+    } catch (error) {
+        console.error('Error saving entitlement:', error);
+        alert('❌ Error saving entitlement: ' + error.message);
+    }
 }
 
 /**
  * Edit entitlement
  */
 function editEntitlement(entitlementId) {
-    alert(`Edit entitlement ID: ${entitlementId}\n\nThis would open a modal to edit entitlement settings.`);
-    // In production, fetch the entitlement data and show edit modal
+    const entitlement = currentEntitlements.find(e => e.id === entitlementId);
+    if (!entitlement) return;
+    
+    // Populate form
+    currentEntitlementId = entitlement.id;
+    document.getElementById('entitlementId').value = entitlement.id;
+    
+    // Populate dropdown first
+    populateLeaveTypeDropdown();
+    
+    document.getElementById('entitlementLeaveType').value = entitlement.leave_type_code || '';
+    document.getElementById('entitlementTier').value = entitlement.employee_tier || '';
+    document.getElementById('entitlementDays').value = entitlement.days_entitlement || 0;
+    document.getElementById('entitlementMaxAccumulation').value = entitlement.max_accumulation || 0;
+    
+    document.getElementById('entitlementModalTitle').textContent = 'Edit Entitlement';
+    document.getElementById('entitlementModal').style.display = 'block';
+}
+
+/**
+ * Delete entitlement
+ */
+async function deleteEntitlement(entitlementId) {
+    const entitlement = currentEntitlements.find(e => e.id === entitlementId);
+    if (!entitlement) return;
+    
+    if (!confirm(`⚠️ Are you sure you want to delete this entitlement?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/leave-entitlements/${entitlementId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`✅ Entitlement deleted successfully!`);
+            await loadEntitlements();
+        } else {
+            alert(`❌ Error: ${data.message || 'Failed to delete entitlement'}`);
+        }
+    } catch (error) {
+        console.error('Error deleting entitlement:', error);
+        alert('❌ Error deleting entitlement: ' + error.message);
+    }
 }

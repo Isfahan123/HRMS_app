@@ -1,6 +1,6 @@
 /**
  * Leave Calendar Component for Web Interface
- * Provides visual calendar for leave management
+ * Provides visual calendar for leave management with holiday CRUD
  */
 
 class LeaveCalendar {
@@ -10,6 +10,7 @@ class LeaveCalendar {
         this.currentMonth = new Date().getMonth() + 1;
         this.leaveRequests = [];
         this.holidays = [];
+        this.holidayDetails = []; // Full holiday data with names
     }
 
     /**
@@ -26,17 +27,33 @@ class LeaveCalendar {
      */
     async loadHolidays() {
         try {
-            // TODO: Implement API call to fetch holidays
-            // For now, using sample data
-            this.holidays = [
-                '2024-01-01', // New Year
-                '2024-02-10', // Chinese New Year
-                '2024-05-01', // Labour Day
-                '2024-08-31', // Merdeka Day
-                '2024-12-25'  // Christmas
-            ];
+            const response = await fetch('/api/holidays');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                // Store full holiday details for management
+                this.holidayDetails = data.data;
+                // Extract just the dates for quick lookup
+                this.holidays = data.data.map(h => h.date);
+            } else {
+                // Fall back to sample data
+                this.holidayDetails = [
+                    {id: 1, date: '2024-01-01', name: 'New Year\'s Day', type: 'national'},
+                    {id: 2, date: '2024-02-10', name: 'Chinese New Year', type: 'national'},
+                    {id: 3, date: '2024-05-01', name: 'Labour Day', type: 'national'},
+                    {id: 4, date: '2024-08-31', name: 'Merdeka Day', type: 'national'},
+                    {id: 5, date: '2024-12-25', name: 'Christmas Day', type: 'national'}
+                ];
+                this.holidays = this.holidayDetails.map(h => h.date);
+            }
         } catch (error) {
             console.error('Error loading holidays:', error);
+            // Fall back to sample data on error
+            this.holidayDetails = [
+                {id: 1, date: '2024-01-01', name: 'New Year\'s Day', type: 'national'},
+                {id: 2, date: '2024-05-01', name: 'Labour Day', type: 'national'}
+            ];
+            this.holidays = this.holidayDetails.map(h => h.date);
         }
     }
 
@@ -46,7 +63,16 @@ class LeaveCalendar {
     async loadLeaveRequests() {
         try {
             const userEmail = sessionStorage.getItem('userEmail');
-            if (!userEmail) return;
+            if (!userEmail) {
+                // For admin view, fetch all leave requests
+                const response = await fetch('/api/admin/leave-requests');
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.leaveRequests = data.data || [];
+                }
+                return;
+            }
 
             const response = await fetch(`/api/leave-requests/${userEmail}`);
             const data = await response.json();
@@ -152,6 +178,8 @@ class LeaveCalendar {
                 <h3>${monthNames[this.currentMonth - 1]} ${this.currentYear}</h3>
                 <button onclick="leaveCalendar.nextMonth()" class="btn-secondary">Next ▶</button>
                 <button onclick="leaveCalendar.goToToday()" class="btn-secondary">Today</button>
+                <button onclick="leaveCalendar.showAddHolidayModal()" class="btn-primary" style="margin-left: 20px;">➕ Add Holiday</button>
+                <button onclick="leaveCalendar.showHolidayListModal()" class="btn-secondary">📋 Manage Holidays</button>
             </div>
             <table class="calendar-table">
                 <thead>
@@ -198,7 +226,9 @@ class LeaveCalendar {
             // Check if holiday
             if (this.isHoliday(dateStr)) {
                 classes.push('holiday');
-                content += '<div class="day-label">Holiday</div>';
+                const holidayInfo = this.getHolidayForDate(dateStr);
+                const holidayName = holidayInfo ? holidayInfo.name : 'Holiday';
+                content += `<div class="day-label" title="${holidayName}">🏖️ ${holidayName}</div>`;
             }
             
             // Check for leave requests
@@ -270,6 +300,192 @@ class LeaveCalendar {
         }
         
         return count;
+    }
+
+    /**
+     * Show add holiday modal
+     */
+    showAddHolidayModal() {
+        document.getElementById('holidayModalTitle').textContent = '➕ Add Holiday';
+        document.getElementById('holidayId').value = '';
+        document.getElementById('holidayDate').value = '';
+        document.getElementById('holidayName').value = '';
+        document.getElementById('holidayType').value = 'national';
+        document.getElementById('holidayState').value = '';
+        document.getElementById('holidayObservance').checked = false;
+        document.getElementById('holidayModal').style.display = 'block';
+    }
+
+    /**
+     * Show edit holiday modal
+     */
+    showEditHolidayModal(holidayId) {
+        const holiday = this.holidayDetails.find(h => h.id === holidayId);
+        if (!holiday) return;
+
+        document.getElementById('holidayModalTitle').textContent = '✏️ Edit Holiday';
+        document.getElementById('holidayId').value = holiday.id;
+        document.getElementById('holidayDate').value = holiday.date;
+        document.getElementById('holidayName').value = holiday.name || '';
+        document.getElementById('holidayType').value = holiday.type || 'national';
+        document.getElementById('holidayState').value = holiday.state || '';
+        document.getElementById('holidayObservance').checked = holiday.is_observance || false;
+        document.getElementById('holidayModal').style.display = 'block';
+    }
+
+    /**
+     * Close holiday modal
+     */
+    closeHolidayModal() {
+        document.getElementById('holidayModal').style.display = 'none';
+    }
+
+    /**
+     * Save holiday (add or update)
+     */
+    async saveHoliday() {
+        const holidayId = document.getElementById('holidayId').value;
+        const date = document.getElementById('holidayDate').value;
+        const name = document.getElementById('holidayName').value;
+        const type = document.getElementById('holidayType').value;
+        const state = document.getElementById('holidayState').value;
+        const isObservance = document.getElementById('holidayObservance').checked;
+
+        if (!date || !name) {
+            alert('❌ Please fill in all required fields (Date and Name)');
+            return;
+        }
+
+        const holidayData = {
+            date: date,
+            name: name,
+            type: type,
+            state: state || null,
+            is_observance: isObservance
+        };
+
+        try {
+            let response;
+            if (holidayId) {
+                // Update existing holiday
+                response = await fetch(`/api/holidays/${holidayId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(holidayData)
+                });
+            } else {
+                // Create new holiday
+                response = await fetch('/api/holidays', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(holidayData)
+                });
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`✅ Holiday ${holidayId ? 'updated' : 'added'} successfully!`);
+                this.closeHolidayModal();
+                await this.loadHolidays();
+                this.render();
+            } else {
+                alert(`❌ Error: ${data.message || 'Failed to save holiday'}`);
+            }
+        } catch (error) {
+            console.error('Error saving holiday:', error);
+            alert('❌ Error saving holiday. Please try again.');
+        }
+    }
+
+    /**
+     * Delete holiday
+     */
+    async deleteHoliday(holidayId) {
+        if (!confirm('🗑️ Are you sure you want to delete this holiday?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/holidays/${holidayId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('✅ Holiday deleted successfully!');
+                await this.loadHolidays();
+                this.render();
+                // Close holiday list modal if open
+                const listModal = document.getElementById('holidayListModal');
+                if (listModal && listModal.style.display === 'block') {
+                    this.showHolidayListModal(); // Refresh the list
+                }
+            } else {
+                alert(`❌ Error: ${data.message || 'Failed to delete holiday'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting holiday:', error);
+            alert('❌ Error deleting holiday. Please try again.');
+        }
+    }
+
+    /**
+     * Show holiday list modal
+     */
+    showHolidayListModal() {
+        const modal = document.getElementById('holidayListModal');
+        const tbody = modal.querySelector('tbody');
+        
+        // Sort holidays by date
+        const sortedHolidays = [...this.holidayDetails].sort((a, b) => 
+            new Date(a.date) - new Date(b.date)
+        );
+
+        // Generate table rows
+        let rows = '';
+        sortedHolidays.forEach(holiday => {
+            const dateObj = new Date(holiday.date);
+            const formattedDate = dateObj.toLocaleDateString('en-MY', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+            const typeBadge = holiday.type === 'national' ? '🇲🇾 National' : 
+                             holiday.type === 'state' ? '📍 State' : 
+                             '📅 ' + (holiday.type || 'Other');
+            const observanceBadge = holiday.is_observance ? '👁️ Observance' : '';
+            const stateName = holiday.state ? `(${holiday.state})` : '';
+
+            rows += `
+                <tr>
+                    <td>${formattedDate}</td>
+                    <td><strong>${holiday.name}</strong></td>
+                    <td>${typeBadge} ${stateName}</td>
+                    <td>${observanceBadge}</td>
+                    <td>
+                        <button onclick="leaveCalendar.showEditHolidayModal(${holiday.id})" class="btn-sm" style="background: #667eea; color: white; margin-right: 5px;">✏️ Edit</button>
+                        <button onclick="leaveCalendar.deleteHoliday(${holiday.id})" class="btn-sm" style="background: #dc3545; color: white;">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align: center; color: #666;">No holidays found</td></tr>';
+        modal.style.display = 'block';
+    }
+
+    /**
+     * Close holiday list modal
+     */
+    closeHolidayListModal() {
+        document.getElementById('holidayListModal').style.display = 'none';
+    }
+
+    /**
+     * Get holiday details for a specific date
+     */
+    getHolidayForDate(dateStr) {
+        return this.holidayDetails.find(h => h.date === dateStr);
     }
 }
 
