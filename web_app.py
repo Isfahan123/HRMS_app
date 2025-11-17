@@ -761,6 +761,95 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
         print(f"Error uploading contribution rates: {str(e)}")
         return {"success": False, "message": f"Error uploading file: {str(e)}"}
 
+# Variable Percentage API Endpoints
+@app.get("/api/admin/variable-percentage")
+async def get_variable_percentage_rules():
+    """
+    Get all variable percentage rules
+    """
+    try:
+        response = supabase.table("variable_percentage_rules").select("*").order("created_at", desc=True).execute()
+        return {"success": True, "data": response.data or []}
+    except Exception as e:
+        print(f"Error getting variable percentage rules: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
+
+@app.post("/api/admin/variable-percentage")
+async def create_variable_percentage_rule(request: Request):
+    """
+    Create a new variable percentage rule
+    """
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        required_fields = ['name', 'type', 'percentage', 'apply_to', 'base_on', 'frequency', 'status']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return {"success": False, "message": f"Missing required field: {field}"}
+        
+        # Validate percentage
+        try:
+            percentage = float(data['percentage'])
+            if percentage < 0 or percentage > 100:
+                return {"success": False, "message": "Percentage must be between 0 and 100"}
+        except ValueError:
+            return {"success": False, "message": "Invalid percentage value"}
+        
+        # Add timestamp
+        data['created_at'] = datetime.utcnow().isoformat()
+        
+        response = supabase.table("variable_percentage_rules").insert(data).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Variable percentage rule created successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to create rule"}
+    except Exception as e:
+        print(f"Error creating variable percentage rule: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/variable-percentage/{rule_id}")
+async def update_variable_percentage_rule(rule_id: str, request: Request):
+    """
+    Update an existing variable percentage rule
+    """
+    try:
+        data = await request.json()
+        
+        # Remove fields that shouldn't be updated
+        data.pop('id', None)
+        data.pop('created_at', None)
+        
+        # Add updated timestamp
+        data['updated_at'] = datetime.utcnow().isoformat()
+        
+        response = supabase.table("variable_percentage_rules").update(data).eq("id", rule_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Rule updated successfully", "data": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to update rule"}
+    except Exception as e:
+        print(f"Error updating variable percentage rule: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/variable-percentage/{rule_id}")
+async def delete_variable_percentage_rule(rule_id: str):
+    """
+    Delete a variable percentage rule
+    """
+    try:
+        response = supabase.table("variable_percentage_rules").delete().eq("id", rule_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Rule deleted successfully"}
+        else:
+            return {"success": False, "message": "Failed to delete rule"}
+    except Exception as e:
+        print(f"Error deleting variable percentage rule: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/admin/salary-history")
 async def get_salary_history():
     """

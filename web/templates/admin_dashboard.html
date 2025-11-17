@@ -893,8 +893,128 @@
                     
                     <!-- Variable % Subtab -->
                     <div id="payrollVariableSubtab" class="subtab-content">
-                        <h3>📊 Variable %</h3>
-                        <p>Variable percentage configuration coming soon...</p>
+                        <h3>📊 Variable Percentage Configuration</h3>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            Configure variable percentage bonuses and allowances for employees. These can be performance-based, 
+                            department-based, or applied company-wide.
+                        </p>
+                        
+                        <!-- Add Variable % Button -->
+                        <button class="btn-primary" onclick="showAddVariablePercentageForm()" style="margin-bottom: 20px;">
+                            ➕ Add Variable Percentage Rule
+                        </button>
+                        
+                        <!-- Add Variable % Form (hidden by default) -->
+                        <div id="addVariablePercentageForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                            <h4>Add Variable Percentage Rule</h4>
+                            <form id="newVariablePercentageForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctName">Rule Name:*</label>
+                                        <input type="text" id="varPctName" name="name" required placeholder="e.g., Q1 Performance Bonus">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctType">Type:*</label>
+                                        <select id="varPctType" name="type" required>
+                                            <option value="">Select Type</option>
+                                            <option value="bonus">Bonus</option>
+                                            <option value="allowance">Allowance</option>
+                                            <option value="commission">Commission</option>
+                                            <option value="incentive">Incentive</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctPercentage">Percentage:*</label>
+                                        <input type="number" id="varPctPercentage" name="percentage" required min="0" max="100" step="0.01" placeholder="e.g., 5.5">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctApplyTo">Apply To:*</label>
+                                        <select id="varPctApplyTo" name="apply_to" required onchange="toggleEmployeeSelection()">
+                                            <option value="">Select</option>
+                                            <option value="all">All Employees</option>
+                                            <option value="department">Department</option>
+                                            <option value="individual">Individual Employee</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="varPctDepartmentGroup" style="display: none;">
+                                        <label for="varPctDepartment">Department:</label>
+                                        <select id="varPctDepartment" name="department">
+                                            <option value="">Select Department</option>
+                                            <option value="IT">IT</option>
+                                            <option value="HR">HR</option>
+                                            <option value="Finance">Finance</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Operations">Operations</option>
+                                            <option value="Sales">Sales</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="varPctEmployeeGroup" style="display: none;">
+                                        <label for="varPctEmployee">Employee Email:</label>
+                                        <input type="email" id="varPctEmployee" name="employee_email" placeholder="employee@company.com">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctBaseOn">Calculate Based On:*</label>
+                                        <select id="varPctBaseOn" name="base_on" required>
+                                            <option value="">Select</option>
+                                            <option value="basic_salary">Basic Salary</option>
+                                            <option value="gross_salary">Gross Salary</option>
+                                            <option value="net_salary">Net Salary</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctFrequency">Frequency:*</label>
+                                        <select id="varPctFrequency" name="frequency" required>
+                                            <option value="">Select</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="quarterly">Quarterly</option>
+                                            <option value="annually">Annually</option>
+                                            <option value="one-time">One-Time</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctStatus">Status:*</label>
+                                        <select id="varPctStatus" name="status" required>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="varPctStartDate">Start Date:</label>
+                                        <input type="date" id="varPctStartDate" name="start_date">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="varPctEndDate">End Date:</label>
+                                        <input type="date" id="varPctEndDate" name="end_date">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="varPctDescription">Description:</label>
+                                    <textarea id="varPctDescription" name="description" rows="3" placeholder="Optional description of this variable percentage rule"></textarea>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <button type="submit" class="btn-primary">Save Rule</button>
+                                    <button type="button" class="btn-secondary" onclick="hideAddVariablePercentageForm()">Cancel</button>
+                                </div>
+                                
+                                <div id="addVariablePercentageMessage" style="display: none; margin-top: 10px;"></div>
+                            </form>
+                        </div>
+                        
+                        <!-- Variable % Rules Table -->
+                        <div id="variablePercentageRulesTable">
+                            <p style="color: #666;">Loading variable percentage rules...</p>
+                        </div>
                     </div>
                     
                     <!-- LHDN Tax Subtab -->

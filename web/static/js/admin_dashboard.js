@@ -1201,6 +1201,167 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Variable Percentage Management Functions
+    window.showAddVariablePercentageForm = function() {
+        document.getElementById('addVariablePercentageForm').style.display = 'block';
+    };
+    
+    window.hideAddVariablePercentageForm = function() {
+        document.getElementById('addVariablePercentageForm').style.display = 'none';
+        document.getElementById('newVariablePercentageForm').reset();
+        document.getElementById('addVariablePercentageMessage').style.display = 'none';
+    };
+    
+    window.toggleEmployeeSelection = function() {
+        const applyTo = document.getElementById('varPctApplyTo').value;
+        const deptGroup = document.getElementById('varPctDepartmentGroup');
+        const empGroup = document.getElementById('varPctEmployeeGroup');
+        
+        if (applyTo === 'department') {
+            deptGroup.style.display = 'block';
+            empGroup.style.display = 'none';
+        } else if (applyTo === 'individual') {
+            deptGroup.style.display = 'none';
+            empGroup.style.display = 'block';
+        } else {
+            deptGroup.style.display = 'none';
+            empGroup.style.display = 'none';
+        }
+    };
+    
+    async function loadVariablePercentageRules() {
+        try {
+            const response = await fetch('/api/admin/variable-percentage');
+            const data = await response.json();
+            
+            const container = document.getElementById('variablePercentageRulesTable');
+            if (!container) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                let html = '<h4 style="margin-top: 20px; margin-bottom: 15px;">Active Variable Percentage Rules</h4>';
+                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px;">Rule Name</th>';
+                html += '<th style="padding: 10px;">Type</th>';
+                html += '<th style="padding: 10px;">Percentage</th>';
+                html += '<th style="padding: 10px;">Apply To</th>';
+                html += '<th style="padding: 10px;">Base On</th>';
+                html += '<th style="padding: 10px;">Frequency</th>';
+                html += '<th style="padding: 10px;">Status</th>';
+                html += '<th style="padding: 10px;">Actions</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.data.forEach(rule => {
+                    const statusClass = rule.status === 'active' ? 'color: #2e7d32;' : 'color: #f57c00;';
+                    const applyToText = rule.apply_to === 'all' ? 'All Employees' : 
+                                      rule.apply_to === 'department' ? `Dept: ${rule.department || '-'}` :
+                                      rule.apply_to === 'individual' ? `Emp: ${rule.employee_email || '-'}` : '-';
+                    
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += `<td style="padding: 10px;"><strong>${rule.name || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${rule.type || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${rule.percentage}%</strong></td>`;
+                    html += `<td style="padding: 10px;">${applyToText}</td>`;
+                    html += `<td style="padding: 10px;">${(rule.base_on || '').replace('_', ' ') || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${rule.frequency || '-'}</td>`;
+                    html += `<td style="padding: 10px; ${statusClass}"><strong>${rule.status || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">`;
+                    html += `<button class="btn-secondary btn-sm" onclick="editVariablePercentageRule('${rule.id}')">✏️ Edit</button> `;
+                    html += `<button class="btn-secondary btn-sm" onclick="deleteVariablePercentageRule('${rule.id}')">🗑️ Delete</button>`;
+                    html += `</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 10px; color: #666; font-size: 14px;">${data.data.length} rule(s) configured</p>`;
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p style="color: #666;">No variable percentage rules configured yet. Click "Add Variable Percentage Rule" to create one.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading variable percentage rules:', error);
+            const container = document.getElementById('variablePercentageRulesTable');
+            if (container) container.innerHTML = '<p style="color: #f44336;">Error loading rules.</p>';
+        }
+    }
+    
+    // Handle new variable percentage form submission
+    const newVariablePercentageForm = document.getElementById('newVariablePercentageForm');
+    if (newVariablePercentageForm) {
+        newVariablePercentageForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(newVariablePercentageForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/variable-percentage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('addVariablePercentageMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Variable percentage rule created successfully!';
+                    
+                    setTimeout(() => {
+                        hideAddVariablePercentageForm();
+                        loadVariablePercentageRules();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to create rule';
+                }
+            } catch (error) {
+                console.error('Error creating variable percentage rule:', error);
+                const messageDiv = document.getElementById('addVariablePercentageMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error creating rule';
+            }
+        });
+    }
+    
+    window.editVariablePercentageRule = function(ruleId) {
+        // TODO: Implement edit functionality
+        alert('Edit functionality will be implemented in the next iteration. For now, you can delete and recreate the rule.');
+    };
+    
+    window.deleteVariablePercentageRule = async function(ruleId) {
+        if (!confirm('Are you sure you want to delete this variable percentage rule?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/variable-percentage/${ruleId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ Rule deleted successfully');
+                loadVariablePercentageRules();
+            } else {
+                alert(`❌ ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error deleting variable percentage rule:', error);
+            alert('❌ Error deleting rule');
+        }
+    };
+    
     // Load all new data on init
     loadLeaveBalances();
     loadSickLeaveBalances();
@@ -1208,4 +1369,5 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPayrollContributions();
     loadSalaryHistory();
     loadEmployeeHistory();
+    loadVariablePercentageRules();
 });
