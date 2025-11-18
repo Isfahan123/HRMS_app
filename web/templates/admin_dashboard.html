@@ -1479,7 +1479,7 @@
                                 <th style="text-align: left; padding: 12px;">Type</th>
                                 <th style="text-align: right; padding: 12px;">Amount</th>
                                 <th style="text-align: left; padding: 12px;">Description</th>
-                                <th style="text-align: left; padding: 12px;">Pay Period</th>
+                                <th style="text-align: left; padding: 12px;">Effective Date</th>
                                 <th style="text-align: center; padding: 12px;">Status</th>
                                 <th style="text-align: left; padding: 12px;">Approved By</th>
                                 <th style="text-align: center; padding: 12px;">Actions</th>
@@ -1529,8 +1529,17 @@
                                     <textarea id="bonusDescription" rows="3" style="width: 100%; padding: 8px;"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="bonusPayPeriod">Pay Period: *</label>
-                                    <input type="month" id="bonusPayPeriod" required style="width: 100%; padding: 8px;">
+                                    <label for="bonusEffectiveDate">Effective Date: *</label>
+                                    <input type="date" id="bonusEffectiveDate" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bonusStatus">Status: *</label>
+                                    <select id="bonusStatus" required style="width: 100%; padding: 8px;">
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
                                 </div>
                                 <div style="margin-top: 20px;">
                                     <button type="submit" class="btn-primary">Save Bonus</button>

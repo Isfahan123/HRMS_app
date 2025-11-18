@@ -106,7 +106,7 @@ class BonusManager {
                     <td>${bonus.bonus_type || '-'}</td>
                     <td>RM ${parseFloat(bonus.amount || 0).toFixed(2)}</td>
                     <td>${bonus.description || '-'}</td>
-                    <td>${bonus.pay_period || '-'}</td>
+                    <td>${bonus.effective_date || '-'}</td>
                     <td><span class="badge badge-${statusBadge}">${bonus.status}</span></td>
                     <td>${bonus.approved_by || '-'}</td>
                     <td>
@@ -238,7 +238,8 @@ class BonusManager {
             bonus_type: document.getElementById('bonusType').value,
             amount: document.getElementById('bonusAmount').value,
             description: document.getElementById('bonusDescription').value,
-            pay_period: document.getElementById('bonusPayPeriod').value
+            effective_date: document.getElementById('bonusEffectiveDate').value,
+            status: document.getElementById('bonusStatus').value
         };
 
         // Validation
@@ -293,7 +294,8 @@ class BonusManager {
         document.getElementById('bonusType').value = bonus.bonus_type;
         document.getElementById('bonusAmount').value = bonus.amount;
         document.getElementById('bonusDescription').value = bonus.description;
-        document.getElementById('bonusPayPeriod').value = bonus.pay_period;
+        document.getElementById('bonusEffectiveDate').value = bonus.effective_date;
+        document.getElementById('bonusStatus').value = bonus.status || 'pending';
 
         document.getElementById('modalTitle').textContent = 'Edit Bonus';
         this.populateEmployeeDropdown();
