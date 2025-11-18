@@ -148,15 +148,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`/api/payroll/${userEmail}`);
             const data = await response.json();
             
+            const container = document.getElementById('employeePayrollTable');
+            if (!container) return;
+            
             if (data.success && data.data && data.data.length > 0) {
                 const tableHtml = buildPayrollTable(data.data);
-                document.getElementById('payrollTab').innerHTML = '<h2>Payroll Information</h2>' + tableHtml;
+                container.innerHTML = tableHtml;
             } else {
-                document.getElementById('payrollTab').innerHTML = '<h2>Payroll Information</h2><p>No payroll records found.</p>';
+                container.innerHTML = '<p>No payroll records found.</p>';
             }
         } catch (error) {
             console.error('Error loading payroll:', error);
-            document.getElementById('payrollTab').innerHTML = '<h2>Payroll Information</h2><p>Error loading payroll data.</p>';
+            const container = document.getElementById('employeePayrollTable');
+            if (container) container.innerHTML = '<p>Error loading payroll data.</p>';
         }
     }
     
@@ -184,8 +188,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`/api/engagements/${userEmail}`);
             const data = await response.json();
             
+            const container = document.getElementById('myEngagementsTable');
+            if (!container) return;
+            
             if (data.success && data.data) {
-                let html = '<h2>Training & Trips</h2>';
+                let html = '';
                 
                 // Training courses
                 if (data.data.training && data.data.training.length > 0) {
@@ -203,13 +210,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '<h3>Overseas Work Trips</h3><p>No overseas trips found.</p>';
                 }
                 
-                document.getElementById('engagementsTab').innerHTML = html;
+                container.innerHTML = html;
             } else {
-                document.getElementById('engagementsTab').innerHTML = '<h2>Training & Trips</h2><p>No engagement records found.</p>';
+                container.innerHTML = '<p>No engagement records found.</p>';
             }
         } catch (error) {
             console.error('Error loading engagements:', error);
-            document.getElementById('engagementsTab').innerHTML = '<h2>Training & Trips</h2><p>Error loading engagement data.</p>';
+            const container = document.getElementById('myEngagementsTable');
+            if (container) container.innerHTML = '<p>Error loading engagement data.</p>';
         }
     }
     
