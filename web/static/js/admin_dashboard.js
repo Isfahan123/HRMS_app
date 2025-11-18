@@ -762,7 +762,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Global functions for bonus actions
     window.editBonus = async function(bonusId) {
-        alert('Edit functionality: Bonus ID ' + bonusId + '. Full edit dialog will be implemented in next iteration.');
+        // Delegate to bonusManager if available
+        if (typeof bonusManager !== 'undefined' && bonusManager) {
+            bonusManager.editBonus(bonusId);
+        } else {
+            alert('Bonus manager not loaded. Please refresh the page.');
+        }
     };
     
     window.deleteBonus = async function(bonusId) {
@@ -2021,6 +2026,86 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error exporting skipped payroll');
         }
     };
+    
+    // Admin Leave Request Form Handler
+    const adminLeaveRequestForm = document.getElementById('adminLeaveRequestForm');
+    if (adminLeaveRequestForm) {
+        adminLeaveRequestForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(adminLeaveRequestForm);
+            const employeeId = formData.get('employee_id');
+            
+            // Need to convert employee_id to email - fetch employee data
+            try {
+                const employeesResponse = await fetch('/api/employees');
+                const employeesData = await employeesResponse.json();
+                
+                if (!employeesData.success || !employeesData.data) {
+                    throw new Error('Failed to load employee data');
+                }
+                
+                // Find employee by ID
+                const employee = employeesData.data.find(emp => 
+                    emp.employee_id === employeeId || emp.email === employeeId
+                );
+                
+                if (!employee) {
+                    const messageDiv = document.getElementById('adminLeaveFormMessage');
+                    messageDiv.style.display = 'block';
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = `Employee with ID "${employeeId}" not found. Please use employee email or valid ID.`;
+                    return;
+                }
+                
+                // Build leave request data
+                const leaveData = {
+                    employee_email: employee.email,
+                    leave_type: formData.get('leave_type'),
+                    start_date: formData.get('start_date'),
+                    end_date: formData.get('end_date'),
+                    title: formData.get('title') || 'Admin submitted leave',
+                    is_half_day: formData.get('is_half_day') === 'on',
+                    half_day_period: formData.get('is_half_day') === 'on' ? 'morning' : null
+                };
+                
+                // Submit leave request
+                const response = await fetch('/api/leave-requests/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(leaveData)
+                });
+                
+                const result = await response.json();
+                const messageDiv = document.getElementById('adminLeaveFormMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Leave request submitted successfully!';
+                    adminLeaveRequestForm.reset();
+                    
+                    // Reload leave requests
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                        loadLeaveRequests();
+                        loadApprovedRejectedLeaveRequests();
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to submit leave request';
+                }
+            } catch (error) {
+                console.error('Error submitting admin leave request:', error);
+                const messageDiv = document.getElementById('adminLeaveFormMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error submitting leave request: ' + error.message;
+            }
+        });
+    }
     
     // Load all new data on init
     loadLeaveBalances();
