@@ -1628,78 +1628,75 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="empHistoryJobTitle">Job Title:*</label>
-                                    <select id="empHistoryJobTitle" name="job_title" required>
-                                        <option value="">Select Job Title</option>
-                                        <option value="Software Engineer">Software Engineer</option>
-                                        <option value="Senior Software Engineer">Senior Software Engineer</option>
-                                        <option value="Lead Software Engineer">Lead Software Engineer</option>
-                                        <option value="Product Manager">Product Manager</option>
-                                        <option value="Senior Product Manager">Senior Product Manager</option>
-                                        <option value="Accountant">Accountant</option>
-                                        <option value="Senior Accountant">Senior Accountant</option>
-                                        <option value="HR Manager">HR Manager</option>
-                                        <option value="Marketing Manager">Marketing Manager</option>
-                                        <option value="Sales Representative">Sales Representative</option>
-                                        <option value="Operations Manager">Operations Manager</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <input type="text" id="empHistoryJobTitle" name="job_title" list="jobTitleList" required placeholder="Select or type job title">
+                                    <datalist id="jobTitleList">
+                                        <option value="Software Engineer">
+                                        <option value="Senior Software Engineer">
+                                        <option value="Lead Software Engineer">
+                                        <option value="Product Manager">
+                                        <option value="Senior Product Manager">
+                                        <option value="Accountant">
+                                        <option value="Senior Accountant">
+                                        <option value="HR Manager">
+                                        <option value="Marketing Manager">
+                                        <option value="Sales Representative">
+                                        <option value="Operations Manager">
+                                    </datalist>
                                 </div>
                                 <div class="form-group">
                                     <label for="empHistoryPosition">Position:</label>
-                                    <select id="empHistoryPosition" name="position">
-                                        <option value="">Select Position</option>
-                                        <option value="Junior">Junior</option>
-                                        <option value="Mid-level">Mid-level</option>
-                                        <option value="Senior">Senior</option>
-                                        <option value="Lead">Lead</option>
-                                        <option value="Manager">Manager</option>
-                                        <option value="Senior Manager">Senior Manager</option>
-                                        <option value="Director">Director</option>
-                                        <option value="Senior Director">Senior Director</option>
-                                        <option value="VP">VP</option>
-                                        <option value="Senior VP">Senior VP</option>
-                                        <option value="C-Level">C-Level</option>
-                                        <option value="Intern">Intern</option>
-                                        <option value="Contractor">Contractor</option>
-                                        <option value="Consultant">Consultant</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <input type="text" id="empHistoryPosition" name="position" list="positionList" placeholder="Select or type position">
+                                    <datalist id="positionList">
+                                        <option value="Junior">
+                                        <option value="Mid-level">
+                                        <option value="Senior">
+                                        <option value="Lead">
+                                        <option value="Manager">
+                                        <option value="Senior Manager">
+                                        <option value="Director">
+                                        <option value="Senior Director">
+                                        <option value="VP">
+                                        <option value="Senior VP">
+                                        <option value="C-Level">
+                                        <option value="Intern">
+                                        <option value="Contractor">
+                                        <option value="Consultant">
+                                    </datalist>
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="empHistoryDepartment">Department:</label>
-                                    <select id="empHistoryDepartment" name="department">
-                                        <option value="">Select Department</option>
-                                        <option value="Engineering">Engineering</option>
-                                        <option value="Product">Product</option>
-                                        <option value="Design">Design</option>
-                                        <option value="Research">Research</option>
-                                        <option value="Data">Data</option>
-                                        <option value="IT">IT</option>
-                                        <option value="Security">Security</option>
-                                        <option value="Human Resources">Human Resources</option>
-                                        <option value="Finance">Finance</option>
-                                        <option value="Accounting">Accounting</option>
-                                        <option value="Legal">Legal</option>
-                                        <option value="Compliance">Compliance</option>
-                                        <option value="Sales">Sales</option>
-                                        <option value="Business Development">Business Development</option>
-                                        <option value="Marketing">Marketing</option>
-                                        <option value="Customer Success">Customer Success</option>
-                                        <option value="Support">Support</option>
-                                        <option value="Operations">Operations</option>
-                                        <option value="Supply Chain">Supply Chain</option>
-                                        <option value="Procurement">Procurement</option>
-                                        <option value="Facilities">Facilities</option>
-                                        <option value="Quality">Quality</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Executive">Executive</option>
-                                        <option value="Strategy">Strategy</option>
-                                        <option value="Growth">Growth</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <input type="text" id="empHistoryDepartment" name="department" list="departmentList" placeholder="Select or type department">
+                                    <datalist id="departmentList">
+                                        <option value="Engineering">
+                                        <option value="Product">
+                                        <option value="Design">
+                                        <option value="Research">
+                                        <option value="Data">
+                                        <option value="IT">
+                                        <option value="Security">
+                                        <option value="Human Resources">
+                                        <option value="Finance">
+                                        <option value="Accounting">
+                                        <option value="Legal">
+                                        <option value="Compliance">
+                                        <option value="Sales">
+                                        <option value="Business Development">
+                                        <option value="Marketing">
+                                        <option value="Customer Success">
+                                        <option value="Support">
+                                        <option value="Operations">
+                                        <option value="Supply Chain">
+                                        <option value="Procurement">
+                                        <option value="Facilities">
+                                        <option value="Quality">
+                                        <option value="Admin">
+                                        <option value="Executive">
+                                        <option value="Strategy">
+                                        <option value="Growth">
+                                    </datalist>
                                 </div>
                                 <div class="form-group">
                                     <label for="empHistoryFunctionalGroup">Functional Group:</label>
@@ -1710,46 +1707,46 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="empHistoryStatus">Status:</label>
-                                    <select id="empHistoryStatus" name="status">
-                                        <option value="">Select Status</option>
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                        <option value="Resigned">Resigned</option>
-                                        <option value="Terminated">Terminated</option>
-                                    </select>
+                                    <input type="text" id="empHistoryStatus" name="status" list="statusList" placeholder="Select or type status">
+                                    <datalist id="statusList">
+                                        <option value="Active">
+                                        <option value="Inactive">
+                                        <option value="Resigned">
+                                        <option value="Terminated">
+                                    </datalist>
                                 </div>
                                 <div class="form-group">
                                     <label for="empHistoryEmploymentType">Employment Type:</label>
-                                    <select id="empHistoryEmploymentType" name="employment_type">
-                                        <option value="">Select Type</option>
-                                        <option value="Full-time">Full-time</option>
-                                        <option value="Part-time">Part-time</option>
-                                        <option value="Contract">Contract</option>
-                                        <option value="Temporary">Temporary</option>
-                                    </select>
+                                    <input type="text" id="empHistoryEmploymentType" name="employment_type" list="employmentTypeList" placeholder="Select or type employment type">
+                                    <datalist id="employmentTypeList">
+                                        <option value="Full-time">
+                                        <option value="Part-time">
+                                        <option value="Contract">
+                                        <option value="Temporary">
+                                    </datalist>
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="empHistoryWorkStatus">Work Status:</label>
-                                    <select id="empHistoryWorkStatus" name="work_status">
-                                        <option value="">Select Work Status</option>
-                                        <option value="On Duty">On Duty</option>
-                                        <option value="On Leave">On Leave</option>
-                                        <option value="On Sick Leave">On Sick Leave</option>
-                                        <option value="On Unpaid Leave">On Unpaid Leave</option>
-                                        <option value="On Suspension">On Suspension</option>
-                                        <option value="On Business Trip">On Business Trip</option>
-                                    </select>
+                                    <input type="text" id="empHistoryWorkStatus" name="work_status" list="workStatusList" placeholder="Select or type work status">
+                                    <datalist id="workStatusList">
+                                        <option value="On Duty">
+                                        <option value="On Leave">
+                                        <option value="On Sick Leave">
+                                        <option value="On Unpaid Leave">
+                                        <option value="On Suspension">
+                                        <option value="On Business Trip">
+                                    </datalist>
                                 </div>
                                 <div class="form-group">
                                     <label for="empHistoryPayrollStatus">Payroll Status:</label>
-                                    <select id="empHistoryPayrollStatus" name="payroll_status">
-                                        <option value="">Select Payroll Status</option>
-                                        <option value="Active Payroll">Active Payroll</option>
-                                        <option value="Inactive Payroll">Inactive Payroll</option>
-                                    </select>
+                                    <input type="text" id="empHistoryPayrollStatus" name="payroll_status" list="payrollStatusList" placeholder="Select or type payroll status">
+                                    <datalist id="payrollStatusList">
+                                        <option value="Active Payroll">
+                                        <option value="Inactive Payroll">
+                                    </datalist>
                                 </div>
                             </div>
                             
@@ -1838,78 +1835,75 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="editEmpHistoryJobTitle">Job Title:*</label>
-                        <select id="editEmpHistoryJobTitle" name="job_title" required>
-                            <option value="">Select Job Title</option>
-                            <option value="Software Engineer">Software Engineer</option>
-                            <option value="Senior Software Engineer">Senior Software Engineer</option>
-                            <option value="Lead Software Engineer">Lead Software Engineer</option>
-                            <option value="Product Manager">Product Manager</option>
-                            <option value="Senior Product Manager">Senior Product Manager</option>
-                            <option value="Accountant">Accountant</option>
-                            <option value="Senior Accountant">Senior Accountant</option>
-                            <option value="HR Manager">HR Manager</option>
-                            <option value="Marketing Manager">Marketing Manager</option>
-                            <option value="Sales Representative">Sales Representative</option>
-                            <option value="Operations Manager">Operations Manager</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <input type="text" id="editEmpHistoryJobTitle" name="job_title" list="editJobTitleList" required placeholder="Select or type job title">
+                        <datalist id="editJobTitleList">
+                            <option value="Software Engineer">
+                            <option value="Senior Software Engineer">
+                            <option value="Lead Software Engineer">
+                            <option value="Product Manager">
+                            <option value="Senior Product Manager">
+                            <option value="Accountant">
+                            <option value="Senior Accountant">
+                            <option value="HR Manager">
+                            <option value="Marketing Manager">
+                            <option value="Sales Representative">
+                            <option value="Operations Manager">
+                        </datalist>
                     </div>
                     <div class="form-group">
                         <label for="editEmpHistoryPosition">Position:</label>
-                        <select id="editEmpHistoryPosition" name="position">
-                            <option value="">Select Position</option>
-                            <option value="Junior">Junior</option>
-                            <option value="Mid-level">Mid-level</option>
-                            <option value="Senior">Senior</option>
-                            <option value="Lead">Lead</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Senior Manager">Senior Manager</option>
-                            <option value="Director">Director</option>
-                            <option value="Senior Director">Senior Director</option>
-                            <option value="VP">VP</option>
-                            <option value="Senior VP">Senior VP</option>
-                            <option value="C-Level">C-Level</option>
-                            <option value="Intern">Intern</option>
-                            <option value="Contractor">Contractor</option>
-                            <option value="Consultant">Consultant</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <input type="text" id="editEmpHistoryPosition" name="position" list="editPositionList" placeholder="Select or type position">
+                        <datalist id="editPositionList">
+                            <option value="Junior">
+                            <option value="Mid-level">
+                            <option value="Senior">
+                            <option value="Lead">
+                            <option value="Manager">
+                            <option value="Senior Manager">
+                            <option value="Director">
+                            <option value="Senior Director">
+                            <option value="VP">
+                            <option value="Senior VP">
+                            <option value="C-Level">
+                            <option value="Intern">
+                            <option value="Contractor">
+                            <option value="Consultant">
+                        </datalist>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="editEmpHistoryDepartment">Department:</label>
-                        <select id="editEmpHistoryDepartment" name="department">
-                            <option value="">Select Department</option>
-                            <option value="Engineering">Engineering</option>
-                            <option value="Product">Product</option>
-                            <option value="Design">Design</option>
-                            <option value="Research">Research</option>
-                            <option value="Data">Data</option>
-                            <option value="IT">IT</option>
-                            <option value="Security">Security</option>
-                            <option value="Human Resources">Human Resources</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Accounting">Accounting</option>
-                            <option value="Legal">Legal</option>
-                            <option value="Compliance">Compliance</option>
-                            <option value="Sales">Sales</option>
-                            <option value="Business Development">Business Development</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Customer Success">Customer Success</option>
-                            <option value="Support">Support</option>
-                            <option value="Operations">Operations</option>
-                            <option value="Supply Chain">Supply Chain</option>
-                            <option value="Procurement">Procurement</option>
-                            <option value="Facilities">Facilities</option>
-                            <option value="Quality">Quality</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Executive">Executive</option>
-                            <option value="Strategy">Strategy</option>
-                            <option value="Growth">Growth</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <input type="text" id="editEmpHistoryDepartment" name="department" list="editDepartmentList" placeholder="Select or type department">
+                        <datalist id="editDepartmentList">
+                            <option value="Engineering">
+                            <option value="Product">
+                            <option value="Design">
+                            <option value="Research">
+                            <option value="Data">
+                            <option value="IT">
+                            <option value="Security">
+                            <option value="Human Resources">
+                            <option value="Finance">
+                            <option value="Accounting">
+                            <option value="Legal">
+                            <option value="Compliance">
+                            <option value="Sales">
+                            <option value="Business Development">
+                            <option value="Marketing">
+                            <option value="Customer Success">
+                            <option value="Support">
+                            <option value="Operations">
+                            <option value="Supply Chain">
+                            <option value="Procurement">
+                            <option value="Facilities">
+                            <option value="Quality">
+                            <option value="Admin">
+                            <option value="Executive">
+                            <option value="Strategy">
+                            <option value="Growth">
+                        </datalist>
                     </div>
                     <div class="form-group">
                         <label for="editEmpHistoryFunctionalGroup">Functional Group:</label>
@@ -1920,46 +1914,47 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="editEmpHistoryStatus">Status:</label>
-                        <select id="editEmpHistoryStatus" name="status">
-                            <option value="">Select Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                            <option value="Resigned">Resigned</option>
-                            <option value="Terminated">Terminated</option>
-                        </select>
+                        <input type="text" id="editEmpHistoryStatus" name="status" list="editStatusList" placeholder="Select or type status">
+                        <datalist id="editStatusList">
+                            <option value="Active">
+                            <option value="Inactive">
+                            <option value="Resigned">
+                            <option value="Terminated">
+                        </datalist>
                     </div>
                     <div class="form-group">
                         <label for="editEmpHistoryEmploymentType">Employment Type:</label>
-                        <select id="editEmpHistoryEmploymentType" name="employment_type">
+                        <input type="text" id="editEmpHistoryEmploymentType" name="employment_type" list="editEmploymentTypeList" placeholder="Select or type employment type">
+                        <datalist id="editEmploymentTypeList">
                             <option value="">Select Type</option>
-                            <option value="Full-time">Full-time</option>
-                            <option value="Part-time">Part-time</option>
-                            <option value="Contract">Contract</option>
-                            <option value="Temporary">Temporary</option>
-                        </select>
+                            <option value="Full-time">
+                            <option value="Part-time">
+                            <option value="Contract">
+                            <option value="Temporary">
+                        </datalist>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="editEmpHistoryWorkStatus">Work Status:</label>
-                        <select id="editEmpHistoryWorkStatus" name="work_status">
-                            <option value="">Select Work Status</option>
-                            <option value="On Duty">On Duty</option>
-                            <option value="On Leave">On Leave</option>
-                            <option value="On Sick Leave">On Sick Leave</option>
-                            <option value="On Unpaid Leave">On Unpaid Leave</option>
-                            <option value="On Suspension">On Suspension</option>
-                            <option value="On Business Trip">On Business Trip</option>
-                        </select>
+                        <input type="text" id="editEmpHistoryWorkStatus" name="work_status" list="editWorkStatusList" placeholder="Select or type work status">
+                        <datalist id="editWorkStatusList">
+                            <option value="On Duty">
+                            <option value="On Leave">
+                            <option value="On Sick Leave">
+                            <option value="On Unpaid Leave">
+                            <option value="On Suspension">
+                            <option value="On Business Trip">
+                        </datalist>
                     </div>
                     <div class="form-group">
                         <label for="editEmpHistoryPayrollStatus">Payroll Status:</label>
-                        <select id="editEmpHistoryPayrollStatus" name="payroll_status">
-                            <option value="">Select Payroll Status</option>
-                            <option value="Active Payroll">Active Payroll</option>
-                            <option value="Inactive Payroll">Inactive Payroll</option>
-                        </select>
+                        <input type="text" id="editEmpHistoryPayrollStatus" name="payroll_status" list="editPayrollStatusList" placeholder="Select or type payroll status">
+                        <datalist id="editPayrollStatusList">
+                            <option value="Active Payroll">
+                            <option value="Inactive Payroll">
+                        </datalist>
                     </div>
                 </div>
                 
