@@ -1520,15 +1520,44 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Employment History Management Functions
-    window.showAddEmploymentChangeForm = function() {
-        document.getElementById('addEmploymentChangeForm').style.display = 'block';
+    window.showAddEmploymentHistoryForm = function() {
+        loadEmployeeHistorySelector();
+        document.getElementById('addEmploymentHistoryForm').style.display = 'block';
     };
     
-    window.hideAddEmploymentChangeForm = function() {
-        document.getElementById('addEmploymentChangeForm').style.display = 'none';
-        document.getElementById('newEmploymentChangeForm').reset();
-        document.getElementById('addEmploymentChangeMessage').style.display = 'none';
+    window.hideAddEmploymentHistoryForm = function() {
+        document.getElementById('addEmploymentHistoryForm').style.display = 'none';
+        document.getElementById('newEmploymentHistoryForm').reset();
+        document.getElementById('addEmploymentHistoryMessage').style.display = 'none';
     };
+    
+    // Load employees into the employment history employee selector
+    async function loadEmployeeHistorySelector() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            const selectors = [
+                document.getElementById('empHistoryEmployeeSelect'),
+                document.getElementById('editEmpHistoryEmployeeSelect')
+            ];
+            
+            if (data.success && data.data && data.data.length > 0) {
+                selectors.forEach(selector => {
+                    if (!selector) return;
+                    selector.innerHTML = '<option value="">Select Employee</option>';
+                    data.data.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.email;
+                        option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                        selector.appendChild(option);
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error loading employees for employment history:', error);
+        }
+    }
     
     async function loadEmployeeHistory() {
         try {
@@ -1541,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success && data.data && data.data.length > 0) {
                 // Apply filters
                 const employeeFilter = document.getElementById('empHistoryEmployeeFilter')?.value.toLowerCase() || '';
-                const typeFilter = document.getElementById('empHistoryTypeFilter')?.value || '';
+                const companyFilter = document.getElementById('empHistoryCompanyFilter')?.value.toLowerCase() || '';
                 const yearFilter = document.getElementById('empHistoryYearFilter')?.value || '';
                 
                 let filteredData = data.data;
@@ -1553,14 +1582,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     );
                 }
                 
-                if (typeFilter) {
-                    filteredData = filteredData.filter(r => r.change_type === typeFilter);
+                if (companyFilter) {
+                    filteredData = filteredData.filter(r => 
+                        ((r.company || '').toLowerCase().includes(companyFilter))
+                    );
                 }
                 
                 if (yearFilter) {
                     filteredData = filteredData.filter(r => {
-                        const date = r.effective_date || '';
-                        return date.startsWith(yearFilter);
+                        const startDate = r.start_date || '';
+                        const endDate = r.end_date || '';
+                        return startDate.startsWith(yearFilter) || endDate.startsWith(yearFilter);
                     });
                 }
                 
@@ -1570,35 +1602,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Effective Date</th>';
                 html += '<th style="padding: 10px;">Employee</th>';
-                html += '<th style="padding: 10px;">Change Type</th>';
-                html += '<th style="padding: 10px;">Field Changed</th>';
-                html += '<th style="padding: 10px;">Previous Value</th>';
-                html += '<th style="padding: 10px;">New Value</th>';
-                html += '<th style="padding: 10px;">Reason</th>';
+                html += '<th style="padding: 10px;">Company</th>';
+                html += '<th style="padding: 10px;">Job Title</th>';
+                html += '<th style="padding: 10px;">Position</th>';
+                html += '<th style="padding: 10px;">Department</th>';
+                html += '<th style="padding: 10px;">Type</th>';
+                html += '<th style="padding: 10px;">Period</th>';
                 html += '<th style="padding: 10px;">Actions</th>';
                 html += '</tr></thead><tbody>';
                 
                 filteredData.forEach(record => {
-                    const typeColors = {
-                        'promotion': '#2e7d32',
-                        'transfer': '#1976d2',
-                        'position_change': '#f57c00',
-                        'status_change': '#7b1fa2',
-                        'demotion': '#c62828',
-                        'other': '#666'
-                    };
-                    const typeColor = typeColors[record.change_type] || '#666';
-                    
                     html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
-                    html += `<td style="padding: 10px;"><span style="background: ${typeColor}20; padding: 4px 8px; border-radius: 4px; color: ${typeColor}; font-size: 12px; font-weight: bold;">${record.change_type || '-'}</span></td>`;
-                    html += `<td style="padding: 10px;"><em>${record.field_changed || '-'}</em></td>`;
-                    html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
-                    html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
+                    html += `<td style="padding: 10px;"><strong>${record.company || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${record.job_title || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.position || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.department || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><span style="background: #667eea20; padding: 4px 8px; border-radius: 4px; color: #667eea; font-size: 12px;">${record.employment_type || '-'}</span></td>`;
+                    
+                    const startDate = record.start_date || '-';
+                    const endDate = record.end_date || 'Present';
+                    html += `<td style="padding: 10px;"><small>${startDate} to ${endDate}</small></td>`;
+                    
                     html += '<td style="padding: 10px;">';
                     html += `<button class="btn-secondary btn-sm" onclick="editEmployeeHistory('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
                     html += `<button class="btn-reject btn-sm" onclick="deleteEmployeeHistory('${record.id}')">🗑️ Delete</button>`;
@@ -1607,10 +1633,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 html += '</tbody></table>';
-                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} employment change record(s)</p>`;
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} employment history record(s)</p>`;
                 tableContainer.innerHTML = html;
             } else {
-                tableContainer.innerHTML = '<p style="color: #666;">No employment history records found. Record employment changes using the "Record Employment Change" button above.</p>';
+                tableContainer.innerHTML = '<p style="color: #666;">No employment history records found. Add employment history using the "Add Employment History" button above.</p>';
             }
         } catch (error) {
             console.error('Error loading employee history:', error);
@@ -1619,17 +1645,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Handle new employment change form submission
-    const newEmploymentChangeForm = document.getElementById('newEmploymentChangeForm');
-    if (newEmploymentChangeForm) {
-        newEmploymentChangeForm.addEventListener('submit', async function(e) {
+    // Handle new employment history form submission
+    const newEmploymentHistoryForm = document.getElementById('newEmploymentHistoryForm');
+    if (newEmploymentHistoryForm) {
+        newEmploymentHistoryForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const formData = new FormData(newEmploymentChangeForm);
+            const formData = new FormData(newEmploymentHistoryForm);
             const data = {};
             
             for (let [key, value] of formData.entries()) {
-                data[key] = value;
+                if (value) data[key] = value; // Only include non-empty values
             }
             
             try {
@@ -1643,27 +1669,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const result = await response.json();
                 
-                const messageDiv = document.getElementById('addEmploymentChangeMessage');
+                const messageDiv = document.getElementById('addEmploymentHistoryMessage');
                 messageDiv.style.display = 'block';
                 
                 if (result.success) {
                     messageDiv.className = 'success-message';
-                    messageDiv.textContent = '✅ Employment change recorded successfully!';
+                    messageDiv.textContent = '✅ Employment history recorded successfully!';
                     
                     setTimeout(() => {
-                        hideAddEmploymentChangeForm();
+                        hideAddEmploymentHistoryForm();
                         loadEmployeeHistory();
                     }, 1500);
                 } else {
                     messageDiv.className = 'error-message';
-                    messageDiv.textContent = result.message || 'Failed to record employment change';
+                    messageDiv.textContent = result.message || 'Failed to record employment history';
                 }
             } catch (error) {
-                console.error('Error recording employment change:', error);
-                const messageDiv = document.getElementById('addEmploymentChangeMessage');
+                console.error('Error recording employment history:', error);
+                const messageDiv = document.getElementById('addEmploymentHistoryMessage');
                 messageDiv.style.display = 'block';
                 messageDiv.className = 'error-message';
-                messageDiv.textContent = 'Error recording employment change';
+                messageDiv.textContent = 'Error recording employment history';
             }
         });
     }
@@ -2396,48 +2422,92 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                const newEffectiveDate = prompt('Effective Date (YYYY-MM-DD):', record.effective_date || '');
-                if (newEffectiveDate === null) return; // User cancelled
+                // Load employee selector first
+                await loadEmployeeHistorySelector();
                 
-                const newFieldChanged = prompt('Field Changed:', record.field_changed || '');
-                if (newFieldChanged === null) return;
+                // Populate the edit modal with record data
+                document.getElementById('editEmpHistoryRecordId').value = recordId;
+                document.getElementById('editEmpHistoryEmployeeSelect').value = record.employee_email || '';
+                document.getElementById('editEmpHistoryCompany').value = record.company || '';
+                document.getElementById('editEmpHistoryJobTitle').value = record.job_title || '';
+                document.getElementById('editEmpHistoryPosition').value = record.position || '';
+                document.getElementById('editEmpHistoryDepartment').value = record.department || '';
+                document.getElementById('editEmpHistoryFunctionalGroup').value = record.functional_group || '';
+                document.getElementById('editEmpHistoryStatus').value = record.status || '';
+                document.getElementById('editEmpHistoryEmploymentType').value = record.employment_type || '';
+                document.getElementById('editEmpHistoryWorkStatus').value = record.work_status || '';
+                document.getElementById('editEmpHistoryPayrollStatus').value = record.payroll_status || '';
+                document.getElementById('editEmpHistoryStartDate').value = record.start_date || '';
+                document.getElementById('editEmpHistoryEndDate').value = record.end_date || '';
+                document.getElementById('editEmpHistoryNotes').value = record.notes || '';
                 
-                const newPrevValue = prompt('Previous Value:', record.previous_value || '');
-                if (newPrevValue === null) return;
+                // Clear any previous messages
+                document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
                 
-                const newNewValue = prompt('New Value:', record.new_value || '');
-                if (newNewValue === null) return;
-                
-                const newReason = prompt('Reason:', record.reason || '');
-                if (newReason === null) return;
-                
-                const updateData = {
-                    effective_date: newEffectiveDate,
-                    field_changed: newFieldChanged,
-                    previous_value: newPrevValue,
-                    new_value: newNewValue,
-                    reason: newReason
-                };
-                
-                const updateResponse = await fetch(`/api/admin/employee-history/${recordId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updateData)
-                });
-                
-                const result = await updateResponse.json();
-                if (result.success) {
-                    alert('Employee history updated successfully!');
-                    loadEmployeeHistory();
-                } else {
-                    alert('Failed to update employee history: ' + result.message);
-                }
+                // Show the modal
+                document.getElementById('editEmploymentHistoryModal').style.display = 'block';
             }
         } catch (error) {
-            console.error('Error editing employee history:', error);
-            alert('Error editing employee history');
+            console.error('Error loading employee history for edit:', error);
+            alert('Error loading employee history record');
         }
     };
+    
+    window.closeEditEmploymentHistoryModal = function() {
+        document.getElementById('editEmploymentHistoryModal').style.display = 'none';
+        document.getElementById('editEmploymentHistoryForm').reset();
+        document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
+    };
+    
+    // Handle edit employment history form submission
+    const editEmploymentHistoryForm = document.getElementById('editEmploymentHistoryForm');
+    if (editEmploymentHistoryForm) {
+        editEmploymentHistoryForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const recordId = document.getElementById('editEmpHistoryRecordId').value;
+            const formData = new FormData(editEmploymentHistoryForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/employee-history/${recordId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('editEmploymentHistoryMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Employment history updated successfully!';
+                    
+                    setTimeout(() => {
+                        closeEditEmploymentHistoryModal();
+                        loadEmployeeHistory();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to update employment history';
+                }
+            } catch (error) {
+                console.error('Error updating employee history:', error);
+                const messageDiv = document.getElementById('editEmploymentHistoryMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error updating employment history';
+            }
+        });
+    }
     
     window.deleteEmployeeHistory = async function(recordId) {
         if (!confirm('Are you sure you want to delete this employee history record? This action cannot be undone.')) {
