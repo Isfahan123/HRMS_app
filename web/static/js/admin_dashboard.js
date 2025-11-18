@@ -2111,6 +2111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadLeaveBalances();
     loadSickLeaveBalances();
     loadUnpaidLeaveSummary();
+    loadSkippedPayroll();
     loadContributions();
     loadSalaryHistory();
     loadEmployeeHistory();
