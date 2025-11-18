@@ -1160,7 +1160,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px;">New Salary</th>';
                 html += '<th style="padding: 10px;">Change</th>';
                 html += '<th style="padding: 10px;">Reason</th>';
-                html += '<th style="padding: 10px;">Actions</th>';
                 html += '</tr></thead><tbody>';
                 
                 filteredData.forEach(record => {
@@ -1178,10 +1177,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<td style="padding: 10px;"><strong>RM ${newSalary.toFixed(2)}</strong></td>`;
                     html += `<td style="padding: 10px; color: ${changeColor};"><strong>${change >= 0 ? '+' : ''}RM ${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)</strong></td>`;
                     html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
-                    html += '<td style="padding: 10px;">';
-                    html += `<button class="btn-secondary btn-sm" onclick="editSalaryHistory('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
-                    html += `<button class="btn-reject btn-sm" onclick="deleteSalaryHistory('${record.id}')">🗑️ Delete</button>`;
-                    html += '</td>';
                     html += '</tr>';
                 });
                 
@@ -1259,6 +1254,123 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error exporting salary history:', error);
             alert('Error exporting salary history');
+        }
+    };
+    
+    // Load employees into the salary history employee selector
+    async function loadSalaryHistoryEmployeeSelector() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            const selector = document.getElementById('salaryHistoryEmployeeSelect');
+            if (!selector) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                selector.innerHTML = '<option value="">Select Employee</option>';
+                data.data.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.email;
+                    option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                    option.dataset.salary = emp.basic_salary || 0;
+                    selector.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading employees for salary history:', error);
+        }
+    }
+    
+    // Update current salary display when employee is selected
+    if (document.getElementById('salaryHistoryEmployeeSelect')) {
+        document.getElementById('salaryHistoryEmployeeSelect').addEventListener('change', function(e) {
+            const selectedOption = this.options[this.selectedIndex];
+            const salary = selectedOption.dataset.salary || 0;
+            
+            const salaryDisplay = document.getElementById('currentSalaryDisplay');
+            if (salaryDisplay) {
+                salaryDisplay.textContent = `RM ${parseFloat(salary).toFixed(2)}`;
+            }
+            
+            // Auto-fill the employee email in the form
+            const emailInput = document.getElementById('salaryChangeEmployee');
+            if (emailInput) {
+                emailInput.value = selectedOption.value;
+            }
+            
+            // Auto-fill previous salary
+            const prevSalaryInput = document.getElementById('salaryChangePrevious');
+            if (prevSalaryInput) {
+                prevSalaryInput.value = parseFloat(salary).toFixed(2);
+            }
+        });
+    }
+    
+    // Update Current Salary function - updates employee's basic salary in their profile
+    window.updateCurrentSalary = async function() {
+        const employeeEmail = document.getElementById('salaryChangeEmployee')?.value;
+        const newSalary = document.getElementById('salaryChangeNew')?.value;
+        
+        if (!employeeEmail || !newSalary) {
+            alert('Please fill in Employee Email and New Salary fields');
+            return;
+        }
+        
+        if (!confirm(`Update ${employeeEmail}'s current basic salary to RM ${parseFloat(newSalary).toFixed(2)}?\n\nThis will update their employee profile.`)) {
+            return;
+        }
+        
+        try {
+            // Find the employee ID
+            const empResponse = await fetch('/api/employees');
+            const empData = await empResponse.json();
+            
+            if (!empData.success || !empData.data) {
+                alert('Failed to fetch employee data');
+                return;
+            }
+            
+            const employee = empData.data.find(emp => emp.email === employeeEmail);
+            if (!employee) {
+                alert('Employee not found');
+                return;
+            }
+            
+            // Update the employee's basic salary
+            const updateResponse = await fetch(`/api/admin/employees/${employee.id || employee.email}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    basic_salary: parseFloat(newSalary)
+                })
+            });
+            
+            const result = await updateResponse.json();
+            
+            if (result.success) {
+                alert('✅ Current salary updated successfully!');
+                
+                // Refresh the employee selector
+                loadSalaryHistoryEmployeeSelector();
+                
+                // Update the display
+                const salaryDisplay = document.getElementById('currentSalaryDisplay');
+                if (salaryDisplay) {
+                    salaryDisplay.textContent = `RM ${parseFloat(newSalary).toFixed(2)}`;
+                }
+                
+                const lastUpdatedDisplay = document.getElementById('lastUpdatedDisplay');
+                if (lastUpdatedDisplay) {
+                    lastUpdatedDisplay.textContent = new Date().toLocaleDateString();
+                }
+            } else {
+                alert('Failed to update current salary: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error updating current salary:', error);
+            alert('Error updating current salary: ' + error.message);
         }
     };
     
@@ -1356,7 +1468,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px;">Location</th>';
                 html += '<th style="padding: 10px;">Cost</th>';
                 html += '<th style="padding: 10px;">Status</th>';
-                html += '<th style="padding: 10px;">Actions</th>';
                 html += '</tr></thead><tbody>';
                 
                 filteredData.forEach(record => {
@@ -1377,10 +1488,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<td style="padding: 10px;">${record.location || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.cost ? 'RM ' + parseFloat(record.cost).toFixed(2) : '-'}</td>`;
                     html += `<td style="padding: 10px;"><span style="color: ${statusColor}; font-weight: bold;">${record.status || '-'}</span></td>`;
-                    html += '<td style="padding: 10px;">';
-                    html += `<button class="btn-secondary btn-sm" onclick="editEngagement('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
-                    html += `<button class="btn-reject btn-sm" onclick="deleteEngagement('${record.id}')">🗑️ Delete</button>`;
-                    html += '</td>';
                     html += '</tr>';
                 });
                 
@@ -2362,6 +2469,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSkippedPayroll();
     loadContributions();
     loadSalaryHistory();
+    loadSalaryHistoryEmployeeSelector();
     loadEmployeeHistory();
     loadVariablePercentageRules();
 });
