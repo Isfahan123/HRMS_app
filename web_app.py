@@ -29,10 +29,18 @@ from services.supabase_service import (
     update_employee,
     run_payroll
 )
-from services.supabase_engagements import fetch_engagements
+from services.supabase_engagements import (
+    fetch_engagements, 
+    update_engagement, 
+    delete_engagement
+)
 from services.supabase_training_overseas import (
     fetch_training_course_records,
     fetch_overseas_work_trip_records
+)
+from services.supabase_employee_history import (
+    update_employee_history_record,
+    delete_employee_history_record
 )
 from core.employee_service import calculate_cumulative_service
 
@@ -336,6 +344,102 @@ async def get_all_engagements():
     except Exception as e:
         print(f"Error getting all engagements: {str(e)}")
         return {"success": False, "message": str(e), "data": []}
+
+@app.put("/api/admin/engagements/{engagement_id}")
+async def update_engagement_record(engagement_id: str, request: Request):
+    """
+    Update an engagement record (admin only)
+    """
+    try:
+        data = await request.json()
+        
+        # Remove read-only fields that shouldn't be updated
+        data.pop('id', None)
+        data.pop('created_at', None)
+        
+        # Try to update in all possible tables
+        success = False
+        error_msg = None
+        
+        # Try engagements table first
+        try:
+            response = supabase.table("engagements").update(data).eq("id", engagement_id).execute()
+            if response.data:
+                return {"success": True, "message": "Engagement updated successfully", "data": response.data[0]}
+            success = True
+        except Exception as e:
+            error_msg = str(e)
+        
+        # Try training_courses table
+        try:
+            response = supabase.table("training_courses").update(data).eq("id", engagement_id).execute()
+            if response.data:
+                return {"success": True, "message": "Training course updated successfully", "data": response.data[0]}
+            success = True
+        except Exception as e:
+            error_msg = str(e)
+        
+        # Try overseas_trips table
+        try:
+            response = supabase.table("overseas_trips").update(data).eq("id", engagement_id).execute()
+            if response.data:
+                return {"success": True, "message": "Overseas trip updated successfully", "data": response.data[0]}
+            success = True
+        except Exception as e:
+            error_msg = str(e)
+        
+        if not success:
+            return {"success": False, "message": f"Failed to update engagement: {error_msg}"}
+        
+        return {"success": True, "message": "Engagement updated successfully"}
+    except Exception as e:
+        print(f"Error updating engagement: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/engagements/{engagement_id}")
+async def delete_engagement_record(engagement_id: str):
+    """
+    Delete an engagement record (admin only)
+    """
+    try:
+        # Try to delete from all possible tables
+        deleted = False
+        error_msg = None
+        
+        # Try engagements table first
+        try:
+            response = supabase.table("engagements").delete().eq("id", engagement_id).execute()
+            if response.data:
+                return {"success": True, "message": "Engagement deleted successfully"}
+            deleted = True
+        except Exception as e:
+            error_msg = str(e)
+        
+        # Try training_courses table
+        try:
+            response = supabase.table("training_courses").delete().eq("id", engagement_id).execute()
+            if response.data:
+                return {"success": True, "message": "Training course deleted successfully"}
+            deleted = True
+        except Exception as e:
+            error_msg = str(e)
+        
+        # Try overseas_trips table
+        try:
+            response = supabase.table("overseas_trips").delete().eq("id", engagement_id).execute()
+            if response.data:
+                return {"success": True, "message": "Overseas trip deleted successfully"}
+            deleted = True
+        except Exception as e:
+            error_msg = str(e)
+        
+        if not deleted:
+            return {"success": False, "message": f"Failed to delete engagement: {error_msg}"}
+        
+        return {"success": True, "message": "Engagement deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting engagement: {str(e)}")
+        return {"success": False, "message": str(e)}
 
 @app.get("/api/admin/attendance")
 async def get_all_attendance():
@@ -1173,6 +1277,102 @@ async def create_employment_change(request: Request):
             return {"success": False, "message": "Failed to record employment change"}
     except Exception as e:
         print(f"Error creating employment change: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/employee-history/{record_id}")
+async def update_employment_history(record_id: str, request: Request):
+    """
+    Update an employee history record (admin only)
+    """
+    try:
+        data = await request.json()
+        
+        # Remove read-only fields
+        data.pop('id', None)
+        data.pop('created_at', None)
+        
+        # Update the record using the service
+        response = update_employee_history_record(record_id, data)
+        
+        if response and response.data:
+            return {"success": True, "message": "Employee history record updated successfully", "data": response.data[0] if response.data else None}
+        else:
+            return {"success": False, "message": "Failed to update employee history record"}
+    except Exception as e:
+        print(f"Error updating employee history: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/employee-history/{record_id}")
+async def delete_employment_history(record_id: str):
+    """
+    Delete an employee history record (admin only)
+    """
+    try:
+        response = delete_employee_history_record(record_id)
+        
+        if response:
+            return {"success": True, "message": "Employee history record deleted successfully"}
+        else:
+            return {"success": False, "message": "Failed to delete employee history record"}
+    except Exception as e:
+        print(f"Error deleting employee history: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.put("/api/admin/salary-history/{record_id}")
+async def update_salary_history(record_id: str, request: Request):
+    """
+    Update a salary history record (admin only)
+    Salary history is stored in employee_history table
+    """
+    try:
+        data = await request.json()
+        
+        # Remove read-only fields
+        data.pop('id', None)
+        data.pop('created_at', None)
+        
+        # If updating salary values, recalculate change amount and percentage
+        if 'previous_salary' in data and 'new_salary' in data:
+            try:
+                prev_salary = float(data.get('previous_salary', data.get('previous_value', 0)))
+                new_salary = float(data.get('new_salary', data.get('new_value', 0)))
+                
+                change_amount = new_salary - prev_salary
+                change_percentage = (change_amount / prev_salary * 100) if prev_salary > 0 else 0
+                
+                data['previous_value'] = str(prev_salary)
+                data['new_value'] = str(new_salary)
+                data['change_amount'] = change_amount
+                data['change_percentage'] = change_percentage
+            except (ValueError, TypeError):
+                pass
+        
+        # Update the record using the service
+        response = update_employee_history_record(record_id, data)
+        
+        if response and response.data:
+            return {"success": True, "message": "Salary history record updated successfully", "data": response.data[0] if response.data else None}
+        else:
+            return {"success": False, "message": "Failed to update salary history record"}
+    except Exception as e:
+        print(f"Error updating salary history: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/salary-history/{record_id}")
+async def delete_salary_history(record_id: str):
+    """
+    Delete a salary history record (admin only)
+    Salary history is stored in employee_history table
+    """
+    try:
+        response = delete_employee_history_record(record_id)
+        
+        if response:
+            return {"success": True, "message": "Salary history record deleted successfully"}
+        else:
+            return {"success": False, "message": "Failed to delete salary history record"}
+    except Exception as e:
+        print(f"Error deleting salary history: {str(e)}")
         return {"success": False, "message": str(e)}
 
 # ====================
