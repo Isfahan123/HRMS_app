@@ -1715,6 +1715,77 @@
         </div>
     </div>
     
+    <!-- Edit Employment History Modal -->
+    <div id="editEmploymentHistoryModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" onclick="closeEditEmploymentHistoryModal()">&times;</span>
+            <h3>Edit Employment History Record</h3>
+            <form id="editEmploymentHistoryForm">
+                <input type="hidden" id="editEmpHistoryRecordId" value="">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmpHistoryEmployeeEmail">Employee Email:*</label>
+                        <input type="email" id="editEmpHistoryEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpHistoryChangeType">Change Type:*</label>
+                        <select id="editEmpHistoryChangeType" name="change_type" required>
+                            <option value="">Select Type</option>
+                            <option value="promotion">Promotion</option>
+                            <option value="transfer">Department Transfer</option>
+                            <option value="position_change">Position Change</option>
+                            <option value="status_change">Status Change</option>
+                            <option value="demotion">Demotion</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmpHistoryFieldChanged">Field Changed:*</label>
+                        <select id="editEmpHistoryFieldChanged" name="field_changed" required>
+                            <option value="">Select Field</option>
+                            <option value="position">Position</option>
+                            <option value="department">Department</option>
+                            <option value="status">Employment Status</option>
+                            <option value="role">Role/Level</option>
+                            <option value="location">Location</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpHistoryEffectiveDate">Effective Date:*</label>
+                        <input type="date" id="editEmpHistoryEffectiveDate" name="effective_date" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmpHistoryPreviousValue">Previous Value:*</label>
+                        <input type="text" id="editEmpHistoryPreviousValue" name="previous_value" required placeholder="e.g., Software Engineer">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpHistoryNewValue">New Value:*</label>
+                        <input type="text" id="editEmpHistoryNewValue" name="new_value" required placeholder="e.g., Senior Software Engineer">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editEmpHistoryReason">Reason/Notes:</label>
+                    <textarea id="editEmpHistoryReason" name="reason" rows="3" placeholder="Optional details about this employment change"></textarea>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">💾 Update</button>
+                    <button type="button" class="btn-secondary" onclick="closeEditEmploymentHistoryModal()">Cancel</button>
+                </div>
+                
+                <div id="editEmploymentHistoryMessage" style="display: none; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+    
     <!-- LHDN Tax Configuration Modals -->
     <div id="taxBracketModal" class="modal" style="display:none;">
         <div class="modal-content" style="max-width: 600px;">

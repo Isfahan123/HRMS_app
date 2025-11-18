@@ -2396,48 +2396,83 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                const newEffectiveDate = prompt('Effective Date (YYYY-MM-DD):', record.effective_date || '');
-                if (newEffectiveDate === null) return; // User cancelled
+                // Populate the edit modal with record data
+                document.getElementById('editEmpHistoryRecordId').value = recordId;
+                document.getElementById('editEmpHistoryEmployeeEmail').value = record.employee_email || '';
+                document.getElementById('editEmpHistoryChangeType').value = record.change_type || '';
+                document.getElementById('editEmpHistoryFieldChanged').value = record.field_changed || '';
+                document.getElementById('editEmpHistoryEffectiveDate').value = record.effective_date || '';
+                document.getElementById('editEmpHistoryPreviousValue').value = record.previous_value || '';
+                document.getElementById('editEmpHistoryNewValue').value = record.new_value || '';
+                document.getElementById('editEmpHistoryReason').value = record.reason || '';
                 
-                const newFieldChanged = prompt('Field Changed:', record.field_changed || '');
-                if (newFieldChanged === null) return;
+                // Clear any previous messages
+                document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
                 
-                const newPrevValue = prompt('Previous Value:', record.previous_value || '');
-                if (newPrevValue === null) return;
-                
-                const newNewValue = prompt('New Value:', record.new_value || '');
-                if (newNewValue === null) return;
-                
-                const newReason = prompt('Reason:', record.reason || '');
-                if (newReason === null) return;
-                
-                const updateData = {
-                    effective_date: newEffectiveDate,
-                    field_changed: newFieldChanged,
-                    previous_value: newPrevValue,
-                    new_value: newNewValue,
-                    reason: newReason
-                };
-                
-                const updateResponse = await fetch(`/api/admin/employee-history/${recordId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updateData)
-                });
-                
-                const result = await updateResponse.json();
-                if (result.success) {
-                    alert('Employee history updated successfully!');
-                    loadEmployeeHistory();
-                } else {
-                    alert('Failed to update employee history: ' + result.message);
-                }
+                // Show the modal
+                document.getElementById('editEmploymentHistoryModal').style.display = 'block';
             }
         } catch (error) {
-            console.error('Error editing employee history:', error);
-            alert('Error editing employee history');
+            console.error('Error loading employee history for edit:', error);
+            alert('Error loading employee history record');
         }
     };
+    
+    window.closeEditEmploymentHistoryModal = function() {
+        document.getElementById('editEmploymentHistoryModal').style.display = 'none';
+        document.getElementById('editEmploymentHistoryForm').reset();
+        document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
+    };
+    
+    // Handle edit employment history form submission
+    const editEmploymentHistoryForm = document.getElementById('editEmploymentHistoryForm');
+    if (editEmploymentHistoryForm) {
+        editEmploymentHistoryForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const recordId = document.getElementById('editEmpHistoryRecordId').value;
+            const formData = new FormData(editEmploymentHistoryForm);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/employee-history/${recordId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const messageDiv = document.getElementById('editEmploymentHistoryMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Employment history updated successfully!';
+                    
+                    setTimeout(() => {
+                        closeEditEmploymentHistoryModal();
+                        loadEmployeeHistory();
+                    }, 1500);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to update employment history';
+                }
+            } catch (error) {
+                console.error('Error updating employee history:', error);
+                const messageDiv = document.getElementById('editEmploymentHistoryMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error updating employment history';
+            }
+        });
+    }
     
     window.deleteEmployeeHistory = async function(recordId) {
         if (!confirm('Are you sure you want to delete this employee history record? This action cannot be undone.')) {
