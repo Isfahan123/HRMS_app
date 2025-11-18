@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Load leave requests for approval
             loadLeaveRequests();
             
+            // Load approved/rejected leave requests
+            loadApprovedRejectedLeaveRequests();
+            
             // Load payroll runs
             loadPayrollRuns();
             
@@ -167,6 +170,77 @@ document.addEventListener('DOMContentLoaded', function() {
         
         html += '</tbody></table>';
         return html;
+    }
+    
+    // Load approved/rejected leave requests
+    async function loadApprovedRejectedLeaveRequests(statusFilter = '') {
+        try {
+            const response = await fetch('/api/admin/leave-requests');
+            const data = await response.json();
+            
+            const container = document.getElementById('approvedRejectedLeaveRequestsTable');
+            if (!container) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Filter for non-pending requests
+                let filteredRequests = data.data.filter(r => r.status !== 'pending');
+                
+                // Apply status filter if specified
+                if (statusFilter) {
+                    filteredRequests = filteredRequests.filter(r => r.status === statusFilter);
+                }
+                
+                if (filteredRequests.length === 0) {
+                    container.innerHTML = '<p>No approved/rejected leave requests found.</p>';
+                    return;
+                }
+                
+                let html = '<table><thead><tr>';
+                html += '<th>Employee</th><th>Type</th><th>Start Date</th><th>End Date</th><th>Days</th><th>Status</th><th>Reviewed By</th><th>Reviewed At</th>';
+                html += '</tr></thead><tbody>';
+                
+                filteredRequests.forEach(request => {
+                    const statusColor = request.status === 'approved' ? 'green' : 
+                                       request.status === 'rejected' ? 'red' : '#666';
+                    html += '<tr>';
+                    html += `<td>${request.employees?.full_name || request.employee_email || '-'}</td>`;
+                    html += `<td>${request.leave_type || '-'}</td>`;
+                    html += `<td>${request.start_date || '-'}</td>`;
+                    html += `<td>${request.end_date || '-'}</td>`;
+                    html += `<td>${request.total_days || '-'}</td>`;
+                    html += `<td style="color: ${statusColor}; font-weight: bold;">${(request.status || '').toUpperCase()}</td>`;
+                    html += `<td>${request.reviewed_by || '-'}</td>`;
+                    html += `<td>${request.reviewed_at ? new Date(request.reviewed_at).toLocaleDateString() : '-'}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p>No leave requests found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading approved/rejected leave requests:', error);
+            const container = document.getElementById('approvedRejectedLeaveRequestsTable');
+            if (container) container.innerHTML = '<p>Error loading leave requests.</p>';
+        }
+    }
+    
+    // Wire up filter buttons for approved/rejected leave requests
+    const filterLeaveBtn = document.getElementById('filterLeaveBtn');
+    if (filterLeaveBtn) {
+        filterLeaveBtn.addEventListener('click', () => {
+            const statusFilter = document.getElementById('leaveStatusFilter')?.value || '';
+            loadApprovedRejectedLeaveRequests(statusFilter);
+        });
+    }
+    
+    const clearLeaveFilterBtn = document.getElementById('clearLeaveFilterBtn');
+    if (clearLeaveFilterBtn) {
+        clearLeaveFilterBtn.addEventListener('click', () => {
+            document.getElementById('leaveStatusFilter').value = '';
+            loadApprovedRejectedLeaveRequests();
+        });
     }
     
     async function loadPayrollRuns() {
@@ -1952,7 +2026,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadLeaveBalances();
     loadSickLeaveBalances();
     loadUnpaidLeaveSummary();
-    loadPayrollContributions();
+    loadContributions();
     loadSalaryHistory();
     loadEmployeeHistory();
     loadVariablePercentageRules();
