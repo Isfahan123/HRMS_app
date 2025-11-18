@@ -1229,10 +1229,10 @@ async def create_salary_change(request: Request):
 @app.get("/api/admin/employee-history")
 async def get_employee_history():
     """
-    Get complete employee history (all changes)
+    Get complete employment/re-employment history (previous jobs, companies, positions)
     """
     try:
-        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(200).execute()
+        response = supabase.table("employee_history").select("*").order("start_date", desc=True).limit(200).execute()
         
         if not response.data:
             return {"success": True, "data": []}
@@ -1243,40 +1243,49 @@ async def get_employee_history():
         return {"success": False, "message": str(e)}
 
 @app.post("/api/admin/employee-history")
-async def create_employment_change(request: Request):
+async def create_employment_history(request: Request):
     """
-    Record an employment change (promotion, transfer, status change, etc.)
+    Record employment / re-employment history (previous jobs, companies, positions)
     """
     try:
         data = await request.json()
         
         # Validate required fields
-        required_fields = ['employee_email', 'change_type', 'field_changed', 'effective_date', 'previous_value', 'new_value']
+        required_fields = ['employee_email', 'company', 'job_title', 'start_date']
         for field in required_fields:
             if field not in data or data[field] == '':
                 return {"success": False, "message": f"Missing required field: {field}"}
         
+        # Get employee_id from email
+        employee_response = supabase.table("employees").select("id").eq("email", data['employee_email']).execute()
+        if not employee_response.data or len(employee_response.data) == 0:
+            return {"success": False, "message": "Employee not found"}
+        
+        employee_id = employee_response.data[0]['id']
+        
         # Create employment history record
         history_record = {
+            "employee_id": employee_id,
             "employee_email": data['employee_email'],
-            "change_type": data['change_type'],
-            "field_changed": data['field_changed'],
-            "previous_value": data['previous_value'],
-            "new_value": data['new_value'],
-            "effective_date": data['effective_date'],
-            "reason": data.get('reason', f"{data['field_changed']} changed from {data['previous_value']} to {data['new_value']}"),
+            "company": data['company'],
+            "job_title": data['job_title'],
+            "position": data.get('position', ''),
+            "department": data.get('department', ''),
+            "employment_type": data.get('employment_type', ''),
+            "start_date": data['start_date'],
+            "end_date": data.get('end_date', None),  # None means currently employed
+            "notes": data.get('notes', ''),
             "created_at": datetime.utcnow().isoformat(),
-            "created_by": "admin"
         }
         
         response = supabase.table("employee_history").insert(history_record).execute()
         
         if response.data:
-            return {"success": True, "message": "Employment change recorded successfully", "data": response.data[0]}
+            return {"success": True, "message": "Employment history recorded successfully", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to record employment change"}
+            return {"success": False, "message": "Failed to record employment history"}
     except Exception as e:
-        print(f"Error creating employment change: {str(e)}")
+        print(f"Error creating employment history: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.put("/api/admin/employee-history/{record_id}")
@@ -2084,27 +2093,28 @@ async def export_engagements_csv():
 
 @app.get("/api/admin/employee-history/export/csv")
 async def export_employee_history_csv():
-    """Export employee history to CSV"""
+    """Export employment/re-employment history to CSV"""
     try:
         # Get employee history data
-        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(1000).execute()
+        response = supabase.table("employee_history").select("*").order("start_date", desc=True).limit(1000).execute()
         
         if not response.data:
-            headers = ["Effective Date", "Employee Email", "Employee Name", "Change Type", "Field Changed", "Previous Value", "New Value", "Reason", "Created At"]
+            headers = ["Employee Email", "Company", "Job Title", "Position", "Department", "Employment Type", "Start Date", "End Date", "Notes", "Created At"]
             return generate_csv(headers, [])
         
-        headers = ["Effective Date", "Employee Email", "Employee Name", "Change Type", "Field Changed", "Previous Value", "New Value", "Reason", "Created At"]
+        headers = ["Employee Email", "Company", "Job Title", "Position", "Department", "Employment Type", "Start Date", "End Date", "Notes", "Created At"]
         rows = []
         for record in response.data:
             rows.append([
-                record.get('effective_date', ''),
                 record.get('employee_email', ''),
-                record.get('employee_name', ''),
-                record.get('change_type', ''),
-                record.get('field_changed', ''),
-                record.get('previous_value', ''),
-                record.get('new_value', ''),
-                record.get('reason', ''),
+                record.get('company', ''),
+                record.get('job_title', ''),
+                record.get('position', ''),
+                record.get('department', ''),
+                record.get('employment_type', ''),
+                record.get('start_date', ''),
+                record.get('end_date', ''),
+                record.get('notes', ''),
                 record.get('created_at', '')
             ])
         

@@ -1600,77 +1600,83 @@
                 
                 <!-- Employee History Tab -->
                 <div id="employeeHistoryTab" class="tab-pane">
-                    <h2>🧾 Employment History</h2>
-                    <p style="color: #666; margin-bottom: 20px;">Track changes in employee positions, departments, status, and other employment details.</p>
+                    <h2>🧾 Employment / Re-Employment History</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Track employee work history including previous companies, positions, and employment periods.</p>
                     
-                    <!-- Add Employment Change Button -->
-                    <button class="btn-primary" onclick="showAddEmploymentChangeForm()" style="margin-bottom: 20px;">
-                        ➕ Record Employment Change
+                    <!-- Add Employment History Button -->
+                    <button class="btn-primary" onclick="showAddEmploymentHistoryForm()" style="margin-bottom: 20px;">
+                        ➕ Add Employment History
                     </button>
                     
-                    <!-- Add Employment Change Form (hidden by default) -->
-                    <div id="addEmploymentChangeForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                        <h3>Record Employment Change</h3>
-                        <form id="newEmploymentChangeForm">
+                    <!-- Add Employment History Form (hidden by default) -->
+                    <div id="addEmploymentHistoryForm" class="form-section" style="display: none; margin-bottom: 30px;">
+                        <h3>Add Employment / Re-Employment History</h3>
+                        <form id="newEmploymentHistoryForm">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="empHistoryEmployeeEmail">Employee Email:*</label>
-                                    <input type="email" id="empHistoryEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                                    <label for="empHistoryEmployeeSelect">Employee:*</label>
+                                    <select id="empHistoryEmployeeSelect" name="employee_email" required style="width: 100%; padding: 8px;">
+                                        <option value="">Select Employee</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="empHistoryChangeType">Change Type:*</label>
-                                    <select id="empHistoryChangeType" name="change_type" required>
+                                    <label for="empHistoryCompany">Company:*</label>
+                                    <input type="text" id="empHistoryCompany" name="company" required placeholder="e.g., ABC Corporation">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryJobTitle">Job Title:*</label>
+                                    <input type="text" id="empHistoryJobTitle" name="job_title" required placeholder="e.g., Software Engineer">
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryPosition">Position:</label>
+                                    <input type="text" id="empHistoryPosition" name="position" placeholder="e.g., Senior Developer">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryDepartment">Department:</label>
+                                    <input type="text" id="empHistoryDepartment" name="department" placeholder="e.g., Engineering">
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryEmploymentType">Employment Type:</label>
+                                    <select id="empHistoryEmploymentType" name="employment_type">
                                         <option value="">Select Type</option>
-                                        <option value="promotion">Promotion</option>
-                                        <option value="transfer">Department Transfer</option>
-                                        <option value="position_change">Position Change</option>
-                                        <option value="status_change">Status Change</option>
-                                        <option value="demotion">Demotion</option>
-                                        <option value="other">Other</option>
+                                        <option value="Full-time">Full-time</option>
+                                        <option value="Part-time">Part-time</option>
+                                        <option value="Contract">Contract</option>
+                                        <option value="Temporary">Temporary</option>
+                                        <option value="Internship">Internship</option>
                                     </select>
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="empHistoryFieldChanged">Field Changed:*</label>
-                                    <select id="empHistoryFieldChanged" name="field_changed" required>
-                                        <option value="">Select Field</option>
-                                        <option value="position">Position</option>
-                                        <option value="department">Department</option>
-                                        <option value="status">Employment Status</option>
-                                        <option value="role">Role/Level</option>
-                                        <option value="location">Location</option>
-                                    </select>
+                                    <label for="empHistoryStartDate">Start Date:*</label>
+                                    <input type="date" id="empHistoryStartDate" name="start_date" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="empHistoryEffectiveDate">Effective Date:*</label>
-                                    <input type="date" id="empHistoryEffectiveDate" name="effective_date" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="empHistoryPreviousValue">Previous Value:*</label>
-                                    <input type="text" id="empHistoryPreviousValue" name="previous_value" required placeholder="e.g., Software Engineer">
-                                </div>
-                                <div class="form-group">
-                                    <label for="empHistoryNewValue">New Value:*</label>
-                                    <input type="text" id="empHistoryNewValue" name="new_value" required placeholder="e.g., Senior Software Engineer">
+                                    <label for="empHistoryEndDate">End Date:</label>
+                                    <input type="date" id="empHistoryEndDate" name="end_date">
+                                    <small style="color: #666;">Leave empty if currently employed</small>
                                 </div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="empHistoryReason">Reason/Notes:</label>
-                                <textarea id="empHistoryReason" name="reason" rows="3" placeholder="Optional details about this employment change"></textarea>
+                                <label for="empHistoryNotes">Notes:</label>
+                                <textarea id="empHistoryNotes" name="notes" rows="3" placeholder="Optional details about this employment period"></textarea>
                             </div>
                             
                             <div style="margin-top: 15px;">
-                                <button type="submit" class="btn-primary">Save Employment Change</button>
-                                <button type="button" class="btn-secondary" onclick="hideAddEmploymentChangeForm()">Cancel</button>
+                                <button type="submit" class="btn-primary">Save Employment History</button>
+                                <button type="button" class="btn-secondary" onclick="hideAddEmploymentHistoryForm()">Cancel</button>
                             </div>
                             
-                            <div id="addEmploymentChangeMessage" style="display: none; margin-top: 10px;"></div>
+                            <div id="addEmploymentHistoryMessage" style="display: none; margin-top: 10px;"></div>
                         </form>
                     </div>
                     
@@ -1681,16 +1687,8 @@
                             <input type="text" id="empHistoryEmployeeFilter" placeholder="Search by name or email...">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="empHistoryTypeFilter">Change Type:</label>
-                            <select id="empHistoryTypeFilter">
-                                <option value="">All Types</option>
-                                <option value="promotion">Promotion</option>
-                                <option value="transfer">Transfer</option>
-                                <option value="position_change">Position Change</option>
-                                <option value="status_change">Status Change</option>
-                                <option value="demotion">Demotion</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <label for="empHistoryCompanyFilter">Company:</label>
+                            <input type="text" id="empHistoryCompanyFilter" placeholder="Filter by company...">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="empHistoryYearFilter">Year:</label>
@@ -1700,6 +1698,8 @@
                                 <option value="2024">2024</option>
                                 <option value="2023">2023</option>
                                 <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                                <option value="2020">2020</option>
                             </select>
                         </div>
                         <button class="btn-primary" onclick="loadEmployeeHistory()">🔍 Search</button>
@@ -1725,55 +1725,61 @@
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editEmpHistoryEmployeeEmail">Employee Email:*</label>
-                        <input type="email" id="editEmpHistoryEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                        <label for="editEmpHistoryEmployeeSelect">Employee:*</label>
+                        <select id="editEmpHistoryEmployeeSelect" name="employee_email" required style="width: 100%; padding: 8px;">
+                            <option value="">Select Employee</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="editEmpHistoryChangeType">Change Type:*</label>
-                        <select id="editEmpHistoryChangeType" name="change_type" required>
+                        <label for="editEmpHistoryCompany">Company:*</label>
+                        <input type="text" id="editEmpHistoryCompany" name="company" required placeholder="e.g., ABC Corporation">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmpHistoryJobTitle">Job Title:*</label>
+                        <input type="text" id="editEmpHistoryJobTitle" name="job_title" required placeholder="e.g., Software Engineer">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpHistoryPosition">Position:</label>
+                        <input type="text" id="editEmpHistoryPosition" name="position" placeholder="e.g., Senior Developer">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmpHistoryDepartment">Department:</label>
+                        <input type="text" id="editEmpHistoryDepartment" name="department" placeholder="e.g., Engineering">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpHistoryEmploymentType">Employment Type:</label>
+                        <select id="editEmpHistoryEmploymentType" name="employment_type">
                             <option value="">Select Type</option>
-                            <option value="promotion">Promotion</option>
-                            <option value="transfer">Department Transfer</option>
-                            <option value="position_change">Position Change</option>
-                            <option value="status_change">Status Change</option>
-                            <option value="demotion">Demotion</option>
-                            <option value="other">Other</option>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Temporary">Temporary</option>
+                            <option value="Internship">Internship</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editEmpHistoryFieldChanged">Field Changed:*</label>
-                        <select id="editEmpHistoryFieldChanged" name="field_changed" required>
-                            <option value="">Select Field</option>
-                            <option value="position">Position</option>
-                            <option value="department">Department</option>
-                            <option value="status">Employment Status</option>
-                            <option value="role">Role/Level</option>
-                            <option value="location">Location</option>
-                        </select>
+                        <label for="editEmpHistoryStartDate">Start Date:*</label>
+                        <input type="date" id="editEmpHistoryStartDate" name="start_date" required>
                     </div>
                     <div class="form-group">
-                        <label for="editEmpHistoryEffectiveDate">Effective Date:*</label>
-                        <input type="date" id="editEmpHistoryEffectiveDate" name="effective_date" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="editEmpHistoryPreviousValue">Previous Value:*</label>
-                        <input type="text" id="editEmpHistoryPreviousValue" name="previous_value" required placeholder="e.g., Software Engineer">
-                    </div>
-                    <div class="form-group">
-                        <label for="editEmpHistoryNewValue">New Value:*</label>
-                        <input type="text" id="editEmpHistoryNewValue" name="new_value" required placeholder="e.g., Senior Software Engineer">
+                        <label for="editEmpHistoryEndDate">End Date:</label>
+                        <input type="date" id="editEmpHistoryEndDate" name="end_date">
+                        <small style="color: #666;">Leave empty if currently employed</small>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="editEmpHistoryReason">Reason/Notes:</label>
-                    <textarea id="editEmpHistoryReason" name="reason" rows="3" placeholder="Optional details about this employment change"></textarea>
+                    <label for="editEmpHistoryNotes">Notes:</label>
+                    <textarea id="editEmpHistoryNotes" name="notes" rows="3" placeholder="Optional details about this employment period"></textarea>
                 </div>
                 
                 <div style="margin-top: 20px; display: flex; gap: 10px;">
