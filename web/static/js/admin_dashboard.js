@@ -344,6 +344,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (targetPane) {
                     targetPane.classList.add('active');
                     console.log('✅ Activated tab pane:', tabName + 'Tab');
+                    
+                    // Load data when specific tabs are activated
+                    if (tabName === 'employeeHistory') {
+                        console.log('🔄 Reloading employment history data...');
+                        loadEmployeeHistory();
+                    }
                 } else {
                     console.error('❌ Tab pane not found:', tabName + 'Tab');
                 }
