@@ -1702,6 +1702,23 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label for="empHistoryFunctionalGroup">Functional Group:</label>
+                                    <input type="text" id="empHistoryFunctionalGroup" name="functional_group" placeholder="e.g., Backend Development">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryStatus">Status:</label>
+                                    <select id="empHistoryStatus" name="status">
+                                        <option value="">Select Status</option>
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Resigned">Resigned</option>
+                                        <option value="Terminated">Terminated</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
                                     <label for="empHistoryEmploymentType">Employment Type:</label>
                                     <select id="empHistoryEmploymentType" name="employment_type">
                                         <option value="">Select Type</option>
@@ -1709,14 +1726,36 @@
                                         <option value="Part-time">Part-time</option>
                                         <option value="Contract">Contract</option>
                                         <option value="Temporary">Temporary</option>
-                                        <option value="Internship">Internship</option>
                                     </select>
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="empHistoryStartDate">Start Date:*</label>
+                                    <label for="empHistoryWorkStatus">Work Status:</label>
+                                    <select id="empHistoryWorkStatus" name="work_status">
+                                        <option value="">Select Work Status</option>
+                                        <option value="On Duty">On Duty</option>
+                                        <option value="On Leave">On Leave</option>
+                                        <option value="On Sick Leave">On Sick Leave</option>
+                                        <option value="On Unpaid Leave">On Unpaid Leave</option>
+                                        <option value="On Suspension">On Suspension</option>
+                                        <option value="On Business Trip">On Business Trip</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empHistoryPayrollStatus">Payroll Status:</label>
+                                    <select id="empHistoryPayrollStatus" name="payroll_status">
+                                        <option value="">Select Payroll Status</option>
+                                        <option value="Active Payroll">Active Payroll</option>
+                                        <option value="Inactive Payroll">Inactive Payroll</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empHistoryStartDate">Date Joined (Start Date):*</label>
                                     <input type="date" id="empHistoryStartDate" name="start_date" required>
                                 </div>
                                 <div class="form-group">
@@ -1873,6 +1912,23 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="editEmpHistoryFunctionalGroup">Functional Group:</label>
+                        <input type="text" id="editEmpHistoryFunctionalGroup" name="functional_group" placeholder="e.g., Backend Development">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmpHistoryStatus">Status:</label>
+                        <select id="editEmpHistoryStatus" name="status">
+                            <option value="">Select Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Resigned">Resigned</option>
+                            <option value="Terminated">Terminated</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="editEmpHistoryEmploymentType">Employment Type:</label>
                         <select id="editEmpHistoryEmploymentType" name="employment_type">
                             <option value="">Select Type</option>
@@ -1880,14 +1936,36 @@
                             <option value="Part-time">Part-time</option>
                             <option value="Contract">Contract</option>
                             <option value="Temporary">Temporary</option>
-                            <option value="Internship">Internship</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editEmpHistoryStartDate">Start Date:*</label>
+                        <label for="editEmpHistoryWorkStatus">Work Status:</label>
+                        <select id="editEmpHistoryWorkStatus" name="work_status">
+                            <option value="">Select Work Status</option>
+                            <option value="On Duty">On Duty</option>
+                            <option value="On Leave">On Leave</option>
+                            <option value="On Sick Leave">On Sick Leave</option>
+                            <option value="On Unpaid Leave">On Unpaid Leave</option>
+                            <option value="On Suspension">On Suspension</option>
+                            <option value="On Business Trip">On Business Trip</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmpHistoryPayrollStatus">Payroll Status:</label>
+                        <select id="editEmpHistoryPayrollStatus" name="payroll_status">
+                            <option value="">Select Payroll Status</option>
+                            <option value="Active Payroll">Active Payroll</option>
+                            <option value="Inactive Payroll">Inactive Payroll</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmpHistoryStartDate">Date Joined (Start Date):*</label>
                         <input type="date" id="editEmpHistoryStartDate" name="start_date" required>
                     </div>
                     <div class="form-group">

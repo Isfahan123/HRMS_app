@@ -2432,7 +2432,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpHistoryJobTitle').value = record.job_title || '';
                 document.getElementById('editEmpHistoryPosition').value = record.position || '';
                 document.getElementById('editEmpHistoryDepartment').value = record.department || '';
+                document.getElementById('editEmpHistoryFunctionalGroup').value = record.functional_group || '';
+                document.getElementById('editEmpHistoryStatus').value = record.status || '';
                 document.getElementById('editEmpHistoryEmploymentType').value = record.employment_type || '';
+                document.getElementById('editEmpHistoryWorkStatus').value = record.work_status || '';
+                document.getElementById('editEmpHistoryPayrollStatus').value = record.payroll_status || '';
                 document.getElementById('editEmpHistoryStartDate').value = record.start_date || '';
                 document.getElementById('editEmpHistoryEndDate').value = record.end_date || '';
                 document.getElementById('editEmpHistoryNotes').value = record.notes || '';
