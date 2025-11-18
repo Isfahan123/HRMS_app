@@ -106,7 +106,7 @@ class BonusManager {
                     <td>${bonus.bonus_type || '-'}</td>
                     <td>RM ${parseFloat(bonus.amount || 0).toFixed(2)}</td>
                     <td>${bonus.description || '-'}</td>
-                    <td>${bonus.pay_period || '-'}</td>
+                    <td>${bonus.effective_date || '-'}</td>
                     <td><span class="badge badge-${statusBadge}">${bonus.status}</span></td>
                     <td>${bonus.approved_by || '-'}</td>
                     <td>
@@ -238,8 +238,17 @@ class BonusManager {
             bonus_type: document.getElementById('bonusType').value,
             amount: document.getElementById('bonusAmount').value,
             description: document.getElementById('bonusDescription').value,
-            pay_period: document.getElementById('bonusPayPeriod').value
+            effective_date: document.getElementById('bonusEffectiveDate').value,
+            status: document.getElementById('bonusStatus').value,
+            is_recurring: document.getElementById('bonusIsRecurring').checked
         };
+        
+        // Add expiry_date if checkbox is checked
+        if (document.getElementById('bonusHasExpiry').checked) {
+            formData.expiry_date = document.getElementById('bonusExpiryDate').value;
+        } else {
+            formData.expiry_date = null;
+        }
 
         // Validation
         if (!formData.employee_id || !formData.amount) {
@@ -293,7 +302,20 @@ class BonusManager {
         document.getElementById('bonusType').value = bonus.bonus_type;
         document.getElementById('bonusAmount').value = bonus.amount;
         document.getElementById('bonusDescription').value = bonus.description;
-        document.getElementById('bonusPayPeriod').value = bonus.pay_period;
+        document.getElementById('bonusEffectiveDate').value = bonus.effective_date;
+        document.getElementById('bonusStatus').value = bonus.status || 'Pending';
+        document.getElementById('bonusIsRecurring').checked = bonus.is_recurring || false;
+        
+        // Handle expiry date
+        if (bonus.expiry_date) {
+            document.getElementById('bonusHasExpiry').checked = true;
+            document.getElementById('bonusExpiryDateGroup').style.display = 'block';
+            document.getElementById('bonusExpiryDate').value = bonus.expiry_date;
+        } else {
+            document.getElementById('bonusHasExpiry').checked = false;
+            document.getElementById('bonusExpiryDateGroup').style.display = 'none';
+            document.getElementById('bonusExpiryDate').value = '';
+        }
 
         document.getElementById('modalTitle').textContent = 'Edit Bonus';
         this.populateEmployeeDropdown();
@@ -379,6 +401,21 @@ class BonusManager {
         // TODO: Implement better success notification
     }
 }
+
+// Global function to toggle expiry date field
+function toggleExpiryDate() {
+    const hasExpiry = document.getElementById('bonusHasExpiry').checked;
+    const expiryGroup = document.getElementById('bonusExpiryDateGroup');
+    if (expiryGroup) {
+        expiryGroup.style.display = hasExpiry ? 'block' : 'none';
+        if (!hasExpiry) {
+            document.getElementById('bonusExpiryDate').value = '';
+        }
+    }
+}
+
+// Make function globally available
+window.toggleExpiryDate = toggleExpiryDate;
 
 // Global instance
 let bonusManager;

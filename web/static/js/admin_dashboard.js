@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Load leave requests for approval
             loadLeaveRequests();
             
+            // Load approved/rejected leave requests
+            loadApprovedRejectedLeaveRequests();
+            
             // Load payroll runs
             loadPayrollRuns();
             
@@ -167,6 +170,77 @@ document.addEventListener('DOMContentLoaded', function() {
         
         html += '</tbody></table>';
         return html;
+    }
+    
+    // Load approved/rejected leave requests
+    async function loadApprovedRejectedLeaveRequests(statusFilter = '') {
+        try {
+            const response = await fetch('/api/admin/leave-requests');
+            const data = await response.json();
+            
+            const container = document.getElementById('approvedRejectedLeaveRequestsTable');
+            if (!container) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Filter for non-pending requests
+                let filteredRequests = data.data.filter(r => r.status !== 'pending');
+                
+                // Apply status filter if specified
+                if (statusFilter) {
+                    filteredRequests = filteredRequests.filter(r => r.status === statusFilter);
+                }
+                
+                if (filteredRequests.length === 0) {
+                    container.innerHTML = '<p>No approved/rejected leave requests found.</p>';
+                    return;
+                }
+                
+                let html = '<table><thead><tr>';
+                html += '<th>Employee</th><th>Type</th><th>Start Date</th><th>End Date</th><th>Days</th><th>Status</th><th>Reviewed By</th><th>Reviewed At</th>';
+                html += '</tr></thead><tbody>';
+                
+                filteredRequests.forEach(request => {
+                    const statusColor = request.status === 'approved' ? 'green' : 
+                                       request.status === 'rejected' ? 'red' : '#666';
+                    html += '<tr>';
+                    html += `<td>${request.employees?.full_name || request.employee_email || '-'}</td>`;
+                    html += `<td>${request.leave_type || '-'}</td>`;
+                    html += `<td>${request.start_date || '-'}</td>`;
+                    html += `<td>${request.end_date || '-'}</td>`;
+                    html += `<td>${request.total_days || '-'}</td>`;
+                    html += `<td style="color: ${statusColor}; font-weight: bold;">${(request.status || '').toUpperCase()}</td>`;
+                    html += `<td>${request.reviewed_by || '-'}</td>`;
+                    html += `<td>${request.reviewed_at ? new Date(request.reviewed_at).toLocaleDateString() : '-'}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p>No leave requests found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading approved/rejected leave requests:', error);
+            const container = document.getElementById('approvedRejectedLeaveRequestsTable');
+            if (container) container.innerHTML = '<p>Error loading leave requests.</p>';
+        }
+    }
+    
+    // Wire up filter buttons for approved/rejected leave requests
+    const filterLeaveBtn = document.getElementById('filterLeaveBtn');
+    if (filterLeaveBtn) {
+        filterLeaveBtn.addEventListener('click', () => {
+            const statusFilter = document.getElementById('leaveStatusFilter')?.value || '';
+            loadApprovedRejectedLeaveRequests(statusFilter);
+        });
+    }
+    
+    const clearLeaveFilterBtn = document.getElementById('clearLeaveFilterBtn');
+    if (clearLeaveFilterBtn) {
+        clearLeaveFilterBtn.addEventListener('click', () => {
+            document.getElementById('leaveStatusFilter').value = '';
+            loadApprovedRejectedLeaveRequests();
+        });
     }
     
     async function loadPayrollRuns() {
@@ -688,7 +762,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Global functions for bonus actions
     window.editBonus = async function(bonusId) {
-        alert('Edit functionality: Bonus ID ' + bonusId + '. Full edit dialog will be implemented in next iteration.');
+        // Delegate to bonusManager if available
+        if (typeof bonusManager !== 'undefined' && bonusManager) {
+            bonusManager.editBonus(bonusId);
+        } else {
+            alert('Bonus manager not loaded. Please refresh the page.');
+        }
     };
     
     window.deleteBonus = async function(bonusId) {
@@ -1008,9 +1087,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    window.exportContributionsCSV = function() {
-        // TODO: Implement CSV export
-        alert('CSV export functionality will be implemented soon');
+    window.exportContributionsCSV = async function() {
+        try {
+            const response = await fetch('/api/admin/contributions/export/csv');
+            if (response.ok) {
+                const blob = await response.blob();
+                downloadBlob(blob, `contributions_${new Date().toISOString().split('T')[0]}.csv`);
+            } else {
+                alert('Failed to export contributions data');
+            }
+        } catch (error) {
+            console.error('Error exporting contributions:', error);
+            alert('Error exporting contributions data');
+        }
     };
     
     // Salary History Management Functions
@@ -1153,9 +1242,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    window.exportSalaryHistoryCSV = function() {
-        // TODO: Implement CSV export
-        alert('CSV export functionality will be implemented soon');
+    window.exportSalaryHistoryCSV = async function() {
+        try {
+            const response = await fetch('/api/admin/salary-history/export/csv');
+            if (response.ok) {
+                const blob = await response.blob();
+                downloadBlob(blob, `salary_history_${new Date().toISOString().split('T')[0]}.csv`);
+            } else {
+                alert('Failed to export salary history');
+            }
+        } catch (error) {
+            console.error('Error exporting salary history:', error);
+            alert('Error exporting salary history');
+        }
     };
     
     // Engagements Management Functions (Admin)
@@ -1288,9 +1387,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    window.exportEngagementsCSV = function() {
-        // TODO: Implement CSV export
-        alert('CSV export functionality will be implemented soon');
+    window.exportEngagementsCSV = async function() {
+        try {
+            const response = await fetch('/api/admin/engagements/export/csv');
+            if (response.ok) {
+                const blob = await response.blob();
+                downloadBlob(blob, `engagements_${new Date().toISOString().split('T')[0]}.csv`);
+            } else {
+                alert('Failed to export engagements');
+            }
+        } catch (error) {
+            console.error('Error exporting engagements:', error);
+            alert('Error exporting engagements');
+        }
     };
     
     // Employment History Management Functions
@@ -1437,9 +1546,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    window.exportEmployeeHistoryCSV = function() {
-        // TODO: Implement CSV export
-        alert('CSV export functionality will be implemented soon');
+    window.exportEmployeeHistoryCSV = async function() {
+        try {
+            const response = await fetch('/api/admin/employee-history/export/csv');
+            if (response.ok) {
+                const blob = await response.blob();
+                downloadBlob(blob, `employee_history_${new Date().toISOString().split('T')[0]}.csv`);
+            } else {
+                alert('Failed to export employee history');
+            }
+        } catch (error) {
+            console.error('Error exporting employee history:', error);
+            alert('Error exporting employee history');
+        }
     };
     
     // Edit Employee Functions
@@ -1563,8 +1682,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.hideAddVariablePercentageForm = function() {
         document.getElementById('addVariablePercentageForm').style.display = 'none';
-        document.getElementById('newVariablePercentageForm').reset();
+        const form = document.getElementById('newVariablePercentageForm');
+        form.reset();
         document.getElementById('addVariablePercentageMessage').style.display = 'none';
+        
+        // Reset edit mode
+        form.removeAttribute('data-rule-id');
+        form.removeAttribute('data-edit-mode');
+        
+        // Reset form title and button
+        const formTitle = document.querySelector('#addVariablePercentageForm h4');
+        if (formTitle) formTitle.textContent = 'Add Variable Percentage Rule';
+        
+        const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Create Rule';
+        
+        // Hide conditional fields
+        document.getElementById('varPctDepartmentGroup').style.display = 'none';
+        document.getElementById('varPctEmployeeGroup').style.display = 'none';
     };
     
     window.toggleEmployeeSelection = function() {
@@ -1652,9 +1787,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 data[key] = value;
             }
             
+            // Check if we're in edit mode
+            const isEditMode = this.getAttribute('data-edit-mode') === 'true';
+            const ruleId = this.getAttribute('data-rule-id');
+            
             try {
-                const response = await fetch('/api/admin/variable-percentage', {
-                    method: 'POST',
+                const url = isEditMode ? `/api/admin/variable-percentage/${ruleId}` : '/api/admin/variable-percentage';
+                const method = isEditMode ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -1668,7 +1810,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (result.success) {
                     messageDiv.className = 'success-message';
-                    messageDiv.textContent = '✅ Variable percentage rule created successfully!';
+                    messageDiv.textContent = isEditMode ? '✅ Variable percentage rule updated successfully!' : '✅ Variable percentage rule created successfully!';
                     
                     setTimeout(() => {
                         hideAddVariablePercentageForm();
@@ -1676,21 +1818,71 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1500);
                 } else {
                     messageDiv.className = 'error-message';
-                    messageDiv.textContent = result.message || 'Failed to create rule';
+                    messageDiv.textContent = result.message || (isEditMode ? 'Failed to update rule' : 'Failed to create rule');
                 }
             } catch (error) {
-                console.error('Error creating variable percentage rule:', error);
+                console.error('Error saving variable percentage rule:', error);
                 const messageDiv = document.getElementById('addVariablePercentageMessage');
                 messageDiv.style.display = 'block';
                 messageDiv.className = 'error-message';
-                messageDiv.textContent = 'Error creating rule';
+                messageDiv.textContent = 'Error saving rule';
             }
         });
     }
     
-    window.editVariablePercentageRule = function(ruleId) {
-        // TODO: Implement edit functionality
-        alert('Edit functionality will be implemented in the next iteration. For now, you can delete and recreate the rule.');
+    window.editVariablePercentageRule = async function(ruleId) {
+        try {
+            // Fetch all rules
+            const response = await fetch('/api/admin/variable-percentage');
+            const data = await response.json();
+            
+            if (!data.success || !data.data) {
+                alert('Error loading rule data');
+                return;
+            }
+            
+            // Find the specific rule
+            const rule = data.data.find(r => r.id === ruleId);
+            if (!rule) {
+                alert('Rule not found');
+                return;
+            }
+            
+            // Show the form
+            showAddVariablePercentageForm();
+            
+            // Pre-populate the form with existing rule data
+            document.getElementById('varPctName').value = rule.name || '';
+            document.getElementById('varPctType').value = rule.type || '';
+            document.getElementById('varPctPercentage').value = rule.percentage || '';
+            document.getElementById('varPctApplyTo').value = rule.apply_to || '';
+            toggleEmployeeSelection(); // Show/hide department/employee fields
+            document.getElementById('varPctDepartment').value = rule.department || '';
+            document.getElementById('varPctEmployee').value = rule.employee_email || '';
+            document.getElementById('varPctBaseOn').value = rule.base_on || '';
+            document.getElementById('varPctFrequency').value = rule.frequency || '';
+            document.getElementById('varPctStatus').value = rule.status || '';
+            document.getElementById('varPctStartDate').value = rule.start_date || '';
+            document.getElementById('varPctEndDate').value = rule.end_date || '';
+            document.getElementById('varPctDescription').value = rule.description || '';
+            
+            // Change form title to indicate edit mode
+            const formTitle = document.querySelector('#addVariablePercentageForm h4');
+            if (formTitle) formTitle.textContent = 'Edit Variable Percentage Rule';
+            
+            // Change button text
+            const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'Update Rule';
+            
+            // Store the rule ID for update
+            const form = document.getElementById('newVariablePercentageForm');
+            form.setAttribute('data-rule-id', ruleId);
+            form.setAttribute('data-edit-mode', 'true');
+            
+        } catch (error) {
+            console.error('Error loading rule for edit:', error);
+            alert('Error loading rule data');
+        }
     };
     
     window.deleteVariablePercentageRule = async function(ruleId) {
@@ -1820,16 +2012,107 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    window.exportSkippedPayrollCSV = function() {
-        // TODO: Implement CSV export
-        alert('CSV export functionality will be implemented soon');
+    window.exportSkippedPayrollCSV = async function() {
+        try {
+            const response = await fetch('/api/admin/skipped-payroll/export/csv');
+            if (response.ok) {
+                const blob = await response.blob();
+                downloadBlob(blob, `skipped_payroll_${new Date().toISOString().split('T')[0]}.csv`);
+            } else {
+                alert('Failed to export skipped payroll');
+            }
+        } catch (error) {
+            console.error('Error exporting skipped payroll:', error);
+            alert('Error exporting skipped payroll');
+        }
     };
+    
+    // Admin Leave Request Form Handler
+    const adminLeaveRequestForm = document.getElementById('adminLeaveRequestForm');
+    if (adminLeaveRequestForm) {
+        adminLeaveRequestForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(adminLeaveRequestForm);
+            const employeeId = formData.get('employee_id');
+            
+            // Need to convert employee_id to email - fetch employee data
+            try {
+                const employeesResponse = await fetch('/api/employees');
+                const employeesData = await employeesResponse.json();
+                
+                if (!employeesData.success || !employeesData.data) {
+                    throw new Error('Failed to load employee data');
+                }
+                
+                // Find employee by ID
+                const employee = employeesData.data.find(emp => 
+                    emp.employee_id === employeeId || emp.email === employeeId
+                );
+                
+                if (!employee) {
+                    const messageDiv = document.getElementById('adminLeaveFormMessage');
+                    messageDiv.style.display = 'block';
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = `Employee with ID "${employeeId}" not found. Please use employee email or valid ID.`;
+                    return;
+                }
+                
+                // Build leave request data
+                const leaveData = {
+                    employee_email: employee.email,
+                    leave_type: formData.get('leave_type'),
+                    start_date: formData.get('start_date'),
+                    end_date: formData.get('end_date'),
+                    title: formData.get('title') || 'Admin submitted leave',
+                    is_half_day: formData.get('is_half_day') === 'on',
+                    half_day_period: formData.get('is_half_day') === 'on' ? 'morning' : null
+                };
+                
+                // Submit leave request
+                const response = await fetch('/api/leave-requests/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(leaveData)
+                });
+                
+                const result = await response.json();
+                const messageDiv = document.getElementById('adminLeaveFormMessage');
+                messageDiv.style.display = 'block';
+                
+                if (result.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Leave request submitted successfully!';
+                    adminLeaveRequestForm.reset();
+                    
+                    // Reload leave requests
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                        loadLeaveRequests();
+                        loadApprovedRejectedLeaveRequests();
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = result.message || 'Failed to submit leave request';
+                }
+            } catch (error) {
+                console.error('Error submitting admin leave request:', error);
+                const messageDiv = document.getElementById('adminLeaveFormMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error submitting leave request: ' + error.message;
+            }
+        });
+    }
     
     // Load all new data on init
     loadLeaveBalances();
     loadSickLeaveBalances();
     loadUnpaidLeaveSummary();
-    loadPayrollContributions();
+    loadSkippedPayroll();
+    loadContributions();
     loadSalaryHistory();
     loadEmployeeHistory();
     loadVariablePercentageRules();
