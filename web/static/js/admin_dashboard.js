@@ -86,15 +86,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/api/admin/attendance');
             const data = await response.json();
             
+            const container = document.getElementById('allAttendanceTable');
+            if (!container) return;
+            
             if (data.success && data.data && data.data.length > 0) {
                 const tableHtml = buildAttendanceTable(data.data);
-                document.getElementById('attendanceTab').innerHTML = '<h2>Attendance Management</h2>' + tableHtml;
+                container.innerHTML = tableHtml;
             } else {
-                document.getElementById('attendanceTab').innerHTML = '<h2>Attendance Management</h2><p>No attendance records found.</p>';
+                container.innerHTML = '<p>No attendance records found.</p>';
             }
         } catch (error) {
             console.error('Error loading attendance:', error);
-            document.getElementById('attendanceTab').innerHTML = '<h2>Attendance Management</h2><p>Error loading attendance data.</p>';
+            const container = document.getElementById('allAttendanceTable');
+            if (container) container.innerHTML = '<p>Error loading attendance data.</p>';
         }
     }
     
@@ -122,15 +126,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/api/admin/leave-requests');
             const data = await response.json();
             
+            const container = document.getElementById('pendingLeaveRequestsTable');
+            if (!container) return;
+            
             if (data.success && data.data && data.data.length > 0) {
                 const tableHtml = buildLeaveRequestsTable(data.data);
-                document.getElementById('leaveTab').innerHTML = '<h2>Leave Approval</h2>' + tableHtml;
+                container.innerHTML = tableHtml;
             } else {
-                document.getElementById('leaveTab').innerHTML = '<h2>Leave Approval</h2><p>No leave requests found.</p>';
+                container.innerHTML = '<p>No leave requests found.</p>';
             }
         } catch (error) {
             console.error('Error loading leave requests:', error);
-            document.getElementById('leaveTab').innerHTML = '<h2>Leave Approval</h2><p>Error loading leave requests.</p>';
+            const container = document.getElementById('pendingLeaveRequestsTable');
+            if (container) container.innerHTML = '<p>Error loading leave requests.</p>';
         }
     }
     
@@ -166,15 +174,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/api/admin/payroll-runs');
             const data = await response.json();
             
+            const container = document.getElementById('payrollRunsTable');
+            if (!container) return;
+            
             if (data.success && data.data && data.data.length > 0) {
                 const tableHtml = buildPayrollRunsTable(data.data);
-                document.getElementById('payrollTab').innerHTML = '<h2>Payroll Processing</h2>' + tableHtml;
+                container.innerHTML = tableHtml;
             } else {
-                document.getElementById('payrollTab').innerHTML = '<h2>Payroll Processing</h2><p>No payroll runs found.</p>';
+                container.innerHTML = '<p>No payroll runs found.</p>';
             }
         } catch (error) {
             console.error('Error loading payroll runs:', error);
-            document.getElementById('payrollTab').innerHTML = '<h2>Payroll Processing</h2><p>Error loading payroll data.</p>';
+            const container = document.getElementById('payrollRunsTable');
+            if (container) container.innerHTML = '<p>Error loading payroll data.</p>';
         }
     }
     
@@ -495,39 +507,41 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/api/admin/bonuses');
             const data = await response.json();
             
+            const tbody = document.getElementById('bonusTableBody');
+            if (!tbody) return;
+            
             if (data.success && data.data && data.data.length > 0) {
-                const tableHtml = buildBonusesTable(data.data);
-                document.getElementById('bonusTable').innerHTML = tableHtml;
+                const rowsHtml = buildBonusesTableRows(data.data);
+                tbody.innerHTML = rowsHtml;
             } else {
-                document.getElementById('bonusTable').innerHTML = '<p>No bonus records found.</p>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">No bonus records found.</td></tr>';
             }
         } catch (error) {
             console.error('Error loading bonuses:', error);
-            document.getElementById('bonusTable').innerHTML = '<p>Error loading bonus data.</p>';
+            const tbody = document.getElementById('bonusTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Error loading bonus data.</td></tr>';
         }
     }
     
-    function buildBonusesTable(bonuses) {
-        let html = '<table><thead><tr>';
-        html += '<th>Employee</th><th>Type</th><th>Amount</th><th>Effective Date</th><th>Expiry Date</th><th>Status</th><th>Actions</th>';
-        html += '</tr></thead><tbody>';
+    function buildBonusesTableRows(bonuses) {
+        let html = '';
         
         bonuses.forEach(bonus => {
             html += '<tr>';
-            html += `<td>${bonus.employees?.full_name || bonus.employee_id}</td>`;
-            html += `<td>${bonus.bonus_type || '-'}</td>`;
-            html += `<td>RM ${parseFloat(bonus.amount || 0).toFixed(2)}</td>`;
-            html += `<td>${bonus.effective_date || '-'}</td>`;
-            html += `<td>${bonus.expiry_date || '-'}</td>`;
-            html += `<td>${bonus.status || '-'}</td>`;
-            html += '<td>';
+            html += `<td style="padding: 12px;">${bonus.employees?.full_name || bonus.employee_id}</td>`;
+            html += `<td style="padding: 12px;">${bonus.bonus_type || '-'}</td>`;
+            html += `<td style="padding: 12px; text-align: right;">RM ${parseFloat(bonus.amount || 0).toFixed(2)}</td>`;
+            html += `<td style="padding: 12px;">${bonus.description || '-'}</td>`;
+            html += `<td style="padding: 12px;">${bonus.pay_period || '-'}</td>`;
+            html += `<td style="padding: 12px; text-align: center;">${bonus.status || '-'}</td>`;
+            html += `<td style="padding: 12px;">${bonus.approved_by || '-'}</td>`;
+            html += '<td style="padding: 12px; text-align: center;">';
             html += `<button class="btn-approve" onclick="editBonus('${bonus.id}')">Edit</button> `;
             html += `<button class="btn-reject" onclick="deleteBonus('${bonus.id}')">Delete</button>`;
             html += '</td>';
             html += '</tr>';
         });
         
-        html += '</tbody></table>';
         return html;
     }
     

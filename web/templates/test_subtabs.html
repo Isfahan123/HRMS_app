@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS Subtabs Test</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=2.0">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>HRMS Subtabs Test</h1>
+        </header>
+        
+        <div class="dashboard-content">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="leave">📅 Leaves</button>
+                <button class="tab-button" data-tab="payroll">💸 Payroll</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Leave Tab -->
+                <div id="leaveTab" class="tab-pane active">
+                    <h2>Leave Management</h2>
+                    
+                    <!-- Leave Subtabs -->
+                    <div class="subtabs">
+                        <button class="subtab-button active" data-subtab="leavePending">Pending</button>
+                        <button class="subtab-button" data-subtab="leaveApprovedRejected">Approved/Rejected</button>
+                        <button class="subtab-button" data-subtab="leaveSubmit">Submit Leave Request</button>
+                    </div>
+                    
+                    <!-- Pending Leave Subtab -->
+                    <div id="leavePendingSubtab" class="subtab-content active">
+                        <h3>Pending Leave Requests</h3>
+                        <div id="pendingLeaveRequestsTable">Loading...</div>
+                    </div>
+                    
+                    <!-- Approved/Rejected Leave Subtab -->
+                    <div id="leaveApprovedRejectedSubtab" class="subtab-content">
+                        <h3>Approved/Rejected Leave Requests</h3>
+                        <div id="approvedRejectedLeaveRequestsTable">Loading...</div>
+                    </div>
+                    
+                    <!-- Submit Leave Request Subtab -->
+                    <div id="leaveSubmitSubtab" class="subtab-content">
+                        <h3>Submit Leave Request (Admin)</h3>
+                        <p>Submit form would be here</p>
+                    </div>
+                </div>
+                
+                <!-- Payroll Tab -->
+                <div id="payrollTab" class="tab-pane">
+                    <h2>Payroll Processing</h2>
+                    
+                    <!-- Payroll Subtabs -->
+                    <div class="subtabs">
+                        <button class="subtab-button active" data-subtab="payrollHistory">Payroll History</button>
+                        <button class="subtab-button" data-subtab="payrollSkipped">Skipped Payroll</button>
+                        <button class="subtab-button" data-subtab="payrollContributions">View Contributions</button>
+                    </div>
+                    
+                    <!-- Payroll History Subtab -->
+                    <div id="payrollHistorySubtab" class="subtab-content active">
+                        <h3>Payroll History</h3>
+                        <div id="payrollRunsTable" style="margin-top: 20px;">Loading...</div>
+                    </div>
+                    
+                    <!-- Skipped Payroll Subtab -->
+                    <div id="payrollSkippedSubtab" class="subtab-content">
+                        <h3>⏭️ Skipped Payroll Records</h3>
+                        <p>Skipped payroll content</p>
+                    </div>
+                    
+                    <!-- View Contributions Subtab -->
+                    <div id="payrollContributionsSubtab" class="subtab-content">
+                        <h3>📊 View Contributions (EPF, SOCSO, EIS)</h3>
+                        <p>Contributions content</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the admin dashboard setup
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Test page loaded');
+            
+            // Setup tabs
+            setupTabs();
+            
+            // Simulate data loading after 1 second (like the real page)
+            setTimeout(() => {
+                console.log('📊 Simulating data load...');
+                loadLeaveRequests();
+                loadPayrollRuns();
+            }, 1000);
+            
+            function setupTabs() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabPanes = document.querySelectorAll('.tab-pane');
+                
+                console.log('🔧 Setting up tabs:', tabButtons.length, 'tab buttons found');
+                
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const tabName = this.getAttribute('data-tab');
+                        console.log('✅ Tab clicked:', tabName);
+                        
+                        // Remove active class from all buttons and panes
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabPanes.forEach(pane => pane.classList.remove('active'));
+                        
+                        // Add active class to clicked button and corresponding pane
+                        this.classList.add('active');
+                        const targetPane = document.getElementById(tabName + 'Tab');
+                        if (targetPane) {
+                            targetPane.classList.add('active');
+                            console.log('✅ Activated tab pane:', tabName + 'Tab');
+                        }
+                    });
+                });
+                
+                // Setup subtabs
+                setupSubtabs();
+            }
+            
+            function setupSubtabs() {
+                const subtabButtons = document.querySelectorAll('.subtab-button');
+                
+                console.log('🔧 Setting up subtabs:', subtabButtons.length, 'subtab buttons found');
+                
+                subtabButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const subtabName = this.getAttribute('data-subtab');
+                        console.log('✅ Subtab clicked:', subtabName);
+                        
+                        // Get parent tab to scope subtab switching
+                        const parentContainer = this.closest('.tab-pane');
+                        if (!parentContainer) return;
+                        
+                        const containerSubtabButtons = parentContainer.querySelectorAll('.subtab-button');
+                        const containerSubtabContents = parentContainer.querySelectorAll('.subtab-content');
+                        
+                        containerSubtabButtons.forEach(btn => btn.classList.remove('active'));
+                        containerSubtabContents.forEach(content => content.classList.remove('active'));
+                        
+                        // Add active class to clicked button and corresponding content
+                        this.classList.add('active');
+                        const subtabContent = document.getElementById(subtabName + 'Subtab');
+                        if (subtabContent) {
+                            subtabContent.classList.add('active');
+                        }
+                    });
+                });
+            }
+            
+            // FIXED VERSION: Update only the specific container
+            async function loadLeaveRequests() {
+                console.log('📊 Loading leave requests (FIXED version)...');
+                
+                const container = document.getElementById('pendingLeaveRequestsTable');
+                if (!container) {
+                    console.error('❌ Container not found: pendingLeaveRequestsTable');
+                    return;
+                }
+                
+                // Simulate API response
+                setTimeout(() => {
+                    container.innerHTML = '<table><tr><th>Employee</th><th>Type</th><th>Status</th></tr><tr><td>John Doe</td><td>Annual</td><td>Pending</td></tr></table>';
+                    console.log('✅ Leave requests loaded - subtabs should still be visible!');
+                }, 500);
+            }
+            
+            async function loadPayrollRuns() {
+                console.log('📊 Loading payroll runs (FIXED version)...');
+                
+                const container = document.getElementById('payrollRunsTable');
+                if (!container) {
+                    console.error('❌ Container not found: payrollRunsTable');
+                    return;
+                }
+                
+                // Simulate API response
+                setTimeout(() => {
+                    container.innerHTML = '<table><tr><th>Month</th><th>Status</th></tr><tr><td>December 2024</td><td>Completed</td></tr></table>';
+                    console.log('✅ Payroll runs loaded - subtabs should still be visible!');
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>

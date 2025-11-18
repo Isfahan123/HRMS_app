@@ -93,6 +93,11 @@ async def admin_preview(request: Request):
     """Serve the full admin dashboard for preview (no auth required)"""
     return templates.TemplateResponse("admin_dashboard.html", {"request": request})
 
+@app.get("/test-subtabs", response_class=HTMLResponse)
+async def test_subtabs(request: Request):
+    """Test page to verify subtabs fix"""
+    return templates.TemplateResponse("test_subtabs.html", {"request": request})
+
 @app.get("/WEB_INTERFACE_GUIDE.md")
 async def serve_guide():
     """Serve the web interface guide"""
