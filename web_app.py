@@ -976,12 +976,34 @@ async def get_skipped_payroll():
     Get skipped payroll records
     """
     try:
-        # Query skipped payroll from payroll_skipped table or payroll_runs with skip flag
-        # For now, we'll create mock data structure since table might not exist yet
+        # Try to query from payroll_run_skips table first (correct table used by GUI)
+        try:
+            response = supabase.table("payroll_run_skips").select("*, employees!inner(full_name, email)").order("created_at", desc=True).limit(200).execute()
+            
+            if response.data:
+                skipped_records = []
+                for record in response.data:
+                    employee = record.get('employees', {})
+                    skipped_records.append({
+                        "id": record.get('id'),
+                        "employee_name": employee.get('full_name', ''),
+                        "employee_email": employee.get('email', ''),
+                        "employee_id": record.get('employee_id', ''),
+                        "month_year": record.get('payroll_date', ''),
+                        "reason": record.get('reason', 'Not specified'),
+                        "skipped_date": record.get('created_at', ''),
+                        "notes": record.get('notes', ''),
+                        "can_include": True
+                    })
+                return {"success": True, "data": skipped_records}
+        except Exception as e:
+            print(f"Info: payroll_run_skips table query failed, trying payroll_runs: {str(e)}")
+        
+        # Fallback to querying payroll_runs with skip flag
         response = supabase.table("payroll_runs").select("*").eq("status", "skipped").order("created_at", desc=True).limit(100).execute()
         
         if not response.data:
-            # If no skipped records in payroll_runs, return empty array
+            # If no skipped records found, return empty array
             return {"success": True, "data": []}
         
         skipped_records = []
@@ -1675,11 +1697,32 @@ def generate_csv(headers: List[str], rows: List[List[Any]]) -> StreamingResponse
 async def export_skipped_payroll_csv():
     """Export skipped payroll records to CSV"""
     try:
-        # Get skipped payroll data
+        # Try to get data from payroll_run_skips table first
+        try:
+            response = supabase.table("payroll_run_skips").select("*, employees!inner(full_name, email)").order("created_at", desc=True).limit(1000).execute()
+            
+            if response.data:
+                headers = ["ID", "Employee Name", "Employee Email", "Employee ID", "Payroll Date", "Reason", "Skipped Date"]
+                rows = []
+                for record in response.data:
+                    employee = record.get('employees', {})
+                    rows.append([
+                        record.get('id', ''),
+                        employee.get('full_name', ''),
+                        employee.get('email', ''),
+                        record.get('employee_id', ''),
+                        record.get('payroll_date', ''),
+                        record.get('reason', 'Not specified'),
+                        record.get('created_at', '')
+                    ])
+                return generate_csv(headers, rows)
+        except Exception as e:
+            print(f"Info: payroll_run_skips export failed, trying payroll_runs: {str(e)}")
+        
+        # Fallback to payroll_runs table
         response = supabase.table("payroll_runs").select("*").eq("status", "skipped").order("created_at", desc=True).limit(1000).execute()
         
         if not response.data:
-            # Return empty CSV with headers
             headers = ["ID", "Employee Name", "Employee Email", "Month/Year", "Reason", "Skipped Date", "Notes"]
             return generate_csv(headers, [])
         
