@@ -1535,11 +1535,26 @@
                                 <div class="form-group">
                                     <label for="bonusStatus">Status: *</label>
                                     <select id="bonusStatus" required style="width: 100%; padding: 8px;">
-                                        <option value="pending">Pending</option>
-                                        <option value="approved">Approved</option>
-                                        <option value="paid">Paid</option>
-                                        <option value="cancelled">Cancelled</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
                                     </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="bonusIsRecurring" style="margin-right: 5px;">
+                                        Recurring bonus
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="bonusHasExpiry" style="margin-right: 5px;" onchange="toggleExpiryDate()">
+                                        Has expiry date
+                                    </label>
+                                </div>
+                                <div class="form-group" id="bonusExpiryDateGroup" style="display: none;">
+                                    <label for="bonusExpiryDate">Expiry Date:</label>
+                                    <input type="date" id="bonusExpiryDate" style="width: 100%; padding: 8px;">
                                 </div>
                                 <div style="margin-top: 20px;">
                                     <button type="submit" class="btn-primary">Save Bonus</button>
