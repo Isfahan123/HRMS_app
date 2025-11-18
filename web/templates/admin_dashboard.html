@@ -1244,99 +1244,132 @@
                 
                 <!-- Salary History Tab -->
                 <div id="salaryHistoryTab" class="tab-pane">
-                    <h2>📈 Salary History</h2>
+                    <h2>📈 Employee Salary History Management</h2>
                     <p style="color: #666; margin-bottom: 20px;">Track and manage salary changes over time for all employees.</p>
                     
-                    <!-- Add Salary Change Button -->
-                    <button class="btn-primary" onclick="showAddSalaryChangeForm()" style="margin-bottom: 20px;">
-                        ➕ Record Salary Change
-                    </button>
-                    
-                    <!-- Add Salary Change Form (hidden by default) -->
-                    <div id="addSalaryChangeForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                        <h3>Record Salary Change</h3>
-                        <form id="newSalaryChangeForm">
-                            <div class="form-row">
+                    <!-- Split Layout: Left panel (forms) + Right panel (table) -->
+                    <div style="display: grid; grid-template-columns: 400px 1fr; gap: 20px; margin-top: 20px;">
+                        
+                        <!-- Left Panel: Employee Selection & Forms -->
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            
+                            <!-- Employee Selection Section -->
+                            <div class="form-section" style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                <h3 style="margin-top: 0; color: #667eea;">Employee Selection</h3>
                                 <div class="form-group">
-                                    <label for="salaryChangeEmployee">Employee Email:*</label>
-                                    <input type="email" id="salaryChangeEmployee" name="employee_email" required placeholder="employee@company.com">
+                                    <label for="salaryHistoryEmployeeSelect">Employee:*</label>
+                                    <select id="salaryHistoryEmployeeSelect" style="width: 100%; padding: 8px;">
+                                        <option value="">Select Employee</option>
+                                    </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="salaryChangePrevious">Previous Salary:*</label>
-                                    <input type="number" id="salaryChangePrevious" name="previous_salary" required min="0" step="0.01" placeholder="e.g., 5000.00">
-                                </div>
-                                <div class="form-group">
-                                    <label for="salaryChangeNew">New Salary:*</label>
-                                    <input type="number" id="salaryChangeNew" name="new_salary" required min="0" step="0.01" placeholder="e.g., 5500.00">
+                                <div style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="color: #666;">Current Salary:</span>
+                                        <strong id="currentSalaryDisplay" style="color: #2e7d32;">RM 0.00</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span style="color: #666;">Last Updated:</span>
+                                        <span id="lastUpdatedDisplay" style="color: #666;">Never</span>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="salaryChangeEffectiveDate">Effective Date:*</label>
-                                    <input type="date" id="salaryChangeEffectiveDate" name="effective_date" required>
+                            <!-- Add Salary Change Form -->
+                            <div class="form-section" style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                <h3 style="margin-top: 0; color: #667eea;">Record Salary Change</h3>
+                                <form id="newSalaryChangeForm">
+                                    <div class="form-group">
+                                        <label for="salaryChangeEmployee">Employee Email:*</label>
+                                        <input type="email" id="salaryChangeEmployee" name="employee_email" required placeholder="employee@company.com" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="salaryChangeEffectiveDate">Effective Date:*</label>
+                                        <input type="date" id="salaryChangeEffectiveDate" name="effective_date" required style="width: 100%;">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="salaryChangePrevious">Previous Salary (RM):*</label>
+                                        <input type="number" id="salaryChangePrevious" name="previous_salary" required min="0" step="0.01" placeholder="e.g., 5000.00" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="salaryChangeNew">New Salary (RM):*</label>
+                                        <input type="number" id="salaryChangeNew" name="new_salary" required min="0" step="0.01" placeholder="e.g., 5500.00" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="salaryChangeType">Change Type:*</label>
+                                        <select id="salaryChangeType" name="change_type" required style="width: 100%;">
+                                            <option value="">Select Type</option>
+                                            <option value="promotion">Promotion</option>
+                                            <option value="increment">Annual Increment</option>
+                                            <option value="adjustment">Salary Adjustment</option>
+                                            <option value="correction">Correction</option>
+                                            <option value="demotion">Demotion</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="salaryChangeReason">Reason/Notes:</label>
+                                        <textarea id="salaryChangeReason" name="reason" rows="3" placeholder="Optional notes" style="width: 100%;"></textarea>
+                                    </div>
+                                    
+                                    <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                                        <button type="submit" class="btn-primary" style="width: 100%;">💾 Add Salary Change</button>
+                                        <button type="button" class="btn-secondary" onclick="updateCurrentSalary()" style="width: 100%;">🔄 Update Current Salary</button>
+                                    </div>
+                                    
+                                    <div id="addSalaryChangeMessage" style="display: none; margin-top: 10px;"></div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Panel: History Table -->
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: #667eea;">Salary History Records</h3>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn-secondary" onclick="loadSalaryHistory()">🔄 Refresh</button>
+                                    <button class="btn-secondary" onclick="exportSalaryHistoryCSV()">📤 Export</button>
                                 </div>
-                                <div class="form-group">
-                                    <label for="salaryChangeType">Change Type:*</label>
-                                    <select id="salaryChangeType" name="change_type" required>
-                                        <option value="">Select Type</option>
+                            </div>
+                            
+                            <!-- Filter Section -->
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; padding: 15px; background: #f9f9f9; border-radius: 5px;">
+                                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                                    <label for="salaryHistoryEmployeeFilter" style="font-size: 12px;">Employee:</label>
+                                    <input type="text" id="salaryHistoryEmployeeFilter" placeholder="Search..." style="width: 100%; padding: 6px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 120px;">
+                                    <label for="salaryHistoryTypeFilter" style="font-size: 12px;">Type:</label>
+                                    <select id="salaryHistoryTypeFilter" style="width: 100%; padding: 6px;">
+                                        <option value="">All</option>
                                         <option value="promotion">Promotion</option>
-                                        <option value="increment">Annual Increment</option>
-                                        <option value="adjustment">Salary Adjustment</option>
+                                        <option value="increment">Increment</option>
+                                        <option value="adjustment">Adjustment</option>
                                         <option value="correction">Correction</option>
                                         <option value="demotion">Demotion</option>
                                     </select>
                                 </div>
+                                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 100px;">
+                                    <label for="salaryHistoryYearFilter" style="font-size: 12px;">Year:</label>
+                                    <select id="salaryHistoryYearFilter" style="width: 100%; padding: 6px;">
+                                        <option value="">All</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2024">2024</option>
+                                        <option value="2023">2023</option>
+                                        <option value="2022">2022</option>
+                                    </select>
+                                </div>
+                                <button class="btn-primary" onclick="loadSalaryHistory()" style="align-self: flex-end; padding: 6px 12px; height: 32px;">🔍 Search</button>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="salaryChangeReason">Reason/Notes:</label>
-                                <textarea id="salaryChangeReason" name="reason" rows="3" placeholder="Optional notes about this salary change"></textarea>
+                            <!-- Salary History Table -->
+                            <div id="salaryHistoryTable" style="flex: 1; overflow-y: auto;">
+                                <p style="color: #666;">Loading salary history records...</p>
                             </div>
-                            
-                            <div style="margin-top: 15px;">
-                                <button type="submit" class="btn-primary">Save Salary Change</button>
-                                <button type="button" class="btn-secondary" onclick="hideAddSalaryChangeForm()">Cancel</button>
-                            </div>
-                            
-                            <div id="addSalaryChangeMessage" style="display: none; margin-top: 10px;"></div>
-                        </form>
-                    </div>
-                    
-                    <!-- Filter Section -->
-                    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: end;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="salaryHistoryEmployeeFilter">Employee:</label>
-                            <input type="text" id="salaryHistoryEmployeeFilter" placeholder="Search by name or email...">
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="salaryHistoryTypeFilter">Change Type:</label>
-                            <select id="salaryHistoryTypeFilter">
-                                <option value="">All Types</option>
-                                <option value="promotion">Promotion</option>
-                                <option value="increment">Annual Increment</option>
-                                <option value="adjustment">Salary Adjustment</option>
-                                <option value="correction">Correction</option>
-                                <option value="demotion">Demotion</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="salaryHistoryYearFilter">Year:</label>
-                            <select id="salaryHistoryYearFilter">
-                                <option value="">All Years</option>
-                                <option value="2025">2025</option>
-                                <option value="2024">2024</option>
-                                <option value="2023">2023</option>
-                                <option value="2022">2022</option>
-                            </select>
-                        </div>
-                        <button class="btn-primary" onclick="loadSalaryHistory()">🔍 Search</button>
-                        <button class="btn-secondary" onclick="exportSalaryHistoryCSV()">📤 Export CSV</button>
-                    </div>
-                    
-                    <!-- Salary History Table -->
-                    <div id="salaryHistoryTable">
-                        <p style="color: #666;">Loading salary history records...</p>
                     </div>
                 </div>
                 

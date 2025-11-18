@@ -1257,6 +1257,123 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Load employees into the salary history employee selector
+    async function loadSalaryHistoryEmployeeSelector() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            const selector = document.getElementById('salaryHistoryEmployeeSelect');
+            if (!selector) return;
+            
+            if (data.success && data.data && data.data.length > 0) {
+                selector.innerHTML = '<option value="">Select Employee</option>';
+                data.data.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.email;
+                    option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                    option.dataset.salary = emp.basic_salary || 0;
+                    selector.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading employees for salary history:', error);
+        }
+    }
+    
+    // Update current salary display when employee is selected
+    if (document.getElementById('salaryHistoryEmployeeSelect')) {
+        document.getElementById('salaryHistoryEmployeeSelect').addEventListener('change', function(e) {
+            const selectedOption = this.options[this.selectedIndex];
+            const salary = selectedOption.dataset.salary || 0;
+            
+            const salaryDisplay = document.getElementById('currentSalaryDisplay');
+            if (salaryDisplay) {
+                salaryDisplay.textContent = `RM ${parseFloat(salary).toFixed(2)}`;
+            }
+            
+            // Auto-fill the employee email in the form
+            const emailInput = document.getElementById('salaryChangeEmployee');
+            if (emailInput) {
+                emailInput.value = selectedOption.value;
+            }
+            
+            // Auto-fill previous salary
+            const prevSalaryInput = document.getElementById('salaryChangePrevious');
+            if (prevSalaryInput) {
+                prevSalaryInput.value = parseFloat(salary).toFixed(2);
+            }
+        });
+    }
+    
+    // Update Current Salary function - updates employee's basic salary in their profile
+    window.updateCurrentSalary = async function() {
+        const employeeEmail = document.getElementById('salaryChangeEmployee')?.value;
+        const newSalary = document.getElementById('salaryChangeNew')?.value;
+        
+        if (!employeeEmail || !newSalary) {
+            alert('Please fill in Employee Email and New Salary fields');
+            return;
+        }
+        
+        if (!confirm(`Update ${employeeEmail}'s current basic salary to RM ${parseFloat(newSalary).toFixed(2)}?\n\nThis will update their employee profile.`)) {
+            return;
+        }
+        
+        try {
+            // Find the employee ID
+            const empResponse = await fetch('/api/employees');
+            const empData = await empResponse.json();
+            
+            if (!empData.success || !empData.data) {
+                alert('Failed to fetch employee data');
+                return;
+            }
+            
+            const employee = empData.data.find(emp => emp.email === employeeEmail);
+            if (!employee) {
+                alert('Employee not found');
+                return;
+            }
+            
+            // Update the employee's basic salary
+            const updateResponse = await fetch(`/api/admin/employees/${employee.id || employee.email}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    basic_salary: parseFloat(newSalary)
+                })
+            });
+            
+            const result = await updateResponse.json();
+            
+            if (result.success) {
+                alert('✅ Current salary updated successfully!');
+                
+                // Refresh the employee selector
+                loadSalaryHistoryEmployeeSelector();
+                
+                // Update the display
+                const salaryDisplay = document.getElementById('currentSalaryDisplay');
+                if (salaryDisplay) {
+                    salaryDisplay.textContent = `RM ${parseFloat(newSalary).toFixed(2)}`;
+                }
+                
+                const lastUpdatedDisplay = document.getElementById('lastUpdatedDisplay');
+                if (lastUpdatedDisplay) {
+                    lastUpdatedDisplay.textContent = new Date().toLocaleDateString();
+                }
+            } else {
+                alert('Failed to update current salary: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error updating current salary:', error);
+            alert('Error updating current salary: ' + error.message);
+        }
+    };
+    
     // Engagements Management Functions (Admin)
     const adminEngagementForm = document.getElementById('adminEngagementForm');
     if (adminEngagementForm) {
@@ -1460,6 +1577,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px;">Previous Value</th>';
                 html += '<th style="padding: 10px;">New Value</th>';
                 html += '<th style="padding: 10px;">Reason</th>';
+                html += '<th style="padding: 10px;">Actions</th>';
                 html += '</tr></thead><tbody>';
                 
                 filteredData.forEach(record => {
@@ -1481,6 +1599,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<td style="padding: 10px;">${record.previous_value || '-'}</td>`;
                     html += `<td style="padding: 10px;"><strong>${record.new_value || '-'}</strong></td>`;
                     html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
+                    html += '<td style="padding: 10px;">';
+                    html += `<button class="btn-secondary btn-sm" onclick="editEmployeeHistory('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
+                    html += `<button class="btn-reject btn-sm" onclick="deleteEmployeeHistory('${record.id}')">🗑️ Delete</button>`;
+                    html += '</td>';
                     html += '</tr>';
                 });
                 
@@ -2107,6 +2229,239 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Salary History Edit/Delete Functions
+    window.editSalaryHistory = async function(recordId) {
+        try {
+            const response = await fetch('/api/admin/salary-history');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const record = data.data.find(r => r.id === recordId);
+                if (!record) {
+                    alert('Record not found');
+                    return;
+                }
+                
+                const newEffectiveDate = prompt('Effective Date (YYYY-MM-DD):', record.effective_date || '');
+                if (newEffectiveDate === null) return; // User cancelled
+                
+                const newPrevSalary = prompt('Previous Salary:', parseFloat(record.previous_value) || 0);
+                if (newPrevSalary === null) return;
+                
+                const newNewSalary = prompt('New Salary:', parseFloat(record.new_value) || 0);
+                if (newNewSalary === null) return;
+                
+                const newReason = prompt('Reason:', record.reason || '');
+                if (newReason === null) return;
+                
+                const updateData = {
+                    effective_date: newEffectiveDate,
+                    previous_salary: newPrevSalary,
+                    new_salary: newNewSalary,
+                    reason: newReason
+                };
+                
+                const updateResponse = await fetch(`/api/admin/salary-history/${recordId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await updateResponse.json();
+                if (result.success) {
+                    alert('Salary history updated successfully!');
+                    loadSalaryHistory();
+                } else {
+                    alert('Failed to update salary history: ' + result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error editing salary history:', error);
+            alert('Error editing salary history');
+        }
+    };
+    
+    window.deleteSalaryHistory = async function(recordId) {
+        if (!confirm('Are you sure you want to delete this salary history record? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/salary-history/${recordId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Salary history deleted successfully!');
+                loadSalaryHistory();
+            } else {
+                alert('Failed to delete salary history: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting salary history:', error);
+            alert('Error deleting salary history');
+        }
+    };
+    
+    // Engagement Edit/Delete Functions
+    window.editEngagement = async function(engagementId) {
+        try {
+            const response = await fetch('/api/admin/engagements/all');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const record = data.data.find(r => r.id === engagementId);
+                if (!record) {
+                    alert('Engagement not found');
+                    return;
+                }
+                
+                const newTitle = prompt('Title:', record.title || '');
+                if (newTitle === null) return; // User cancelled
+                
+                const newStartDate = prompt('Start Date (YYYY-MM-DD):', record.start_date || '');
+                if (newStartDate === null) return;
+                
+                const newEndDate = prompt('End Date (YYYY-MM-DD):', record.end_date || '');
+                if (newEndDate === null) return;
+                
+                const newLocation = prompt('Location:', record.location || '');
+                if (newLocation === null) return;
+                
+                const newStatus = prompt('Status (pending/approved/completed/cancelled):', record.status || '');
+                if (newStatus === null) return;
+                
+                const updateData = {
+                    title: newTitle,
+                    start_date: newStartDate,
+                    end_date: newEndDate,
+                    location: newLocation,
+                    status: newStatus
+                };
+                
+                const updateResponse = await fetch(`/api/admin/engagements/${engagementId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await updateResponse.json();
+                if (result.success) {
+                    alert('Engagement updated successfully!');
+                    loadAllEngagements();
+                } else {
+                    alert('Failed to update engagement: ' + result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error editing engagement:', error);
+            alert('Error editing engagement');
+        }
+    };
+    
+    window.deleteEngagement = async function(engagementId) {
+        if (!confirm('Are you sure you want to delete this engagement? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/engagements/${engagementId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Engagement deleted successfully!');
+                loadAllEngagements();
+            } else {
+                alert('Failed to delete engagement: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting engagement:', error);
+            alert('Error deleting engagement');
+        }
+    };
+    
+    // Employee History Edit/Delete Functions
+    window.editEmployeeHistory = async function(recordId) {
+        try {
+            const response = await fetch('/api/admin/employee-history');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const record = data.data.find(r => r.id === recordId);
+                if (!record) {
+                    alert('Record not found');
+                    return;
+                }
+                
+                const newEffectiveDate = prompt('Effective Date (YYYY-MM-DD):', record.effective_date || '');
+                if (newEffectiveDate === null) return; // User cancelled
+                
+                const newFieldChanged = prompt('Field Changed:', record.field_changed || '');
+                if (newFieldChanged === null) return;
+                
+                const newPrevValue = prompt('Previous Value:', record.previous_value || '');
+                if (newPrevValue === null) return;
+                
+                const newNewValue = prompt('New Value:', record.new_value || '');
+                if (newNewValue === null) return;
+                
+                const newReason = prompt('Reason:', record.reason || '');
+                if (newReason === null) return;
+                
+                const updateData = {
+                    effective_date: newEffectiveDate,
+                    field_changed: newFieldChanged,
+                    previous_value: newPrevValue,
+                    new_value: newNewValue,
+                    reason: newReason
+                };
+                
+                const updateResponse = await fetch(`/api/admin/employee-history/${recordId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await updateResponse.json();
+                if (result.success) {
+                    alert('Employee history updated successfully!');
+                    loadEmployeeHistory();
+                } else {
+                    alert('Failed to update employee history: ' + result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error editing employee history:', error);
+            alert('Error editing employee history');
+        }
+    };
+    
+    window.deleteEmployeeHistory = async function(recordId) {
+        if (!confirm('Are you sure you want to delete this employee history record? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/employee-history/${recordId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Employee history deleted successfully!');
+                loadEmployeeHistory();
+            } else {
+                alert('Failed to delete employee history: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting employee history:', error);
+            alert('Error deleting employee history');
+        }
+    };
+    
     // Load all new data on init
     loadLeaveBalances();
     loadSickLeaveBalances();
@@ -2114,6 +2469,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSkippedPayroll();
     loadContributions();
     loadSalaryHistory();
+    loadSalaryHistoryEmployeeSelector();
     loadEmployeeHistory();
     loadVariablePercentageRules();
 });
