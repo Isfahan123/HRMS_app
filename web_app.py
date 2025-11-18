@@ -1870,6 +1870,123 @@ async def export_employee_history_csv():
         print(f"Error exporting employee history: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/admin/attendance/export/csv")
+async def export_attendance_csv():
+    """Export attendance records to CSV"""
+    try:
+        # Get attendance data
+        attendance_data = get_all_attendance_records()
+        
+        if not attendance_data:
+            headers = ["ID", "Employee Email", "Date", "Clock In", "Clock Out", "Status", "Notes", "Created At"]
+            return generate_csv(headers, [])
+        
+        headers = ["ID", "Employee Email", "Date", "Clock In", "Clock Out", "Status", "Notes", "Created At"]
+        rows = []
+        for record in attendance_data:
+            rows.append([
+                record.get('id', ''),
+                record.get('employee_email', ''),
+                record.get('date', ''),
+                record.get('clock_in', ''),
+                record.get('clock_out', ''),
+                record.get('status', ''),
+                record.get('notes', ''),
+                record.get('created_at', '')
+            ])
+        
+        return generate_csv(headers, rows)
+    except Exception as e:
+        print(f"Error exporting attendance: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/leave-requests/export/csv")
+async def export_leave_requests_csv():
+    """Export leave requests to CSV"""
+    try:
+        # Fetch leave requests
+        response = supabase.table("leave_requests").select("*").order("created_at", desc=True).execute()
+        
+        if not response.data:
+            headers = ["ID", "Employee Email", "Employee Name", "Leave Type", "Start Date", "End Date", "Days", "Status", "Title", "Description", "Created At", "Reviewed At", "Reviewed By"]
+            return generate_csv(headers, [])
+        
+        leave_requests = response.data
+        
+        # Get unique employee emails for enrichment
+        employee_emails = list(set([lr.get("employee_email") for lr in leave_requests if lr.get("employee_email")]))
+        
+        # Fetch employee data
+        employee_map = {}
+        if employee_emails:
+            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            if employees_response.data:
+                employee_map = {emp["email"]: emp.get("full_name", "") for emp in employees_response.data}
+        
+        headers = ["ID", "Employee Email", "Employee Name", "Leave Type", "Start Date", "End Date", "Days", "Status", "Title", "Description", "Created At", "Reviewed At", "Reviewed By"]
+        rows = []
+        for record in leave_requests:
+            employee_email = record.get('employee_email', '')
+            employee_name = employee_map.get(employee_email, '')
+            
+            rows.append([
+                record.get('id', ''),
+                employee_email,
+                employee_name,
+                record.get('leave_type', ''),
+                record.get('start_date', ''),
+                record.get('end_date', ''),
+                record.get('total_days', ''),
+                record.get('status', ''),
+                record.get('title', ''),
+                record.get('description', ''),
+                record.get('created_at', ''),
+                record.get('reviewed_at', ''),
+                record.get('reviewed_by', '')
+            ])
+        
+        return generate_csv(headers, rows)
+    except Exception as e:
+        print(f"Error exporting leave requests: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/payroll/export/csv")
+async def export_payroll_runs_csv():
+    """Export payroll runs to CSV"""
+    try:
+        # Get payroll runs
+        payroll_runs = get_payroll_runs()
+        
+        if not payroll_runs:
+            headers = ["ID", "Employee Email", "Employee Name", "Month/Year", "Basic Salary", "Allowances", "Deductions", "EPF Employee", "EPF Employer", "SOCSO Employee", "SOCSO Employer", "EIS", "PCB", "Net Salary", "Created At"]
+            return generate_csv(headers, [])
+        
+        headers = ["ID", "Employee Email", "Employee Name", "Month/Year", "Basic Salary", "Allowances", "Deductions", "EPF Employee", "EPF Employer", "SOCSO Employee", "SOCSO Employer", "EIS", "PCB", "Net Salary", "Created At"]
+        rows = []
+        for record in payroll_runs:
+            rows.append([
+                record.get('id', ''),
+                record.get('employee_email', ''),
+                record.get('employee_name', ''),
+                record.get('month_year', ''),
+                f"{float(record.get('basic_salary', 0)):.2f}",
+                f"{float(record.get('allowances', 0)):.2f}",
+                f"{float(record.get('deductions', 0)):.2f}",
+                f"{float(record.get('epf_employee', 0)):.2f}",
+                f"{float(record.get('epf_employer', 0)):.2f}",
+                f"{float(record.get('socso_employee', 0)):.2f}",
+                f"{float(record.get('socso_employer', 0)):.2f}",
+                f"{float(record.get('eis', 0)):.2f}",
+                f"{float(record.get('pcb', 0)):.2f}",
+                f"{float(record.get('net_salary', 0)):.2f}",
+                record.get('created_at', '')
+            ])
+        
+        return generate_csv(headers, rows)
+    except Exception as e:
+        print(f"Error exporting payroll runs: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
