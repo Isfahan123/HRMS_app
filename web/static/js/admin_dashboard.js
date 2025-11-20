@@ -1792,6 +1792,33 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Engagements Management Functions (Admin)
+    // Load employees into the engagement form employee selector
+    async function loadEngagementEmployeeSelector() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            const selector = document.getElementById('adminEngEmployeeEmail');
+            
+            if (selector && data.success && data.data && data.data.length > 0) {
+                selector.innerHTML = '<option value="">Select Employee</option>';
+                data.data.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.email;
+                    option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                    selector.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading employees for engagement form:', error);
+        }
+    }
+    
+    // Load employees when page loads
+    if (document.getElementById('adminEngEmployeeEmail')) {
+        loadEngagementEmployeeSelector();
+    }
+    
     const adminEngagementForm = document.getElementById('adminEngagementForm');
     if (adminEngagementForm) {
         adminEngagementForm.addEventListener('submit', async function(e) {
