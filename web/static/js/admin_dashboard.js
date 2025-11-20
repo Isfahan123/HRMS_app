@@ -1166,6 +1166,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px;">New Salary</th>';
                 html += '<th style="padding: 10px;">Change</th>';
                 html += '<th style="padding: 10px;">Reason</th>';
+                html += '<th style="padding: 10px;">Actions</th>';
                 html += '</tr></thead><tbody>';
                 
                 filteredData.forEach(record => {
@@ -1183,6 +1184,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<td style="padding: 10px;"><strong>RM ${newSalary.toFixed(2)}</strong></td>`;
                     html += `<td style="padding: 10px; color: ${changeColor};"><strong>${change >= 0 ? '+' : ''}RM ${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)</strong></td>`;
                     html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
+                    html += '<td style="padding: 10px;">';
+                    html += `<button class="btn-secondary btn-sm" onclick="editSalaryHistory('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
+                    html += `<button class="btn-reject btn-sm" onclick="deleteSalaryHistory('${record.id}')">🗑️ Delete</button>`;
+                    html += '</td>';
                     html += '</tr>';
                 });
                 
@@ -1474,6 +1479,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px;">Location</th>';
                 html += '<th style="padding: 10px;">Cost</th>';
                 html += '<th style="padding: 10px;">Status</th>';
+                html += '<th style="padding: 10px;">Actions</th>';
                 html += '</tr></thead><tbody>';
                 
                 filteredData.forEach(record => {
@@ -1494,6 +1500,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<td style="padding: 10px;">${record.location || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.cost ? 'RM ' + parseFloat(record.cost).toFixed(2) : '-'}</td>`;
                     html += `<td style="padding: 10px;"><span style="color: ${statusColor}; font-weight: bold;">${record.status || '-'}</span></td>`;
+                    html += '<td style="padding: 10px;">';
+                    html += `<button class="btn-secondary btn-sm" onclick="editEngagement('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
+                    html += `<button class="btn-reject btn-sm" onclick="deleteEngagement('${record.id}')">🗑️ Delete</button>`;
+                    html += '</td>';
                     html += '</tr>';
                 });
                 
