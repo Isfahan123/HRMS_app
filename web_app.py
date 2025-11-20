@@ -916,6 +916,8 @@ async def get_payroll_contributions():
         
         contributions = []
         for run in response.data:
+            eis_employee = float(run.get('eis_employee', 0) or run.get('eis', 0))
+            eis_employer = float(run.get('eis_employer', 0))
             contributions.append({
                 "employee_name": run.get('employee_name', ''),
                 "month_year": run.get('month_year', ''),
@@ -923,10 +925,11 @@ async def get_payroll_contributions():
                 "epf_employer": float(run.get('epf_employer', 0)),
                 "socso_employee": float(run.get('socso_employee', 0)),
                 "socso_employer": float(run.get('socso_employer', 0)),
-                "eis": float(run.get('eis', 0)),
+                "eis": eis_employee,  # Use correct field name: eis_employee
+                "eis_employer": eis_employer,  # Also include employer contribution
                 "pcb": float(run.get('pcb', 0)),
-                "total_employee": float(run.get('epf_employee', 0)) + float(run.get('socso_employee', 0)) + float(run.get('eis', 0)),
-                "total_employer": float(run.get('epf_employer', 0)) + float(run.get('socso_employer', 0))
+                "total_employee": float(run.get('epf_employee', 0)) + float(run.get('socso_employee', 0)) + eis_employee,
+                "total_employer": float(run.get('epf_employer', 0)) + float(run.get('socso_employer', 0)) + eis_employer
             })
         
         return {"success": True, "data": contributions}

@@ -551,8 +551,10 @@
                             <form id="adminLeaveRequestForm">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="adminLeaveEmployeeId">Employee ID:</label>
-                                        <input type="text" id="adminLeaveEmployeeId" name="employee_id" required>
+                                        <label for="adminLeaveEmployeeId">Employee:</label>
+                                        <select id="adminLeaveEmployeeId" name="employee_id" required>
+                                            <option value="">Select Employee</option>
+                                        </select>
                                     </div>
                                     <div class="form-group">
                                         <label for="adminLeaveType">Leave Type:</label>
@@ -604,11 +606,36 @@
                     
                     <!-- Sick Leave Balance Subtab -->
                     <div id="leaveSickBalanceSubtab" class="subtab-content">
-                        <h3>Sick Leave Balance</h3>
-                        <div style="margin-bottom: 15px;">
-                            <button id="exportSickLeaveBalancesCSVBtn" class="btn-secondary">Export to CSV</button>
+                        <h3>🏥 Sick Leave Balance Management</h3>
+                        
+                        <!-- Filters and Controls -->
+                        <div style="background: #f7f9fc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 250px;">
+                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Employee:</label>
+                                    <input type="text" id="sickLeaveEmployeeFilter" placeholder="Search by name, email, or department..." 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div style="min-width: 120px;">
+                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Year:</label>
+                                    <select id="sickLeaveYearSelector" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <!-- Years will be populated by JS -->
+                                    </select>
+                                </div>
+                                <div style="padding-top: 26px;">
+                                    <button id="refreshSickLeaveBtn" class="btn-secondary" style="padding: 8px 15px;">🔄 Refresh</button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="sickLeaveBalanceTable">Loading...</div>
+                        
+                        <!-- Action Buttons -->
+                        <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                            <button id="exportSickLeaveBalancesCSVBtn" class="btn-secondary">📊 Export to CSV</button>
+                            <button id="employmentActInfoBtn" class="btn-secondary">📖 Employment Act 1955 Info</button>
+                        </div>
+                        
+                        <!-- Balance Table -->
+                        <div id="sickLeaveBalanceTable" style="overflow-x: auto;">Loading...</div>
                     </div>
                     
                     <!-- Unpaid Leave Subtab -->
@@ -814,7 +841,6 @@
                         <button class="subtab-button active" data-subtab="payrollHistory">Payroll History</button>
                         <button class="subtab-button" data-subtab="payrollSkipped">Skipped Payroll</button>
                         <button class="subtab-button" data-subtab="payrollContributions">View Contributions</button>
-                        <button class="subtab-button" data-subtab="payrollBonuses">💰 Bonuses</button>
                         <button class="subtab-button" data-subtab="payrollVariable">📊 Variable %</button>
                         <button class="subtab-button" data-subtab="payrollLHDN">🏛️ LHDN Tax</button>
                     </div>
@@ -999,12 +1025,6 @@
                         </div>
                     </div>
                     
-                    <!-- Bonuses Subtab -->
-                    <div id="payrollBonusesSubtab" class="subtab-content">
-                        <h3>💰 Bonuses</h3>
-                        <p>Bonus management is available in the Bonus tab</p>
-                    </div>
-                    
                     <!-- Variable % Subtab -->
                     <div id="payrollVariableSubtab" class="subtab-content">
                         <h3>📊 Variable Percentage Configuration</h3>
@@ -1066,8 +1086,10 @@
                                         </select>
                                     </div>
                                     <div class="form-group" id="varPctEmployeeGroup" style="display: none;">
-                                        <label for="varPctEmployee">Employee Email:</label>
-                                        <input type="email" id="varPctEmployee" name="employee_email" placeholder="employee@company.com">
+                                        <label for="varPctEmployee">Employee:</label>
+                                        <select id="varPctEmployee" name="employee_email">
+                                            <option value="">Select Employee</option>
+                                        </select>
                                     </div>
                                 </div>
                                 
@@ -1279,8 +1301,10 @@
                                 <h3 style="margin-top: 0; color: #667eea;">Record Salary Change</h3>
                                 <form id="newSalaryChangeForm">
                                     <div class="form-group">
-                                        <label for="salaryChangeEmployee">Employee Email:*</label>
-                                        <input type="email" id="salaryChangeEmployee" name="employee_email" required placeholder="employee@company.com" style="width: 100%;">
+                                        <label for="salaryChangeEmployee">Employee:*</label>
+                                        <select id="salaryChangeEmployee" name="employee_email" required style="width: 100%; padding: 8px;">
+                                            <option value="">Select Employee</option>
+                                        </select>
                                     </div>
                                     
                                     <div class="form-group">
@@ -1401,8 +1425,10 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="adminEngEmployeeEmail">Employee Email:*</label>
-                                    <input type="email" id="adminEngEmployeeEmail" name="employee_email" required placeholder="employee@company.com">
+                                    <label for="adminEngEmployeeEmail">Employee:*</label>
+                                    <select id="adminEngEmployeeEmail" name="employee_email" required>
+                                        <option value="">Select Employee</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="adminEngTitle">Title/Name:*</label>

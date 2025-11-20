@@ -112,7 +112,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         records.forEach(record => {
             html += '<tr>';
-            html += `<td>${record.email || '-'}</td>`;
+            // Use consistent fallback logic for employee display
+            const employeeName = record.full_name || record.employee_name || record.email || '-';
+            html += `<td>${employeeName}</td>`;
             html += `<td>${record.date || '-'}</td>`;
             html += `<td>${record.check_in_time || '-'}</td>`;
             html += `<td>${record.check_out_time || '-'}</td>`;
@@ -152,7 +154,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         requests.forEach(request => {
             html += '<tr>';
-            html += `<td>${request.employees?.full_name || request.email || '-'}</td>`;
+            // Use consistent fallback logic: nested object, then employee_email, then email, then dash
+            const employeeName = request.employees?.full_name || request.employee_email || request.email || '-';
+            html += `<td>${employeeName}</td>`;
             html += `<td>${request.leave_type || '-'}</td>`;
             html += `<td>${request.start_date || '-'}</td>`;
             html += `<td>${request.end_date || '-'}</td>`;
@@ -203,7 +207,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const statusColor = request.status === 'approved' ? 'green' : 
                                        request.status === 'rejected' ? 'red' : '#666';
                     html += '<tr>';
-                    html += `<td>${request.employees?.full_name || request.employee_email || '-'}</td>`;
+                    // Use consistent fallback logic: nested object, then employee_email, then email, then dash
+                    const employeeName = request.employees?.full_name || request.employee_email || request.email || '-';
+                    html += `<td>${employeeName}</td>`;
                     html += `<td>${request.leave_type || '-'}</td>`;
                     html += `<td>${request.start_date || '-'}</td>`;
                     html += `<td>${request.end_date || '-'}</td>`;
@@ -266,14 +272,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function buildPayrollRunsTable(runs) {
         let html = '<table><thead><tr>';
-        html += '<th>Employee</th><th>Month</th><th>Basic Salary</th><th>Net Pay</th><th>Status</th>';
+        html += '<th>Employee</th><th>Month</th><th>Basic Salary</th><th>Gross Pay</th><th>Deductions</th><th>Net Pay</th><th>Status</th>';
         html += '</tr></thead><tbody>';
         
         runs.forEach(run => {
             html += '<tr>';
-            html += `<td>${run.employee_email || '-'}</td>`;
-            html += `<td>${run.month_year || '-'}</td>`;
+            // Try multiple fields for employee name
+            const employeeName = run.employee_name || run.employee?.full_name || run.employee_email || '-';
+            html += `<td>${employeeName}</td>`;
+            html += `<td>${run.month_year || run.payroll_date || '-'}</td>`;
             html += `<td>RM ${parseFloat(run.basic_salary || 0).toFixed(2)}</td>`;
+            html += `<td>RM ${parseFloat(run.gross_pay || 0).toFixed(2)}</td>`;
+            html += `<td>RM ${parseFloat(run.total_deductions || 0).toFixed(2)}</td>`;
             html += `<td>RM ${parseFloat(run.net_pay || 0).toFixed(2)}</td>`;
             html += `<td>${run.status || '-'}</td>`;
             html += '</tr>';
@@ -1230,43 +1240,122 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    let sickLeaveBalancesData = []; // Store for filtering
+    
     async function loadSickLeaveBalances() {
         try {
-            const response = await fetch('/api/admin/sick-leave-balances');
+            // Populate year selector if not already done
+            const yearSelector = document.getElementById('sickLeaveYearSelector');
+            if (yearSelector && yearSelector.options.length === 0) {
+                const currentYear = new Date().getFullYear();
+                for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    if (year === currentYear) option.selected = true;
+                    yearSelector.appendChild(option);
+                }
+            }
+            
+            const year = yearSelector ? yearSelector.value : new Date().getFullYear();
+            const response = await fetch(`/api/admin/sick-leave-balances?year=${year}`);
             const data = await response.json();
             
-            const tbody = document.getElementById('sickLeaveBalanceTable');
-            if (!tbody) return;
+            sickLeaveBalancesData = data.success && data.data ? data.data : [];
+            applySickLeaveFilters();
             
-            if (data.success && data.data && data.data.length > 0) {
-                let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Employee ID</th>';
-                html += '<th style="padding: 10px;">Name</th>';
-                html += '<th style="padding: 10px; text-align: center;">Total Sick Leave</th>';
-                html += '<th style="padding: 10px; text-align: center;">Used</th>';
-                html += '<th style="padding: 10px; text-align: center;">Remaining</th>';
-                html += '</tr></thead><tbody>';
-                
-                data.data.forEach(balance => {
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;">${balance.employee_id || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${balance.full_name || '-'}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.total_sick_leave || 14}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.used_sick_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;"><strong>${balance.remaining_sick_leave || 14}</strong></td>`;
-                    html += '</tr>';
-                });
-                
-                html += '</tbody></table>';
-                tbody.innerHTML = html;
-            } else {
-                tbody.innerHTML = '<p>No sick leave balance data available.</p>';
-            }
         } catch (error) {
             console.error('Error loading sick leave balances:', error);
             const tbody = document.getElementById('sickLeaveBalanceTable');
-            if (tbody) tbody.innerHTML = '<p>Error loading sick leave balances.</p>';
+            if (tbody) tbody.innerHTML = '<p style="color: red;">Error loading sick leave balances.</p>';
         }
+    }
+    
+    function applySickLeaveFilters() {
+        const filterText = document.getElementById('sickLeaveEmployeeFilter')?.value.toLowerCase() || '';
+        
+        // Filter data
+        const filteredData = sickLeaveBalancesData.filter(balance => {
+            const searchText = `${balance.full_name || ''} ${balance.email || ''} ${balance.department || ''}`.toLowerCase();
+            return searchText.includes(filterText);
+        });
+        
+        displaySickLeaveBalances(filteredData);
+    }
+    
+    function displaySickLeaveBalances(data) {
+        const tbody = document.getElementById('sickLeaveBalanceTable');
+        if (!tbody) return;
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<p>No sick leave balance data found.</p>';
+            return;
+        }
+        
+        let html = '<table style="width: 100%; border-collapse: collapse; font-size: 14px;"><thead><tr style="background: #667eea; color: white;">';
+        html += '<th style="padding: 10px; text-align: left;">Email</th>';
+        html += '<th style="padding: 10px; text-align: left;">Name</th>';
+        html += '<th style="padding: 10px; text-align: left;">Department</th>';
+        html += '<th style="padding: 10px; text-align: center;">Years of Service</th>';
+        html += '<th style="padding: 10px; text-align: center;">Sick Days<br>Entitlement</th>';
+        html += '<th style="padding: 10px; text-align: center;">Used Sick<br>Days</th>';
+        html += '<th style="padding: 10px; text-align: center;">Remaining<br>Sick Days</th>';
+        html += '<th style="padding: 10px; text-align: center;">Hospitalization<br>Entitlement</th>';
+        html += '<th style="padding: 10px; text-align: center;">Used<br>Hospitalization</th>';
+        html += '<th style="padding: 10px; text-align: center;">Remaining<br>Hospitalization</th>';
+        html += '<th style="padding: 10px; text-align: center;">Actions</th>';
+        html += '</tr></thead><tbody>';
+        
+        data.forEach(balance => {
+            const remainingSick = (balance.sick_days_entitlement || 14) - (balance.used_sick_days || 0);
+            const remainingHosp = (balance.hospitalization_days_entitlement || 60) - (balance.used_hospitalization_days || 0);
+            
+            // Color coding for low balances
+            let sickRowStyle = '';
+            if (remainingSick <= 0) {
+                sickRowStyle = 'background: #fee; '; // Red for zero/negative
+            } else if (remainingSick < 3) {
+                sickRowStyle = 'background: #fffbeb; '; // Yellow for low
+            }
+            
+            html += `<tr style="border-bottom: 1px solid #eee; ${sickRowStyle}">`;
+            html += `<td style="padding: 10px;">${balance.email || '-'}</td>`;
+            html += `<td style="padding: 10px;"><strong>${balance.full_name || '-'}</strong></td>`;
+            html += `<td style="padding: 10px;">${balance.department || '-'}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.years_of_service_display || balance.years_of_service?.toFixed(1) || '-'}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.sick_days_entitlement || 14}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.used_sick_days || 0}</td>`;
+            html += `<td style="padding: 10px; text-align: center;"><strong style="color: ${remainingSick <= 0 ? '#dc2626' : remainingSick < 3 ? '#d97706' : '#059669'};">${remainingSick}</strong></td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.hospitalization_days_entitlement || 60}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.used_hospitalization_days || 0}</td>`;
+            html += `<td style="padding: 10px; text-align: center;"><strong>${remainingHosp}</strong></td>`;
+            html += `<td style="padding: 10px; text-align: center;"><button class="btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewSickLeaveDetails('${balance.email}')">View Details</button></td>`;
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        tbody.innerHTML = html;
+    }
+    
+    window.viewSickLeaveDetails = async function(email) {
+        alert(`Detailed view for ${email} will be implemented in future update.\n\nFeatures:\n- View/edit sick leave balances\n- Manual adjustments\n- Leave history`);
+    }
+    
+    function showEmploymentActInfo() {
+        const message = `📖 Employment Act 1955 - Sick Leave Provisions\n\n` +
+            `Section 60F: Sick Leave Entitlement\n\n` +
+            `An employee is entitled to paid sick leave if:\n` +
+            `1. Hospitalization - Number of days hospitalized, up to 60 days per year\n` +
+            `2. Outpatient treatment:\n` +
+            `   • 14 days per year (for employees with < 2 years of service)\n` +
+            `   • 18 days per year (for employees with 2-5 years of service)\n` +
+            `   • 22 days per year (for employees with > 5 years of service)\n\n` +
+            `Note: Sick leave entitlement includes hospitalization leave.\n\n` +
+            `Requirements:\n` +
+            `• Medical certificate required for more than 2 consecutive days\n` +
+            `• Certificate must be from registered medical practitioner\n` +
+            `• Certification for hospitalization leave is mandatory`;
+        alert(message);
     }
     
     async function loadUnpaidLeaveSummary() {
@@ -1354,29 +1443,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px; text-align: right;">EPF (Er)</th>';
                 html += '<th style="padding: 10px; text-align: right;">SOCSO (Ee)</th>';
                 html += '<th style="padding: 10px; text-align: right;">SOCSO (Er)</th>';
-                html += '<th style="padding: 10px; text-align: right;">EIS</th>';
+                html += '<th style="padding: 10px; text-align: right;">EIS (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EIS (Er)</th>';
                 html += '<th style="padding: 10px; text-align: right;">PCB</th>';
                 html += '<th style="padding: 10px; text-align: right;">Total (Ee)</th>';
                 html += '<th style="padding: 10px; text-align: right;">Total (Er)</th>';
                 html += '</tr></thead><tbody>';
                 
-                let totalEpfEe = 0, totalEpfEr = 0, totalSocsoEe = 0, totalSocsoEr = 0, totalEis = 0, totalPcb = 0;
+                let totalEpfEe = 0, totalEpfEr = 0, totalSocsoEe = 0, totalSocsoEr = 0, totalEisEe = 0, totalEisEr = 0, totalPcb = 0;
                 
                 filteredData.forEach(contrib => {
                     const epfEe = parseFloat(contrib.epf_employee) || 0;
                     const epfEr = parseFloat(contrib.epf_employer) || 0;
                     const socsoEe = parseFloat(contrib.socso_employee) || 0;
                     const socsoEr = parseFloat(contrib.socso_employer) || 0;
-                    const eis = parseFloat(contrib.eis) || 0;
+                    const eisEe = parseFloat(contrib.eis) || 0;
+                    const eisEr = parseFloat(contrib.eis_employer) || 0;
                     const pcb = parseFloat(contrib.pcb) || 0;
-                    const totalEe = epfEe + socsoEe + eis;
-                    const totalEr = epfEr + socsoEr;
+                    const totalEe = epfEe + socsoEe + eisEe;
+                    const totalEr = epfEr + socsoEr + eisEr;
                     
                     totalEpfEe += epfEe;
                     totalEpfEr += epfEr;
                     totalSocsoEe += socsoEe;
                     totalSocsoEr += socsoEr;
-                    totalEis += eis;
+                    totalEisEe += eisEe;
+                    totalEisEr += eisEr;
                     totalPcb += pcb;
                     
                     html += '<tr style="border-bottom: 1px solid #eee;">';
@@ -1386,7 +1478,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<td style="padding: 10px; text-align: right;">RM ${epfEr.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;">RM ${socsoEe.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;">RM ${socsoEr.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${eis.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${eisEe.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${eisEr.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;">RM ${pcb.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEe.toFixed(2)}</strong></td>`;
                     html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEr.toFixed(2)}</strong></td>`;
@@ -1400,10 +1493,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalEpfEr.toFixed(2)}</td>`;
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEe.toFixed(2)}</td>`;
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEr.toFixed(2)}</td>`;
-                html += `<td style="padding: 10px; text-align: right;">RM ${totalEis.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEisEe.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEisEr.toFixed(2)}</td>`;
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalPcb.toFixed(2)}</td>`;
-                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEe + totalSocsoEe + totalEis).toFixed(2)}</td>`;
-                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEr + totalSocsoEr).toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEe + totalSocsoEe + totalEisEe).toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEr + totalSocsoEr + totalEisEr).toFixed(2)}</td>`;
                 html += '</tr>';
                 
                 html += '</tbody></table>';
@@ -1567,7 +1661,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    // Prefer showing name over email for better readability, with consistent fallback chain
+                    const employeeName = record.employee_name || record.employee_email || record.employee?.full_name || '-';
+                    html += `<td style="padding: 10px;">${employeeName}</td>`;
                     html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; color: #1976d2; font-size: 12px;">${record.change_type || '-'}</span></td>`;
                     html += `<td style="padding: 10px;">RM ${prevSalary.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px;"><strong>RM ${newSalary.toFixed(2)}</strong></td>`;
@@ -1775,6 +1871,33 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Engagements Management Functions (Admin)
+    // Load employees into the engagement form employee selector
+    async function loadEngagementEmployeeSelector() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            const selector = document.getElementById('adminEngEmployeeEmail');
+            
+            if (selector && data.success && data.data && data.data.length > 0) {
+                selector.innerHTML = '<option value="">Select Employee</option>';
+                data.data.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.email;
+                    option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                    selector.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading employees for engagement form:', error);
+        }
+    }
+    
+    // Load employees when page loads
+    if (document.getElementById('adminEngEmployeeEmail')) {
+        loadEngagementEmployeeSelector();
+    }
+    
     const adminEngagementForm = document.getElementById('adminEngagementForm');
     if (adminEngagementForm) {
         adminEngagementForm.addEventListener('submit', async function(e) {
@@ -2422,6 +2545,61 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Load employees into various form dropdowns
+    async function loadFormEmployeeSelectors() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Admin Leave Request form
+                const leaveSelector = document.getElementById('adminLeaveEmployeeId');
+                if (leaveSelector) {
+                    leaveSelector.innerHTML = '<option value="">Select Employee</option>';
+                    data.data.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.email; // Use email as value instead of employee_id
+                        option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                        leaveSelector.appendChild(option);
+                    });
+                }
+                
+                // Variable Percentage form
+                const varPctSelector = document.getElementById('varPctEmployee');
+                if (varPctSelector) {
+                    varPctSelector.innerHTML = '<option value="">Select Employee</option>';
+                    data.data.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.email;
+                        option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                        varPctSelector.appendChild(option);
+                    });
+                }
+                
+                // Salary Change form
+                const salaryChangeSelector = document.getElementById('salaryChangeEmployee');
+                if (salaryChangeSelector) {
+                    salaryChangeSelector.innerHTML = '<option value="">Select Employee</option>';
+                    data.data.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.email;
+                        option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                        salaryChangeSelector.appendChild(option);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error loading employees for form selectors:', error);
+        }
+    }
+    
+    // Load employees when page loads
+    if (document.getElementById('adminLeaveEmployeeId') || 
+        document.getElementById('varPctEmployee') || 
+        document.getElementById('salaryChangeEmployee')) {
+        loadFormEmployeeSelectors();
+    }
+    
     // Admin Leave Request Form Handler
     const adminLeaveRequestForm = document.getElementById('adminLeaveRequestForm');
     if (adminLeaveRequestForm) {
@@ -2429,33 +2607,12 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(adminLeaveRequestForm);
-            const employeeId = formData.get('employee_id');
+            const employeeEmail = formData.get('employee_id'); // Now contains email directly from dropdown
             
-            // Need to convert employee_id to email - fetch employee data
             try {
-                const employeesResponse = await fetch('/api/employees');
-                const employeesData = await employeesResponse.json();
-                
-                if (!employeesData.success || !employeesData.data) {
-                    throw new Error('Failed to load employee data');
-                }
-                
-                // Find employee by ID
-                const employee = employeesData.data.find(emp => 
-                    emp.employee_id === employeeId || emp.email === employeeId
-                );
-                
-                if (!employee) {
-                    const messageDiv = document.getElementById('adminLeaveFormMessage');
-                    messageDiv.style.display = 'block';
-                    messageDiv.className = 'error-message';
-                    messageDiv.textContent = `Employee with ID "${employeeId}" not found. Please use employee email or valid ID.`;
-                    return;
-                }
-                
                 // Build leave request data
                 const leaveData = {
-                    employee_email: employee.email,
+                    employee_email: employeeEmail,
                     leave_type: formData.get('leave_type'),
                     start_date: formData.get('start_date'),
                     end_date: formData.get('end_date'),
@@ -2561,6 +2718,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Export additional functions for onclick handlers
     window.loadSalaryHistory = loadSalaryHistory;
     window.loadEmployeeHistory = loadEmployeeHistory;
+    
+    // Event listeners for Sick Leave Balance controls
+    const sickLeaveEmployeeFilter = document.getElementById('sickLeaveEmployeeFilter');
+    if (sickLeaveEmployeeFilter) {
+        sickLeaveEmployeeFilter.addEventListener('input', applySickLeaveFilters);
+    }
+    
+    const sickLeaveYearSelector = document.getElementById('sickLeaveYearSelector');
+    if (sickLeaveYearSelector) {
+        sickLeaveYearSelector.addEventListener('change', loadSickLeaveBalances);
+    }
+    
+    const refreshSickLeaveBtn = document.getElementById('refreshSickLeaveBtn');
+    if (refreshSickLeaveBtn) {
+        refreshSickLeaveBtn.addEventListener('click', loadSickLeaveBalances);
+    }
+    
+    const employmentActInfoBtn = document.getElementById('employmentActInfoBtn');
+    if (employmentActInfoBtn) {
+        employmentActInfoBtn.addEventListener('click', showEmploymentActInfo);
+    }
     
     // Load all new data on init
     loadLeaveBalances();
