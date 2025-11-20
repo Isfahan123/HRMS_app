@@ -152,7 +152,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         requests.forEach(request => {
             html += '<tr>';
-            html += `<td>${request.employees?.full_name || request.email || '-'}</td>`;
+            // Use consistent fallback logic: nested object, then employee_email, then email, then dash
+            const employeeName = request.employees?.full_name || request.employee_email || request.email || '-';
+            html += `<td>${employeeName}</td>`;
             html += `<td>${request.leave_type || '-'}</td>`;
             html += `<td>${request.start_date || '-'}</td>`;
             html += `<td>${request.end_date || '-'}</td>`;
@@ -203,7 +205,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const statusColor = request.status === 'approved' ? 'green' : 
                                        request.status === 'rejected' ? 'red' : '#666';
                     html += '<tr>';
-                    html += `<td>${request.employees?.full_name || request.employee_email || '-'}</td>`;
+                    // Use consistent fallback logic: nested object, then employee_email, then email, then dash
+                    const employeeName = request.employees?.full_name || request.employee_email || request.email || '-';
+                    html += `<td>${employeeName}</td>`;
                     html += `<td>${request.leave_type || '-'}</td>`;
                     html += `<td>${request.start_date || '-'}</td>`;
                     html += `<td>${request.end_date || '-'}</td>`;
