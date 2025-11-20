@@ -572,3 +572,13 @@ async function deleteEntitlement(entitlementId) {
         alert('❌ Error deleting entitlement: ' + error.message);
     }
 }
+
+// Export functions to window object for onclick handlers
+window.showAddLeaveTypeModal = showAddLeaveTypeModal;
+window.closeLeaveTypeModal = closeLeaveTypeModal;
+window.showAddEntitlementModal = showAddEntitlementModal;
+window.closeEntitlementModal = closeEntitlementModal;
+window.editLeaveType = editLeaveType;
+window.editEntitlement = editEntitlement;
+window.deleteLeaveType = deleteLeaveType;
+window.deleteEntitlement = deleteEntitlement;
