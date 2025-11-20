@@ -266,14 +266,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function buildPayrollRunsTable(runs) {
         let html = '<table><thead><tr>';
-        html += '<th>Employee</th><th>Month</th><th>Basic Salary</th><th>Net Pay</th><th>Status</th>';
+        html += '<th>Employee</th><th>Month</th><th>Basic Salary</th><th>Gross Pay</th><th>Deductions</th><th>Net Pay</th><th>Status</th>';
         html += '</tr></thead><tbody>';
         
         runs.forEach(run => {
             html += '<tr>';
-            html += `<td>${run.employee_email || '-'}</td>`;
-            html += `<td>${run.month_year || '-'}</td>`;
+            // Try multiple fields for employee name
+            const employeeName = run.employee_name || run.employee?.full_name || run.employee_email || '-';
+            html += `<td>${employeeName}</td>`;
+            html += `<td>${run.month_year || run.payroll_date || '-'}</td>`;
             html += `<td>RM ${parseFloat(run.basic_salary || 0).toFixed(2)}</td>`;
+            html += `<td>RM ${parseFloat(run.gross_pay || 0).toFixed(2)}</td>`;
+            html += `<td>RM ${parseFloat(run.total_deductions || 0).toFixed(2)}</td>`;
             html += `<td>RM ${parseFloat(run.net_pay || 0).toFixed(2)}</td>`;
             html += `<td>${run.status || '-'}</td>`;
             html += '</tr>';
