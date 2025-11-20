@@ -632,66 +632,79 @@ document.addEventListener('DOMContentLoaded', function() {
         const newBonusForm = document.getElementById('newBonusForm');
         const messageDiv = document.getElementById('addBonusMessage');
         
-        addBtn.addEventListener('click', function() {
-            addForm.style.display = 'block';
-            addBtn.style.display = 'none';
-        });
-        
-        cancelBtn.addEventListener('click', function() {
-            addForm.style.display = 'none';
-            addBtn.style.display = 'inline-block';
-            newBonusForm.reset();
-            messageDiv.style.display = 'none';
-        });
-        
-        newBonusForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                employee_id: document.getElementById('bonusEmployeeId').value,
-                bonus_type: document.getElementById('bonusType').value,
-                amount: parseFloat(document.getElementById('bonusAmount').value),
-                status: document.getElementById('bonusStatus').value,
-                effective_date: document.getElementById('bonusEffectiveDate').value,
-                expiry_date: document.getElementById('bonusExpiryDate').value,
-                remarks: document.getElementById('bonusRemarks').value
-            };
-            
-            try {
-                const response = await fetch('/api/admin/bonuses', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                
-                const data = await response.json();
-                
-                messageDiv.style.display = 'block';
-                if (data.success) {
-                    messageDiv.className = 'success-message';
-                    messageDiv.textContent = data.message;
-                    newBonusForm.reset();
-                    
-                    // Reload bonus list
-                    loadBonuses();
-                    
-                    // Hide form after a delay
-                    setTimeout(() => {
-                        addForm.style.display = 'none';
-                        addBtn.style.display = 'inline-block';
-                        messageDiv.style.display = 'none';
-                    }, 2000);
-                } else {
-                    messageDiv.className = 'error-message';
-                    messageDiv.textContent = data.message;
+        // Only setup event listeners if the elements exist
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                if (addForm) {
+                    addForm.style.display = 'block';
+                    addBtn.style.display = 'none';
                 }
-            } catch (error) {
-                messageDiv.style.display = 'block';
-                messageDiv.className = 'error-message';
-                messageDiv.textContent = 'Error creating bonus';
-                console.error('Error:', error);
-            }
-        });
+            });
+        }
+        
+        if (cancelBtn && addForm && newBonusForm && messageDiv) {
+            cancelBtn.addEventListener('click', function() {
+                addForm.style.display = 'none';
+                if (addBtn) addBtn.style.display = 'inline-block';
+                newBonusForm.reset();
+                messageDiv.style.display = 'none';
+            });
+        }
+        
+        if (newBonusForm) {
+            newBonusForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    employee_id: document.getElementById('bonusEmployeeId').value,
+                    bonus_type: document.getElementById('bonusType').value,
+                    amount: parseFloat(document.getElementById('bonusAmount').value),
+                    status: document.getElementById('bonusStatus').value,
+                    effective_date: document.getElementById('bonusEffectiveDate').value,
+                    expiry_date: document.getElementById('bonusExpiryDate').value,
+                    remarks: document.getElementById('bonusRemarks').value
+                };
+                
+                try {
+                    const response = await fetch('/api/admin/bonuses', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (messageDiv) {
+                        messageDiv.style.display = 'block';
+                        if (data.success) {
+                            messageDiv.className = 'success-message';
+                            messageDiv.textContent = data.message;
+                            newBonusForm.reset();
+                            
+                            // Reload bonus list
+                            loadBonuses();
+                            
+                            // Hide form after a delay
+                            setTimeout(() => {
+                                if (addForm) addForm.style.display = 'none';
+                                if (addBtn) addBtn.style.display = 'inline-block';
+                                messageDiv.style.display = 'none';
+                            }, 2000);
+                        } else {
+                            messageDiv.className = 'error-message';
+                            messageDiv.textContent = data.message;
+                        }
+                    }
+                } catch (error) {
+                    if (messageDiv) {
+                        messageDiv.style.display = 'block';
+                        messageDiv.className = 'error-message';
+                        messageDiv.textContent = 'Error creating bonus';
+                    }
+                    console.error('Error:', error);
+                }
+            });
+        }
     }
     
     function setupExportHandlers() {
