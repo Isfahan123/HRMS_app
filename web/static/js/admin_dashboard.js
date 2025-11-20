@@ -2538,6 +2538,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Export additional functions for onclick handlers
+    window.loadSalaryHistory = loadSalaryHistory;
+    window.loadEmployeeHistory = loadEmployeeHistory;
+    
     // Load all new data on init
     loadLeaveBalances();
     loadSickLeaveBalances();
