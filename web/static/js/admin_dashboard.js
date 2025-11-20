@@ -2466,6 +2466,61 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Load employees into various form dropdowns
+    async function loadFormEmployeeSelectors() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Admin Leave Request form
+                const leaveSelector = document.getElementById('adminLeaveEmployeeId');
+                if (leaveSelector) {
+                    leaveSelector.innerHTML = '<option value="">Select Employee</option>';
+                    data.data.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.email; // Use email as value instead of employee_id
+                        option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                        leaveSelector.appendChild(option);
+                    });
+                }
+                
+                // Variable Percentage form
+                const varPctSelector = document.getElementById('varPctEmployee');
+                if (varPctSelector) {
+                    varPctSelector.innerHTML = '<option value="">Select Employee</option>';
+                    data.data.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.email;
+                        option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                        varPctSelector.appendChild(option);
+                    });
+                }
+                
+                // Salary Change form
+                const salaryChangeSelector = document.getElementById('salaryChangeEmployee');
+                if (salaryChangeSelector) {
+                    salaryChangeSelector.innerHTML = '<option value="">Select Employee</option>';
+                    data.data.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.email;
+                        option.textContent = `${emp.full_name || emp.email} - ${emp.department || 'N/A'}`;
+                        salaryChangeSelector.appendChild(option);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error loading employees for form selectors:', error);
+        }
+    }
+    
+    // Load employees when page loads
+    if (document.getElementById('adminLeaveEmployeeId') || 
+        document.getElementById('varPctEmployee') || 
+        document.getElementById('salaryChangeEmployee')) {
+        loadFormEmployeeSelectors();
+    }
+    
     // Admin Leave Request Form Handler
     const adminLeaveRequestForm = document.getElementById('adminLeaveRequestForm');
     if (adminLeaveRequestForm) {
@@ -2473,33 +2528,12 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(adminLeaveRequestForm);
-            const employeeId = formData.get('employee_id');
+            const employeeEmail = formData.get('employee_id'); // Now contains email directly from dropdown
             
-            // Need to convert employee_id to email - fetch employee data
             try {
-                const employeesResponse = await fetch('/api/employees');
-                const employeesData = await employeesResponse.json();
-                
-                if (!employeesData.success || !employeesData.data) {
-                    throw new Error('Failed to load employee data');
-                }
-                
-                // Find employee by ID
-                const employee = employeesData.data.find(emp => 
-                    emp.employee_id === employeeId || emp.email === employeeId
-                );
-                
-                if (!employee) {
-                    const messageDiv = document.getElementById('adminLeaveFormMessage');
-                    messageDiv.style.display = 'block';
-                    messageDiv.className = 'error-message';
-                    messageDiv.textContent = `Employee with ID "${employeeId}" not found. Please use employee email or valid ID.`;
-                    return;
-                }
-                
                 // Build leave request data
                 const leaveData = {
-                    employee_email: employee.email,
+                    employee_email: employeeEmail,
                     leave_type: formData.get('leave_type'),
                     start_date: formData.get('start_date'),
                     end_date: formData.get('end_date'),

@@ -551,8 +551,10 @@
                             <form id="adminLeaveRequestForm">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="adminLeaveEmployeeId">Employee ID:</label>
-                                        <input type="text" id="adminLeaveEmployeeId" name="employee_id" required>
+                                        <label for="adminLeaveEmployeeId">Employee:</label>
+                                        <select id="adminLeaveEmployeeId" name="employee_id" required>
+                                            <option value="">Select Employee</option>
+                                        </select>
                                     </div>
                                     <div class="form-group">
                                         <label for="adminLeaveType">Leave Type:</label>
@@ -1059,8 +1061,10 @@
                                         </select>
                                     </div>
                                     <div class="form-group" id="varPctEmployeeGroup" style="display: none;">
-                                        <label for="varPctEmployee">Employee Email:</label>
-                                        <input type="email" id="varPctEmployee" name="employee_email" placeholder="employee@company.com">
+                                        <label for="varPctEmployee">Employee:</label>
+                                        <select id="varPctEmployee" name="employee_email">
+                                            <option value="">Select Employee</option>
+                                        </select>
                                     </div>
                                 </div>
                                 
@@ -1272,8 +1276,10 @@
                                 <h3 style="margin-top: 0; color: #667eea;">Record Salary Change</h3>
                                 <form id="newSalaryChangeForm">
                                     <div class="form-group">
-                                        <label for="salaryChangeEmployee">Employee Email:*</label>
-                                        <input type="email" id="salaryChangeEmployee" name="employee_email" required placeholder="employee@company.com" style="width: 100%;">
+                                        <label for="salaryChangeEmployee">Employee:*</label>
+                                        <select id="salaryChangeEmployee" name="employee_email" required style="width: 100%; padding: 8px;">
+                                            <option value="">Select Employee</option>
+                                        </select>
                                     </div>
                                     
                                     <div class="form-group">
