@@ -239,7 +239,7 @@ CREATE INDEX IF NOT EXISTS idx_var_pct_rules_employee ON public.variable_percent
 -- ============================================================================
 
 -- 8. Employee History Table (if not exists)
--- Used by: /api/admin/employee-history
+-- Used by: /api/admin/employee-history and /api/admin/salary-history
 CREATE TABLE IF NOT EXISTS public.employee_history (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     employee_id UUID REFERENCES public.employees(id) ON DELETE CASCADE,
@@ -248,13 +248,21 @@ CREATE TABLE IF NOT EXISTS public.employee_history (
     previous_value TEXT,
     new_value TEXT,
     change_date DATE NOT NULL,
+    effective_date DATE,
     reason TEXT,
     changed_by VARCHAR(255),
+    change_type VARCHAR(100),
+    change_amount DECIMAL(12, 2),
+    change_percentage DECIMAL(5, 2),
+    employee_name VARCHAR(255),
+    created_by VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_employee_history_employee ON public.employee_history(employee_id);
 CREATE INDEX IF NOT EXISTS idx_employee_history_date ON public.employee_history(change_date);
+CREATE INDEX IF NOT EXISTS idx_employee_history_effective_date ON public.employee_history(effective_date);
+CREATE INDEX IF NOT EXISTS idx_employee_history_email_effective ON public.employee_history(employee_email, effective_date DESC);
 
 -- ============================================================================
 
