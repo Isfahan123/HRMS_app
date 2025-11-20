@@ -1364,29 +1364,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px; text-align: right;">EPF (Er)</th>';
                 html += '<th style="padding: 10px; text-align: right;">SOCSO (Ee)</th>';
                 html += '<th style="padding: 10px; text-align: right;">SOCSO (Er)</th>';
-                html += '<th style="padding: 10px; text-align: right;">EIS</th>';
+                html += '<th style="padding: 10px; text-align: right;">EIS (Ee)</th>';
+                html += '<th style="padding: 10px; text-align: right;">EIS (Er)</th>';
                 html += '<th style="padding: 10px; text-align: right;">PCB</th>';
                 html += '<th style="padding: 10px; text-align: right;">Total (Ee)</th>';
                 html += '<th style="padding: 10px; text-align: right;">Total (Er)</th>';
                 html += '</tr></thead><tbody>';
                 
-                let totalEpfEe = 0, totalEpfEr = 0, totalSocsoEe = 0, totalSocsoEr = 0, totalEis = 0, totalPcb = 0;
+                let totalEpfEe = 0, totalEpfEr = 0, totalSocsoEe = 0, totalSocsoEr = 0, totalEisEe = 0, totalEisEr = 0, totalPcb = 0;
                 
                 filteredData.forEach(contrib => {
                     const epfEe = parseFloat(contrib.epf_employee) || 0;
                     const epfEr = parseFloat(contrib.epf_employer) || 0;
                     const socsoEe = parseFloat(contrib.socso_employee) || 0;
                     const socsoEr = parseFloat(contrib.socso_employer) || 0;
-                    const eis = parseFloat(contrib.eis) || 0;
+                    const eisEe = parseFloat(contrib.eis) || 0;
+                    const eisEr = parseFloat(contrib.eis_employer) || 0;
                     const pcb = parseFloat(contrib.pcb) || 0;
-                    const totalEe = epfEe + socsoEe + eis;
-                    const totalEr = epfEr + socsoEr;
+                    const totalEe = epfEe + socsoEe + eisEe;
+                    const totalEr = epfEr + socsoEr + eisEr;
                     
                     totalEpfEe += epfEe;
                     totalEpfEr += epfEr;
                     totalSocsoEe += socsoEe;
                     totalSocsoEr += socsoEr;
-                    totalEis += eis;
+                    totalEisEe += eisEe;
+                    totalEisEr += eisEr;
                     totalPcb += pcb;
                     
                     html += '<tr style="border-bottom: 1px solid #eee;">';
@@ -1396,7 +1399,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<td style="padding: 10px; text-align: right;">RM ${epfEr.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;">RM ${socsoEe.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;">RM ${socsoEr.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px; text-align: right;">RM ${eis.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${eisEe.toFixed(2)}</td>`;
+                    html += `<td style="padding: 10px; text-align: right;">RM ${eisEr.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;">RM ${pcb.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEe.toFixed(2)}</strong></td>`;
                     html += `<td style="padding: 10px; text-align: right;"><strong>RM ${totalEr.toFixed(2)}</strong></td>`;
@@ -1410,10 +1414,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalEpfEr.toFixed(2)}</td>`;
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEe.toFixed(2)}</td>`;
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalSocsoEr.toFixed(2)}</td>`;
-                html += `<td style="padding: 10px; text-align: right;">RM ${totalEis.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEisEe.toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${totalEisEr.toFixed(2)}</td>`;
                 html += `<td style="padding: 10px; text-align: right;">RM ${totalPcb.toFixed(2)}</td>`;
-                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEe + totalSocsoEe + totalEis).toFixed(2)}</td>`;
-                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEr + totalSocsoEr).toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEe + totalSocsoEe + totalEisEe).toFixed(2)}</td>`;
+                html += `<td style="padding: 10px; text-align: right;">RM ${(totalEpfEr + totalSocsoEr + totalEisEr).toFixed(2)}</td>`;
                 html += '</tr>';
                 
                 html += '</tbody></table>';
