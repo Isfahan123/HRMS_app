@@ -57,13 +57,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('welcomeMessage').textContent = 
                     `Welcome, ${employee.full_name || employee.email}`;
                 
-                // Update profile tab
+                // Update profile tab - Basic Information
                 document.getElementById('profileName').textContent = employee.full_name || '-';
                 document.getElementById('profileEmail').textContent = employee.email || '-';
-                document.getElementById('profileDepartment').textContent = employee.department || '-';
-                document.getElementById('profilePosition').textContent = employee.position || '-';
+                document.getElementById('profileEmployeeID').textContent = employee.employee_id || '-';
+                document.getElementById('profileGender').textContent = employee.gender || '-';
+                document.getElementById('profileDOB').textContent = employee.date_of_birth || '-';
+                document.getElementById('profileNRIC').textContent = employee.nric || '-';
+                document.getElementById('profileNationality').textContent = employee.nationality || '-';
+                document.getElementById('profileCitizenship').textContent = employee.citizenship || '-';
+                document.getElementById('profileRace').textContent = employee.race || '-';
+                document.getElementById('profileReligion').textContent = employee.religion || '-';
+                document.getElementById('profileMaritalStatus').textContent = employee.marital_status || '-';
+                document.getElementById('profileChildren').textContent = employee.number_of_children || '-';
+                
+                // Contact Information
                 document.getElementById('profilePhone').textContent = employee.phone_number || '-';
                 document.getElementById('profileAddress').textContent = employee.address || '-';
+                document.getElementById('profileCity').textContent = employee.city || '-';
+                document.getElementById('profileState').textContent = employee.state || '-';
+                document.getElementById('profileZipcode').textContent = employee.zipcode || '-';
+                
+                // Employment Information
+                document.getElementById('profileDepartment').textContent = employee.department || '-';
+                document.getElementById('profilePosition').textContent = employee.position || '-';
+                document.getElementById('profileStatus').textContent = employee.employment_status || '-';
+                document.getElementById('profileJoinDate').textContent = employee.join_date || '-';
+                
+                // EPF/SOCSO Information
+                document.getElementById('profileEPFNumber').textContent = employee.epf_number || '-';
+                document.getElementById('profileSOCSONumber').textContent = employee.socso_number || '-';
+                document.getElementById('profileTaxNumber').textContent = employee.income_tax_number || '-';
             }
             
             // Load attendance data

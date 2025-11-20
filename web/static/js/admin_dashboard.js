@@ -2036,11 +2036,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${record.type || '-'}</span></td>`;
                     html += `<td style="padding: 10px;"><strong>${record.title || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    // Show employee name first, fall back to email if name not available
+                    html += `<td style="padding: 10px;">${record.employee_name || record.employees?.full_name || record.employee_email || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.start_date || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.end_date || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.location || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.cost ? 'RM ' + parseFloat(record.cost).toFixed(2) : '-'}</td>`;
+                    html += `<td style="padding: 10px;">${formatCurrency(record.cost)}</td>`;
                     html += `<td style="padding: 10px;"><span style="color: ${statusColor}; font-weight: bold;">${record.status || '-'}</span></td>`;
                     html += '<td style="padding: 10px;">';
                     html += `<button class="btn-secondary btn-sm" onclick="editEngagement('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
@@ -2172,7 +2173,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 filteredData.forEach(record => {
                     html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    // Show employee name first, fall back to email if name not available
+                    html += `<td style="padding: 10px;">${record.employee_name || record.employees?.full_name || record.employee_email || '-'}</td>`;
                     html += `<td style="padding: 10px;"><strong>${record.company || '-'}</strong></td>`;
                     html += `<td style="padding: 10px;">${record.job_title || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.position || '-'}</td>`;
