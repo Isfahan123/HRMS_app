@@ -1240,43 +1240,122 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    let sickLeaveBalancesData = []; // Store for filtering
+    
     async function loadSickLeaveBalances() {
         try {
-            const response = await fetch('/api/admin/sick-leave-balances');
+            // Populate year selector if not already done
+            const yearSelector = document.getElementById('sickLeaveYearSelector');
+            if (yearSelector && yearSelector.options.length === 0) {
+                const currentYear = new Date().getFullYear();
+                for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    if (year === currentYear) option.selected = true;
+                    yearSelector.appendChild(option);
+                }
+            }
+            
+            const year = yearSelector ? yearSelector.value : new Date().getFullYear();
+            const response = await fetch(`/api/admin/sick-leave-balances?year=${year}`);
             const data = await response.json();
             
-            const tbody = document.getElementById('sickLeaveBalanceTable');
-            if (!tbody) return;
+            sickLeaveBalancesData = data.success && data.data ? data.data : [];
+            applySickLeaveFilters();
             
-            if (data.success && data.data && data.data.length > 0) {
-                let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Employee ID</th>';
-                html += '<th style="padding: 10px;">Name</th>';
-                html += '<th style="padding: 10px; text-align: center;">Total Sick Leave</th>';
-                html += '<th style="padding: 10px; text-align: center;">Used</th>';
-                html += '<th style="padding: 10px; text-align: center;">Remaining</th>';
-                html += '</tr></thead><tbody>';
-                
-                data.data.forEach(balance => {
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;">${balance.employee_id || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${balance.full_name || '-'}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.total_sick_leave || 14}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.used_sick_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;"><strong>${balance.remaining_sick_leave || 14}</strong></td>`;
-                    html += '</tr>';
-                });
-                
-                html += '</tbody></table>';
-                tbody.innerHTML = html;
-            } else {
-                tbody.innerHTML = '<p>No sick leave balance data available.</p>';
-            }
         } catch (error) {
             console.error('Error loading sick leave balances:', error);
             const tbody = document.getElementById('sickLeaveBalanceTable');
-            if (tbody) tbody.innerHTML = '<p>Error loading sick leave balances.</p>';
+            if (tbody) tbody.innerHTML = '<p style="color: red;">Error loading sick leave balances.</p>';
         }
+    }
+    
+    function applySickLeaveFilters() {
+        const filterText = document.getElementById('sickLeaveEmployeeFilter')?.value.toLowerCase() || '';
+        
+        // Filter data
+        const filteredData = sickLeaveBalancesData.filter(balance => {
+            const searchText = `${balance.full_name || ''} ${balance.email || ''} ${balance.department || ''}`.toLowerCase();
+            return searchText.includes(filterText);
+        });
+        
+        displaySickLeaveBalances(filteredData);
+    }
+    
+    function displaySickLeaveBalances(data) {
+        const tbody = document.getElementById('sickLeaveBalanceTable');
+        if (!tbody) return;
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<p>No sick leave balance data found.</p>';
+            return;
+        }
+        
+        let html = '<table style="width: 100%; border-collapse: collapse; font-size: 14px;"><thead><tr style="background: #667eea; color: white;">';
+        html += '<th style="padding: 10px; text-align: left;">Email</th>';
+        html += '<th style="padding: 10px; text-align: left;">Name</th>';
+        html += '<th style="padding: 10px; text-align: left;">Department</th>';
+        html += '<th style="padding: 10px; text-align: center;">Years of Service</th>';
+        html += '<th style="padding: 10px; text-align: center;">Sick Days<br>Entitlement</th>';
+        html += '<th style="padding: 10px; text-align: center;">Used Sick<br>Days</th>';
+        html += '<th style="padding: 10px; text-align: center;">Remaining<br>Sick Days</th>';
+        html += '<th style="padding: 10px; text-align: center;">Hospitalization<br>Entitlement</th>';
+        html += '<th style="padding: 10px; text-align: center;">Used<br>Hospitalization</th>';
+        html += '<th style="padding: 10px; text-align: center;">Remaining<br>Hospitalization</th>';
+        html += '<th style="padding: 10px; text-align: center;">Actions</th>';
+        html += '</tr></thead><tbody>';
+        
+        data.forEach(balance => {
+            const remainingSick = (balance.sick_days_entitlement || 14) - (balance.used_sick_days || 0);
+            const remainingHosp = (balance.hospitalization_days_entitlement || 60) - (balance.used_hospitalization_days || 0);
+            
+            // Color coding for low balances
+            let sickRowStyle = '';
+            if (remainingSick <= 0) {
+                sickRowStyle = 'background: #fee; '; // Red for zero/negative
+            } else if (remainingSick < 3) {
+                sickRowStyle = 'background: #fffbeb; '; // Yellow for low
+            }
+            
+            html += `<tr style="border-bottom: 1px solid #eee; ${sickRowStyle}">`;
+            html += `<td style="padding: 10px;">${balance.email || '-'}</td>`;
+            html += `<td style="padding: 10px;"><strong>${balance.full_name || '-'}</strong></td>`;
+            html += `<td style="padding: 10px;">${balance.department || '-'}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.years_of_service_display || balance.years_of_service?.toFixed(1) || '-'}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.sick_days_entitlement || 14}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.used_sick_days || 0}</td>`;
+            html += `<td style="padding: 10px; text-align: center;"><strong style="color: ${remainingSick <= 0 ? '#dc2626' : remainingSick < 3 ? '#d97706' : '#059669'};">${remainingSick}</strong></td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.hospitalization_days_entitlement || 60}</td>`;
+            html += `<td style="padding: 10px; text-align: center;">${balance.used_hospitalization_days || 0}</td>`;
+            html += `<td style="padding: 10px; text-align: center;"><strong>${remainingHosp}</strong></td>`;
+            html += `<td style="padding: 10px; text-align: center;"><button class="btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewSickLeaveDetails('${balance.email}')">View Details</button></td>`;
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        tbody.innerHTML = html;
+    }
+    
+    window.viewSickLeaveDetails = async function(email) {
+        alert(`Detailed view for ${email} will be implemented in future update.\n\nFeatures:\n- View/edit sick leave balances\n- Manual adjustments\n- Leave history`);
+    }
+    
+    function showEmploymentActInfo() {
+        const message = `📖 Employment Act 1955 - Sick Leave Provisions\n\n` +
+            `Section 60F: Sick Leave Entitlement\n\n` +
+            `An employee is entitled to paid sick leave if:\n` +
+            `1. Hospitalization - Number of days hospitalized, up to 60 days per year\n` +
+            `2. Outpatient treatment:\n` +
+            `   • 14 days per year (for employees with < 2 years of service)\n` +
+            `   • 18 days per year (for employees with 2-5 years of service)\n` +
+            `   • 22 days per year (for employees with > 5 years of service)\n\n` +
+            `Note: Sick leave entitlement includes hospitalization leave.\n\n` +
+            `Requirements:\n` +
+            `• Medical certificate required for more than 2 consecutive days\n` +
+            `• Certificate must be from registered medical practitioner\n` +
+            `• Certification for hospitalization leave is mandatory`;
+        alert(message);
     }
     
     async function loadUnpaidLeaveSummary() {
@@ -2639,6 +2718,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Export additional functions for onclick handlers
     window.loadSalaryHistory = loadSalaryHistory;
     window.loadEmployeeHistory = loadEmployeeHistory;
+    
+    // Event listeners for Sick Leave Balance controls
+    const sickLeaveEmployeeFilter = document.getElementById('sickLeaveEmployeeFilter');
+    if (sickLeaveEmployeeFilter) {
+        sickLeaveEmployeeFilter.addEventListener('input', applySickLeaveFilters);
+    }
+    
+    const sickLeaveYearSelector = document.getElementById('sickLeaveYearSelector');
+    if (sickLeaveYearSelector) {
+        sickLeaveYearSelector.addEventListener('change', loadSickLeaveBalances);
+    }
+    
+    const refreshSickLeaveBtn = document.getElementById('refreshSickLeaveBtn');
+    if (refreshSickLeaveBtn) {
+        refreshSickLeaveBtn.addEventListener('click', loadSickLeaveBalances);
+    }
+    
+    const employmentActInfoBtn = document.getElementById('employmentActInfoBtn');
+    if (employmentActInfoBtn) {
+        employmentActInfoBtn.addEventListener('click', showEmploymentActInfo);
+    }
     
     // Load all new data on init
     loadLeaveBalances();
