@@ -112,7 +112,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         records.forEach(record => {
             html += '<tr>';
-            html += `<td>${record.email || '-'}</td>`;
+            // Use consistent fallback logic for employee display
+            const employeeName = record.full_name || record.employee_name || record.email || '-';
+            html += `<td>${employeeName}</td>`;
             html += `<td>${record.date || '-'}</td>`;
             html += `<td>${record.check_in_time || '-'}</td>`;
             html += `<td>${record.check_out_time || '-'}</td>`;
@@ -1575,7 +1577,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;">${record.effective_date || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    // Prefer showing name over email for better readability, with consistent fallback chain
+                    const employeeName = record.employee_name || record.employee_email || record.employee?.full_name || '-';
+                    html += `<td style="padding: 10px;">${employeeName}</td>`;
                     html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; color: #1976d2; font-size: 12px;">${record.change_type || '-'}</span></td>`;
                     html += `<td style="padding: 10px;">RM ${prevSalary.toFixed(2)}</td>`;
                     html += `<td style="padding: 10px;"><strong>RM ${newSalary.toFixed(2)}</strong></td>`;
