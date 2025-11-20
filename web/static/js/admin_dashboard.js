@@ -322,6 +322,73 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Employee History Edit/Delete Functions - defined early for onclick handlers
+    window.editEmployeeHistory = async function(recordId) {
+        try {
+            const response = await fetch('/api/admin/employee-history');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const record = data.data.find(r => r.id === recordId);
+                if (!record) {
+                    alert('Record not found');
+                    return;
+                }
+                
+                // Load employee selector first
+                await loadEmployeeHistorySelector();
+                
+                // Populate the edit modal with record data
+                document.getElementById('editEmpHistoryRecordId').value = recordId;
+                document.getElementById('editEmpHistoryEmployeeSelect').value = record.employee_email || '';
+                document.getElementById('editEmpHistoryCompany').value = record.company || '';
+                document.getElementById('editEmpHistoryJobTitle').value = record.job_title || '';
+                document.getElementById('editEmpHistoryPosition').value = record.position || '';
+                document.getElementById('editEmpHistoryDepartment').value = record.department || '';
+                document.getElementById('editEmpHistoryFunctionalGroup').value = record.functional_group || '';
+                document.getElementById('editEmpHistoryStatus').value = record.status || '';
+                document.getElementById('editEmpHistoryEmploymentType').value = record.employment_type || '';
+                document.getElementById('editEmpHistoryWorkStatus').value = record.work_status || '';
+                document.getElementById('editEmpHistoryPayrollStatus').value = record.payroll_status || '';
+                document.getElementById('editEmpHistoryStartDate').value = record.start_date || '';
+                document.getElementById('editEmpHistoryEndDate').value = record.end_date || '';
+                document.getElementById('editEmpHistoryNotes').value = record.notes || '';
+                
+                // Clear any previous messages
+                document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
+                
+                // Show the modal
+                document.getElementById('editEmploymentHistoryModal').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading employee history for edit:', error);
+            alert('Error loading employee history record');
+        }
+    };
+    
+    window.deleteEmployeeHistory = async function(recordId) {
+        if (!confirm('Are you sure you want to delete this employee history record? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/employee-history/${recordId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Employee history deleted successfully!');
+                loadEmployeeHistory();
+            } else {
+                alert('Failed to delete employee history: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting employee history:', error);
+            alert('Error deleting employee history');
+        }
+    };
+    
     function setupTabs() {
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabPanes = document.querySelectorAll('.tab-pane');
@@ -2438,50 +2505,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Employee History Edit/Delete Functions
-    window.editEmployeeHistory = async function(recordId) {
-        try {
-            const response = await fetch('/api/admin/employee-history');
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                const record = data.data.find(r => r.id === recordId);
-                if (!record) {
-                    alert('Record not found');
-                    return;
-                }
-                
-                // Load employee selector first
-                await loadEmployeeHistorySelector();
-                
-                // Populate the edit modal with record data
-                document.getElementById('editEmpHistoryRecordId').value = recordId;
-                document.getElementById('editEmpHistoryEmployeeSelect').value = record.employee_email || '';
-                document.getElementById('editEmpHistoryCompany').value = record.company || '';
-                document.getElementById('editEmpHistoryJobTitle').value = record.job_title || '';
-                document.getElementById('editEmpHistoryPosition').value = record.position || '';
-                document.getElementById('editEmpHistoryDepartment').value = record.department || '';
-                document.getElementById('editEmpHistoryFunctionalGroup').value = record.functional_group || '';
-                document.getElementById('editEmpHistoryStatus').value = record.status || '';
-                document.getElementById('editEmpHistoryEmploymentType').value = record.employment_type || '';
-                document.getElementById('editEmpHistoryWorkStatus').value = record.work_status || '';
-                document.getElementById('editEmpHistoryPayrollStatus').value = record.payroll_status || '';
-                document.getElementById('editEmpHistoryStartDate').value = record.start_date || '';
-                document.getElementById('editEmpHistoryEndDate').value = record.end_date || '';
-                document.getElementById('editEmpHistoryNotes').value = record.notes || '';
-                
-                // Clear any previous messages
-                document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
-                
-                // Show the modal
-                document.getElementById('editEmploymentHistoryModal').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error loading employee history for edit:', error);
-            alert('Error loading employee history record');
-        }
-    };
-    
     window.closeEditEmploymentHistoryModal = function() {
         document.getElementById('editEmploymentHistoryModal').style.display = 'none';
         document.getElementById('editEmploymentHistoryForm').reset();
@@ -2537,29 +2560,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    window.deleteEmployeeHistory = async function(recordId) {
-        if (!confirm('Are you sure you want to delete this employee history record? This action cannot be undone.')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/employee-history/${recordId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                alert('Employee history deleted successfully!');
-                loadEmployeeHistory();
-            } else {
-                alert('Failed to delete employee history: ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error deleting employee history:', error);
-            alert('Error deleting employee history');
-        }
-    };
     
     // Export additional functions for onclick handlers
     window.loadSalaryHistory = loadSalaryHistory;
