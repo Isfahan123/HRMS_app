@@ -1,6 +1,30 @@
 // Dashboard JavaScript logic
 // Handles employee dashboard functionality and API calls
 
+// Helper function to format currency values safely
+function formatCurrency(value) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+        return '-';
+    }
+    return `RM ${numValue.toFixed(2)}`;
+}
+
+// Helper function to format numeric values safely
+function formatNumber(value, decimals = 2) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+        return '-';
+    }
+    return numValue.toFixed(decimals);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Check if user is logged in
     const userEmail = sessionStorage.getItem('userEmail');
@@ -172,8 +196,8 @@ document.addEventListener('DOMContentLoaded', function() {
         records.forEach(record => {
             html += '<tr>';
             html += `<td>${record.month_year || '-'}</td>`;
-            html += `<td>RM ${parseFloat(record.basic_salary || 0).toFixed(2)}</td>`;
-            html += `<td>RM ${parseFloat(record.net_pay || 0).toFixed(2)}</td>`;
+            html += `<td>${formatCurrency(record.basic_salary)}</td>`;
+            html += `<td>${formatCurrency(record.net_pay)}</td>`;
             html += `<td>${record.status || '-'}</td>`;
             html += `<td><button class="btn-primary" onclick="downloadPayslip('${record.id}', '${record.month_year}')">Download PDF</button></td>`;
             html += '</tr>';
