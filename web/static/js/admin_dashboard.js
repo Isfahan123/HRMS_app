@@ -322,6 +322,415 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Employee History Edit/Delete Functions - defined early for onclick handlers
+    window.editEmployeeHistory = async function(recordId) {
+        try {
+            const response = await fetch('/api/admin/employee-history');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const record = data.data.find(r => r.id === recordId);
+                if (!record) {
+                    alert('Record not found');
+                    return;
+                }
+                
+                // Load employee selector first
+                await loadEmployeeHistorySelector();
+                
+                // Populate the edit modal with record data
+                document.getElementById('editEmpHistoryRecordId').value = recordId;
+                document.getElementById('editEmpHistoryEmployeeSelect').value = record.employee_email || '';
+                document.getElementById('editEmpHistoryCompany').value = record.company || '';
+                document.getElementById('editEmpHistoryJobTitle').value = record.job_title || '';
+                document.getElementById('editEmpHistoryPosition').value = record.position || '';
+                document.getElementById('editEmpHistoryDepartment').value = record.department || '';
+                document.getElementById('editEmpHistoryFunctionalGroup').value = record.functional_group || '';
+                document.getElementById('editEmpHistoryStatus').value = record.status || '';
+                document.getElementById('editEmpHistoryEmploymentType').value = record.employment_type || '';
+                document.getElementById('editEmpHistoryWorkStatus').value = record.work_status || '';
+                document.getElementById('editEmpHistoryPayrollStatus').value = record.payroll_status || '';
+                document.getElementById('editEmpHistoryStartDate').value = record.start_date || '';
+                document.getElementById('editEmpHistoryEndDate').value = record.end_date || '';
+                document.getElementById('editEmpHistoryNotes').value = record.notes || '';
+                
+                // Clear any previous messages
+                document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
+                
+                // Show the modal
+                document.getElementById('editEmploymentHistoryModal').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading employee history for edit:', error);
+            alert('Error loading employee history record');
+        }
+    };
+    
+    window.deleteEmployeeHistory = async function(recordId) {
+        if (!confirm('Are you sure you want to delete this employee history record? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/employee-history/${recordId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Employee history deleted successfully!');
+                loadEmployeeHistory();
+            } else {
+                alert('Failed to delete employee history: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting employee history:', error);
+            alert('Error deleting employee history');
+        }
+    };
+    
+    // Additional global functions for onclick handlers - defined early to prevent ReferenceErrors
+    window.openEditEmployeeModal = async function(employeeId) {
+        try {
+            console.log('Opening edit modal for employee:', employeeId);
+            
+            // Fetch employee data
+            const response = await fetch(`/api/employees`);
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                // Find the employee by ID or email
+                const employee = data.data.find(emp => emp.id === employeeId || emp.email === employeeId);
+                
+                if (!employee) {
+                    alert('Employee not found');
+                    return;
+                }
+                
+                // Populate the form
+                document.getElementById('editEmpId').value = employee.id || employee.email;
+                document.getElementById('editEmpName').value = employee.full_name || '';
+                document.getElementById('editEmpEmail').value = employee.email || '';
+                document.getElementById('editEmpEmployeeID').value = employee.employee_id || '';
+                document.getElementById('editEmpGender').value = employee.gender || '';
+                document.getElementById('editEmpDOB').value = employee.date_of_birth || '';
+                document.getElementById('editEmpNRIC').value = employee.nric || '';
+                document.getElementById('editEmpNationality').value = employee.nationality || '';
+                document.getElementById('editEmpCitizenship').value = employee.citizenship || '';
+                document.getElementById('editEmpRace').value = employee.race || '';
+                document.getElementById('editEmpReligion').value = employee.religion || '';
+                document.getElementById('editEmpMaritalStatus').value = employee.marital_status || '';
+                document.getElementById('editEmpChildren').value = employee.number_of_children || '0';
+                document.getElementById('editEmpPhone').value = employee.phone_number || '';
+                document.getElementById('editEmpAddress').value = employee.address || '';
+                document.getElementById('editEmpCity').value = employee.city || '';
+                document.getElementById('editEmpState').value = employee.state || '';
+                document.getElementById('editEmpZipcode').value = employee.zipcode || '';
+                document.getElementById('editEmpDepartment').value = employee.department || '';
+                document.getElementById('editEmpPosition').value = employee.position || '';
+                document.getElementById('editEmpRole').value = employee.role || 'employee';
+                document.getElementById('editEmpStatus').value = employee.employment_status || 'Active';
+                document.getElementById('editEmpJoinDate').value = employee.join_date || '';
+                document.getElementById('editEmpEPFNumber').value = employee.epf_number || '';
+                document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
+                document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
+                
+                // Show the modal
+                document.getElementById('editEmployeeModal').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading employee data:', error);
+            alert('Error loading employee data');
+        }
+    };
+    
+    window.editBonus = async function(bonusId) {
+        // Delegate to bonusManager if available
+        if (typeof bonusManager !== 'undefined' && bonusManager) {
+            bonusManager.editBonus(bonusId);
+        } else {
+            alert('Bonus manager not loaded. Please refresh the page.');
+        }
+    };
+    
+    window.deleteBonus = async function(bonusId) {
+        if (!confirm('Are you sure you want to delete this bonus?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/bonuses/${bonusId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Bonus deleted successfully');
+                loadBonuses(); // Reload the table
+            } else {
+                alert('Failed to delete bonus: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error deleting bonus:', error);
+            alert('Error deleting bonus');
+        }
+    };
+    
+    window.editSalaryHistory = async function(recordId) {
+        try {
+            const response = await fetch('/api/admin/salary-history');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const record = data.data.find(r => r.id === recordId);
+                if (!record) {
+                    alert('Record not found');
+                    return;
+                }
+                
+                const newEffectiveDate = prompt('Effective Date (YYYY-MM-DD):', record.effective_date || '');
+                if (newEffectiveDate === null) return; // User cancelled
+                
+                const newPrevSalary = prompt('Previous Salary:', parseFloat(record.previous_value) || 0);
+                if (newPrevSalary === null) return;
+                
+                const newNewSalary = prompt('New Salary:', parseFloat(record.new_value) || 0);
+                if (newNewSalary === null) return;
+                
+                const newReason = prompt('Reason:', record.reason || '');
+                if (newReason === null) return;
+                
+                const updateData = {
+                    effective_date: newEffectiveDate,
+                    previous_salary: newPrevSalary,
+                    new_salary: newNewSalary,
+                    reason: newReason
+                };
+                
+                const updateResponse = await fetch(`/api/admin/salary-history/${recordId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await updateResponse.json();
+                if (result.success) {
+                    alert('Salary history updated successfully!');
+                    loadSalaryHistory();
+                } else {
+                    alert('Failed to update salary history: ' + result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error editing salary history:', error);
+            alert('Error editing salary history');
+        }
+    };
+    
+    window.deleteSalaryHistory = async function(recordId) {
+        if (!confirm('Are you sure you want to delete this salary history record? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/salary-history/${recordId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Salary history deleted successfully!');
+                loadSalaryHistory();
+            } else {
+                alert('Failed to delete salary history: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting salary history:', error);
+            alert('Error deleting salary history');
+        }
+    };
+    
+    window.editEngagement = async function(engagementId) {
+        try {
+            const response = await fetch('/api/admin/engagements/all');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const record = data.data.find(r => r.id === engagementId);
+                if (!record) {
+                    alert('Engagement not found');
+                    return;
+                }
+                
+                const newTitle = prompt('Title:', record.title || '');
+                if (newTitle === null) return; // User cancelled
+                
+                const newStartDate = prompt('Start Date (YYYY-MM-DD):', record.start_date || '');
+                if (newStartDate === null) return;
+                
+                const newEndDate = prompt('End Date (YYYY-MM-DD):', record.end_date || '');
+                if (newEndDate === null) return;
+                
+                const newLocation = prompt('Location:', record.location || '');
+                if (newLocation === null) return;
+                
+                const newStatus = prompt('Status (pending/approved/completed/cancelled):', record.status || '');
+                if (newStatus === null) return;
+                
+                const updateData = {
+                    title: newTitle,
+                    start_date: newStartDate,
+                    end_date: newEndDate,
+                    location: newLocation,
+                    status: newStatus
+                };
+                
+                const updateResponse = await fetch(`/api/admin/engagements/${engagementId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await updateResponse.json();
+                if (result.success) {
+                    alert('Engagement updated successfully!');
+                    loadAllEngagements();
+                } else {
+                    alert('Failed to update engagement: ' + result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error editing engagement:', error);
+            alert('Error editing engagement');
+        }
+    };
+    
+    window.deleteEngagement = async function(engagementId) {
+        if (!confirm('Are you sure you want to delete this engagement? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/engagements/${engagementId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Engagement deleted successfully!');
+                loadAllEngagements();
+            } else {
+                alert('Failed to delete engagement: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting engagement:', error);
+            alert('Error deleting engagement');
+        }
+    };
+    
+    window.editVariablePercentageRule = async function(ruleId) {
+        try {
+            // Fetch all rules
+            const response = await fetch('/api/admin/variable-percentage');
+            const data = await response.json();
+            
+            if (!data.success || !data.data) {
+                alert('Error loading rule data');
+                return;
+            }
+            
+            // Find the specific rule
+            const rule = data.data.find(r => r.id === ruleId);
+            if (!rule) {
+                alert('Rule not found');
+                return;
+            }
+            
+            // Show the form
+            showAddVariablePercentageForm();
+            
+            // Pre-populate the form with existing rule data
+            document.getElementById('varPctName').value = rule.name || '';
+            document.getElementById('varPctType').value = rule.type || '';
+            document.getElementById('varPctPercentage').value = rule.percentage || '';
+            document.getElementById('varPctApplyTo').value = rule.apply_to || '';
+            toggleEmployeeSelection(); // Show/hide department/employee fields
+            document.getElementById('varPctDepartment').value = rule.department || '';
+            document.getElementById('varPctEmployee').value = rule.employee_email || '';
+            document.getElementById('varPctBaseOn').value = rule.base_on || '';
+            document.getElementById('varPctFrequency').value = rule.frequency || '';
+            document.getElementById('varPctStatus').value = rule.status || '';
+            document.getElementById('varPctStartDate').value = rule.start_date || '';
+            document.getElementById('varPctEndDate').value = rule.end_date || '';
+            document.getElementById('varPctDescription').value = rule.description || '';
+            
+            // Change form title to indicate edit mode
+            const formTitle = document.querySelector('#addVariablePercentageForm h4');
+            if (formTitle) formTitle.textContent = 'Edit Variable Percentage Rule';
+            
+            // Change button text
+            const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'Update Rule';
+            
+            // Store the rule ID for update
+            const form = document.getElementById('newVariablePercentageForm');
+            form.setAttribute('data-rule-id', ruleId);
+            form.setAttribute('data-edit-mode', 'true');
+            
+        } catch (error) {
+            console.error('Error loading rule for edit:', error);
+            alert('Error loading rule data');
+        }
+    };
+    
+    window.deleteVariablePercentageRule = async function(ruleId) {
+        if (!confirm('Are you sure you want to delete this variable percentage rule?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/variable-percentage/${ruleId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ Rule deleted successfully');
+                loadVariablePercentageRules();
+            } else {
+                alert(`❌ ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error deleting variable percentage rule:', error);
+            alert('❌ Error deleting rule');
+        }
+    };
+    
+    window.includeInNextPayroll = async function(recordId) {
+        if (!confirm('Mark this employee to be included in the next payroll run?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/admin/skipped-payroll/${recordId}/include`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ ' + result.message);
+                loadSkippedPayroll();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error including in next payroll:', error);
+            alert('❌ Error updating record');
+        }
+    };
+    
     function setupTabs() {
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabPanes = document.querySelectorAll('.tab-pane');
@@ -632,66 +1041,79 @@ document.addEventListener('DOMContentLoaded', function() {
         const newBonusForm = document.getElementById('newBonusForm');
         const messageDiv = document.getElementById('addBonusMessage');
         
-        addBtn.addEventListener('click', function() {
-            addForm.style.display = 'block';
-            addBtn.style.display = 'none';
-        });
-        
-        cancelBtn.addEventListener('click', function() {
-            addForm.style.display = 'none';
-            addBtn.style.display = 'inline-block';
-            newBonusForm.reset();
-            messageDiv.style.display = 'none';
-        });
-        
-        newBonusForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                employee_id: document.getElementById('bonusEmployeeId').value,
-                bonus_type: document.getElementById('bonusType').value,
-                amount: parseFloat(document.getElementById('bonusAmount').value),
-                status: document.getElementById('bonusStatus').value,
-                effective_date: document.getElementById('bonusEffectiveDate').value,
-                expiry_date: document.getElementById('bonusExpiryDate').value,
-                remarks: document.getElementById('bonusRemarks').value
-            };
-            
-            try {
-                const response = await fetch('/api/admin/bonuses', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                
-                const data = await response.json();
-                
-                messageDiv.style.display = 'block';
-                if (data.success) {
-                    messageDiv.className = 'success-message';
-                    messageDiv.textContent = data.message;
-                    newBonusForm.reset();
-                    
-                    // Reload bonus list
-                    loadBonuses();
-                    
-                    // Hide form after a delay
-                    setTimeout(() => {
-                        addForm.style.display = 'none';
-                        addBtn.style.display = 'inline-block';
-                        messageDiv.style.display = 'none';
-                    }, 2000);
-                } else {
-                    messageDiv.className = 'error-message';
-                    messageDiv.textContent = data.message;
+        // Only setup event listeners if the elements exist
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                if (addForm) {
+                    addForm.style.display = 'block';
+                    addBtn.style.display = 'none';
                 }
-            } catch (error) {
-                messageDiv.style.display = 'block';
-                messageDiv.className = 'error-message';
-                messageDiv.textContent = 'Error creating bonus';
-                console.error('Error:', error);
-            }
-        });
+            });
+        }
+        
+        if (cancelBtn && addForm && newBonusForm && messageDiv) {
+            cancelBtn.addEventListener('click', function() {
+                addForm.style.display = 'none';
+                if (addBtn) addBtn.style.display = 'inline-block';
+                newBonusForm.reset();
+                messageDiv.style.display = 'none';
+            });
+        }
+        
+        if (newBonusForm) {
+            newBonusForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    employee_id: document.getElementById('bonusEmployeeId').value,
+                    bonus_type: document.getElementById('bonusType').value,
+                    amount: parseFloat(document.getElementById('bonusAmount').value),
+                    status: document.getElementById('bonusStatus').value,
+                    effective_date: document.getElementById('bonusEffectiveDate').value,
+                    expiry_date: document.getElementById('bonusExpiryDate').value,
+                    remarks: document.getElementById('bonusRemarks').value
+                };
+                
+                try {
+                    const response = await fetch('/api/admin/bonuses', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (messageDiv) {
+                        messageDiv.style.display = 'block';
+                        if (data.success) {
+                            messageDiv.className = 'success-message';
+                            messageDiv.textContent = data.message;
+                            newBonusForm.reset();
+                            
+                            // Reload bonus list
+                            loadBonuses();
+                            
+                            // Hide form after a delay
+                            setTimeout(() => {
+                                if (addForm) addForm.style.display = 'none';
+                                if (addBtn) addBtn.style.display = 'inline-block';
+                                messageDiv.style.display = 'none';
+                            }, 2000);
+                        } else {
+                            messageDiv.className = 'error-message';
+                            messageDiv.textContent = data.message;
+                        }
+                    }
+                } catch (error) {
+                    if (messageDiv) {
+                        messageDiv.style.display = 'block';
+                        messageDiv.className = 'error-message';
+                        messageDiv.textContent = 'Error creating bonus';
+                    }
+                    console.error('Error:', error);
+                }
+            });
+        }
     }
     
     function setupExportHandlers() {
@@ -765,39 +1187,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
     }
-    
-    // Global functions for bonus actions
-    window.editBonus = async function(bonusId) {
-        // Delegate to bonusManager if available
-        if (typeof bonusManager !== 'undefined' && bonusManager) {
-            bonusManager.editBonus(bonusId);
-        } else {
-            alert('Bonus manager not loaded. Please refresh the page.');
-        }
-    };
-    
-    window.deleteBonus = async function(bonusId) {
-        if (!confirm('Are you sure you want to delete this bonus?')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/bonuses/${bonusId}`, {
-                method: 'DELETE'
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('Bonus deleted successfully');
-                loadBonuses(); // Reload the table
-            } else {
-                alert('Failed to delete bonus: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Error deleting bonus:', error);
-            alert('Error deleting bonus');
-        }
-    };
     
     // Load leave balances
     async function loadLeaveBalances() {
@@ -1725,61 +2114,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Edit Employee Functions
-    window.openEditEmployeeModal = async function(employeeId) {
-        try {
-            console.log('Opening edit modal for employee:', employeeId);
-            
-            // Fetch employee data
-            const response = await fetch(`/api/employees`);
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                // Find the employee by ID or email
-                const employee = data.data.find(emp => emp.id === employeeId || emp.email === employeeId);
-                
-                if (!employee) {
-                    alert('Employee not found');
-                    return;
-                }
-                
-                // Populate the form
-                document.getElementById('editEmpId').value = employee.id || employee.email;
-                document.getElementById('editEmpName').value = employee.full_name || '';
-                document.getElementById('editEmpEmail').value = employee.email || '';
-                document.getElementById('editEmpEmployeeID').value = employee.employee_id || '';
-                document.getElementById('editEmpGender').value = employee.gender || '';
-                document.getElementById('editEmpDOB').value = employee.date_of_birth || '';
-                document.getElementById('editEmpNRIC').value = employee.nric || '';
-                document.getElementById('editEmpNationality').value = employee.nationality || '';
-                document.getElementById('editEmpCitizenship').value = employee.citizenship || '';
-                document.getElementById('editEmpRace').value = employee.race || '';
-                document.getElementById('editEmpReligion').value = employee.religion || '';
-                document.getElementById('editEmpMaritalStatus').value = employee.marital_status || '';
-                document.getElementById('editEmpChildren').value = employee.number_of_children || '0';
-                document.getElementById('editEmpPhone').value = employee.phone_number || '';
-                document.getElementById('editEmpAddress').value = employee.address || '';
-                document.getElementById('editEmpCity').value = employee.city || '';
-                document.getElementById('editEmpState').value = employee.state || '';
-                document.getElementById('editEmpZipcode').value = employee.zipcode || '';
-                document.getElementById('editEmpDepartment').value = employee.department || '';
-                document.getElementById('editEmpPosition').value = employee.position || '';
-                document.getElementById('editEmpRole').value = employee.role || 'employee';
-                document.getElementById('editEmpStatus').value = employee.employment_status || 'Active';
-                document.getElementById('editEmpJoinDate').value = employee.join_date || '';
-                document.getElementById('editEmpEPFNumber').value = employee.epf_number || '';
-                document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
-                document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
-                
-                // Show the modal
-                document.getElementById('editEmployeeModal').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error loading employee data:', error);
-            alert('Error loading employee data');
-        }
-    };
-    
     window.closeEditEmployeeModal = function() {
         document.getElementById('editEmployeeModal').style.display = 'none';
         document.getElementById('editEmployeeMessage').style.display = 'none';
@@ -1994,85 +2328,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    window.editVariablePercentageRule = async function(ruleId) {
-        try {
-            // Fetch all rules
-            const response = await fetch('/api/admin/variable-percentage');
-            const data = await response.json();
-            
-            if (!data.success || !data.data) {
-                alert('Error loading rule data');
-                return;
-            }
-            
-            // Find the specific rule
-            const rule = data.data.find(r => r.id === ruleId);
-            if (!rule) {
-                alert('Rule not found');
-                return;
-            }
-            
-            // Show the form
-            showAddVariablePercentageForm();
-            
-            // Pre-populate the form with existing rule data
-            document.getElementById('varPctName').value = rule.name || '';
-            document.getElementById('varPctType').value = rule.type || '';
-            document.getElementById('varPctPercentage').value = rule.percentage || '';
-            document.getElementById('varPctApplyTo').value = rule.apply_to || '';
-            toggleEmployeeSelection(); // Show/hide department/employee fields
-            document.getElementById('varPctDepartment').value = rule.department || '';
-            document.getElementById('varPctEmployee').value = rule.employee_email || '';
-            document.getElementById('varPctBaseOn').value = rule.base_on || '';
-            document.getElementById('varPctFrequency').value = rule.frequency || '';
-            document.getElementById('varPctStatus').value = rule.status || '';
-            document.getElementById('varPctStartDate').value = rule.start_date || '';
-            document.getElementById('varPctEndDate').value = rule.end_date || '';
-            document.getElementById('varPctDescription').value = rule.description || '';
-            
-            // Change form title to indicate edit mode
-            const formTitle = document.querySelector('#addVariablePercentageForm h4');
-            if (formTitle) formTitle.textContent = 'Edit Variable Percentage Rule';
-            
-            // Change button text
-            const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
-            if (submitBtn) submitBtn.textContent = 'Update Rule';
-            
-            // Store the rule ID for update
-            const form = document.getElementById('newVariablePercentageForm');
-            form.setAttribute('data-rule-id', ruleId);
-            form.setAttribute('data-edit-mode', 'true');
-            
-        } catch (error) {
-            console.error('Error loading rule for edit:', error);
-            alert('Error loading rule data');
-        }
-    };
-    
-    window.deleteVariablePercentageRule = async function(ruleId) {
-        if (!confirm('Are you sure you want to delete this variable percentage rule?')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/variable-percentage/${ruleId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('✅ Rule deleted successfully');
-                loadVariablePercentageRules();
-            } else {
-                alert(`❌ ${result.message}`);
-            }
-        } catch (error) {
-            console.error('Error deleting variable percentage rule:', error);
-            alert('❌ Error deleting rule');
-        }
-    };
-    
     // Skipped Payroll Management Functions
     window.loadSkippedPayroll = async function() {
         try {
@@ -2149,30 +2404,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error loading skipped payroll:', error);
             const tableContainer = document.getElementById('skippedPayrollTable');
             if (tableContainer) tableContainer.innerHTML = '<p style="color: #f44336;">Error loading skipped payroll data.</p>';
-        }
-    };
-    
-    window.includeInNextPayroll = async function(recordId) {
-        if (!confirm('Mark this employee to be included in the next payroll run?')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/skipped-payroll/${recordId}/include`, {
-                method: 'POST'
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('✅ ' + result.message);
-                loadSkippedPayroll();
-            } else {
-                alert('❌ ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error including in next payroll:', error);
-            alert('❌ Error updating record');
         }
     };
     
@@ -2271,204 +2502,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Salary History Edit/Delete Functions
-    window.editSalaryHistory = async function(recordId) {
-        try {
-            const response = await fetch('/api/admin/salary-history');
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                const record = data.data.find(r => r.id === recordId);
-                if (!record) {
-                    alert('Record not found');
-                    return;
-                }
-                
-                const newEffectiveDate = prompt('Effective Date (YYYY-MM-DD):', record.effective_date || '');
-                if (newEffectiveDate === null) return; // User cancelled
-                
-                const newPrevSalary = prompt('Previous Salary:', parseFloat(record.previous_value) || 0);
-                if (newPrevSalary === null) return;
-                
-                const newNewSalary = prompt('New Salary:', parseFloat(record.new_value) || 0);
-                if (newNewSalary === null) return;
-                
-                const newReason = prompt('Reason:', record.reason || '');
-                if (newReason === null) return;
-                
-                const updateData = {
-                    effective_date: newEffectiveDate,
-                    previous_salary: newPrevSalary,
-                    new_salary: newNewSalary,
-                    reason: newReason
-                };
-                
-                const updateResponse = await fetch(`/api/admin/salary-history/${recordId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updateData)
-                });
-                
-                const result = await updateResponse.json();
-                if (result.success) {
-                    alert('Salary history updated successfully!');
-                    loadSalaryHistory();
-                } else {
-                    alert('Failed to update salary history: ' + result.message);
-                }
-            }
-        } catch (error) {
-            console.error('Error editing salary history:', error);
-            alert('Error editing salary history');
-        }
-    };
-    
-    window.deleteSalaryHistory = async function(recordId) {
-        if (!confirm('Are you sure you want to delete this salary history record? This action cannot be undone.')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/salary-history/${recordId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                alert('Salary history deleted successfully!');
-                loadSalaryHistory();
-            } else {
-                alert('Failed to delete salary history: ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error deleting salary history:', error);
-            alert('Error deleting salary history');
-        }
-    };
-    
-    // Engagement Edit/Delete Functions
-    window.editEngagement = async function(engagementId) {
-        try {
-            const response = await fetch('/api/admin/engagements/all');
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                const record = data.data.find(r => r.id === engagementId);
-                if (!record) {
-                    alert('Engagement not found');
-                    return;
-                }
-                
-                const newTitle = prompt('Title:', record.title || '');
-                if (newTitle === null) return; // User cancelled
-                
-                const newStartDate = prompt('Start Date (YYYY-MM-DD):', record.start_date || '');
-                if (newStartDate === null) return;
-                
-                const newEndDate = prompt('End Date (YYYY-MM-DD):', record.end_date || '');
-                if (newEndDate === null) return;
-                
-                const newLocation = prompt('Location:', record.location || '');
-                if (newLocation === null) return;
-                
-                const newStatus = prompt('Status (pending/approved/completed/cancelled):', record.status || '');
-                if (newStatus === null) return;
-                
-                const updateData = {
-                    title: newTitle,
-                    start_date: newStartDate,
-                    end_date: newEndDate,
-                    location: newLocation,
-                    status: newStatus
-                };
-                
-                const updateResponse = await fetch(`/api/admin/engagements/${engagementId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updateData)
-                });
-                
-                const result = await updateResponse.json();
-                if (result.success) {
-                    alert('Engagement updated successfully!');
-                    loadAllEngagements();
-                } else {
-                    alert('Failed to update engagement: ' + result.message);
-                }
-            }
-        } catch (error) {
-            console.error('Error editing engagement:', error);
-            alert('Error editing engagement');
-        }
-    };
-    
-    window.deleteEngagement = async function(engagementId) {
-        if (!confirm('Are you sure you want to delete this engagement? This action cannot be undone.')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/engagements/${engagementId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                alert('Engagement deleted successfully!');
-                loadAllEngagements();
-            } else {
-                alert('Failed to delete engagement: ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error deleting engagement:', error);
-            alert('Error deleting engagement');
-        }
-    };
-    
-    // Employee History Edit/Delete Functions
-    window.editEmployeeHistory = async function(recordId) {
-        try {
-            const response = await fetch('/api/admin/employee-history');
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                const record = data.data.find(r => r.id === recordId);
-                if (!record) {
-                    alert('Record not found');
-                    return;
-                }
-                
-                // Load employee selector first
-                await loadEmployeeHistorySelector();
-                
-                // Populate the edit modal with record data
-                document.getElementById('editEmpHistoryRecordId').value = recordId;
-                document.getElementById('editEmpHistoryEmployeeSelect').value = record.employee_email || '';
-                document.getElementById('editEmpHistoryCompany').value = record.company || '';
-                document.getElementById('editEmpHistoryJobTitle').value = record.job_title || '';
-                document.getElementById('editEmpHistoryPosition').value = record.position || '';
-                document.getElementById('editEmpHistoryDepartment').value = record.department || '';
-                document.getElementById('editEmpHistoryFunctionalGroup').value = record.functional_group || '';
-                document.getElementById('editEmpHistoryStatus').value = record.status || '';
-                document.getElementById('editEmpHistoryEmploymentType').value = record.employment_type || '';
-                document.getElementById('editEmpHistoryWorkStatus').value = record.work_status || '';
-                document.getElementById('editEmpHistoryPayrollStatus').value = record.payroll_status || '';
-                document.getElementById('editEmpHistoryStartDate').value = record.start_date || '';
-                document.getElementById('editEmpHistoryEndDate').value = record.end_date || '';
-                document.getElementById('editEmpHistoryNotes').value = record.notes || '';
-                
-                // Clear any previous messages
-                document.getElementById('editEmploymentHistoryMessage').style.display = 'none';
-                
-                // Show the modal
-                document.getElementById('editEmploymentHistoryModal').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error loading employee history for edit:', error);
-            alert('Error loading employee history record');
-        }
-    };
-    
     window.closeEditEmploymentHistoryModal = function() {
         document.getElementById('editEmploymentHistoryModal').style.display = 'none';
         document.getElementById('editEmploymentHistoryForm').reset();
@@ -2524,29 +2557,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    window.deleteEmployeeHistory = async function(recordId) {
-        if (!confirm('Are you sure you want to delete this employee history record? This action cannot be undone.')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/employee-history/${recordId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                alert('Employee history deleted successfully!');
-                loadEmployeeHistory();
-            } else {
-                alert('Failed to delete employee history: ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error deleting employee history:', error);
-            alert('Error deleting employee history');
-        }
-    };
     
     // Export additional functions for onclick handlers
     window.loadSalaryHistory = loadSalaryHistory;
