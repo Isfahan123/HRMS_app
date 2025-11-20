@@ -240,27 +240,47 @@ CREATE INDEX IF NOT EXISTS idx_var_pct_rules_employee ON public.variable_percent
 
 -- 8. Employee History Table (if not exists)
 -- Used by: /api/admin/employee-history and /api/admin/salary-history
+-- This table serves dual purposes:
+-- 1. Employment history (previous jobs) - uses start_date, end_date, company, position
+-- 2. Salary change history - uses effective_date, change_type, change_amount, change_percentage
 CREATE TABLE IF NOT EXISTS public.employee_history (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     employee_id UUID REFERENCES public.employees(id) ON DELETE CASCADE,
     employee_email VARCHAR(255),
-    field_changed VARCHAR(100) NOT NULL,
+    -- Fields for employment history tracking
+    company TEXT,
+    job_title TEXT,
+    position TEXT,
+    department TEXT,
+    functional_group TEXT,
+    employment_type TEXT,
+    start_date DATE,
+    end_date DATE,
+    notes TEXT,
+    attachments JSONB,
+    city_place_id TEXT,
+    admin_notes TEXT,
+    -- Fields for generic change tracking
+    field_changed VARCHAR(100),
     previous_value TEXT,
     new_value TEXT,
-    change_date DATE NOT NULL,
-    effective_date DATE,
+    change_date DATE,
     reason TEXT,
     changed_by VARCHAR(255),
+    -- Fields for salary change tracking
+    effective_date DATE,
     change_type VARCHAR(100),
     change_amount DECIMAL(12, 2),
     change_percentage DECIMAL(5, 2),
     employee_name VARCHAR(255),
     created_by VARCHAR(255),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_employee_history_employee ON public.employee_history(employee_id);
 CREATE INDEX IF NOT EXISTS idx_employee_history_date ON public.employee_history(change_date);
+CREATE INDEX IF NOT EXISTS idx_employee_history_start_date ON public.employee_history(start_date);
 CREATE INDEX IF NOT EXISTS idx_employee_history_effective_date ON public.employee_history(effective_date);
 CREATE INDEX IF NOT EXISTS idx_employee_history_email_effective ON public.employee_history(employee_email, effective_date DESC);
 

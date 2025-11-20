@@ -1,22 +1,44 @@
-# Fix for Salary History Error: Missing effective_date Column
+# Fix for Employee History Errors: Missing Column Issues
 
 ## Problem
-The `/api/admin/salary-history` endpoint was failing with the error:
+Multiple endpoints were failing with column not found errors:
+
+1. **Salary History endpoint** (`/api/admin/salary-history`):
 ```
 Error getting salary history: {'code': '42703', 'details': None, 'hint': None, 'message': 'column employee_history.effective_date does not exist'}
 ```
 
+2. **Employee History endpoint** (`/api/admin/employee-history`):
+Potential error with `start_date` column ordering.
+
 ## Root Cause
 The `employee_history` table is used for two purposes:
-1. **Employment history** (previous jobs, companies) - uses `start_date`, `end_date`
-2. **Salary change history** - tries to use `effective_date` but this column didn't exist in the database
+1. **Employment history** (previous jobs, companies) - uses `start_date`, `end_date`, `company`, `position`
+2. **Salary change history** - uses `effective_date`, `change_type`, `change_amount`
 
-The application code was trying to query and insert records with `effective_date`, but the database schema only had `change_date` or `start_date` fields.
+The application code was trying to query both types of records, but the database schema was missing columns for both purposes. The CREATE_MISSING_TABLES.sql only had fields for generic change tracking, missing:
+- Employment history specific columns (`start_date`, `end_date`, `company`, `position`, etc.)
+- Salary tracking specific columns (`effective_date`, `change_amount`, `change_percentage`)
 
 ## Solution
-Added the missing `effective_date` column and related columns to the `employee_history` table to support salary change tracking.
+Added all missing columns to the `employee_history` table to support both employment history and salary change tracking.
 
-### New Columns Added:
+### New Columns Added for Employment History:
+- `company` - Company/employer name
+- `job_title` - Job title at that company
+- `position` - Position held
+- `department` - Department worked in
+- `functional_group` - Functional group/division
+- `employment_type` - Type of employment (full-time, contract, etc.)
+- `start_date` - Start date of employment period
+- `end_date` - End date of employment period
+- `notes` - Additional notes
+- `attachments` - Document attachments (JSONB)
+- `city_place_id` - Location identifier
+- `admin_notes` - Administrative notes
+- `updated_at` - Last update timestamp
+
+### New Columns Added for Salary Change Tracking:
 - `effective_date` - Date when the salary change becomes effective
 - `change_type` - Type of change (e.g., 'salary_adjustment', 'promotion', 'increment')
 - `change_amount` - Amount of salary change
@@ -53,11 +75,20 @@ Both files have been updated to include the new columns.
 
 ## Affected Endpoints
 The following endpoints now work correctly:
-- `GET /api/admin/salary-history` - Get salary change history
+
+**Salary History:**
+- `GET /api/admin/salary-history` - Get salary change history (orders by `effective_date`)
 - `POST /api/admin/salary-history` - Create salary change record
 - `PUT /api/admin/salary-history/{record_id}` - Update salary change record
 - `DELETE /api/admin/salary-history/{record_id}` - Delete salary change record
 - `GET /api/admin/salary-history/export/csv` - Export salary history to CSV
+
+**Employment History:**
+- `GET /api/admin/employee-history` - Get employment history (orders by `start_date`)
+- `POST /api/admin/employee-history` - Create employment history record
+- `PUT /api/admin/employee-history/{record_id}` - Update employment history record
+- `DELETE /api/admin/employee-history/{record_id}` - Delete employment history record
+- `GET /api/admin/employee-history/export/csv` - Export employment history to CSV
 
 ## Testing
 After running the migration:

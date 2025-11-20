@@ -1,26 +1,52 @@
-# Solution Summary: Fix Salary History effective_date Error
+# Solution Summary: Fix Employee History Column Errors
 
 ## Problem Statement
-Users reported an error when accessing salary history functionality:
+Users reported errors when accessing employee history functionality:
+
+1. **Salary History Error:**
 ```
 Error getting salary history: {'code': '42703', 'details': None, 'hint': None, 'message': 'column employee_history.effective_date does not exist'}
 ```
 
+2. **Employment History Error (potential):**
+Similar error could occur with `start_date` column when accessing employment history.
+
 ## Root Cause Analysis
-The application code in `web_app.py` was trying to query the `employee_history` table using an `effective_date` column that didn't exist in the database schema. 
+The application code in `web_app.py` was trying to query the `employee_history` table using columns that didn't exist in the database schema. 
 
 The `employee_history` table was being used for two different purposes:
-1. **Employment History** - tracking previous jobs and employers (using `start_date`, `end_date`)
-2. **Salary Change History** - tracking salary adjustments (trying to use `effective_date`)
+1. **Employment History** - tracking previous jobs and employers (lines 1235, 2099: ordering by `start_date`)
+2. **Salary Change History** - tracking salary adjustments (lines 1161, 2000: ordering by `effective_date`)
 
-The schema only supported the first use case, causing the salary history endpoints to fail.
+The CREATE_MISSING_TABLES.sql schema only had generic change tracking fields, missing:
+- Employment-specific columns (`start_date`, `end_date`, `company`, `position`, etc.)
+- Salary tracking columns (`effective_date`, `change_amount`, `change_percentage`)
+
+This caused both endpoint types to fail or have incomplete functionality.
 
 ## Solution Implemented
-Added the missing `effective_date` column and related salary tracking columns to the `employee_history` table schema.
+Added all missing columns to the `employee_history` table schema to support both use cases comprehensively.
 
 ### Database Schema Changes
 Added the following columns to `employee_history` table:
-- `effective_date` - Date when the salary change takes effect
+
+**For Employment History Tracking:**
+- `company` - Company/employer name
+- `job_title` - Job title
+- `position` - Position held
+- `department` - Department
+- `functional_group` - Functional group/division
+- `employment_type` - Type of employment
+- `start_date` - Start date of employment period ⭐
+- `end_date` - End date of employment period
+- `notes` - Additional notes
+- `attachments` - Document attachments (JSONB)
+- `city_place_id` - Location identifier
+- `admin_notes` - Administrative notes
+- `updated_at` - Last update timestamp
+
+**For Salary Change Tracking:**
+- `effective_date` - Date when the salary change takes effect ⭐
 - `change_type` - Type of change (salary_adjustment, promotion, increment, etc.)
 - `change_amount` - Monetary amount of the change
 - `change_percentage` - Percentage of the change
@@ -50,12 +76,20 @@ The migration is:
 
 ## Affected Features
 After applying the migration, these features will work correctly:
-- ✅ View salary history in Admin Dashboard
+
+**Salary History:**
+- ✅ View salary history in Admin Dashboard (sorted by effective_date)
 - ✅ Create new salary change records
 - ✅ Edit existing salary history
 - ✅ Delete salary history records
 - ✅ Export salary history to CSV
-- ✅ Filter and sort salary history by effective date
+
+**Employment History:**
+- ✅ View employment history in Admin Dashboard (sorted by start_date)
+- ✅ Create new employment history records (previous jobs, companies)
+- ✅ Edit existing employment history
+- ✅ Delete employment history records
+- ✅ Export employment history to CSV
 
 ## Code Changes
 **No application code changes were required.** The application code was already correctly written to use `effective_date` - it was the database schema that was missing the column.
