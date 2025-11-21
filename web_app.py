@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 import os
 import csv
 import io
+import requests
 from datetime import datetime
 
 # Import existing services and business logic
@@ -2567,14 +2568,19 @@ async def location_autocomplete(query: str, country: Optional[str] = None):
         List of location suggestions with description and place_id
     """
     try:
-        import requests
-        
         # Validate query length
         if not query or len(query.strip()) < 3:
             return {"success": True, "data": []}
         
         # Geoapify API configuration
-        GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_KEY', 'c664905ab3824cde9203a35f4804ecdd')
+        GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_KEY')
+        if not GEOAPIFY_API_KEY:
+            return {
+                "success": False,
+                "message": "Location service not configured. Please set GEOAPIFY_KEY environment variable.",
+                "data": []
+            }
+        
         AUTOCOMPLETE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
         
         # Build request parameters

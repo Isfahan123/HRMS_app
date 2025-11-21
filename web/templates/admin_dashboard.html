@@ -3159,17 +3159,38 @@
             // Edit form school locations
             const editPrimaryLocationField = document.getElementById('editEmpPrimaryLocation');
             if (editPrimaryLocationField) {
-                new LocationAutocomplete(editPrimaryLocationField, { country: 'MY' });
+                new LocationAutocomplete(editPrimaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            editPrimaryLocationField.value = result.city;
+                        }
+                    }
+                });
             }
             
             const editSecondaryLocationField = document.getElementById('editEmpSecondaryLocation');
             if (editSecondaryLocationField) {
-                new LocationAutocomplete(editSecondaryLocationField, { country: 'MY' });
+                new LocationAutocomplete(editSecondaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            editSecondaryLocationField.value = result.city;
+                        }
+                    }
+                });
             }
             
             const editTertiaryLocationField = document.getElementById('editEmpTertiaryLocation');
             if (editTertiaryLocationField) {
-                new LocationAutocomplete(editTertiaryLocationField, { country: 'MY' });
+                new LocationAutocomplete(editTertiaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            editTertiaryLocationField.value = result.city;
+                        }
+                    }
+                });
             }
         });
     </script>
