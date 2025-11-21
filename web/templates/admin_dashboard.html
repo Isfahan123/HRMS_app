@@ -321,6 +321,193 @@
                                 </div>
                             </div>
                             
+                            <!-- Emergency Contact Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Emergency Contact</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpContactName">Contact Name:</label>
+                                    <input type="text" id="newEmpContactName" name="contact_name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpRelation">Relation:</label>
+                                    <input type="text" id="newEmpRelation" name="relation" placeholder="e.g., Spouse, Parent, Sibling">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpEmergencyPhone">Emergency Phone:</label>
+                                    <input type="tel" id="newEmpEmergencyPhone" name="emergency_phone">
+                                </div>
+                            </div>
+                            
+                            <!-- Education Information -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Education History</h4>
+                            
+                            <!-- Primary Education -->
+                            <h5 style="margin-top: 15px; color: #7c3aed;">Primary Education</h5>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpPrimarySchool">School Name:</label>
+                                    <input type="text" id="newEmpPrimarySchool" name="primary_school_name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpPrimaryLocation">Location:</label>
+                                    <input type="text" id="newEmpPrimaryLocation" name="primary_location">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpPrimaryType">Type:</label>
+                                    <select id="newEmpPrimaryType" name="primary_type">
+                                        <option value="">Select Type</option>
+                                        <option value="National">National</option>
+                                        <option value="Vernacular">Vernacular</option>
+                                        <option value="Religious">Religious</option>
+                                        <option value="Private">Private</option>
+                                        <option value="International">International</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpPrimaryYearStarted">Year Started:</label>
+                                    <input type="text" id="newEmpPrimaryYearStarted" name="primary_year_started" placeholder="e.g., 2005">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpPrimaryYearCompleted">Year Completed:</label>
+                                    <input type="text" id="newEmpPrimaryYearCompleted" name="primary_year_completed" placeholder="e.g., 2011">
+                                </div>
+                            </div>
+                            
+                            <!-- Secondary Education -->
+                            <h5 style="margin-top: 15px; color: #7c3aed;">Secondary Education</h5>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpSecondarySchool">School Name:</label>
+                                    <input type="text" id="newEmpSecondarySchool" name="secondary_school_name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSecondaryLocation">Location:</label>
+                                    <input type="text" id="newEmpSecondaryLocation" name="secondary_location">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSecondaryType">Type:</label>
+                                    <select id="newEmpSecondaryType" name="secondary_type">
+                                        <option value="">Select Type</option>
+                                        <option value="National">National</option>
+                                        <option value="Vernacular">Vernacular</option>
+                                        <option value="Religious">Religious</option>
+                                        <option value="Elite/Boarding">Elite/Boarding</option>
+                                        <option value="Technical/Vocational">Technical/Vocational</option>
+                                        <option value="Specialized">Specialized</option>
+                                        <option value="Private">Private</option>
+                                        <option value="International">International</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpSecondaryYearStarted">Year Started:</label>
+                                    <input type="text" id="newEmpSecondaryYearStarted" name="secondary_year_started" placeholder="e.g., 2011">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSecondaryYearCompleted">Year Completed:</label>
+                                    <input type="text" id="newEmpSecondaryYearCompleted" name="secondary_year_completed" placeholder="e.g., 2016">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSecondaryQualification">Qualification:</label>
+                                    <input type="text" id="newEmpSecondaryQualification" name="secondary_qualification" placeholder="e.g., SPM, O-Level">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpSecondaryStream">Stream:</label>
+                                    <select id="newEmpSecondaryStream" name="secondary_stream">
+                                        <option value="">Select Stream</option>
+                                        <option value="Science">Science</option>
+                                        <option value="Arts">Arts</option>
+                                        <option value="Technical">Technical</option>
+                                        <option value="Vocational">Vocational</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSecondaryGrades">Grades/Results:</label>
+                                    <input type="text" id="newEmpSecondaryGrades" name="secondary_grades" placeholder="e.g., 6A 3B">
+                                </div>
+                            </div>
+                            
+                            <!-- Tertiary Education -->
+                            <h5 style="margin-top: 15px; color: #7c3aed;">Tertiary Education</h5>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryInstitution">Institution Name:</label>
+                                    <input type="text" id="newEmpTertiaryInstitution" name="tertiary_institution_name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryLocation">Location:</label>
+                                    <input type="text" id="newEmpTertiaryLocation" name="tertiary_location">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryLevel">Level:</label>
+                                    <select id="newEmpTertiaryLevel" name="tertiary_level">
+                                        <option value="">Select Level</option>
+                                        <option value="Certificate">Certificate</option>
+                                        <option value="Diploma">Diploma</option>
+                                        <option value="Bachelor">Bachelor</option>
+                                        <option value="Master">Master</option>
+                                        <option value="PhD">PhD</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryType">Institution Type:</label>
+                                    <select id="newEmpTertiaryType" name="tertiary_institution_type">
+                                        <option value="">Select Type</option>
+                                        <option value="National (Public)">National (Public)</option>
+                                        <option value="Private">Private</option>
+                                        <option value="Polytechnic">Polytechnic</option>
+                                        <option value="Community College">Community College</option>
+                                        <option value="TVET">TVET</option>
+                                        <option value="International Branch">International Branch</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryField">Field of Study:</label>
+                                    <input type="text" id="newEmpTertiaryField" name="tertiary_field" placeholder="e.g., Engineering, Business">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryMajor">Major/Minor:</label>
+                                    <input type="text" id="newEmpTertiaryMajor" name="tertiary_major" placeholder="e.g., Computer Science">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryYearStarted">Year Started:</label>
+                                    <input type="text" id="newEmpTertiaryYearStarted" name="tertiary_year_started" placeholder="e.g., 2016">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryYearCompleted">Year Completed:</label>
+                                    <input type="text" id="newEmpTertiaryYearCompleted" name="tertiary_year_completed" placeholder="e.g., 2020">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryStatus">Status:</label>
+                                    <select id="newEmpTertiaryStatus" name="tertiary_status">
+                                        <option value="">Select Status</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Ongoing">Ongoing</option>
+                                        <option value="Dropped">Dropped</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpTertiaryCGPA">CGPA/Final Result:</label>
+                                    <input type="text" id="newEmpTertiaryCGPA" name="tertiary_cgpa" placeholder="e.g., 3.85, First Class">
+                                </div>
+                            </div>
+                            
                             <div class="form-actions">
                                 <button type="submit" class="btn-primary">Create Employee</button>
                                 <button type="button" id="cancelAddEmployeeBtn" class="btn-secondary">Cancel</button>
@@ -582,6 +769,193 @@
                                     <div class="form-group">
                                         <label for="editEmpIncomeTaxNumber">Income Tax Number:</label>
                                         <input type="text" id="editEmpIncomeTaxNumber" name="income_tax_number">
+                                    </div>
+                                </div>
+                                
+                                <!-- Emergency Contact Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Emergency Contact</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpContactName">Contact Name:</label>
+                                        <input type="text" id="editEmpContactName" name="contact_name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpRelation">Relation:</label>
+                                        <input type="text" id="editEmpRelation" name="relation" placeholder="e.g., Spouse, Parent, Sibling">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpEmergencyPhone">Emergency Phone:</label>
+                                        <input type="tel" id="editEmpEmergencyPhone" name="emergency_phone">
+                                    </div>
+                                </div>
+                                
+                                <!-- Education Information -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Education History</h4>
+                                
+                                <!-- Primary Education -->
+                                <h5 style="margin-top: 15px; color: #7c3aed;">Primary Education</h5>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpPrimarySchool">School Name:</label>
+                                        <input type="text" id="editEmpPrimarySchool" name="primary_school_name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpPrimaryLocation">Location:</label>
+                                        <input type="text" id="editEmpPrimaryLocation" name="primary_location">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpPrimaryType">Type:</label>
+                                        <select id="editEmpPrimaryType" name="primary_type">
+                                            <option value="">Select Type</option>
+                                            <option value="National">National</option>
+                                            <option value="Vernacular">Vernacular</option>
+                                            <option value="Religious">Religious</option>
+                                            <option value="Private">Private</option>
+                                            <option value="International">International</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpPrimaryYearStarted">Year Started:</label>
+                                        <input type="text" id="editEmpPrimaryYearStarted" name="primary_year_started" placeholder="e.g., 2005">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpPrimaryYearCompleted">Year Completed:</label>
+                                        <input type="text" id="editEmpPrimaryYearCompleted" name="primary_year_completed" placeholder="e.g., 2011">
+                                    </div>
+                                </div>
+                                
+                                <!-- Secondary Education -->
+                                <h5 style="margin-top: 15px; color: #7c3aed;">Secondary Education</h5>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpSecondarySchool">School Name:</label>
+                                        <input type="text" id="editEmpSecondarySchool" name="secondary_school_name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSecondaryLocation">Location:</label>
+                                        <input type="text" id="editEmpSecondaryLocation" name="secondary_location">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSecondaryType">Type:</label>
+                                        <select id="editEmpSecondaryType" name="secondary_type">
+                                            <option value="">Select Type</option>
+                                            <option value="National">National</option>
+                                            <option value="Vernacular">Vernacular</option>
+                                            <option value="Religious">Religious</option>
+                                            <option value="Elite/Boarding">Elite/Boarding</option>
+                                            <option value="Technical/Vocational">Technical/Vocational</option>
+                                            <option value="Specialized">Specialized</option>
+                                            <option value="Private">Private</option>
+                                            <option value="International">International</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpSecondaryYearStarted">Year Started:</label>
+                                        <input type="text" id="editEmpSecondaryYearStarted" name="secondary_year_started" placeholder="e.g., 2011">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSecondaryYearCompleted">Year Completed:</label>
+                                        <input type="text" id="editEmpSecondaryYearCompleted" name="secondary_year_completed" placeholder="e.g., 2016">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSecondaryQualification">Qualification:</label>
+                                        <input type="text" id="editEmpSecondaryQualification" name="secondary_qualification" placeholder="e.g., SPM, O-Level">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpSecondaryStream">Stream:</label>
+                                        <select id="editEmpSecondaryStream" name="secondary_stream">
+                                            <option value="">Select Stream</option>
+                                            <option value="Science">Science</option>
+                                            <option value="Arts">Arts</option>
+                                            <option value="Technical">Technical</option>
+                                            <option value="Vocational">Vocational</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSecondaryGrades">Grades/Results:</label>
+                                        <input type="text" id="editEmpSecondaryGrades" name="secondary_grades" placeholder="e.g., 6A 3B">
+                                    </div>
+                                </div>
+                                
+                                <!-- Tertiary Education -->
+                                <h5 style="margin-top: 15px; color: #7c3aed;">Tertiary Education</h5>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryInstitution">Institution Name:</label>
+                                        <input type="text" id="editEmpTertiaryInstitution" name="tertiary_institution_name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryLocation">Location:</label>
+                                        <input type="text" id="editEmpTertiaryLocation" name="tertiary_location">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryLevel">Level:</label>
+                                        <select id="editEmpTertiaryLevel" name="tertiary_level">
+                                            <option value="">Select Level</option>
+                                            <option value="Certificate">Certificate</option>
+                                            <option value="Diploma">Diploma</option>
+                                            <option value="Bachelor">Bachelor</option>
+                                            <option value="Master">Master</option>
+                                            <option value="PhD">PhD</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryType">Institution Type:</label>
+                                        <select id="editEmpTertiaryType" name="tertiary_institution_type">
+                                            <option value="">Select Type</option>
+                                            <option value="National (Public)">National (Public)</option>
+                                            <option value="Private">Private</option>
+                                            <option value="Polytechnic">Polytechnic</option>
+                                            <option value="Community College">Community College</option>
+                                            <option value="TVET">TVET</option>
+                                            <option value="International Branch">International Branch</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryField">Field of Study:</label>
+                                        <input type="text" id="editEmpTertiaryField" name="tertiary_field" placeholder="e.g., Engineering, Business">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryMajor">Major/Minor:</label>
+                                        <input type="text" id="editEmpTertiaryMajor" name="tertiary_major" placeholder="e.g., Computer Science">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryYearStarted">Year Started:</label>
+                                        <input type="text" id="editEmpTertiaryYearStarted" name="tertiary_year_started" placeholder="e.g., 2016">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryYearCompleted">Year Completed:</label>
+                                        <input type="text" id="editEmpTertiaryYearCompleted" name="tertiary_year_completed" placeholder="e.g., 2020">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryStatus">Status:</label>
+                                        <select id="editEmpTertiaryStatus" name="tertiary_status">
+                                            <option value="">Select Status</option>
+                                            <option value="Completed">Completed</option>
+                                            <option value="Ongoing">Ongoing</option>
+                                            <option value="Dropped">Dropped</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpTertiaryCGPA">CGPA/Final Result:</label>
+                                        <input type="text" id="editEmpTertiaryCGPA" name="tertiary_cgpa" placeholder="e.g., 3.85, First Class">
                                     </div>
                                 </div>
                                 

@@ -492,6 +492,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpEPFNumber').value = employee.epf_number || '';
                 document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
                 document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
+                // Emergency Contact
+                document.getElementById('editEmpContactName').value = employee.contact_name || '';
+                document.getElementById('editEmpRelation').value = employee.relation || '';
+                document.getElementById('editEmpEmergencyPhone').value = employee.emergency_phone || '';
+                // Primary Education
+                document.getElementById('editEmpPrimarySchool').value = employee.primary_school_name || '';
+                document.getElementById('editEmpPrimaryLocation').value = employee.primary_location || '';
+                document.getElementById('editEmpPrimaryType').value = employee.primary_type || '';
+                document.getElementById('editEmpPrimaryYearStarted').value = employee.primary_year_started || '';
+                document.getElementById('editEmpPrimaryYearCompleted').value = employee.primary_year_completed || '';
+                // Secondary Education
+                document.getElementById('editEmpSecondarySchool').value = employee.secondary_school_name || '';
+                document.getElementById('editEmpSecondaryLocation').value = employee.secondary_location || '';
+                document.getElementById('editEmpSecondaryType').value = employee.secondary_type || '';
+                document.getElementById('editEmpSecondaryYearStarted').value = employee.secondary_year_started || '';
+                document.getElementById('editEmpSecondaryYearCompleted').value = employee.secondary_year_completed || '';
+                document.getElementById('editEmpSecondaryQualification').value = employee.secondary_qualification || '';
+                document.getElementById('editEmpSecondaryStream').value = employee.secondary_stream || '';
+                document.getElementById('editEmpSecondaryGrades').value = employee.secondary_grades || '';
+                // Tertiary Education
+                document.getElementById('editEmpTertiaryInstitution').value = employee.tertiary_institution_name || '';
+                document.getElementById('editEmpTertiaryLocation').value = employee.tertiary_location || '';
+                document.getElementById('editEmpTertiaryLevel').value = employee.tertiary_level || '';
+                document.getElementById('editEmpTertiaryType').value = employee.tertiary_institution_type || '';
+                document.getElementById('editEmpTertiaryField').value = employee.tertiary_field || '';
+                document.getElementById('editEmpTertiaryMajor').value = employee.tertiary_major || '';
+                document.getElementById('editEmpTertiaryYearStarted').value = employee.tertiary_year_started || '';
+                document.getElementById('editEmpTertiaryYearCompleted').value = employee.tertiary_year_completed || '';
+                document.getElementById('editEmpTertiaryStatus').value = employee.tertiary_status || '';
+                document.getElementById('editEmpTertiaryCGPA').value = employee.tertiary_cgpa || '';
                 
                 // Show the modal
                 document.getElementById('editEmployeeModal').style.display = 'block';
@@ -1032,7 +1062,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 // EPF/SOCSO Information
                 epf_number: document.getElementById('newEmpEPFNumber').value,
                 socso_number: document.getElementById('newEmpSOCSONumber').value,
-                income_tax_number: document.getElementById('newEmpIncomeTaxNumber').value
+                income_tax_number: document.getElementById('newEmpIncomeTaxNumber').value,
+                // Emergency Contact
+                contact_name: document.getElementById('newEmpContactName').value,
+                relation: document.getElementById('newEmpRelation').value,
+                emergency_phone: document.getElementById('newEmpEmergencyPhone').value,
+                // Primary Education
+                primary_school_name: document.getElementById('newEmpPrimarySchool').value,
+                primary_location: document.getElementById('newEmpPrimaryLocation').value,
+                primary_type: document.getElementById('newEmpPrimaryType').value,
+                primary_year_started: document.getElementById('newEmpPrimaryYearStarted').value,
+                primary_year_completed: document.getElementById('newEmpPrimaryYearCompleted').value,
+                // Secondary Education
+                secondary_school_name: document.getElementById('newEmpSecondarySchool').value,
+                secondary_location: document.getElementById('newEmpSecondaryLocation').value,
+                secondary_type: document.getElementById('newEmpSecondaryType').value,
+                secondary_year_started: document.getElementById('newEmpSecondaryYearStarted').value,
+                secondary_year_completed: document.getElementById('newEmpSecondaryYearCompleted').value,
+                secondary_qualification: document.getElementById('newEmpSecondaryQualification').value,
+                secondary_stream: document.getElementById('newEmpSecondaryStream').value,
+                secondary_grades: document.getElementById('newEmpSecondaryGrades').value,
+                // Tertiary Education
+                tertiary_institution_name: document.getElementById('newEmpTertiaryInstitution').value,
+                tertiary_location: document.getElementById('newEmpTertiaryLocation').value,
+                tertiary_level: document.getElementById('newEmpTertiaryLevel').value,
+                tertiary_institution_type: document.getElementById('newEmpTertiaryType').value,
+                tertiary_field: document.getElementById('newEmpTertiaryField').value,
+                tertiary_major: document.getElementById('newEmpTertiaryMajor').value,
+                tertiary_year_started: document.getElementById('newEmpTertiaryYearStarted').value,
+                tertiary_year_completed: document.getElementById('newEmpTertiaryYearCompleted').value,
+                tertiary_status: document.getElementById('newEmpTertiaryStatus').value,
+                tertiary_cgpa: document.getElementById('newEmpTertiaryCGPA').value
             };
             
             try {
