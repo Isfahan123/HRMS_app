@@ -1924,23 +1924,44 @@ async def delete_holiday(holiday_id: int):
 async def import_malaysia_holidays(year: int, state: Optional[str] = None):
     """Auto-import Malaysia public holidays for a specific year"""
     try:
+        # Validate year parameter
+        if year < 1900 or year > 2100:
+            return {
+                "success": False,
+                "message": "Year must be between 1900 and 2100"
+            }
+        
         from core.holidays_service import get_holidays_for_year
+        from services.supabase_service import insert_calendar_holiday, find_calendar_holidays_for_year
+        
+        # Normalize state parameter
+        normalized_state = None if (not state or state == 'All Malaysia') else state
         
         # Get holidays from python-holidays library
         holidays_set, holiday_details = get_holidays_for_year(
             year, 
-            state=state if state and state != 'All Malaysia' else None,
+            state=normalized_state,
             include_national=True,
             include_observances=True
         )
+        
+        # Fetch existing holidays for this year upfront (avoid N+1 query pattern)
+        existing_holidays = find_calendar_holidays_for_year(year, state=normalized_state)
+        existing_dates = {h.get('date') for h in existing_holidays if h.get('date')}
         
         imported_count = 0
         skipped_count = 0
         errors = []
         
         for holiday_date in holidays_set:
-            # Get holiday name from details
             date_str = holiday_date.isoformat()
+            
+            # Check if holiday already exists (in-memory check)
+            if date_str in existing_dates:
+                skipped_count += 1
+                continue
+            
+            # Get holiday name from details
             holiday_names = holiday_details.get(date_str, [])
             
             # Use first name or create a generic name
@@ -1953,25 +1974,26 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None):
                 if '[' in name:
                     name = name.split('[')[0].strip()
             else:
-                name = f"Public Holiday"
+                name = "Public Holiday"
             
-            # Check if holiday already exists
-            existing = supabase.table("calendar_holidays").select("*").eq("date", date_str).execute()
+            # Determine if national or state-specific
+            is_national = (normalized_state is None)
+            is_observance = False  # Can be enhanced to detect observances
             
-            if existing.data:
-                skipped_count += 1
-                continue
-            
-            # Insert new holiday
+            # Insert new holiday using existing service function
             try:
-                holiday_data = {
-                    "date": date_str,
-                    "name": name,
-                    "type": "national" if not state or state == 'All Malaysia' else "state",
-                    "location": state if state and state != 'All Malaysia' else "Malaysia"
-                }
-                supabase.table("calendar_holidays").insert(holiday_data).execute()
-                imported_count += 1
+                success = insert_calendar_holiday(
+                    date_str=date_str,
+                    name=name,
+                    state=normalized_state,
+                    is_national=is_national,
+                    is_observance=is_observance
+                )
+                if success:
+                    imported_count += 1
+                    existing_dates.add(date_str)  # Update cache
+                else:
+                    errors.append(f"Failed to import {name} on {date_str}")
             except Exception as e:
                 errors.append(f"Failed to import {name} on {date_str}: {str(e)}")
         

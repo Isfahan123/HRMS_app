@@ -1597,3 +1597,14 @@ textarea:disabled {
 .btn-toggle.active:hover {
     background-color: #2980b9;
 }
+
+/* Import Holidays Button */
+.btn-import-holidays {
+    background-color: #28a745 !important;
+    color: white !important;
+    border-color: #28a745 !important;
+}
+
+.btn-import-holidays:hover {
+    background-color: #218838 !important;
+}

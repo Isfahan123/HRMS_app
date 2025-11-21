@@ -180,7 +180,7 @@ class LeaveCalendar {
                 <button onclick="leaveCalendar.goToToday()" class="btn-secondary">Today</button>
                 <button onclick="leaveCalendar.showAddHolidayModal()" class="btn-primary" style="margin-left: 20px;">➕ Add Holiday</button>
                 <button onclick="leaveCalendar.showHolidayListModal()" class="btn-secondary">📋 Manage Holidays</button>
-                <button onclick="leaveCalendar.showImportMalaysiaHolidaysModal()" class="btn-secondary" style="background: #28a745;">🇲🇾 Import Malaysia Holidays</button>
+                <button onclick="leaveCalendar.showImportMalaysiaHolidaysModal()" class="btn-secondary btn-import-holidays">🇲🇾 Import Malaysia Holidays</button>
             </div>
             <table class="calendar-table">
                 <thead>
