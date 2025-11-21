@@ -893,9 +893,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadVariablePercentageRules();
                 } else if (subtabName === 'engagementsView') {
                     console.log('🔄 Loading engagements...');
-                    // Trigger the search to load engagements
-                    const searchBtn = document.getElementById('searchEngagementsBtn');
-                    if (searchBtn) searchBtn.click();
+                    // Load all engagements
+                    if (typeof loadAllEngagements === 'function') {
+                        loadAllEngagements();
+                    }
                 }
             });
         });
