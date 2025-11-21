@@ -675,84 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    window.editVariablePercentageRule = async function(ruleId) {
-        try {
-            // Fetch all rules
-            const response = await fetch('/api/admin/variable-percentage');
-            const data = await response.json();
-            
-            if (!data.success || !data.data) {
-                alert('Error loading rule data');
-                return;
-            }
-            
-            // Find the specific rule
-            const rule = data.data.find(r => r.id === ruleId);
-            if (!rule) {
-                alert('Rule not found');
-                return;
-            }
-            
-            // Show the form
-            showAddVariablePercentageForm();
-            
-            // Pre-populate the form with existing rule data
-            document.getElementById('varPctName').value = rule.name || '';
-            document.getElementById('varPctType').value = rule.type || '';
-            document.getElementById('varPctPercentage').value = rule.percentage || '';
-            document.getElementById('varPctApplyTo').value = rule.apply_to || '';
-            toggleEmployeeSelection(); // Show/hide department/employee fields
-            document.getElementById('varPctDepartment').value = rule.department || '';
-            document.getElementById('varPctEmployee').value = rule.employee_email || '';
-            document.getElementById('varPctBaseOn').value = rule.base_on || '';
-            document.getElementById('varPctFrequency').value = rule.frequency || '';
-            document.getElementById('varPctStatus').value = rule.status || '';
-            document.getElementById('varPctStartDate').value = rule.start_date || '';
-            document.getElementById('varPctEndDate').value = rule.end_date || '';
-            document.getElementById('varPctDescription').value = rule.description || '';
-            
-            // Change form title to indicate edit mode
-            const formTitle = document.querySelector('#addVariablePercentageForm h4');
-            if (formTitle) formTitle.textContent = 'Edit Variable Percentage Rule';
-            
-            // Change button text
-            const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
-            if (submitBtn) submitBtn.textContent = 'Update Rule';
-            
-            // Store the rule ID for update
-            const form = document.getElementById('newVariablePercentageForm');
-            form.setAttribute('data-rule-id', ruleId);
-            form.setAttribute('data-edit-mode', 'true');
-            
-        } catch (error) {
-            console.error('Error loading rule for edit:', error);
-            alert('Error loading rule data');
-        }
-    };
-    
-    window.deleteVariablePercentageRule = async function(ruleId) {
-        if (!confirm('Are you sure you want to delete this variable percentage rule?')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/variable-percentage/${ruleId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('✅ Rule deleted successfully');
-                loadVariablePercentageRules();
-            } else {
-                alert(`❌ ${result.message}`);
-            }
-        } catch (error) {
-            console.error('Error deleting variable percentage rule:', error);
-            alert('❌ Error deleting rule');
-        }
-    };
+    // Old edit and delete functions removed - replaced with EPF/SOCSO/EIS configuration system
     
     window.includeInNextPayroll = async function(recordId) {
         if (!confirm('Mark this employee to be included in the next payroll run?')) {
@@ -2435,159 +2358,132 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Variable Percentage Management Functions
-    window.showAddVariablePercentageForm = function() {
-        document.getElementById('addVariablePercentageForm').style.display = 'block';
-    };
-    
-    window.hideAddVariablePercentageForm = function() {
-        document.getElementById('addVariablePercentageForm').style.display = 'none';
-        const form = document.getElementById('newVariablePercentageForm');
-        form.reset();
-        document.getElementById('addVariablePercentageMessage').style.display = 'none';
-        
-        // Reset edit mode
-        form.removeAttribute('data-rule-id');
-        form.removeAttribute('data-edit-mode');
-        
-        // Reset form title and button
-        const formTitle = document.querySelector('#addVariablePercentageForm h4');
-        if (formTitle) formTitle.textContent = 'Add Variable Percentage Rule';
-        
-        const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
-        if (submitBtn) submitBtn.textContent = 'Create Rule';
-        
-        // Hide conditional fields
-        document.getElementById('varPctDepartmentGroup').style.display = 'none';
-        document.getElementById('varPctEmployeeGroup').style.display = 'none';
-    };
-    
-    window.toggleEmployeeSelection = function() {
-        const applyTo = document.getElementById('varPctApplyTo').value;
-        const deptGroup = document.getElementById('varPctDepartmentGroup');
-        const empGroup = document.getElementById('varPctEmployeeGroup');
-        
-        if (applyTo === 'department') {
-            deptGroup.style.display = 'block';
-            empGroup.style.display = 'none';
-        } else if (applyTo === 'individual') {
-            deptGroup.style.display = 'none';
-            empGroup.style.display = 'block';
-        } else {
-            deptGroup.style.display = 'none';
-            empGroup.style.display = 'none';
-        }
-    };
+    // Old variable percentage functions removed - replaced with EPF/SOCSO/EIS configuration
     
     async function loadVariablePercentageRules() {
+        // This function now loads EPF/SOCSO/EIS configuration instead of bonus rules
+        // Load the default or active configuration from the server
         try {
-            const response = await fetch('/api/admin/variable-percentage');
+            const configName = document.getElementById('varConfigName')?.value || 'default';
+            const response = await fetch(`/api/admin/variable-config/${configName}`);
             const data = await response.json();
             
-            const container = document.getElementById('variablePercentageRulesTable');
-            if (!container) return;
-            
-            if (data.success && data.data && data.data.length > 0) {
-                let html = '<h4 style="margin-top: 20px; margin-bottom: 15px;">Active Variable Percentage Rules</h4>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Rule Name</th>';
-                html += '<th style="padding: 10px;">Type</th>';
-                html += '<th style="padding: 10px;">Percentage</th>';
-                html += '<th style="padding: 10px;">Apply To</th>';
-                html += '<th style="padding: 10px;">Base On</th>';
-                html += '<th style="padding: 10px;">Frequency</th>';
-                html += '<th style="padding: 10px;">Status</th>';
-                html += '<th style="padding: 10px;">Actions</th>';
-                html += '</tr></thead><tbody>';
+            if (data.success && data.config) {
+                const config = data.config;
                 
-                data.data.forEach(rule => {
-                    const statusClass = rule.status === 'active' ? 'color: #2e7d32;' : 'color: #f57c00;';
-                    const applyToText = rule.apply_to === 'all' ? 'All Employees' : 
-                                      rule.apply_to === 'department' ? `Dept: ${rule.department || '-'}` :
-                                      rule.apply_to === 'individual' ? `Emp: ${rule.employee_email || '-'}` : '-';
-                    
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;"><strong>${rule.name || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">${rule.type || '-'}</td>`;
-                    html += `<td style="padding: 10px;"><strong>${rule.percentage}%</strong></td>`;
-                    html += `<td style="padding: 10px;">${applyToText}</td>`;
-                    html += `<td style="padding: 10px;">${(rule.base_on || '').replace('_', ' ') || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${rule.frequency || '-'}</td>`;
-                    html += `<td style="padding: 10px; ${statusClass}"><strong>${rule.status || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">`;
-                    html += `<button class="btn-secondary btn-sm" onclick="editVariablePercentageRule('${rule.id}')">✏️ Edit</button> `;
-                    html += `<button class="btn-secondary btn-sm" onclick="deleteVariablePercentageRule('${rule.id}')">🗑️ Delete</button>`;
-                    html += `</td>`;
-                    html += '</tr>';
-                });
+                // Load EPF Part A values
+                document.getElementById('epfPartAEmployee').value = config.epf_part_a_employee || 11.0;
+                document.getElementById('epfPartAEmployer').value = config.epf_part_a_employer || 12.0;
+                document.getElementById('epfPartAEmployeeOver20k').value = config.epf_part_a_employee_over20k || 11.0;
+                document.getElementById('epfPartAEmployerOver20k').value = config.epf_part_a_employer_over20k || 12.0;
+                document.getElementById('epfPartAEmployerBonus').value = config.epf_part_a_employer_bonus || 13.0;
                 
-                html += '</tbody></table>';
-                html += `<p style="margin-top: 10px; color: #666; font-size: 14px;">${data.data.length} rule(s) configured</p>`;
-                container.innerHTML = html;
+                // Load EPF Part B values
+                document.getElementById('epfPartBEmployee').value = config.epf_part_b_employee || 0.0;
+                document.getElementById('epfPartBEmployer').value = config.epf_part_b_employer || 13.0;
+                document.getElementById('epfPartBEmployeeOver20k').value = config.epf_part_b_employee_over20k || 0.0;
+                document.getElementById('epfPartBEmployerOver20k').value = config.epf_part_b_employer_over20k || 13.0;
+                
+                // Load EPF Part E values
+                document.getElementById('epfPartEEmployee').value = config.epf_part_e_employee || 0.0;
+                document.getElementById('epfPartEEmployer').value = config.epf_part_e_employer || 4.0;
+                document.getElementById('epfPartEEmployeeOver20k').value = config.epf_part_e_employee_over20k || 0.0;
+                document.getElementById('epfPartEEmployerOver20kFixed').value = config.epf_part_e_employer_over20k_fixed || 5.0;
+                
+                // Load SOCSO values
+                document.getElementById('socsoFirstEmployee').value = config.socso_first_employee || 0.5;
+                document.getElementById('socsoFirstEmployer').value = config.socso_first_employer || 1.75;
+                document.getElementById('socsoSecondEmployee').value = config.socso_second_employee || 0.0;
+                document.getElementById('socsoSecondEmployer').value = config.socso_second_employer || 1.25;
+                
+                // Load EIS values
+                document.getElementById('eisEmployee').value = config.eis_employee || 0.2;
+                document.getElementById('eisEmployer').value = config.eis_employer || 0.2;
+                
+                console.log('✅ Loaded variable percentage configuration:', configName);
             } else {
-                container.innerHTML = '<p style="color: #666;">No variable percentage rules configured yet. Click "Add Variable Percentage Rule" to create one.</p>';
+                console.log('⚠️ No configuration found, using defaults');
+                // Load default values (already set in HTML)
             }
         } catch (error) {
-            console.error('Error loading variable percentage rules:', error);
-            const container = document.getElementById('variablePercentageRulesTable');
-            if (container) container.innerHTML = '<p style="color: #f44336;">Error loading rules.</p>';
+            console.error('Error loading variable percentage configuration:', error);
+            console.log('⚠️ Using default values from HTML');
         }
     }
     
-    // Handle new variable percentage form submission
-    const newVariablePercentageForm = document.getElementById('newVariablePercentageForm');
-    if (newVariablePercentageForm) {
-        newVariablePercentageForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    // Save variable percentage configuration
+    window.saveVariableConfig = async function() {
+        try {
+            const configName = document.getElementById('varConfigName').value || 'default';
             
-            const formData = new FormData(newVariablePercentageForm);
-            const data = {};
+            const config = {
+                config_name: configName,
+                // EPF Part A
+                epf_part_a_employee: parseFloat(document.getElementById('epfPartAEmployee').value),
+                epf_part_a_employer: parseFloat(document.getElementById('epfPartAEmployer').value),
+                epf_part_a_employee_over20k: parseFloat(document.getElementById('epfPartAEmployeeOver20k').value),
+                epf_part_a_employer_over20k: parseFloat(document.getElementById('epfPartAEmployerOver20k').value),
+                epf_part_a_employer_bonus: parseFloat(document.getElementById('epfPartAEmployerBonus').value),
+                // EPF Part B
+                epf_part_b_employee: parseFloat(document.getElementById('epfPartBEmployee').value),
+                epf_part_b_employer: parseFloat(document.getElementById('epfPartBEmployer').value),
+                epf_part_b_employee_over20k: parseFloat(document.getElementById('epfPartBEmployeeOver20k').value),
+                epf_part_b_employer_over20k: parseFloat(document.getElementById('epfPartBEmployerOver20k').value),
+                // EPF Part E
+                epf_part_e_employee: parseFloat(document.getElementById('epfPartEEmployee').value),
+                epf_part_e_employer: parseFloat(document.getElementById('epfPartEEmployer').value),
+                epf_part_e_employee_over20k: parseFloat(document.getElementById('epfPartEEmployeeOver20k').value),
+                epf_part_e_employer_over20k_fixed: parseFloat(document.getElementById('epfPartEEmployerOver20kFixed').value),
+                // SOCSO
+                socso_first_employee: parseFloat(document.getElementById('socsoFirstEmployee').value),
+                socso_first_employer: parseFloat(document.getElementById('socsoFirstEmployer').value),
+                socso_second_employee: parseFloat(document.getElementById('socsoSecondEmployee').value),
+                socso_second_employer: parseFloat(document.getElementById('socsoSecondEmployer').value),
+                // EIS
+                eis_employee: parseFloat(document.getElementById('eisEmployee').value),
+                eis_employer: parseFloat(document.getElementById('eisEmployer').value)
+            };
             
-            for (let [key, value] of formData.entries()) {
-                data[key] = value;
+            const response = await fetch('/api/admin/variable-config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(`✅ Configuration "${configName}" saved successfully!`);
+                document.getElementById('configNameDisplay').textContent = configName;
+            } else {
+                alert(`❌ Failed to save configuration: ${result.message || 'Unknown error'}`);
             }
-            
-            // Check if we're in edit mode
-            const isEditMode = this.getAttribute('data-edit-mode') === 'true';
-            const ruleId = this.getAttribute('data-rule-id');
-            
-            try {
-                const url = isEditMode ? `/api/admin/variable-percentage/${ruleId}` : '/api/admin/variable-percentage';
-                const method = isEditMode ? 'PUT' : 'POST';
-                
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                const messageDiv = document.getElementById('addVariablePercentageMessage');
-                messageDiv.style.display = 'block';
-                
-                if (result.success) {
-                    messageDiv.className = 'success-message';
-                    messageDiv.textContent = isEditMode ? '✅ Variable percentage rule updated successfully!' : '✅ Variable percentage rule created successfully!';
-                    
-                    setTimeout(() => {
-                        hideAddVariablePercentageForm();
-                        loadVariablePercentageRules();
-                    }, 1500);
-                } else {
-                    messageDiv.className = 'error-message';
-                    messageDiv.textContent = result.message || (isEditMode ? 'Failed to update rule' : 'Failed to create rule');
-                }
-            } catch (error) {
-                console.error('Error saving variable percentage rule:', error);
-                const messageDiv = document.getElementById('addVariablePercentageMessage');
-                messageDiv.style.display = 'block';
-                messageDiv.className = 'error-message';
-                messageDiv.textContent = 'Error saving rule';
-            }
+        } catch (error) {
+            console.error('Error saving variable configuration:', error);
+            alert('❌ Error saving configuration');
+        }
+    };
+    
+    // Load variable percentage configuration
+    window.loadVariableConfig = async function() {
+        const configName = prompt('Enter configuration name to load:', 'default');
+        if (configName) {
+            document.getElementById('varConfigName').value = configName;
+            document.getElementById('configNameDisplay').textContent = configName;
+            await loadVariablePercentageRules();
+        }
+    };
+    
+    // Update config name display when typing
+    const varConfigNameInput = document.getElementById('varConfigName');
+    if (varConfigNameInput) {
+        varConfigNameInput.addEventListener('input', function() {
+            document.getElementById('configNameDisplay').textContent = this.value || 'default';
         });
     }
+
     
     // Skipped Payroll Management Functions
     window.loadSkippedPayroll = async function() {
