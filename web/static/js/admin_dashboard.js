@@ -2768,6 +2768,201 @@ document.addEventListener('DOMContentLoaded', function() {
                 messageDiv.textContent = 'Error submitting leave request: ' + error.message;
             }
         });
+        
+        // Handle leave balance loading when employee is selected
+        const employeeSelect = document.getElementById('adminLeaveEmployeeId');
+        const refreshBalanceBtn = document.getElementById('adminRefreshBalance');
+        
+        async function loadEmployeeLeaveBalance() {
+            const employeeEmail = employeeSelect.value;
+            if (!employeeEmail) {
+                document.getElementById('adminAnnualBalance').textContent = 'Select an employee to view balance';
+                document.getElementById('adminSickBalance').textContent = 'Select an employee to view balance';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/leave-balance/${encodeURIComponent(employeeEmail)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const annualBalance = data.balances.annual || 0;
+                    const sickBalance = data.balances.sick || 0;
+                    document.getElementById('adminAnnualBalance').textContent = `${annualBalance} days remaining`;
+                    document.getElementById('adminSickBalance').textContent = `${sickBalance} days remaining`;
+                } else {
+                    document.getElementById('adminAnnualBalance').textContent = 'Error loading balance';
+                    document.getElementById('adminSickBalance').textContent = 'Error loading balance';
+                }
+            } catch (error) {
+                console.error('Error loading leave balance:', error);
+                document.getElementById('adminAnnualBalance').textContent = 'Error loading balance';
+                document.getElementById('adminSickBalance').textContent = 'Error loading balance';
+            }
+        }
+        
+        if (employeeSelect) {
+            employeeSelect.addEventListener('change', loadEmployeeLeaveBalance);
+        }
+        
+        if (refreshBalanceBtn) {
+            refreshBalanceBtn.addEventListener('click', loadEmployeeLeaveBalance);
+        }
+        
+        // Handle sick leave type selection to show info
+        const leaveTypeSelect = document.getElementById('adminLeaveType');
+        const sickLeaveInfo = document.getElementById('adminSickLeaveInfo');
+        
+        if (leaveTypeSelect && sickLeaveInfo) {
+            leaveTypeSelect.addEventListener('change', function() {
+                const selectedType = this.value.toLowerCase();
+                if (selectedType === 'sick' || selectedType === 'hospitalization') {
+                    sickLeaveInfo.style.display = 'block';
+                } else {
+                    sickLeaveInfo.style.display = 'none';
+                }
+            });
+        }
+        
+        // Handle half-day period visibility
+        const halfDayCheckbox = document.getElementById('adminLeaveHalfDay');
+        const halfDayPeriod = document.getElementById('adminHalfDayPeriod');
+        const durationInput = document.getElementById('adminLeaveDuration');
+        
+        if (halfDayCheckbox && halfDayPeriod && durationInput) {
+            halfDayCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    durationInput.value = 0.5;
+                    updateWorkingDaysDisplay();
+                } else {
+                    if (durationInput.value == 0.5) {
+                        durationInput.value = 1;
+                    }
+                    updateWorkingDaysDisplay();
+                }
+            });
+        }
+        
+        // Handle document upload
+        const uploadBtn = document.getElementById('adminUploadDocument');
+        const removeBtn = document.getElementById('adminRemoveDocument');
+        const fileInput = document.getElementById('adminDocumentInput');
+        const docName = document.getElementById('adminDocumentName');
+        
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    docName.textContent = this.files[0].name;
+                    removeBtn.style.display = 'inline-block';
+                }
+            });
+        }
+        
+        if (removeBtn && fileInput) {
+            removeBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                docName.textContent = '';
+                this.style.display = 'none';
+            });
+        }
+        
+        // Calculate working days between dates
+        function calculateWorkingDays(startDate, endDate, excludeWeekends = true) {
+            if (!startDate || !endDate) return 0;
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (end < start) return 0;
+            
+            let days = 0;
+            const current = new Date(start);
+            
+            while (current <= end) {
+                const dayOfWeek = current.getDay();
+                if (!excludeWeekends || (dayOfWeek !== 0 && dayOfWeek !== 6)) {
+                    days++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return days;
+        }
+        
+        // Update working days display
+        function updateWorkingDaysDisplay() {
+            const startDate = document.getElementById('adminLeaveStartDate').value;
+            const endDate = document.getElementById('adminLeaveEndDate').value;
+            const display = document.getElementById('adminWorkingDaysDisplay');
+            const halfDay = document.getElementById('adminLeaveHalfDay');
+            
+            if (!startDate || !endDate) {
+                display.textContent = 'Working days: - (excludes weekends & holidays)';
+                return;
+            }
+            
+            if (halfDay && halfDay.checked) {
+                display.textContent = 'Working days: 0.5 (half-day)';
+                return;
+            }
+            
+            const days = calculateWorkingDays(startDate, endDate);
+            display.textContent = `Working days: ${days} (excludes weekends & holidays)`;
+        }
+        
+        // Update dates when duration changes
+        const durationField = document.getElementById('adminLeaveDuration');
+        if (durationField) {
+            durationField.addEventListener('change', function() {
+                const duration = parseFloat(this.value);
+                const startDate = document.getElementById('adminLeaveStartDate');
+                
+                if (startDate.value) {
+                    const start = new Date(startDate.value);
+                    let daysToAdd = Math.ceil(duration);
+                    let workingDaysAdded = 0;
+                    const current = new Date(start);
+                    
+                    while (workingDaysAdded < daysToAdd) {
+                        const dayOfWeek = current.getDay();
+                        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                            workingDaysAdded++;
+                        }
+                        if (workingDaysAdded < daysToAdd) {
+                            current.setDate(current.getDate() + 1);
+                        }
+                    }
+                    
+                    const endDate = document.getElementById('adminLeaveEndDate');
+                    endDate.value = current.toISOString().split('T')[0];
+                    updateWorkingDaysDisplay();
+                }
+            });
+        }
+        
+        // Update working days when dates change
+        const startDateField = document.getElementById('adminLeaveStartDate');
+        const endDateField = document.getElementById('adminLeaveEndDate');
+        
+        if (startDateField) {
+            startDateField.addEventListener('change', updateWorkingDaysDisplay);
+        }
+        
+        if (endDateField) {
+            endDateField.addEventListener('change', updateWorkingDaysDisplay);
+        }
+        
+        // Initialize with current dates
+        if (startDateField && endDateField) {
+            const today = new Date().toISOString().split('T')[0];
+            if (!startDateField.value) startDateField.value = today;
+            if (!endDateField.value) endDateField.value = today;
+            updateWorkingDaysDisplay();
+        }
     }
     
     window.closeEditEmploymentHistoryModal = function() {

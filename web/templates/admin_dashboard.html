@@ -545,50 +545,141 @@
                     
                     <!-- Submit Leave Request Subtab -->
                     <div id="leaveSubmitSubtab" class="subtab-content">
-                        <h3>Submit Leave Request (Admin)</h3>
+                        <h3>👨‍💼 Submit Leave Request (Admin)</h3>
                         <div class="form-section">
                             <form id="adminLeaveRequestForm">
-                                <div class="form-row">
+                                <!-- Employee Selection Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">👤 Employee Selection</legend>
                                     <div class="form-group">
                                         <label for="adminLeaveEmployeeId">Employee:</label>
                                         <select id="adminLeaveEmployeeId" name="employee_id" required>
-                                            <option value="">Select Employee</option>
+                                            <option value="">Select or search employee...</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="adminLeaveType">Leave Type:</label>
-                                        <select id="adminLeaveType" name="leave_type" required>
-                                            <option value="">Select leave type</option>
-                                            <option value="annual">Annual Leave</option>
-                                            <option value="sick">Sick Leave</option>
-                                            <option value="emergency">Emergency Leave</option>
-                                            <option value="unpaid">Unpaid Leave</option>
-                                            <option value="maternity">Maternity Leave</option>
-                                            <option value="paternity">Paternity Leave</option>
+                                </fieldset>
+
+                                <!-- Employee Leave Balance Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 2px solid #ccc; border-radius: 8px; background-color: #f8f9fa;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">📊 Employee Leave Balance</legend>
+                                    <div id="adminLeaveBalanceDisplay" style="padding: 10px;">
+                                        <div style="font-size: 14px; color: #2e7d32; margin: 5px 0;">
+                                            <strong>Annual Leave:</strong> <span id="adminAnnualBalance">Select an employee to view balance</span>
+                                        </div>
+                                        <div style="font-size: 14px; color: #d32f2f; margin: 5px 0;">
+                                            <strong>Sick Leave:</strong> <span id="adminSickBalance">Select an employee to view balance</span>
+                                        </div>
+                                        <button type="button" id="adminRefreshBalance" class="btn-secondary" style="margin-top: 10px;">🔄 Refresh Balance</button>
+                                    </div>
+                                </fieldset>
+
+                                <!-- Leave Request Details Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">📝 Leave Request Details</legend>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="adminLeaveType">Leave Type:</label>
+                                            <select id="adminLeaveType" name="leave_type" required>
+                                                <option value="">Select leave type</option>
+                                                <option value="sick">Sick</option>
+                                                <option value="hospitalization">Hospitalization</option>
+                                                <option value="annual">Annual</option>
+                                                <option value="emergency">Emergency</option>
+                                                <option value="unpaid">Unpaid</option>
+                                                <option value="maternity">Maternity</option>
+                                                <option value="paternity">Paternity</option>
+                                                <option value="others">Others</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="adminLeaveState">State (for holiday rules):</label>
+                                            <select id="adminLeaveState" name="state">
+                                                <option value="All Malaysia">All Malaysia</option>
+                                                <option value="JOHORE">JOHORE</option>
+                                                <option value="KEDAH">KEDAH</option>
+                                                <option value="KELANTAN">KELANTAN</option>
+                                                <option value="MELAKA">MELAKA</option>
+                                                <option value="NEGERI SEMBILAN">NEGERI SEMBILAN</option>
+                                                <option value="PAHANG">PAHANG</option>
+                                                <option value="PERAK">PERAK</option>
+                                                <option value="PERLIS">PERLIS</option>
+                                                <option value="PULAU PINANG">PULAU PINANG</option>
+                                                <option value="SELANGOR">SELANGOR</option>
+                                                <option value="TERENGGANU">TERENGGANU</option>
+                                                <option value="KUALA LUMPUR">KUALA LUMPUR</option>
+                                                <option value="PUTRAJAYA">PUTRAJAYA</option>
+                                                <option value="LABUAN">LABUAN</option>
+                                                <option value="SABAH">SABAH</option>
+                                                <option value="SARAWAK">SARAWAK</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Half Day Controls -->
+                                    <div class="form-group" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                        <label style="margin: 0;">
+                                            <input type="checkbox" id="adminLeaveHalfDay" name="is_half_day">
+                                            Half Day Leave (counts as 0.5 day)
+                                        </label>
+                                        <label for="adminHalfDayPeriod" style="margin: 0;">Period:</label>
+                                        <select id="adminHalfDayPeriod" name="half_day_period" style="padding: 5px;">
+                                            <option value="morning">Morning (8:00 AM - 1:00 PM)</option>
+                                            <option value="afternoon">Afternoon (1:00 PM - 6:00 PM)</option>
                                         </select>
                                     </div>
-                                </div>
-                                <div class="form-row">
+
                                     <div class="form-group">
-                                        <label for="adminLeaveStartDate">Start Date:</label>
-                                        <input type="date" id="adminLeaveStartDate" name="start_date" required>
+                                        <label for="adminLeaveTitle">Leave Title:</label>
+                                        <input type="text" id="adminLeaveTitle" name="title" placeholder="Enter a brief title for the leave request..." required>
                                     </div>
+
+                                    <!-- Sick Leave Information (hidden by default, shown for sick leave) -->
+                                    <div id="adminSickLeaveInfo" style="display: none; padding: 10px; background-color: #fff3cd; border-left: 4px solid #ffc107; margin: 10px 0; border-radius: 4px;">
+                                        <p style="margin: 0; color: #856404;">ℹ️ <strong>Sick Leave Information:</strong> Medical certificate may be required for sick leave exceeding certain days as per company policy.</p>
+                                    </div>
+
+                                    <!-- Leave Duration Input -->
                                     <div class="form-group">
-                                        <label for="adminLeaveEndDate">End Date:</label>
-                                        <input type="date" id="adminLeaveEndDate" name="end_date" required>
+                                        <label for="adminLeaveDuration">Leave duration:</label>
+                                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                            <input type="number" id="adminLeaveDuration" name="duration" min="0.5" max="365" step="0.5" value="1" style="width: 100px; padding: 8px;">
+                                            <span>working days</span>
+                                            <span style="color: #666; font-style: italic;">(excludes weekends & holidays)</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="adminLeaveTitle">Reason:</label>
-                                    <input type="text" id="adminLeaveTitle" name="title" placeholder="Brief reason for leave" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>
-                                        <input type="checkbox" id="adminLeaveHalfDay" name="is_half_day">
-                                        Half Day
-                                    </label>
-                                </div>
-                                <button type="submit" class="btn-primary">Submit Leave Request</button>
+
+                                    <!-- Date Selection -->
+                                    <div class="form-group">
+                                        <label>Or select dates:</label>
+                                        <div class="form-row">
+                                            <div class="form-group" style="flex: 1;">
+                                                <label for="adminLeaveStartDate">Start:</label>
+                                                <input type="date" id="adminLeaveStartDate" name="start_date" required>
+                                            </div>
+                                            <div class="form-group" style="flex: 1;">
+                                                <label for="adminLeaveEndDate">End:</label>
+                                                <input type="date" id="adminLeaveEndDate" name="end_date" required>
+                                            </div>
+                                        </div>
+                                        <div id="adminWorkingDaysDisplay" style="color: #555; margin-top: 5px; font-style: italic;">
+                                            Working days: 1 (excludes weekends & holidays)
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <!-- Document Upload Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">📎 Supporting Documents</legend>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <button type="button" id="adminUploadDocument" class="btn-secondary">Upload Document</button>
+                                        <button type="button" id="adminRemoveDocument" class="btn-secondary" style="display: none;">Remove</button>
+                                        <span id="adminDocumentName" style="color: #666;"></span>
+                                    </div>
+                                    <input type="file" id="adminDocumentInput" style="display: none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                </fieldset>
+
+                                <button type="submit" class="btn-primary">Submit Request for Employee</button>
                                 <div id="adminLeaveFormMessage" style="display: none; margin-top: 10px;"></div>
                             </form>
                         </div>
@@ -1436,8 +1527,8 @@
                     
                     <!-- Engagements Subtabs -->
                     <div class="subtabs">
-                        <button class="subtab-button active" data-subtab="engagementsSubmit">Submit</button>
-                        <button class="subtab-button" data-subtab="engagementsView">View All</button>
+                        <button class="subtab-button active" data-subtab="engagementsSubmit">📝 Submit Engagement</button>
+                        <button class="subtab-button" data-subtab="engagementsView">📚 View Engagements</button>
                     </div>
                     
                     <!-- Submit Engagement Subtab -->
