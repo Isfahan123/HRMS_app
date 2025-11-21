@@ -2366,39 +2366,70 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const configName = document.getElementById('varConfigName')?.value || 'default';
             const response = await fetch(`/api/admin/variable-config/${configName}`);
+            
+            // Check if endpoint exists
+            if (response.status === 404) {
+                console.log('⚠️ Variable config API endpoint not yet implemented, using default values');
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.success && data.config) {
                 const config = data.config;
                 
-                // Load EPF Part A values
-                document.getElementById('epfPartAEmployee').value = config.epf_part_a_employee || 11.0;
-                document.getElementById('epfPartAEmployer').value = config.epf_part_a_employer || 12.0;
-                document.getElementById('epfPartAEmployeeOver20k').value = config.epf_part_a_employee_over20k || 11.0;
-                document.getElementById('epfPartAEmployerOver20k').value = config.epf_part_a_employer_over20k || 12.0;
-                document.getElementById('epfPartAEmployerBonus').value = config.epf_part_a_employer_bonus || 13.0;
+                // Load EPF Part A values with null checks
+                const epfPartAEmployee = document.getElementById('epfPartAEmployee');
+                const epfPartAEmployer = document.getElementById('epfPartAEmployer');
+                const epfPartAEmployeeOver20k = document.getElementById('epfPartAEmployeeOver20k');
+                const epfPartAEmployerOver20k = document.getElementById('epfPartAEmployerOver20k');
+                const epfPartAEmployerBonus = document.getElementById('epfPartAEmployerBonus');
                 
-                // Load EPF Part B values
-                document.getElementById('epfPartBEmployee').value = config.epf_part_b_employee || 0.0;
-                document.getElementById('epfPartBEmployer').value = config.epf_part_b_employer || 13.0;
-                document.getElementById('epfPartBEmployeeOver20k').value = config.epf_part_b_employee_over20k || 0.0;
-                document.getElementById('epfPartBEmployerOver20k').value = config.epf_part_b_employer_over20k || 13.0;
+                if (epfPartAEmployee) epfPartAEmployee.value = config.epf_part_a_employee || 11.0;
+                if (epfPartAEmployer) epfPartAEmployer.value = config.epf_part_a_employer || 12.0;
+                if (epfPartAEmployeeOver20k) epfPartAEmployeeOver20k.value = config.epf_part_a_employee_over20k || 11.0;
+                if (epfPartAEmployerOver20k) epfPartAEmployerOver20k.value = config.epf_part_a_employer_over20k || 12.0;
+                if (epfPartAEmployerBonus) epfPartAEmployerBonus.value = config.epf_part_a_employer_bonus || 13.0;
                 
-                // Load EPF Part E values
-                document.getElementById('epfPartEEmployee').value = config.epf_part_e_employee || 0.0;
-                document.getElementById('epfPartEEmployer').value = config.epf_part_e_employer || 4.0;
-                document.getElementById('epfPartEEmployeeOver20k').value = config.epf_part_e_employee_over20k || 0.0;
-                document.getElementById('epfPartEEmployerOver20kFixed').value = config.epf_part_e_employer_over20k_fixed || 5.0;
+                // Load EPF Part B values with null checks
+                const epfPartBEmployee = document.getElementById('epfPartBEmployee');
+                const epfPartBEmployer = document.getElementById('epfPartBEmployer');
+                const epfPartBEmployeeOver20k = document.getElementById('epfPartBEmployeeOver20k');
+                const epfPartBEmployerOver20k = document.getElementById('epfPartBEmployerOver20k');
                 
-                // Load SOCSO values
-                document.getElementById('socsoFirstEmployee').value = config.socso_first_employee || 0.5;
-                document.getElementById('socsoFirstEmployer').value = config.socso_first_employer || 1.75;
-                document.getElementById('socsoSecondEmployee').value = config.socso_second_employee || 0.0;
-                document.getElementById('socsoSecondEmployer').value = config.socso_second_employer || 1.25;
+                if (epfPartBEmployee) epfPartBEmployee.value = config.epf_part_b_employee || 0.0;
+                if (epfPartBEmployer) epfPartBEmployer.value = config.epf_part_b_employer || 13.0;
+                if (epfPartBEmployeeOver20k) epfPartBEmployeeOver20k.value = config.epf_part_b_employee_over20k || 0.0;
+                if (epfPartBEmployerOver20k) epfPartBEmployerOver20k.value = config.epf_part_b_employer_over20k || 13.0;
                 
-                // Load EIS values
-                document.getElementById('eisEmployee').value = config.eis_employee || 0.2;
-                document.getElementById('eisEmployer').value = config.eis_employer || 0.2;
+                // Load EPF Part E values with null checks
+                const epfPartEEmployee = document.getElementById('epfPartEEmployee');
+                const epfPartEEmployer = document.getElementById('epfPartEEmployer');
+                const epfPartEEmployeeOver20k = document.getElementById('epfPartEEmployeeOver20k');
+                const epfPartEEmployerOver20kFixed = document.getElementById('epfPartEEmployerOver20kFixed');
+                
+                if (epfPartEEmployee) epfPartEEmployee.value = config.epf_part_e_employee || 0.0;
+                if (epfPartEEmployer) epfPartEEmployer.value = config.epf_part_e_employer || 4.0;
+                if (epfPartEEmployeeOver20k) epfPartEEmployeeOver20k.value = config.epf_part_e_employee_over20k || 0.0;
+                if (epfPartEEmployerOver20kFixed) epfPartEEmployerOver20kFixed.value = config.epf_part_e_employer_over20k_fixed || 5.0;
+                
+                // Load SOCSO values with null checks
+                const socsoFirstEmployee = document.getElementById('socsoFirstEmployee');
+                const socsoFirstEmployer = document.getElementById('socsoFirstEmployer');
+                const socsoSecondEmployee = document.getElementById('socsoSecondEmployee');
+                const socsoSecondEmployer = document.getElementById('socsoSecondEmployer');
+                
+                if (socsoFirstEmployee) socsoFirstEmployee.value = config.socso_first_employee || 0.5;
+                if (socsoFirstEmployer) socsoFirstEmployer.value = config.socso_first_employer || 1.75;
+                if (socsoSecondEmployee) socsoSecondEmployee.value = config.socso_second_employee || 0.0;
+                if (socsoSecondEmployer) socsoSecondEmployer.value = config.socso_second_employer || 1.25;
+                
+                // Load EIS values with null checks
+                const eisEmployee = document.getElementById('eisEmployee');
+                const eisEmployer = document.getElementById('eisEmployer');
+                
+                if (eisEmployee) eisEmployee.value = config.eis_employee || 0.2;
+                if (eisEmployer) eisEmployer.value = config.eis_employer || 0.2;
                 
                 console.log('✅ Loaded variable percentage configuration:', configName);
             } else {
@@ -2414,34 +2445,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save variable percentage configuration
     window.saveVariableConfig = async function() {
         try {
-            const configName = document.getElementById('varConfigName').value || 'default';
+            const configName = document.getElementById('varConfigName')?.value || 'default';
+            
+            // Helper function to safely get and parse float values
+            const safeParseFloat = (elementId, defaultValue) => {
+                const element = document.getElementById(elementId);
+                if (!element || !element.value) return defaultValue;
+                const value = parseFloat(element.value);
+                return isNaN(value) ? defaultValue : value;
+            };
             
             const config = {
                 config_name: configName,
                 // EPF Part A
-                epf_part_a_employee: parseFloat(document.getElementById('epfPartAEmployee').value),
-                epf_part_a_employer: parseFloat(document.getElementById('epfPartAEmployer').value),
-                epf_part_a_employee_over20k: parseFloat(document.getElementById('epfPartAEmployeeOver20k').value),
-                epf_part_a_employer_over20k: parseFloat(document.getElementById('epfPartAEmployerOver20k').value),
-                epf_part_a_employer_bonus: parseFloat(document.getElementById('epfPartAEmployerBonus').value),
+                epf_part_a_employee: safeParseFloat('epfPartAEmployee', 11.0),
+                epf_part_a_employer: safeParseFloat('epfPartAEmployer', 12.0),
+                epf_part_a_employee_over20k: safeParseFloat('epfPartAEmployeeOver20k', 11.0),
+                epf_part_a_employer_over20k: safeParseFloat('epfPartAEmployerOver20k', 12.0),
+                epf_part_a_employer_bonus: safeParseFloat('epfPartAEmployerBonus', 13.0),
                 // EPF Part B
-                epf_part_b_employee: parseFloat(document.getElementById('epfPartBEmployee').value),
-                epf_part_b_employer: parseFloat(document.getElementById('epfPartBEmployer').value),
-                epf_part_b_employee_over20k: parseFloat(document.getElementById('epfPartBEmployeeOver20k').value),
-                epf_part_b_employer_over20k: parseFloat(document.getElementById('epfPartBEmployerOver20k').value),
+                epf_part_b_employee: safeParseFloat('epfPartBEmployee', 0.0),
+                epf_part_b_employer: safeParseFloat('epfPartBEmployer', 13.0),
+                epf_part_b_employee_over20k: safeParseFloat('epfPartBEmployeeOver20k', 0.0),
+                epf_part_b_employer_over20k: safeParseFloat('epfPartBEmployerOver20k', 13.0),
                 // EPF Part E
-                epf_part_e_employee: parseFloat(document.getElementById('epfPartEEmployee').value),
-                epf_part_e_employer: parseFloat(document.getElementById('epfPartEEmployer').value),
-                epf_part_e_employee_over20k: parseFloat(document.getElementById('epfPartEEmployeeOver20k').value),
-                epf_part_e_employer_over20k_fixed: parseFloat(document.getElementById('epfPartEEmployerOver20kFixed').value),
+                epf_part_e_employee: safeParseFloat('epfPartEEmployee', 0.0),
+                epf_part_e_employer: safeParseFloat('epfPartEEmployer', 4.0),
+                epf_part_e_employee_over20k: safeParseFloat('epfPartEEmployeeOver20k', 0.0),
+                epf_part_e_employer_over20k_fixed: safeParseFloat('epfPartEEmployerOver20kFixed', 5.0),
                 // SOCSO
-                socso_first_employee: parseFloat(document.getElementById('socsoFirstEmployee').value),
-                socso_first_employer: parseFloat(document.getElementById('socsoFirstEmployer').value),
-                socso_second_employee: parseFloat(document.getElementById('socsoSecondEmployee').value),
-                socso_second_employer: parseFloat(document.getElementById('socsoSecondEmployer').value),
+                socso_first_employee: safeParseFloat('socsoFirstEmployee', 0.5),
+                socso_first_employer: safeParseFloat('socsoFirstEmployer', 1.75),
+                socso_second_employee: safeParseFloat('socsoSecondEmployee', 0.0),
+                socso_second_employer: safeParseFloat('socsoSecondEmployer', 1.25),
                 // EIS
-                eis_employee: parseFloat(document.getElementById('eisEmployee').value),
-                eis_employer: parseFloat(document.getElementById('eisEmployer').value)
+                eis_employee: safeParseFloat('eisEmployee', 0.2),
+                eis_employer: safeParseFloat('eisEmployer', 0.2)
             };
             
             const response = await fetch('/api/admin/variable-config', {
@@ -2452,11 +2491,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(config)
             });
             
+            // Check if endpoint exists
+            if (response.status === 404) {
+                alert('⚠️ Save functionality requires backend API implementation.\n\nConfiguration changes are currently stored locally in the browser only.\n\nAPI endpoint needed: POST /api/admin/variable-config');
+                console.warn('Variable config save API endpoint not yet implemented');
+                return;
+            }
+            
             const result = await response.json();
             
             if (result.success) {
                 alert(`✅ Configuration "${configName}" saved successfully!`);
-                document.getElementById('configNameDisplay').textContent = configName;
+                const displayElement = document.getElementById('configNameDisplay');
+                if (displayElement) displayElement.textContent = configName;
             } else {
                 alert(`❌ Failed to save configuration: ${result.message || 'Unknown error'}`);
             }
