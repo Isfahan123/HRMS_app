@@ -1,6 +1,30 @@
 // Dashboard JavaScript logic
 // Handles employee dashboard functionality and API calls
 
+// Helper function to format currency values safely
+function formatCurrency(value) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+        return '-';
+    }
+    return `RM ${numValue.toFixed(2)}`;
+}
+
+// Helper function to format numeric values safely
+function formatNumber(value, decimals = 2) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+        return '-';
+    }
+    return numValue.toFixed(decimals);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Check if user is logged in
     const userEmail = sessionStorage.getItem('userEmail');
@@ -33,13 +57,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('welcomeMessage').textContent = 
                     `Welcome, ${employee.full_name || employee.email}`;
                 
-                // Update profile tab
+                // Update profile tab - Basic Information
                 document.getElementById('profileName').textContent = employee.full_name || '-';
                 document.getElementById('profileEmail').textContent = employee.email || '-';
-                document.getElementById('profileDepartment').textContent = employee.department || '-';
-                document.getElementById('profilePosition').textContent = employee.position || '-';
+                document.getElementById('profileEmployeeID').textContent = employee.employee_id || '-';
+                document.getElementById('profileGender').textContent = employee.gender || '-';
+                document.getElementById('profileDOB').textContent = employee.date_of_birth || '-';
+                document.getElementById('profileNRIC').textContent = employee.nric || '-';
+                document.getElementById('profileNationality').textContent = employee.nationality || '-';
+                document.getElementById('profileCitizenship').textContent = employee.citizenship || '-';
+                document.getElementById('profileRace').textContent = employee.race || '-';
+                document.getElementById('profileReligion').textContent = employee.religion || '-';
+                document.getElementById('profileMaritalStatus').textContent = employee.marital_status || '-';
+                document.getElementById('profileChildren').textContent = employee.number_of_children || '-';
+                
+                // Contact Information
                 document.getElementById('profilePhone').textContent = employee.phone_number || '-';
                 document.getElementById('profileAddress').textContent = employee.address || '-';
+                document.getElementById('profileCity').textContent = employee.city || '-';
+                document.getElementById('profileState').textContent = employee.state || '-';
+                document.getElementById('profileZipcode').textContent = employee.zipcode || '-';
+                
+                // Employment Information
+                document.getElementById('profileDepartment').textContent = employee.department || '-';
+                document.getElementById('profilePosition').textContent = employee.position || '-';
+                document.getElementById('profileStatus').textContent = employee.employment_status || '-';
+                document.getElementById('profileJoinDate').textContent = employee.join_date || '-';
+                
+                // EPF/SOCSO Information
+                document.getElementById('profileEPFNumber').textContent = employee.epf_number || '-';
+                document.getElementById('profileSOCSONumber').textContent = employee.socso_number || '-';
+                document.getElementById('profileTaxNumber').textContent = employee.income_tax_number || '-';
             }
             
             // Load attendance data
@@ -172,8 +220,8 @@ document.addEventListener('DOMContentLoaded', function() {
         records.forEach(record => {
             html += '<tr>';
             html += `<td>${record.month_year || '-'}</td>`;
-            html += `<td>RM ${parseFloat(record.basic_salary || 0).toFixed(2)}</td>`;
-            html += `<td>RM ${parseFloat(record.net_pay || 0).toFixed(2)}</td>`;
+            html += `<td>${formatCurrency(record.basic_salary)}</td>`;
+            html += `<td>${formatCurrency(record.net_pay)}</td>`;
             html += `<td>${record.status || '-'}</td>`;
             html += `<td><button class="btn-primary" onclick="downloadPayslip('${record.id}', '${record.month_year}')">Download PDF</button></td>`;
             html += '</tr>';

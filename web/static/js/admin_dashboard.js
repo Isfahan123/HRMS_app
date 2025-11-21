@@ -1,6 +1,30 @@
 // Admin Dashboard JavaScript logic
 // Handles admin dashboard functionality and API calls
 
+// Helper function to format currency values safely
+function formatCurrency(value) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+        return '-';
+    }
+    return `RM ${numValue.toFixed(2)}`;
+}
+
+// Helper function to format numeric values safely
+function formatNumber(value, decimals = 2) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+        return '-';
+    }
+    return numValue.toFixed(decimals);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Check if user is logged in as admin
     const userEmail = sessionStorage.getItem('userEmail');
@@ -281,10 +305,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const employeeName = run.employee_name || run.employee?.full_name || run.employee_email || '-';
             html += `<td>${employeeName}</td>`;
             html += `<td>${run.month_year || run.payroll_date || '-'}</td>`;
-            html += `<td>RM ${parseFloat(run.basic_salary || 0).toFixed(2)}</td>`;
-            html += `<td>RM ${parseFloat(run.gross_pay || 0).toFixed(2)}</td>`;
-            html += `<td>RM ${parseFloat(run.total_deductions || 0).toFixed(2)}</td>`;
-            html += `<td>RM ${parseFloat(run.net_pay || 0).toFixed(2)}</td>`;
+            html += `<td>${formatCurrency(run.basic_salary)}</td>`;
+            html += `<td>${formatCurrency(run.gross_pay)}</td>`;
+            html += `<td>${formatCurrency(run.total_deductions)}</td>`;
+            html += `<td>${formatCurrency(run.net_pay)}</td>`;
             html += `<td>${run.status || '-'}</td>`;
             html += '</tr>';
         });
@@ -1027,9 +1051,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         bonuses.forEach(bonus => {
             html += '<tr>';
-            html += `<td style="padding: 12px;">${bonus.employees?.full_name || bonus.employee_id}</td>`;
+            html += `<td style="padding: 12px;">${bonus.employees?.full_name || bonus.employee_id || '-'}</td>`;
             html += `<td style="padding: 12px;">${bonus.bonus_type || '-'}</td>`;
-            html += `<td style="padding: 12px; text-align: right;">RM ${parseFloat(bonus.amount || 0).toFixed(2)}</td>`;
+            html += `<td style="padding: 12px; text-align: right;">${formatCurrency(bonus.amount)}</td>`;
             html += `<td style="padding: 12px;">${bonus.description || '-'}</td>`;
             html += `<td style="padding: 12px;">${bonus.pay_period || '-'}</td>`;
             html += `<td style="padding: 12px; text-align: center;">${bonus.status || '-'}</td>`;
@@ -1653,6 +1677,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '</tr></thead><tbody>';
                 
                 filteredData.forEach(record => {
+                    // Parse salary values, defaulting to 0 for calculation purposes
                     const prevSalary = parseFloat(record.previous_value) || 0;
                     const newSalary = parseFloat(record.new_value) || 0;
                     const change = newSalary - prevSalary;
@@ -1665,9 +1690,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const employeeName = record.employee_name || record.employee_email || record.employee?.full_name || '-';
                     html += `<td style="padding: 10px;">${employeeName}</td>`;
                     html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; color: #1976d2; font-size: 12px;">${record.change_type || '-'}</span></td>`;
-                    html += `<td style="padding: 10px;">RM ${prevSalary.toFixed(2)}</td>`;
-                    html += `<td style="padding: 10px;"><strong>RM ${newSalary.toFixed(2)}</strong></td>`;
-                    html += `<td style="padding: 10px; color: ${changeColor};"><strong>${change >= 0 ? '+' : ''}RM ${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)</strong></td>`;
+                    html += `<td style="padding: 10px;">${formatCurrency(record.previous_value)}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${formatCurrency(record.new_value)}</strong></td>`;
+                    // Only show change if both values exist
+                    if (record.previous_value && record.new_value) {
+                        html += `<td style="padding: 10px; color: ${changeColor};"><strong>${change >= 0 ? '+' : ''}RM ${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)</strong></td>`;
+                    } else {
+                        html += `<td style="padding: 10px;">-</td>`;
+                    }
                     html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
                     html += '<td style="padding: 10px;">';
                     html += `<button class="btn-secondary btn-sm" onclick="editSalaryHistory('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
@@ -2006,11 +2036,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${record.type || '-'}</span></td>`;
                     html += `<td style="padding: 10px;"><strong>${record.title || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    // Show employee name first, fall back to email if name not available
+                    html += `<td style="padding: 10px;">${record.employee_name || record.employees?.full_name || record.employee_email || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.start_date || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.end_date || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.location || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${record.cost ? 'RM ' + parseFloat(record.cost).toFixed(2) : '-'}</td>`;
+                    html += `<td style="padding: 10px;">${formatCurrency(record.cost)}</td>`;
                     html += `<td style="padding: 10px;"><span style="color: ${statusColor}; font-weight: bold;">${record.status || '-'}</span></td>`;
                     html += '<td style="padding: 10px;">';
                     html += `<button class="btn-secondary btn-sm" onclick="editEngagement('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
@@ -2142,7 +2173,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 filteredData.forEach(record => {
                     html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;">${record.employee_email || record.employee_name || '-'}</td>`;
+                    // Show employee name first, fall back to email if name not available
+                    html += `<td style="padding: 10px;">${record.employee_name || record.employees?.full_name || record.employee_email || '-'}</td>`;
                     html += `<td style="padding: 10px;"><strong>${record.company || '-'}</strong></td>`;
                     html += `<td style="padding: 10px;">${record.job_title || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.position || '-'}</td>`;

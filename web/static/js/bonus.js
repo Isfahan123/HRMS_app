@@ -100,11 +100,15 @@ class BonusManager {
         let html = '';
         this.bonuses.forEach(bonus => {
             const statusBadge = this.getStatusBadge(bonus.status);
+            // Format amount safely
+            const formattedAmount = bonus.amount && !isNaN(parseFloat(bonus.amount)) 
+                ? `RM ${parseFloat(bonus.amount).toFixed(2)}` 
+                : '-';
             html += `
                 <tr>
                     <td>${bonus.employee_name || '-'}</td>
                     <td>${bonus.bonus_type || '-'}</td>
-                    <td>RM ${parseFloat(bonus.amount || 0).toFixed(2)}</td>
+                    <td>${formattedAmount}</td>
                     <td>${bonus.description || '-'}</td>
                     <td>${bonus.effective_date || '-'}</td>
                     <td><span class="badge badge-${statusBadge}">${bonus.status}</span></td>
