@@ -159,8 +159,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!container) return;
             
             if (data.success && data.data && data.data.length > 0) {
-                const tableHtml = buildLeaveRequestsTable(data.data);
-                container.innerHTML = tableHtml;
+                // Filter to show ONLY pending requests
+                const pendingRequests = data.data.filter(r => r.status === 'pending');
+                
+                if (pendingRequests.length > 0) {
+                    const tableHtml = buildLeaveRequestsTable(pendingRequests);
+                    container.innerHTML = tableHtml;
+                } else {
+                    container.innerHTML = '<p>No pending leave requests found.</p>';
+                }
             } else {
                 container.innerHTML = '<p>No leave requests found.</p>';
             }
@@ -854,6 +861,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const subtabContent = document.getElementById(subtabName + 'Subtab');
                 if (subtabContent) {
                     subtabContent.classList.add('active');
+                }
+                
+                // Load data when specific subtabs are activated
+                if (subtabName === 'leavePending') {
+                    console.log('🔄 Loading pending leave requests...');
+                    loadLeaveRequests();
+                } else if (subtabName === 'leaveApprovedRejected') {
+                    console.log('🔄 Loading approved/rejected leave requests...');
+                    loadApprovedRejectedLeaveRequests();
                 }
             });
         });
