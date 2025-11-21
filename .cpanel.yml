@@ -1,0 +1,18 @@
+---
+deployment:
+  tasks:
+    - echo "Starting deployment of HRMS_app..."
+    
+    # Activate the virtual environment
+    - source /home/$CPANEL_USER/virtualenv/HRMS_app/3.11/bin/activate
+
+    # Install dependencies
+    - echo "Installing Python dependencies..."
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+
+    # Force Passenger to reload the application
+    - echo "Reloading Passenger..."
+    - touch passenger_wsgi.py
+
+    - echo "Deployment completed successfully."
