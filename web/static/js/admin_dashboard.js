@@ -1287,7 +1287,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     messageDiv.className = 'success-message';
                     messageDiv.textContent = data.message;
+                    
+                    // Upload files if employee was created successfully
+                    const employeeId = data.employee_id || formData.employee_id;
+                    if (employeeId) {
+                        // Upload profile picture if selected
+                        const profilePicInput = document.getElementById('newEmpProfilePic');
+                        if (profilePicInput && profilePicInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, profilePicInput.files[0], 'profile-picture');
+                        }
+                        
+                        // Upload resume if selected
+                        const resumeInput = document.getElementById('newEmpResume');
+                        if (resumeInput && resumeInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, resumeInput.files[0], 'resume');
+                        }
+                    }
+                    
                     newEmployeeForm.reset();
+                    clearProfilePicPreview('new');
+                    clearResume('new');
                     
                     // Reload employee list
                     loadEmployeeList();
@@ -1333,10 +1352,16 @@ document.addEventListener('DOMContentLoaded', function() {
             messageDiv.textContent = 'Processing payroll... This may take a few minutes.';
             
             try {
+                // Get current calculation method
+                const calculationMethod = document.getElementById('fixedRateBtn').classList.contains('active') ? 'fixed' : 'variable';
+                
                 const response = await fetch('/api/admin/payroll/run', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payroll_date: payrollDate })
+                    body: JSON.stringify({ 
+                        payroll_date: payrollDate,
+                        calculation_method: calculationMethod
+                    })
                 });
                 
                 const data = await response.json();
@@ -1359,6 +1384,85 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             }
         });
+        
+        // Refresh payroll button
+        const refreshPayrollBtn = document.getElementById('refreshPayrollBtn');
+        if (refreshPayrollBtn) {
+            refreshPayrollBtn.addEventListener('click', function() {
+                loadPayrollRuns();
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'success-message';
+                messageDiv.textContent = 'Payroll history refreshed';
+            });
+        }
+        
+        // TP1 Reliefs button
+        const tp1ReliefsBtn = document.getElementById('tp1ReliefsBtn');
+        if (tp1ReliefsBtn) {
+            tp1ReliefsBtn.addEventListener('click', function() {
+                // Show info message using the payroll message div
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'info-message';
+                messageDiv.style.backgroundColor = '#e3f2fd';
+                messageDiv.style.color = '#1976d2';
+                messageDiv.style.border = '1px solid #90caf9';
+                messageDiv.textContent = 'ℹ️ TP1 Relief Claims: This feature allows entering per-item TP1 relief claims for selected employees. Backend API implementation is pending.';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            });
+        }
+        
+        // Calculation method toggle buttons
+        const fixedRateBtn = document.getElementById('fixedRateBtn');
+        const variablePercentBtn = document.getElementById('variablePercentBtn');
+        const methodStatusLabel = document.getElementById('methodStatusLabel');
+        
+        if (fixedRateBtn && variablePercentBtn) {
+            fixedRateBtn.addEventListener('click', async function() {
+                if (!this.classList.contains('active')) {
+                    fixedRateBtn.classList.add('active');
+                    variablePercentBtn.classList.remove('active');
+                    methodStatusLabel.textContent = '🔢 Current: Fixed Rate Calculation';
+                    methodStatusLabel.style.color = 'green';
+                    
+                    // Persist preference to backend (gracefully handle if endpoint doesn't exist yet)
+                    try {
+                        await fetch('/api/admin/payroll/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ calculation_method: 'fixed' })
+                        });
+                        console.log('Switched to Fixed Rate calculation method');
+                    } catch (error) {
+                        console.log('Note: Calculation method preference not persisted (API pending)');
+                    }
+                }
+            });
+            
+            variablePercentBtn.addEventListener('click', async function() {
+                if (!this.classList.contains('active')) {
+                    variablePercentBtn.classList.add('active');
+                    fixedRateBtn.classList.remove('active');
+                    methodStatusLabel.textContent = '📊 Current: Variable Percentage Calculation';
+                    methodStatusLabel.style.color = 'blue';
+                    
+                    // Persist preference to backend (gracefully handle if endpoint doesn't exist yet)
+                    try {
+                        await fetch('/api/admin/payroll/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ calculation_method: 'variable' })
+                        });
+                        console.log('Switched to Variable Percentage calculation method');
+                    } catch (error) {
+                        console.log('Note: Calculation method preference not persisted (API pending)');
+                    }
+                }
+            });
+        }
     }
     
     async function loadBonuses() {
@@ -2678,6 +2782,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageDiv.className = 'success-message';
                     messageDiv.textContent = 'Employee updated successfully!';
                     
+                    // Upload files if employee was updated successfully
+                    if (employeeId) {
+                        // Upload profile picture if selected
+                        const profilePicInput = document.getElementById('editEmpProfilePic');
+                        if (profilePicInput && profilePicInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, profilePicInput.files[0], 'profile-picture');
+                        }
+                        
+                        // Upload resume if selected
+                        const resumeInput = document.getElementById('editEmpResume');
+                        if (resumeInput && resumeInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, resumeInput.files[0], 'resume');
+                        }
+                    }
+                    
                     // Refresh the employee list
                     setTimeout(() => {
                         closeEditEmployeeModal();
@@ -3522,4 +3641,29 @@ function clearResume(formType) {
     
     if (input) input.value = '';
     if (nameDiv) nameDiv.textContent = 'No file selected';
+}
+
+async function uploadEmployeeFile(employeeId, file, fileType) {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`/api/employees/${employeeId}/${fileType}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log(`${fileType} uploaded successfully:`, data);
+        } else {
+            console.error(`Error uploading ${fileType}:`, data.message);
+        }
+        
+        return data;
+    } catch (error) {
+        console.error(`Error uploading ${fileType}:`, error);
+        return { success: false, message: error.message };
+    }
 }

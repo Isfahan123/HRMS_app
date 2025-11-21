@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 import os
 import csv
 import io
+import requests
 from datetime import datetime
 
 # Import existing services and business logic
@@ -28,7 +29,11 @@ from services.supabase_service import (
     insert_employee,
     update_employee,
     run_payroll,
-    delete_employee
+    delete_employee,
+    upload_profile_picture,
+    upload_resume,
+    get_payroll_settings,
+    update_payroll_settings
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -1916,6 +1921,101 @@ async def delete_holiday(holiday_id: int):
         print(f"Error deleting holiday: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/holidays/import-malaysia")
+async def import_malaysia_holidays(year: int, state: Optional[str] = None):
+    """Auto-import Malaysia public holidays for a specific year"""
+    try:
+        # Validate year parameter
+        if year < 1900 or year > 2100:
+            return {
+                "success": False,
+                "message": "Year must be between 1900 and 2100"
+            }
+        
+        from core.holidays_service import get_holidays_for_year
+        from services.supabase_service import insert_calendar_holiday, find_calendar_holidays_for_year
+        
+        # Normalize state parameter
+        normalized_state = None if (not state or state == 'All Malaysia') else state
+        
+        # Get holidays from python-holidays library
+        holidays_set, holiday_details = get_holidays_for_year(
+            year, 
+            state=normalized_state,
+            include_national=True,
+            include_observances=True
+        )
+        
+        # Fetch existing holidays for this year upfront (avoid N+1 query pattern)
+        existing_holidays = find_calendar_holidays_for_year(year, state=normalized_state)
+        existing_dates = {h.get('date') for h in existing_holidays if h.get('date')}
+        
+        imported_count = 0
+        skipped_count = 0
+        errors = []
+        
+        for holiday_date in holidays_set:
+            date_str = holiday_date.isoformat()
+            
+            # Check if holiday already exists (in-memory check)
+            if date_str in existing_dates:
+                skipped_count += 1
+                continue
+            
+            # Get holiday name from details
+            holiday_names = holiday_details.get(date_str, [])
+            
+            # Use first name or create a generic name
+            if holiday_names:
+                # Extract just the holiday name (remove provider prefix)
+                name = holiday_names[0]
+                if ':' in name:
+                    name = name.split(':', 1)[1].strip()
+                # Remove location brackets for cleaner display
+                if '[' in name:
+                    name = name.split('[')[0].strip()
+            else:
+                name = "Public Holiday"
+            
+            # Determine if national or state-specific
+            is_national = (normalized_state is None)
+            is_observance = False  # Can be enhanced to detect observances
+            
+            # Insert new holiday using existing service function
+            try:
+                success = insert_calendar_holiday(
+                    date_str=date_str,
+                    name=name,
+                    state=normalized_state,
+                    is_national=is_national,
+                    is_observance=is_observance
+                )
+                if success:
+                    imported_count += 1
+                    existing_dates.add(date_str)  # Update cache
+                else:
+                    errors.append(f"Failed to import {name} on {date_str}")
+            except Exception as e:
+                errors.append(f"Failed to import {name} on {date_str}: {str(e)}")
+        
+        return {
+            "success": True,
+            "message": f"Imported {imported_count} holidays, skipped {skipped_count} duplicates",
+            "data": {
+                "imported": imported_count,
+                "skipped": skipped_count,
+                "errors": errors
+            }
+        }
+    except ImportError:
+        return {
+            "success": False,
+            "message": "Holiday library not available. Please install 'holidays' package: pip install holidays"
+        }
+    except Exception as e:
+        print(f"Error importing Malaysia holidays: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 # Helper function to generate CSV from data
 def generate_csv(headers: List[str], rows: List[List[Any]]) -> StreamingResponse:
     """Generate a CSV file from headers and rows"""
@@ -2269,6 +2369,269 @@ async def export_payroll_runs_csv():
     except Exception as e:
         print(f"Error exporting payroll runs: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# File Upload Endpoints
+# ============================================================================
+
+@app.post("/api/employees/{employee_id}/profile-picture")
+async def upload_employee_profile_picture(employee_id: str, file: UploadFile = File(...)):
+    """Upload profile picture for an employee"""
+    try:
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('image/'):
+            return {"success": False, "message": "Only image files are allowed"}
+        
+        # Validate file size (5MB limit)
+        contents = await file.read()
+        if len(contents) > 5 * 1024 * 1024:
+            return {"success": False, "message": "File size must be less than 5MB"}
+        
+        # Save temporarily
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"profile_{employee_id}_{file.filename}")
+        
+        with open(temp_path, "wb") as f:
+            f.write(contents)
+        
+        # Upload to Supabase storage
+        photo_url = upload_profile_picture(temp_path, employee_id)
+        
+        # Clean up temp file
+        try:
+            os.remove(temp_path)
+        except (OSError, FileNotFoundError) as e:
+            print(f"Warning: Could not remove temp file: {e}")
+        
+        if photo_url:
+            return {
+                "success": True, 
+                "message": "Profile picture uploaded successfully",
+                "photo_url": photo_url
+            }
+        else:
+            return {"success": False, "message": "Failed to upload profile picture"}
+    
+    except Exception as e:
+        print(f"Error uploading profile picture: {str(e)}")
+        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+
+@app.post("/api/employees/{employee_id}/resume")
+async def upload_employee_resume(employee_id: str, file: UploadFile = File(...)):
+    """Upload resume/CV for an employee"""
+    try:
+        # Validate file type
+        allowed_types = ['application/pdf', 'application/msword', 
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        if not file.content_type or file.content_type not in allowed_types:
+            return {"success": False, "message": "Only PDF, DOC, and DOCX files are allowed"}
+        
+        # Validate file size (10MB limit)
+        contents = await file.read()
+        if len(contents) > 10 * 1024 * 1024:
+            return {"success": False, "message": "File size must be less than 10MB"}
+        
+        # Save temporarily
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"resume_{employee_id}_{file.filename}")
+        
+        with open(temp_path, "wb") as f:
+            f.write(contents)
+        
+        # Upload to Supabase storage
+        resume_url = upload_resume(temp_path, employee_id)
+        
+        # Clean up temp file
+        try:
+            os.remove(temp_path)
+        except (OSError, FileNotFoundError) as e:
+            print(f"Warning: Could not remove temp file: {e}")
+        
+        if resume_url:
+            return {
+                "success": True, 
+                "message": "Resume uploaded successfully",
+                "resume_url": resume_url
+            }
+        else:
+            return {"success": False, "message": "Failed to upload resume"}
+    
+    except Exception as e:
+        print(f"Error uploading resume: {str(e)}")
+        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+
+# ============================================================================
+# Payroll Settings Endpoints
+# ============================================================================
+
+@app.get("/api/admin/payroll/settings")
+async def get_payroll_settings_api():
+    """Get current payroll settings (calculation method preference)"""
+    try:
+        settings = get_payroll_settings()
+        return {
+            "success": True,
+            "data": settings
+        }
+    except Exception as e:
+        print(f"Error getting payroll settings: {str(e)}")
+        return {
+            "success": False, 
+            "message": str(e),
+            "data": {"calculation_method": "fixed"}
+        }
+
+@app.post("/api/admin/payroll/settings")
+async def update_payroll_settings_api(settings: Dict[str, Any]):
+    """Update payroll settings (calculation method preference)"""
+    try:
+        calculation_method = settings.get('calculation_method')
+        
+        if calculation_method and calculation_method not in ['fixed', 'variable']:
+            return {
+                "success": False,
+                "message": "calculation_method must be 'fixed' or 'variable'"
+            }
+        
+        # Update settings
+        success = update_payroll_settings(
+            calculation_method=calculation_method,
+            active_variable_config=settings.get('active_variable_config')
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Payroll settings updated successfully"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to update payroll settings"
+            }
+    
+    except Exception as e:
+        print(f"Error updating payroll settings: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+# ============================================================================
+# TP1 Relief Claims Endpoints (Placeholder for future implementation)
+# ============================================================================
+
+@app.get("/api/admin/tp1-reliefs/{employee_id}")
+async def get_tp1_reliefs(employee_id: str, year: Optional[int] = None, month: Optional[int] = None):
+    """Get TP1 relief claims for an employee (placeholder)"""
+    return {
+        "success": False,
+        "message": "TP1 relief claims API is not yet implemented. This endpoint is reserved for future use.",
+        "data": []
+    }
+
+@app.post("/api/admin/tp1-reliefs")
+async def create_tp1_relief(relief_data: Dict[str, Any]):
+    """Create/update TP1 relief claims (placeholder)"""
+    return {
+        "success": False,
+        "message": "TP1 relief claims API is not yet implemented. This endpoint is reserved for future use."
+    }
+
+# ============================================================================
+# Bulk Operations Endpoints
+# ============================================================================
+
+@app.post("/api/admin/employees/generate-pdfs")
+async def generate_all_employee_pdfs():
+    """Generate PDFs for all employees and return as ZIP (placeholder)"""
+    return {
+        "success": False,
+        "message": "Bulk PDF generation is not yet implemented. This feature requires PDF generation library integration."
+    }
+
+# ============================================================================
+# Location Autocomplete Endpoint
+# ============================================================================
+
+@app.get("/api/location/autocomplete")
+async def location_autocomplete(query: str, country: Optional[str] = None):
+    """
+    Location autocomplete using Geoapify API
+    
+    Args:
+        query: Search query (minimum 3 characters)
+        country: Optional 2-letter country code (e.g., 'MY' for Malaysia)
+    
+    Returns:
+        List of location suggestions with description and place_id
+    """
+    try:
+        # Validate query length
+        if not query or len(query.strip()) < 3:
+            return {"success": True, "data": []}
+        
+        # Geoapify API configuration
+        GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_KEY')
+        if not GEOAPIFY_API_KEY:
+            return {
+                "success": False,
+                "message": "Location service not configured. Please set GEOAPIFY_KEY environment variable.",
+                "data": []
+            }
+        
+        AUTOCOMPLETE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
+        
+        # Build request parameters
+        params = {
+            "text": query.strip(),
+            "apiKey": GEOAPIFY_API_KEY,
+            "type": "city",
+            "limit": 7,
+        }
+        
+        # Add country filter if specified
+        if country:
+            params["filter"] = f"countrycode:{country.lower()}"
+        
+        # Make request to Geoapify API
+        response = requests.get(AUTOCOMPLETE_URL, params=params, timeout=6)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Parse results
+        features = data.get("features", [])
+        results = []
+        
+        for feature in features:
+            props = feature.get("properties", {})
+            
+            # Build description from city, state, country
+            desc_parts = [
+                props.get("city") or props.get("name"),
+                props.get("state"),
+                props.get("country")
+            ]
+            description = ", ".join([p for p in desc_parts if p])
+            
+            results.append({
+                "description": description,
+                "place_id": str(props.get("place_id", "")),
+                "city": props.get("city") or props.get("name"),
+                "state": props.get("state"),
+                "country": props.get("country"),
+                "formatted": props.get("formatted")
+            })
+        
+        return {"success": True, "data": results}
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Geoapify API: {str(e)}")
+        return {"success": False, "message": f"Location service error: {str(e)}", "data": []}
+    except Exception as e:
+        print(f"Error in location autocomplete: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
 
 @app.get("/health")
 async def health_check():

@@ -1520,14 +1520,33 @@
                             <form id="runPayrollForm">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="payrollMonth">Month:</label>
+                                        <label for="payrollMonth">Payroll Date:</label>
                                         <input type="month" id="payrollMonth" name="payroll_date" required>
                                     </div>
                                 </div>
                                 
-                                <button type="submit" class="btn-primary">Run Payroll</button>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                    <button type="submit" class="btn-primary">Run Payroll</button>
+                                    <button type="button" id="refreshPayrollBtn" class="btn-secondary">Refresh</button>
+                                    <button type="button" id="tp1ReliefsBtn" class="btn-secondary" title="Enter per-item TP1 relief claims for selected employee">TP1 Reliefs</button>
+                                </div>
                                 <div id="payrollMessage" style="display: none; margin-top: 10px;"></div>
                             </form>
+                            
+                            <!-- Calculation Method Toggle -->
+                            <fieldset style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                <legend style="font-weight: bold; padding: 0 10px;">Payroll Calculation Method</legend>
+                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                    <label style="font-weight: normal;">Calculation Method:</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="button" id="fixedRateBtn" class="btn-toggle active" data-method="fixed">Fixed Rate (Current)</button>
+                                        <button type="button" id="variablePercentBtn" class="btn-toggle" data-method="variable">Variable Percentage</button>
+                                    </div>
+                                    <div id="methodStatusLabel" style="color: green; font-weight: bold; padding: 5px;">
+                                        🔢 Current: Fixed Rate Calculation
+                                    </div>
+                                </div>
+                            </fieldset>
                         </div>
                         
                         <div style="margin-top: 30px;">
@@ -3008,6 +3027,7 @@
     <script src="/static/js/ux-utils.js"></script>
     <script src="/static/js/help-overlay.js"></script>
     <script src="/static/js/table-enhancements.js"></script>
+    <script src="/static/js/location-autocomplete.js"></script>
     <script src="/static/js/admin_dashboard.js"></script>
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>
@@ -3049,6 +3069,130 @@
                 document.getElementById('bonusExpiryDate').value = '';
             }
         }
+        
+        // Initialize location autocomplete for relevant fields
+        document.addEventListener('DOMContentLoaded', function() {
+            // Engagement location field
+            const engagementLocationField = document.getElementById('adminEngLocation');
+            if (engagementLocationField) {
+                new LocationAutocomplete(engagementLocationField, {
+                    country: null,  // Global search
+                    onSelect: (result) => {
+                        console.log('Selected location:', result);
+                    }
+                });
+            }
+            
+            // Employee address/city fields could also be enhanced
+            const employeeCityField = document.getElementById('newEmpCity');
+            if (employeeCityField) {
+                new LocationAutocomplete(employeeCityField, {
+                    country: 'MY',  // Malaysia only for employee addresses
+                    onSelect: (result) => {
+                        // Auto-fill city field with just the city name
+                        if (result.city) {
+                            employeeCityField.value = result.city;
+                        }
+                        // Could also auto-fill state if there's a state field
+                        const stateField = document.getElementById('newEmpState');
+                        if (stateField && result.state) {
+                            stateField.value = result.state;
+                        }
+                    }
+                });
+            }
+            
+            // Edit employee city field
+            const editEmployeeCityField = document.getElementById('editEmpCity');
+            if (editEmployeeCityField) {
+                new LocationAutocomplete(editEmployeeCityField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            editEmployeeCityField.value = result.city;
+                        }
+                        const stateField = document.getElementById('editEmpState');
+                        if (stateField && result.state) {
+                            stateField.value = result.state;
+                        }
+                    }
+                });
+            }
+            
+            // School location fields
+            const primaryLocationField = document.getElementById('newEmpPrimaryLocation');
+            if (primaryLocationField) {
+                new LocationAutocomplete(primaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            primaryLocationField.value = result.city;
+                        }
+                    }
+                });
+            }
+            
+            const secondaryLocationField = document.getElementById('newEmpSecondaryLocation');
+            if (secondaryLocationField) {
+                new LocationAutocomplete(secondaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            secondaryLocationField.value = result.city;
+                        }
+                    }
+                });
+            }
+            
+            const tertiaryLocationField = document.getElementById('newEmpTertiaryLocation');
+            if (tertiaryLocationField) {
+                new LocationAutocomplete(tertiaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            tertiaryLocationField.value = result.city;
+                        }
+                    }
+                });
+            }
+            
+            // Edit form school locations
+            const editPrimaryLocationField = document.getElementById('editEmpPrimaryLocation');
+            if (editPrimaryLocationField) {
+                new LocationAutocomplete(editPrimaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            editPrimaryLocationField.value = result.city;
+                        }
+                    }
+                });
+            }
+            
+            const editSecondaryLocationField = document.getElementById('editEmpSecondaryLocation');
+            if (editSecondaryLocationField) {
+                new LocationAutocomplete(editSecondaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            editSecondaryLocationField.value = result.city;
+                        }
+                    }
+                });
+            }
+            
+            const editTertiaryLocationField = document.getElementById('editEmpTertiaryLocation');
+            if (editTertiaryLocationField) {
+                new LocationAutocomplete(editTertiaryLocationField, {
+                    country: 'MY',
+                    onSelect: (result) => {
+                        if (result.city) {
+                            editTertiaryLocationField.value = result.city;
+                        }
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
