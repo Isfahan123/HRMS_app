@@ -180,6 +180,7 @@ class LeaveCalendar {
                 <button onclick="leaveCalendar.goToToday()" class="btn-secondary">Today</button>
                 <button onclick="leaveCalendar.showAddHolidayModal()" class="btn-primary" style="margin-left: 20px;">➕ Add Holiday</button>
                 <button onclick="leaveCalendar.showHolidayListModal()" class="btn-secondary">📋 Manage Holidays</button>
+                <button onclick="leaveCalendar.showImportMalaysiaHolidaysModal()" class="btn-secondary" style="background: #28a745;">🇲🇾 Import Malaysia Holidays</button>
             </div>
             <table class="calendar-table">
                 <thead>
@@ -486,6 +487,99 @@ class LeaveCalendar {
      */
     getHolidayForDate(dateStr) {
         return this.holidayDetails.find(h => h.date === dateStr);
+    }
+
+    /**
+     * Show import Malaysia holidays modal
+     */
+    showImportMalaysiaHolidaysModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        
+        const states = [
+            'All Malaysia',
+            'Johor', 'Kedah', 'Kelantan', 'Kuala Lumpur',
+            'Labuan', 'Malacca', 'Negeri Sembilan', 'Pahang',
+            'Penang', 'Perak', 'Perlis', 'Putrajaya',
+            'Sabah', 'Sarawak', 'Selangor', 'Terengganu'
+        ];
+        
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                <h2>🇲🇾 Import Malaysia Public Holidays</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Automatically import official Malaysia public holidays from the python-holidays library.
+                    Existing holidays will not be duplicated.
+                </p>
+                <form id="importMalaysiaHolidaysForm" style="text-align: left;">
+                    <div class="form-group">
+                        <label for="importYear">Year:</label>
+                        <input type="number" id="importYear" min="2020" max="2030" value="${this.currentYear}" required style="width: 100%; padding: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="importState">State/Region:</label>
+                        <select id="importState" style="width: 100%; padding: 8px;">
+                            ${states.map(state => `<option value="${state}">${state}</option>`).join('')}
+                        </select>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Select "All Malaysia" for national holidays only, or choose a specific state to include state-specific holidays.
+                        </small>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn-primary">Import Holidays</button>
+                        <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    </div>
+                    <div id="importMessage" style="margin-top: 15px; display: none;"></div>
+                </form>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Handle form submission
+        document.getElementById('importMalaysiaHolidaysForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const year = parseInt(document.getElementById('importYear').value);
+            const state = document.getElementById('importState').value;
+            const messageDiv = document.getElementById('importMessage');
+            
+            try {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'info-message';
+                messageDiv.textContent = 'Importing holidays...';
+                
+                const response = await fetch(`/api/holidays/import-malaysia?year=${year}&state=${encodeURIComponent(state)}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    
+                    // Reload holidays and re-render calendar
+                    await this.loadHolidays();
+                    this.render();
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        modal.remove();
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message || 'Failed to import holidays';
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error importing holidays: ' + error.message;
+                console.error('Error:', error);
+            }
+        });
     }
 }
 

@@ -1920,6 +1920,79 @@ async def delete_holiday(holiday_id: int):
         print(f"Error deleting holiday: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.post("/api/holidays/import-malaysia")
+async def import_malaysia_holidays(year: int, state: Optional[str] = None):
+    """Auto-import Malaysia public holidays for a specific year"""
+    try:
+        from core.holidays_service import get_holidays_for_year
+        
+        # Get holidays from python-holidays library
+        holidays_set, holiday_details = get_holidays_for_year(
+            year, 
+            state=state if state and state != 'All Malaysia' else None,
+            include_national=True,
+            include_observances=True
+        )
+        
+        imported_count = 0
+        skipped_count = 0
+        errors = []
+        
+        for holiday_date in holidays_set:
+            # Get holiday name from details
+            date_str = holiday_date.isoformat()
+            holiday_names = holiday_details.get(date_str, [])
+            
+            # Use first name or create a generic name
+            if holiday_names:
+                # Extract just the holiday name (remove provider prefix)
+                name = holiday_names[0]
+                if ':' in name:
+                    name = name.split(':', 1)[1].strip()
+                # Remove location brackets for cleaner display
+                if '[' in name:
+                    name = name.split('[')[0].strip()
+            else:
+                name = f"Public Holiday"
+            
+            # Check if holiday already exists
+            existing = supabase.table("calendar_holidays").select("*").eq("date", date_str).execute()
+            
+            if existing.data:
+                skipped_count += 1
+                continue
+            
+            # Insert new holiday
+            try:
+                holiday_data = {
+                    "date": date_str,
+                    "name": name,
+                    "type": "national" if not state or state == 'All Malaysia' else "state",
+                    "location": state if state and state != 'All Malaysia' else "Malaysia"
+                }
+                supabase.table("calendar_holidays").insert(holiday_data).execute()
+                imported_count += 1
+            except Exception as e:
+                errors.append(f"Failed to import {name} on {date_str}: {str(e)}")
+        
+        return {
+            "success": True,
+            "message": f"Imported {imported_count} holidays, skipped {skipped_count} duplicates",
+            "data": {
+                "imported": imported_count,
+                "skipped": skipped_count,
+                "errors": errors
+            }
+        }
+    except ImportError:
+        return {
+            "success": False,
+            "message": "Holiday library not available. Please install 'holidays' package: pip install holidays"
+        }
+    except Exception as e:
+        print(f"Error importing Malaysia holidays: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 # Helper function to generate CSV from data
 def generate_csv(headers: List[str], rows: List[List[Any]]) -> StreamingResponse:
     """Generate a CSV file from headers and rows"""
