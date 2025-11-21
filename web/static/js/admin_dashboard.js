@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupPayrollProcessing();
     setupBonusManagement();
     setupExportHandlers();
+    setupTableSorting();
     
     async function initializeAdminDashboard() {
         try {
@@ -89,23 +90,140 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function buildEmployeeTable(employees) {
-        let html = '<table><thead><tr>';
-        html += '<th>Name</th><th>Email</th><th>Department</th><th>Position</th><th>Status</th><th>Actions</th>';
+        let html = '<table class="employee-table"><thead><tr>';
+        html += '<th style="width: 80px;">👤 Profile</th>';
+        html += '<th class="sortable" data-sort="name">📝 Name <span class="sort-indicator">↕</span></th>';
+        html += '<th style="width: 120px;">🆔 Employee ID</th>';
+        html += '<th class="sortable" data-sort="email">📧 Email <span class="sort-indicator">↕</span></th>';
+        html += '<th>🏢 Department</th>';
+        html += '<th>💼 Job Title</th>';
+        html += '<th style="width: 100px;">📊 Status</th>';
+        html += '<th style="width: 120px;">🏷️ Work Status</th>';
+        html += '<th style="width: 100px;">🕌 Religion</th>';
+        html += '<th style="width: 100px;">📄 Resume</th>';
+        html += '<th style="width: 150px;">⚙️ Actions</th>';
         html += '</tr></thead><tbody>';
         
         employees.forEach(employee => {
             html += '<tr>';
-            html += `<td>${employee.full_name || '-'}</td>`;
+            
+            // Profile Picture
+            const profilePicUrl = employee.profile_picture_url || '/static/images/default_avatar.svg';
+            html += `<td><img src="${profilePicUrl}" alt="Profile" class="profile-pic-small" onerror="this.src='/static/images/default_avatar.svg'" /></td>`;
+            
+            // Name
+            html += `<td><strong>${employee.full_name || '-'}</strong></td>`;
+            
+            // Employee ID
+            html += `<td>${employee.employee_id || '-'}</td>`;
+            
+            // Email
             html += `<td>${employee.email || '-'}</td>`;
+            
+            // Department
             html += `<td>${employee.department || '-'}</td>`;
-            html += `<td>${employee.position || '-'}</td>`;
+            
+            // Job Title
+            html += `<td>${employee.job_title || '-'}</td>`;
+            
+            // Status
             html += `<td>${employee.employment_status || '-'}</td>`;
-            html += `<td><button class="btn-secondary btn-sm" onclick="openEditEmployeeModal('${employee.id || employee.email}')">✏️ Edit</button></td>`;
+            
+            // Work Status
+            html += `<td>${employee.work_status || '-'}</td>`;
+            
+            // Religion
+            html += `<td>${employee.religion || '-'}</td>`;
+            
+            // Resume
+            if (employee.resume_url) {
+                html += `<td>
+                    <button class="btn-secondary btn-xs" onclick="window.open('${employee.resume_url}', '_blank')" title="View Resume">👁️</button>
+                    <button class="btn-secondary btn-xs" onclick="downloadResume('${employee.resume_url}', '${employee.full_name}')" title="Download Resume">⬇️</button>
+                </td>`;
+            } else {
+                html += `<td>-</td>`;
+            }
+            
+            // Actions
+            html += `<td>
+                <button class="btn-secondary btn-sm" onclick="openEditEmployeeModal('${employee.id || employee.email}')" title="Edit Employee">✏️ Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteEmployee('${employee.id || employee.email}', '${employee.full_name}')" title="Delete Employee">🗑️ Delete</button>
+            </td>`;
+            
             html += '</tr>';
         });
         
         html += '</tbody></table>';
         return html;
+    }
+    
+    // Helper function to download resume
+    function downloadResume(url, employeeName) {
+        if (!url) return;
+        
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${employeeName}_resume.pdf`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // Helper function to delete employee
+    async function deleteEmployee(employeeId, employeeName) {
+        if (!confirm(`Are you sure you want to delete employee "${employeeName}"? This action cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/employees/${employeeId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`Employee "${employeeName}" has been deleted successfully.`);
+                loadEmployeeList(); // Reload the employee list
+            } else {
+                alert(`Failed to delete employee: ${data.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting employee:', error);
+            alert('Error deleting employee. Please try again.');
+        }
+    }
+    
+    // Table sorting functionality
+    let currentSort = { column: null, direction: 'asc' };
+    
+    function setupTableSorting() {
+        // Add click handlers to sortable headers
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('sortable') || e.target.closest('.sortable')) {
+                const header = e.target.classList.contains('sortable') ? e.target : e.target.closest('.sortable');
+                const sortColumn = header.getAttribute('data-sort');
+                sortEmployeeTable(sortColumn);
+            }
+        });
+    }
+    
+    function sortEmployeeTable(column) {
+        // Toggle direction if same column, else default to ascending
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+        
+        loadEmployeeList(); // Reload with sorting applied
     }
     
     async function loadAllAttendance() {
@@ -1371,6 +1489,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch (error) {
                     console.error('Error exporting payroll:', error);
                     alert('Error exporting payroll data');
+                }
+            });
+        }
+        
+        // Download All PDFs button
+        const downloadAllPDFsBtn = document.getElementById('downloadAllPDFsBtn');
+        if (downloadAllPDFsBtn) {
+            downloadAllPDFsBtn.addEventListener('click', async () => {
+                if (!confirm('Download PDFs for all employees? This may take a while.')) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/employees');
+                    const data = await response.json();
+                    
+                    if (data.success && data.data && data.data.length > 0) {
+                        alert(`Generating ${data.data.length} employee profile PDFs. This feature is currently in development.`);
+                        // TODO: Implement PDF generation for all employees
+                        // This would typically call an API endpoint that generates PDFs
+                    } else {
+                        alert('No employees found.');
+                    }
+                } catch (error) {
+                    console.error('Error downloading PDFs:', error);
+                    alert('Error downloading employee PDFs');
+                }
+            });
+        }
+        
+        // Print All Profiles button
+        const printAllProfilesBtn = document.getElementById('printAllProfilesBtn');
+        if (printAllProfilesBtn) {
+            printAllProfilesBtn.addEventListener('click', () => {
+                if (!confirm('Print all employee profiles?')) {
+                    return;
+                }
+                
+                // Store current display state
+                const currentTab = document.querySelector('.tab-pane.active');
+                
+                // Show employee table for printing
+                const employeeTab = document.getElementById('employeesTab');
+                if (employeeTab) {
+                    // Add print class to trigger print styles
+                    document.body.classList.add('printing');
+                    window.print();
+                    document.body.classList.remove('printing');
                 }
             });
         }
