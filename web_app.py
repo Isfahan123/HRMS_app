@@ -2292,7 +2292,8 @@ async def upload_employee_profile_picture(employee_id: str, file: UploadFile = F
             return {"success": False, "message": "File size must be less than 5MB"}
         
         # Save temporarily
-        temp_dir = "/tmp"
+        import tempfile
+        temp_dir = tempfile.gettempdir()
         os.makedirs(temp_dir, exist_ok=True)
         temp_path = os.path.join(temp_dir, f"profile_{employee_id}_{file.filename}")
         
@@ -2305,8 +2306,8 @@ async def upload_employee_profile_picture(employee_id: str, file: UploadFile = F
         # Clean up temp file
         try:
             os.remove(temp_path)
-        except:
-            pass
+        except (OSError, FileNotFoundError) as e:
+            print(f"Warning: Could not remove temp file: {e}")
         
         if photo_url:
             return {
@@ -2337,7 +2338,8 @@ async def upload_employee_resume(employee_id: str, file: UploadFile = File(...))
             return {"success": False, "message": "File size must be less than 10MB"}
         
         # Save temporarily
-        temp_dir = "/tmp"
+        import tempfile
+        temp_dir = tempfile.gettempdir()
         os.makedirs(temp_dir, exist_ok=True)
         temp_path = os.path.join(temp_dir, f"resume_{employee_id}_{file.filename}")
         
@@ -2350,8 +2352,8 @@ async def upload_employee_resume(employee_id: str, file: UploadFile = File(...))
         # Clean up temp file
         try:
             os.remove(temp_path)
-        except:
-            pass
+        except (OSError, FileNotFoundError) as e:
+            print(f"Warning: Could not remove temp file: {e}")
         
         if resume_url:
             return {
