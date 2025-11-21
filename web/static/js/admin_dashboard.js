@@ -493,8 +493,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
                 document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
                 // Emergency Contact
-                document.getElementById('editEmpContactName').value = employee.contact_name || '';
-                document.getElementById('editEmpRelation').value = employee.relation || '';
+                document.getElementById('editEmpContactName').value = employee.emergency_name || '';
+                document.getElementById('editEmpRelation').value = employee.emergency_relation || '';
                 document.getElementById('editEmpEmergencyPhone').value = employee.emergency_phone || '';
                 // Primary Education
                 document.getElementById('editEmpPrimarySchool').value = employee.primary_school_name || '';
@@ -512,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpSecondaryStream').value = employee.secondary_stream || '';
                 document.getElementById('editEmpSecondaryGrades').value = employee.secondary_grades || '';
                 // Tertiary Education
-                document.getElementById('editEmpTertiaryInstitution').value = employee.tertiary_institution_name || '';
+                document.getElementById('editEmpTertiaryInstitution').value = employee.tertiary_institution || '';
                 document.getElementById('editEmpTertiaryLocation').value = employee.tertiary_location || '';
                 document.getElementById('editEmpTertiaryLevel').value = employee.tertiary_level || '';
                 document.getElementById('editEmpTertiaryType').value = employee.tertiary_institution_type || '';
@@ -1064,8 +1064,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 socso_number: document.getElementById('newEmpSOCSONumber').value,
                 income_tax_number: document.getElementById('newEmpIncomeTaxNumber').value,
                 // Emergency Contact
-                contact_name: document.getElementById('newEmpContactName').value,
-                relation: document.getElementById('newEmpRelation').value,
+                emergency_name: document.getElementById('newEmpContactName').value,
+                emergency_relation: document.getElementById('newEmpRelation').value,
                 emergency_phone: document.getElementById('newEmpEmergencyPhone').value,
                 // Primary Education
                 primary_school_name: document.getElementById('newEmpPrimarySchool').value,
@@ -1083,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 secondary_stream: document.getElementById('newEmpSecondaryStream').value,
                 secondary_grades: document.getElementById('newEmpSecondaryGrades').value,
                 // Tertiary Education
-                tertiary_institution_name: document.getElementById('newEmpTertiaryInstitution').value,
+                tertiary_institution: document.getElementById('newEmpTertiaryInstitution').value,
                 tertiary_location: document.getElementById('newEmpTertiaryLocation').value,
                 tertiary_level: document.getElementById('newEmpTertiaryLevel').value,
                 tertiary_institution_type: document.getElementById('newEmpTertiaryType').value,
