@@ -1287,7 +1287,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     messageDiv.className = 'success-message';
                     messageDiv.textContent = data.message;
+                    
+                    // Upload files if employee was created successfully
+                    const employeeId = data.employee_id || formData.employee_id;
+                    if (employeeId) {
+                        // Upload profile picture if selected
+                        const profilePicInput = document.getElementById('newEmpProfilePic');
+                        if (profilePicInput && profilePicInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, profilePicInput.files[0], 'profile-picture');
+                        }
+                        
+                        // Upload resume if selected
+                        const resumeInput = document.getElementById('newEmpResume');
+                        if (resumeInput && resumeInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, resumeInput.files[0], 'resume');
+                        }
+                    }
+                    
                     newEmployeeForm.reset();
+                    clearProfilePicPreview('new');
+                    clearResume('new');
                     
                     // Reload employee list
                     loadEmployeeList();
@@ -2763,6 +2782,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageDiv.className = 'success-message';
                     messageDiv.textContent = 'Employee updated successfully!';
                     
+                    // Upload files if employee was updated successfully
+                    if (employeeId) {
+                        // Upload profile picture if selected
+                        const profilePicInput = document.getElementById('editEmpProfilePic');
+                        if (profilePicInput && profilePicInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, profilePicInput.files[0], 'profile-picture');
+                        }
+                        
+                        // Upload resume if selected
+                        const resumeInput = document.getElementById('editEmpResume');
+                        if (resumeInput && resumeInput.files.length > 0) {
+                            await uploadEmployeeFile(employeeId, resumeInput.files[0], 'resume');
+                        }
+                    }
+                    
                     // Refresh the employee list
                     setTimeout(() => {
                         closeEditEmployeeModal();
@@ -3607,4 +3641,29 @@ function clearResume(formType) {
     
     if (input) input.value = '';
     if (nameDiv) nameDiv.textContent = 'No file selected';
+}
+
+async function uploadEmployeeFile(employeeId, file, fileType) {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`/api/employees/${employeeId}/${fileType}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log(`${fileType} uploaded successfully:`, data);
+        } else {
+            console.error(`Error uploading ${fileType}:`, data.message);
+        }
+        
+        return data;
+    } catch (error) {
+        console.error(`Error uploading ${fileType}:`, error);
+        return { success: false, message: error.message };
+    }
 }
