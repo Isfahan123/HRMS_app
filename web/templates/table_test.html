@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Mobile Test - HRMS</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=3.0">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>📊 Mobile Table Test</h1>
+            <div class="user-info">
+                <a href="/ux-demo" style="color: white; text-decoration: none;">← Back to Demo</a>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <div class="tab-content">
+                <div class="tab-pane active">
+                    <h2>Employee List (Test Table)</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        This table demonstrates horizontal scrolling on mobile devices.
+                        Try resizing your browser or viewing on a mobile device.
+                    </p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>Email Address</th>
+                                <th>Department</th>
+                                <th>Position</th>
+                                <th>Start Date</th>
+                                <th>Salary (RM)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1001</td>
+                                <td>Ahmad bin Abdullah</td>
+                                <td>ahmad.abdullah@company.com</td>
+                                <td>Information Technology</td>
+                                <td>Senior Developer</td>
+                                <td>2020-01-15</td>
+                                <td>RM 8,500.00</td>
+                                <td><span class="badge success">Active</span></td>
+                                <td>
+                                    <button class="btn-sm btn-primary">Edit</button>
+                                    <button class="btn-sm btn-secondary">View</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>1002</td>
+                                <td>Siti Nurhaliza binti Hassan</td>
+                                <td>siti.nurhaliza@company.com</td>
+                                <td>Human Resources</td>
+                                <td>HR Manager</td>
+                                <td>2019-03-20</td>
+                                <td>RM 9,200.00</td>
+                                <td><span class="badge success">Active</span></td>
+                                <td>
+                                    <button class="btn-sm btn-primary">Edit</button>
+                                    <button class="btn-sm btn-secondary">View</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>1003</td>
+                                <td>Raj Kumar Patel</td>
+                                <td>raj.kumar@company.com</td>
+                                <td>Finance & Accounting</td>
+                                <td>Accountant</td>
+                                <td>2021-06-10</td>
+                                <td>RM 6,800.00</td>
+                                <td><span class="badge success">Active</span></td>
+                                <td>
+                                    <button class="btn-sm btn-primary">Edit</button>
+                                    <button class="btn-sm btn-secondary">View</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>1004</td>
+                                <td>Lee Wei Ming</td>
+                                <td>lee.weiming@company.com</td>
+                                <td>Marketing</td>
+                                <td>Marketing Executive</td>
+                                <td>2022-02-01</td>
+                                <td>RM 5,500.00</td>
+                                <td><span class="badge success">Active</span></td>
+                                <td>
+                                    <button class="btn-sm btn-primary">Edit</button>
+                                    <button class="btn-sm btn-secondary">View</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>1005</td>
+                                <td>Fatimah binti Mohd Ali</td>
+                                <td>fatimah.ali@company.com</td>
+                                <td>Operations</td>
+                                <td>Operations Coordinator</td>
+                                <td>2020-09-15</td>
+                                <td>RM 7,200.00</td>
+                                <td><span class="badge warning">On Leave</span></td>
+                                <td>
+                                    <button class="btn-sm btn-primary">Edit</button>
+                                    <button class="btn-sm btn-secondary">View</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/ux-utils.js"></script>
+    <script>
+        // Show info on mobile
+        if (window.innerWidth <= 768) {
+            setTimeout(() => {
+                Toast.info('Swipe left/right to scroll the table horizontally', 'Mobile View');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

@@ -113,6 +113,11 @@ async def ux_demo(request: Request):
     """UX components demonstration page"""
     return templates.TemplateResponse("ux_demo.html", {"request": request})
 
+@app.get("/table-test", response_class=HTMLResponse)
+async def table_test(request: Request):
+    """Table mobile scrolling test page"""
+    return templates.TemplateResponse("table_test.html", {"request": request})
+
 @app.get("/WEB_INTERFACE_GUIDE.md")
 async def serve_guide():
     """Serve the web interface guide"""

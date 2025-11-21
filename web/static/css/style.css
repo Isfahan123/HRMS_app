@@ -296,6 +296,19 @@ table tr:hover {
     background: #f8f9fa;
 }
 
+/* Table wrapper for horizontal scrolling */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 20px 0;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.table-wrapper table {
+    margin: 0;
+}
+
 /* Action Buttons */
 .btn-approve,
 .btn-reject {
@@ -1259,13 +1272,36 @@ textarea {
 
 /* Enhanced Table Responsiveness */
 @media (max-width: 768px) {
+    /* Make all tables scrollable horizontally on mobile */
+    .tab-pane, .subtab-content, .form-section {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
     table {
         font-size: 12px;
+        min-width: 600px; /* Ensure table has minimum width to trigger scroll */
+        display: table; /* Ensure table layout is preserved */
     }
 
     table th,
     table td {
         padding: 8px 4px;
+        white-space: nowrap; /* Prevent text wrapping in cells */
+    }
+    
+    /* Add visual indicator for scrollable tables */
+    .tab-pane:has(table)::after,
+    .subtab-content:has(table)::after {
+        content: '← Scroll to see more →';
+        display: block;
+        text-align: center;
+        font-size: 11px;
+        color: #7f8c8d;
+        padding: 8px;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        margin-top: 10px;
     }
 }
 
