@@ -825,11 +825,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (subtabName === 'payrollVariable') {
                     console.log('🔄 Loading variable percentage rules...');
                     loadVariablePercentageRules();
+                } else if (subtabName === 'payrollLHDN') {
+                    console.log('🔄 Loading LHDN Tax configuration...');
+                    // Load tax rates by default when LHDN tab is opened
+                    if (typeof loadTaxRatesFromAPI === 'function') {
+                        loadTaxRatesFromAPI();
+                    }
+                    if (typeof loadReliefMaximumsFromAPI === 'function') {
+                        loadReliefMaximumsFromAPI();
+                    }
+                    if (typeof loadReliefOverridesFromAPI === 'function') {
+                        loadReliefOverridesFromAPI();
+                    }
                 } else if (subtabName === 'engagementsView') {
                     console.log('🔄 Loading engagements...');
                     // Load all engagements
                     if (typeof loadAllEngagements === 'function') {
                         loadAllEngagements();
+                    }
+                } else if (subtabName === 'lhdnTaxRates') {
+                    console.log('🔄 Loading LHDN tax rates...');
+                    if (typeof loadTaxRatesFromAPI === 'function') {
+                        loadTaxRatesFromAPI();
+                    }
+                } else if (subtabName === 'lhdnReliefMax') {
+                    console.log('🔄 Loading tax relief maximums...');
+                    if (typeof loadReliefMaximumsFromAPI === 'function') {
+                        loadReliefMaximumsFromAPI();
+                    }
+                } else if (subtabName === 'lhdnReliefOverrides') {
+                    console.log('🔄 Loading relief overrides...');
+                    if (typeof loadReliefOverridesFromAPI === 'function') {
+                        loadReliefOverridesFromAPI();
                     }
                 }
             });
