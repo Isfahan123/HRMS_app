@@ -1520,14 +1520,33 @@
                             <form id="runPayrollForm">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="payrollMonth">Month:</label>
+                                        <label for="payrollMonth">Payroll Date:</label>
                                         <input type="month" id="payrollMonth" name="payroll_date" required>
                                     </div>
                                 </div>
                                 
-                                <button type="submit" class="btn-primary">Run Payroll</button>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                    <button type="submit" class="btn-primary">Run Payroll</button>
+                                    <button type="button" id="refreshPayrollBtn" class="btn-secondary">Refresh</button>
+                                    <button type="button" id="tp1ReliefsBtn" class="btn-secondary" title="Enter per-item TP1 relief claims for selected employee">TP1 Reliefs</button>
+                                </div>
                                 <div id="payrollMessage" style="display: none; margin-top: 10px;"></div>
                             </form>
+                            
+                            <!-- Calculation Method Toggle -->
+                            <fieldset style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                <legend style="font-weight: bold; padding: 0 10px;">Payroll Calculation Method</legend>
+                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                    <label style="font-weight: normal;">Calculation Method:</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="button" id="fixedRateBtn" class="btn-toggle active" data-method="fixed">Fixed Rate (Current)</button>
+                                        <button type="button" id="variablePercentBtn" class="btn-toggle" data-method="variable">Variable Percentage</button>
+                                    </div>
+                                    <div id="methodStatusLabel" style="color: green; font-weight: bold; padding: 5px;">
+                                        🔢 Current: Fixed Rate Calculation
+                                    </div>
+                                </div>
+                            </fieldset>
                         </div>
                         
                         <div style="margin-top: 30px;">

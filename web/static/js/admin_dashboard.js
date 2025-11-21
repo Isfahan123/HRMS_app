@@ -1333,10 +1333,16 @@ document.addEventListener('DOMContentLoaded', function() {
             messageDiv.textContent = 'Processing payroll... This may take a few minutes.';
             
             try {
+                // Get current calculation method
+                const calculationMethod = document.getElementById('fixedRateBtn').classList.contains('active') ? 'fixed' : 'variable';
+                
                 const response = await fetch('/api/admin/payroll/run', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payroll_date: payrollDate })
+                    body: JSON.stringify({ 
+                        payroll_date: payrollDate,
+                        calculation_method: calculationMethod
+                    })
                 });
                 
                 const data = await response.json();
@@ -1359,6 +1365,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             }
         });
+        
+        // Refresh payroll button
+        const refreshPayrollBtn = document.getElementById('refreshPayrollBtn');
+        if (refreshPayrollBtn) {
+            refreshPayrollBtn.addEventListener('click', function() {
+                loadPayrollRuns();
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'success-message';
+                messageDiv.textContent = 'Payroll history refreshed';
+            });
+        }
+        
+        // TP1 Reliefs button
+        const tp1ReliefsBtn = document.getElementById('tp1ReliefsBtn');
+        if (tp1ReliefsBtn) {
+            tp1ReliefsBtn.addEventListener('click', function() {
+                alert('TP1 Relief Claims feature: This allows entering per-item TP1 relief claims for selected employees.\n\nBackend API implementation pending.');
+            });
+        }
+        
+        // Calculation method toggle buttons
+        const fixedRateBtn = document.getElementById('fixedRateBtn');
+        const variablePercentBtn = document.getElementById('variablePercentBtn');
+        const methodStatusLabel = document.getElementById('methodStatusLabel');
+        
+        if (fixedRateBtn && variablePercentBtn) {
+            fixedRateBtn.addEventListener('click', function() {
+                if (!this.classList.contains('active')) {
+                    fixedRateBtn.classList.add('active');
+                    variablePercentBtn.classList.remove('active');
+                    methodStatusLabel.textContent = '🔢 Current: Fixed Rate Calculation';
+                    methodStatusLabel.style.color = 'green';
+                    
+                    // Save preference (could call API to persist)
+                    console.log('Switched to Fixed Rate calculation method');
+                }
+            });
+            
+            variablePercentBtn.addEventListener('click', function() {
+                if (!this.classList.contains('active')) {
+                    variablePercentBtn.classList.add('active');
+                    fixedRateBtn.classList.remove('active');
+                    methodStatusLabel.textContent = '📊 Current: Variable Percentage Calculation';
+                    methodStatusLabel.style.color = 'blue';
+                    
+                    // Save preference (could call API to persist)
+                    console.log('Switched to Variable Percentage calculation method');
+                }
+            });
+        }
     }
     
     async function loadBonuses() {
