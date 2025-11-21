@@ -1381,7 +1381,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const tp1ReliefsBtn = document.getElementById('tp1ReliefsBtn');
         if (tp1ReliefsBtn) {
             tp1ReliefsBtn.addEventListener('click', function() {
-                alert('TP1 Relief Claims feature: This allows entering per-item TP1 relief claims for selected employees.\n\nBackend API implementation pending.');
+                // Show info message using the payroll message div
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'info-message';
+                messageDiv.style.backgroundColor = '#e3f2fd';
+                messageDiv.style.color = '#1976d2';
+                messageDiv.style.border = '1px solid #90caf9';
+                messageDiv.textContent = 'ℹ️ TP1 Relief Claims: This feature allows entering per-item TP1 relief claims for selected employees. Backend API implementation is pending.';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
             });
         }
         
@@ -1391,27 +1402,45 @@ document.addEventListener('DOMContentLoaded', function() {
         const methodStatusLabel = document.getElementById('methodStatusLabel');
         
         if (fixedRateBtn && variablePercentBtn) {
-            fixedRateBtn.addEventListener('click', function() {
+            fixedRateBtn.addEventListener('click', async function() {
                 if (!this.classList.contains('active')) {
                     fixedRateBtn.classList.add('active');
                     variablePercentBtn.classList.remove('active');
                     methodStatusLabel.textContent = '🔢 Current: Fixed Rate Calculation';
                     methodStatusLabel.style.color = 'green';
                     
-                    // Save preference (could call API to persist)
-                    console.log('Switched to Fixed Rate calculation method');
+                    // Persist preference to backend (gracefully handle if endpoint doesn't exist yet)
+                    try {
+                        await fetch('/api/admin/payroll/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ calculation_method: 'fixed' })
+                        });
+                        console.log('Switched to Fixed Rate calculation method');
+                    } catch (error) {
+                        console.log('Note: Calculation method preference not persisted (API pending)');
+                    }
                 }
             });
             
-            variablePercentBtn.addEventListener('click', function() {
+            variablePercentBtn.addEventListener('click', async function() {
                 if (!this.classList.contains('active')) {
                     variablePercentBtn.classList.add('active');
                     fixedRateBtn.classList.remove('active');
                     methodStatusLabel.textContent = '📊 Current: Variable Percentage Calculation';
                     methodStatusLabel.style.color = 'blue';
                     
-                    // Save preference (could call API to persist)
-                    console.log('Switched to Variable Percentage calculation method');
+                    // Persist preference to backend (gracefully handle if endpoint doesn't exist yet)
+                    try {
+                        await fetch('/api/admin/payroll/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ calculation_method: 'variable' })
+                        });
+                        console.log('Switched to Variable Percentage calculation method');
+                    } catch (error) {
+                        console.log('Note: Calculation method preference not persisted (API pending)');
+                    }
                 }
             });
         }
