@@ -78,13 +78,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success && data.data && data.data.length > 0) {
+                cachedEmployees = data.data; // Cache for sorting
                 const tableHtml = buildEmployeeTable(data.data);
                 document.getElementById('employeeTable').innerHTML = tableHtml;
             } else {
+                cachedEmployees = [];
                 document.getElementById('employeeTable').innerHTML = '<p>No employees found.</p>';
             }
         } catch (error) {
             console.error('Error loading employees:', error);
+            cachedEmployees = [];
             document.getElementById('employeeTable').innerHTML = '<p>Error loading employee data.</p>';
         }
     }
@@ -162,10 +165,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function downloadResume(url, employeeName) {
         if (!url) return;
         
+        // Get file extension from URL
+        const urlParts = url.split('.');
+        const extension = urlParts.length > 1 ? urlParts[urlParts.length - 1].split('?')[0] : 'pdf';
+        
         // Create a temporary link element
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${employeeName}_resume.pdf`;
+        link.download = `${employeeName}_resume.${extension}`;
         link.target = '_blank';
         document.body.appendChild(link);
         link.click();
@@ -202,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Table sorting functionality
     let currentSort = { column: null, direction: 'asc' };
+    let cachedEmployees = [];
     
     function setupTableSorting() {
         // Add click handlers to sortable headers
@@ -223,7 +231,50 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSort.direction = 'asc';
         }
         
-        loadEmployeeList(); // Reload with sorting applied
+        // Sort the cached employees array
+        const sortedEmployees = [...cachedEmployees].sort((a, b) => {
+            let aVal = '';
+            let bVal = '';
+            
+            if (column === 'name') {
+                aVal = (a.full_name || '').toLowerCase();
+                bVal = (b.full_name || '').toLowerCase();
+            } else if (column === 'email') {
+                aVal = (a.email || '').toLowerCase();
+                bVal = (b.email || '').toLowerCase();
+            }
+            
+            if (currentSort.direction === 'asc') {
+                return aVal.localeCompare(bVal);
+            } else {
+                return bVal.localeCompare(aVal);
+            }
+        });
+        
+        // Rebuild and display the sorted table
+        const tableHtml = buildEmployeeTable(sortedEmployees);
+        document.getElementById('employeeTable').innerHTML = tableHtml;
+        
+        // Update sort indicators
+        updateSortIndicators();
+    }
+    
+    function updateSortIndicators() {
+        // Reset all indicators
+        document.querySelectorAll('.sort-indicator').forEach(indicator => {
+            indicator.textContent = '↕';
+        });
+        
+        // Update current sorted column indicator
+        if (currentSort.column) {
+            const header = document.querySelector(`[data-sort="${currentSort.column}"]`);
+            if (header) {
+                const indicator = header.querySelector('.sort-indicator');
+                if (indicator) {
+                    indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                }
+            }
+        }
     }
     
     async function loadAllAttendance() {
@@ -1497,25 +1548,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const downloadAllPDFsBtn = document.getElementById('downloadAllPDFsBtn');
         if (downloadAllPDFsBtn) {
             downloadAllPDFsBtn.addEventListener('click', async () => {
-                if (!confirm('Download PDFs for all employees? This may take a while.')) {
-                    return;
-                }
-                
-                try {
-                    const response = await fetch('/api/employees');
-                    const data = await response.json();
-                    
-                    if (data.success && data.data && data.data.length > 0) {
-                        alert(`Generating ${data.data.length} employee profile PDFs. This feature is currently in development.`);
-                        // TODO: Implement PDF generation for all employees
-                        // This would typically call an API endpoint that generates PDFs
-                    } else {
-                        alert('No employees found.');
-                    }
-                } catch (error) {
-                    console.error('Error downloading PDFs:', error);
-                    alert('Error downloading employee PDFs');
-                }
+                alert('📥 Download All PDFs Feature\n\nThis feature will generate comprehensive PDF profiles for all employees.\n\nStatus: Coming Soon\nRequires: Backend PDF generation service\n\nPlease use individual employee view/edit for now.');
+                // TODO: Implement PDF generation for all employees
+                // This would call: POST /api/admin/employees/generate-pdfs
+                // Backend would need to implement PDF generation using reportlab or similar
             });
         }
         
@@ -3369,4 +3405,121 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSalaryHistoryEmployeeSelector();
     loadEmployeeHistory();
     loadVariablePercentageRules();
+    
+    // Setup file upload handlers
+    setupFileUploadHandlers();
 });
+
+// File upload handling functions (defined globally)
+function setupFileUploadHandlers() {
+    // Profile picture preview for new employee
+    const newProfilePicInput = document.getElementById('newEmpProfilePic');
+    if (newProfilePicInput) {
+        newProfilePicInput.addEventListener('change', function(e) {
+            handleProfilePicChange(e, 'new');
+        });
+    }
+    
+    // Resume upload for new employee
+    const newResumeInput = document.getElementById('newEmpResume');
+    if (newResumeInput) {
+        newResumeInput.addEventListener('change', function(e) {
+            handleResumeChange(e, 'new');
+        });
+    }
+    
+    // Profile picture preview for edit employee
+    const editProfilePicInput = document.getElementById('editEmpProfilePic');
+    if (editProfilePicInput) {
+        editProfilePicInput.addEventListener('change', function(e) {
+            handleProfilePicChange(e, 'edit');
+        });
+    }
+    
+    // Resume upload for edit employee
+    const editResumeInput = document.getElementById('editEmpResume');
+    if (editResumeInput) {
+        editResumeInput.addEventListener('change', function(e) {
+            handleResumeChange(e, 'edit');
+        });
+    }
+}
+
+function handleProfilePicChange(event, formType) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Profile picture must be less than 5MB.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById(`${formType}EmpProfilePicPreview`);
+            if (preview) {
+                preview.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+        
+        // Update file name display
+        const nameDiv = document.getElementById(`${formType}EmpProfilePicName`);
+        if (nameDiv) {
+            nameDiv.textContent = file.name;
+        }
+    }
+}
+
+function handleResumeChange(event, formType) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a PDF or Word document.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Resume must be less than 10MB.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Update file name display
+        const nameDiv = document.getElementById(`${formType}EmpResumeName`);
+        if (nameDiv) {
+            nameDiv.textContent = file.name;
+        }
+    }
+}
+
+function clearProfilePicPreview(formType) {
+    const input = document.getElementById(`${formType}EmpProfilePic`);
+    const preview = document.getElementById(`${formType}EmpProfilePicPreview`);
+    const nameDiv = document.getElementById(`${formType}EmpProfilePicName`);
+    
+    if (input) input.value = '';
+    if (preview) preview.src = '/static/images/default_avatar.svg';
+    if (nameDiv) nameDiv.textContent = 'No file selected';
+}
+
+function clearResume(formType) {
+    const input = document.getElementById(`${formType}EmpResume`);
+    const nameDiv = document.getElementById(`${formType}EmpResumeName`);
+    
+    if (input) input.value = '';
+    if (nameDiv) nameDiv.textContent = 'No file selected';
+}
