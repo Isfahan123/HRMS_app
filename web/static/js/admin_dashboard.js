@@ -273,6 +273,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Store payroll runs globally for filtering
+    let allPayrollRuns = [];
+    
     async function loadPayrollRuns() {
         try {
             const response = await fetch('/api/admin/payroll-runs');
@@ -282,13 +285,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!container) return;
             
             if (data.success && data.data && data.data.length > 0) {
+                allPayrollRuns = data.data; // Store for filtering
                 const tableHtml = buildPayrollRunsTable(data.data);
                 container.innerHTML = tableHtml;
             } else {
+                allPayrollRuns = [];
                 container.innerHTML = '<p>No payroll runs found.</p>';
             }
         } catch (error) {
             console.error('Error loading payroll runs:', error);
+            allPayrollRuns = [];
             const container = document.getElementById('payrollRunsTable');
             if (container) container.innerHTML = '<p>Error loading payroll data.</p>';
         }
@@ -862,17 +868,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function filterPayrollByMonth(month) {
-        // This function will filter the payroll table based on selected month
-        // Implementation depends on how payroll data is structured
-        console.log('Filtering payroll by month:', month);
+        const container = document.getElementById('payrollRunsTable');
+        if (!container) return;
         
-        const table = document.getElementById('payrollRunsTable');
-        if (!table) return;
+        if (allPayrollRuns.length === 0) {
+            container.innerHTML = '<p>No payroll runs found.</p>';
+            return;
+        }
         
         const year = document.getElementById('adminPayrollYearFilter')?.value;
         
-        // For now, just log - actual filtering would be done when loading data
-        console.log('Filter by year:', year, 'month:', month);
+        // Filter payroll runs by month and year
+        let filteredRuns = allPayrollRuns;
+        
+        // Filter by month (if not "all")
+        if (month && month !== 'all') {
+            filteredRuns = filteredRuns.filter(run => {
+                // Extract month from payroll_date or month_year
+                const dateStr = run.month_year || run.payroll_date || '';
+                if (!dateStr) return false;
+                
+                // Try to parse the date and extract month
+                try {
+                    // Handle formats like "2024-01", "2024-01-15", "January 2024", etc.
+                    let runMonth;
+                    
+                    if (dateStr.includes('-')) {
+                        // Format: "2024-01" or "2024-01-15"
+                        const parts = dateStr.split('-');
+                        runMonth = parseInt(parts[1], 10);
+                    } else if (dateStr.match(/^\d{4}$/)) {
+                        // Year only, no month
+                        return false;
+                    } else {
+                        // Try to parse as date
+                        const date = new Date(dateStr);
+                        if (!isNaN(date.getTime())) {
+                            runMonth = date.getMonth() + 1; // getMonth() returns 0-11
+                        } else {
+                            return false;
+                        }
+                    }
+                    
+                    return runMonth === parseInt(month, 10);
+                } catch (e) {
+                    console.warn('Unable to parse date:', dateStr);
+                    return false;
+                }
+            });
+        }
+        
+        // Filter by year (if selected)
+        if (year) {
+            filteredRuns = filteredRuns.filter(run => {
+                const dateStr = run.month_year || run.payroll_date || '';
+                return dateStr.includes(year);
+            });
+        }
+        
+        // Display filtered results
+        if (filteredRuns.length > 0) {
+            const tableHtml = buildPayrollRunsTable(filteredRuns);
+            container.innerHTML = tableHtml;
+        } else {
+            const monthName = month === 'all' ? 'all months' : 
+                             ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'][parseInt(month)] || `month ${month}`;
+            container.innerHTML = `<p>No payroll runs found for ${monthName}${year ? ' ' + year : ''}.</p>`;
+        }
     }
     
     function setupLogout() {
