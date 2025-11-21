@@ -492,6 +492,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpEPFNumber').value = employee.epf_number || '';
                 document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
                 document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
+                // Emergency Contact
+                document.getElementById('editEmpContactName').value = employee.emergency_name || '';
+                document.getElementById('editEmpRelation').value = employee.emergency_relation || '';
+                document.getElementById('editEmpEmergencyPhone').value = employee.emergency_phone || '';
+                // Primary Education
+                document.getElementById('editEmpPrimarySchool').value = employee.primary_school_name || '';
+                document.getElementById('editEmpPrimaryLocation').value = employee.primary_location || '';
+                document.getElementById('editEmpPrimaryType').value = employee.primary_type || '';
+                document.getElementById('editEmpPrimaryYearStarted').value = employee.primary_year_started || '';
+                document.getElementById('editEmpPrimaryYearCompleted').value = employee.primary_year_completed || '';
+                // Secondary Education
+                document.getElementById('editEmpSecondarySchool').value = employee.secondary_school_name || '';
+                document.getElementById('editEmpSecondaryLocation').value = employee.secondary_location || '';
+                document.getElementById('editEmpSecondaryType').value = employee.secondary_type || '';
+                document.getElementById('editEmpSecondaryYearStarted').value = employee.secondary_year_started || '';
+                document.getElementById('editEmpSecondaryYearCompleted').value = employee.secondary_year_completed || '';
+                document.getElementById('editEmpSecondaryQualification').value = employee.secondary_qualification || '';
+                document.getElementById('editEmpSecondaryStream').value = employee.secondary_stream || '';
+                document.getElementById('editEmpSecondaryGrades').value = employee.secondary_grades || '';
+                // Tertiary Education
+                document.getElementById('editEmpTertiaryInstitution').value = employee.tertiary_institution || '';
+                document.getElementById('editEmpTertiaryLocation').value = employee.tertiary_location || '';
+                document.getElementById('editEmpTertiaryLevel').value = employee.tertiary_level || '';
+                document.getElementById('editEmpTertiaryType').value = employee.tertiary_institution_type || '';
+                document.getElementById('editEmpTertiaryField').value = employee.tertiary_field || '';
+                document.getElementById('editEmpTertiaryMajor').value = employee.tertiary_major || '';
+                document.getElementById('editEmpTertiaryYearStarted').value = employee.tertiary_year_started || '';
+                document.getElementById('editEmpTertiaryYearCompleted').value = employee.tertiary_year_completed || '';
+                document.getElementById('editEmpTertiaryStatus').value = employee.tertiary_status || '';
+                document.getElementById('editEmpTertiaryCGPA').value = employee.tertiary_cgpa || '';
                 
                 // Show the modal
                 document.getElementById('editEmployeeModal').style.display = 'block';
@@ -768,16 +798,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('✅ Subtab clicked:', subtabName || 'Month: ' + monthValue);
                 
-                // Get parent tab to scope subtab switching
-                const parentContainer = this.closest('.tab-pane');
-                if (!parentContainer) {
-                    console.error('❌ Parent container not found for subtab');
-                    return;
-                }
-                
                 // If this is a month tab (for payroll history)
                 if (monthValue) {
                     // Handle month tab switching
+                    const parentContainer = this.closest('.tab-pane');
+                    if (!parentContainer) {
+                        console.error('❌ Parent container not found for subtab');
+                        return;
+                    }
                     const monthButtons = parentContainer.querySelectorAll('[data-month]');
                     monthButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
@@ -789,12 +817,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                // Regular subtab switching
-                const containerSubtabButtons = parentContainer.querySelectorAll('.subtab-button:not([data-month])');
-                const containerSubtabContents = parentContainer.querySelectorAll('.subtab-content');
+                // Regular subtab switching - find the immediate parent subtabs container
+                const subtabsContainer = this.closest('.subtabs');
+                if (!subtabsContainer) {
+                    console.error('❌ Subtabs container not found for subtab button');
+                    return;
+                }
                 
-                containerSubtabButtons.forEach(btn => btn.classList.remove('active'));
-                containerSubtabContents.forEach(content => content.classList.remove('active'));
+                // Find the parent that contains both the buttons and content
+                // This could be either a .tab-pane or a .subtab-content (for nested subtabs)
+                let contentParent = subtabsContainer.parentElement;
+                
+                // Remove active class from sibling buttons in the same subtabs container
+                const siblingButtons = subtabsContainer.querySelectorAll('.subtab-button');
+                siblingButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Remove active class from sibling content divs at the same level
+                const siblingContents = contentParent.querySelectorAll(':scope > .subtab-content');
+                siblingContents.forEach(content => content.classList.remove('active'));
                 
                 // Add active class to clicked button and corresponding content
                 this.classList.add('active');
@@ -1032,7 +1072,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 // EPF/SOCSO Information
                 epf_number: document.getElementById('newEmpEPFNumber').value,
                 socso_number: document.getElementById('newEmpSOCSONumber').value,
-                income_tax_number: document.getElementById('newEmpIncomeTaxNumber').value
+                income_tax_number: document.getElementById('newEmpIncomeTaxNumber').value,
+                // Emergency Contact
+                emergency_name: document.getElementById('newEmpContactName').value,
+                emergency_relation: document.getElementById('newEmpRelation').value,
+                emergency_phone: document.getElementById('newEmpEmergencyPhone').value,
+                // Primary Education
+                primary_school_name: document.getElementById('newEmpPrimarySchool').value,
+                primary_location: document.getElementById('newEmpPrimaryLocation').value,
+                primary_type: document.getElementById('newEmpPrimaryType').value,
+                primary_year_started: document.getElementById('newEmpPrimaryYearStarted').value,
+                primary_year_completed: document.getElementById('newEmpPrimaryYearCompleted').value,
+                // Secondary Education
+                secondary_school_name: document.getElementById('newEmpSecondarySchool').value,
+                secondary_location: document.getElementById('newEmpSecondaryLocation').value,
+                secondary_type: document.getElementById('newEmpSecondaryType').value,
+                secondary_year_started: document.getElementById('newEmpSecondaryYearStarted').value,
+                secondary_year_completed: document.getElementById('newEmpSecondaryYearCompleted').value,
+                secondary_qualification: document.getElementById('newEmpSecondaryQualification').value,
+                secondary_stream: document.getElementById('newEmpSecondaryStream').value,
+                secondary_grades: document.getElementById('newEmpSecondaryGrades').value,
+                // Tertiary Education
+                tertiary_institution: document.getElementById('newEmpTertiaryInstitution').value,
+                tertiary_location: document.getElementById('newEmpTertiaryLocation').value,
+                tertiary_level: document.getElementById('newEmpTertiaryLevel').value,
+                tertiary_institution_type: document.getElementById('newEmpTertiaryType').value,
+                tertiary_field: document.getElementById('newEmpTertiaryField').value,
+                tertiary_major: document.getElementById('newEmpTertiaryMajor').value,
+                tertiary_year_started: document.getElementById('newEmpTertiaryYearStarted').value,
+                tertiary_year_completed: document.getElementById('newEmpTertiaryYearCompleted').value,
+                tertiary_status: document.getElementById('newEmpTertiaryStatus').value,
+                tertiary_cgpa: document.getElementById('newEmpTertiaryCGPA').value
             };
             
             try {
