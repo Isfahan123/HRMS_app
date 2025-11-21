@@ -64,6 +64,8 @@
                         <button id="clearFiltersBtn" class="btn-secondary">Clear Filters</button>
                         <button id="refreshEmployeesBtn" class="btn-secondary">🔄 Refresh</button>
                         <button id="exportEmployeesCSVBtn" class="btn-secondary">📤 Export CSV</button>
+                        <button id="downloadAllPDFsBtn" class="btn-secondary">📥 Download All PDFs</button>
+                        <button id="printAllProfilesBtn" class="btn-secondary">🖨️ Print All Profiles</button>
                     </div>
                     
                     <button id="addEmployeeBtn" class="btn-primary" style="margin-bottom: 20px;">Add New Employee</button>
@@ -86,6 +88,32 @@
                                 <div class="form-group">
                                     <label for="newEmpPassword">Password:*</label>
                                     <input type="password" id="newEmpPassword" name="password" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Profile Picture & Documents -->
+                            <h4 style="margin-top: 20px; color: #667eea;">Profile Picture & Documents</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newEmpProfilePic">Profile Picture:</label>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img id="newEmpProfilePicPreview" src="/static/images/default_avatar.svg" alt="Preview" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
+                                        <div>
+                                            <input type="file" id="newEmpProfilePic" accept="image/*" style="display: none;">
+                                            <button type="button" class="btn-secondary" onclick="document.getElementById('newEmpProfilePic').click()">Choose Image</button>
+                                            <button type="button" class="btn-secondary" onclick="clearProfilePicPreview('new')" style="margin-left: 5px;">Clear</button>
+                                            <div id="newEmpProfilePicName" style="font-size: 12px; color: #666; margin-top: 5px;">No file selected</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpResume">Resume/CV:</label>
+                                    <div>
+                                        <input type="file" id="newEmpResume" accept=".pdf,.doc,.docx" style="display: none;">
+                                        <button type="button" class="btn-secondary" onclick="document.getElementById('newEmpResume').click()">Choose File</button>
+                                        <button type="button" class="btn-secondary" onclick="clearResume('new')" style="margin-left: 5px;">Clear</button>
+                                        <div id="newEmpResumeName" style="font-size: 12px; color: #666; margin-top: 5px;">No file selected</div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -541,6 +569,33 @@
                                     <div class="form-group">
                                         <label for="editEmpEmployeeID">Employee ID:</label>
                                         <input type="text" id="editEmpEmployeeID" name="employee_id_display" readonly style="background: #f5f5f5;">
+                                    </div>
+                                </div>
+                                
+                                <!-- Profile Picture & Documents -->
+                                <h4 style="margin-top: 20px; color: #667eea;">Profile Picture & Documents</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpProfilePic">Profile Picture:</label>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <img id="editEmpProfilePicPreview" src="/static/images/default_avatar.svg" alt="Preview" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
+                                            <div>
+                                                <input type="file" id="editEmpProfilePic" accept="image/*" style="display: none;">
+                                                <button type="button" class="btn-secondary" onclick="document.getElementById('editEmpProfilePic').click()">Change Image</button>
+                                                <button type="button" class="btn-secondary" onclick="clearProfilePicPreview('edit')" style="margin-left: 5px;">Clear</button>
+                                                <div id="editEmpProfilePicName" style="font-size: 12px; color: #666; margin-top: 5px;">Current profile picture</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpResume">Resume/CV:</label>
+                                        <div>
+                                            <input type="file" id="editEmpResume" accept=".pdf,.doc,.docx" style="display: none;">
+                                            <button type="button" class="btn-secondary" onclick="document.getElementById('editEmpResume').click()">Change File</button>
+                                            <button type="button" class="btn-secondary" onclick="clearResume('edit')" style="margin-left: 5px;">Clear</button>
+                                            <div id="editEmpResumeName" style="font-size: 12px; color: #666; margin-top: 5px;">Current resume</div>
+                                            <a id="editEmpResumeLink" href="#" target="_blank" style="display: none; font-size: 12px; color: #667eea; margin-top: 5px;">View Current Resume</a>
+                                        </div>
                                     </div>
                                 </div>
                                 

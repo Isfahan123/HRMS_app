@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupPayrollProcessing();
     setupBonusManagement();
     setupExportHandlers();
+    setupTableSorting();
     
     async function initializeAdminDashboard() {
         try {
@@ -77,35 +78,203 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success && data.data && data.data.length > 0) {
+                cachedEmployees = data.data; // Cache for sorting
                 const tableHtml = buildEmployeeTable(data.data);
                 document.getElementById('employeeTable').innerHTML = tableHtml;
             } else {
+                cachedEmployees = [];
                 document.getElementById('employeeTable').innerHTML = '<p>No employees found.</p>';
             }
         } catch (error) {
             console.error('Error loading employees:', error);
+            cachedEmployees = [];
             document.getElementById('employeeTable').innerHTML = '<p>Error loading employee data.</p>';
         }
     }
     
     function buildEmployeeTable(employees) {
-        let html = '<table><thead><tr>';
-        html += '<th>Name</th><th>Email</th><th>Department</th><th>Position</th><th>Status</th><th>Actions</th>';
+        let html = '<table class="employee-table"><thead><tr>';
+        html += '<th style="width: 80px;">👤 Profile</th>';
+        html += '<th class="sortable" data-sort="name">📝 Name <span class="sort-indicator">↕</span></th>';
+        html += '<th style="width: 120px;">🆔 Employee ID</th>';
+        html += '<th class="sortable" data-sort="email">📧 Email <span class="sort-indicator">↕</span></th>';
+        html += '<th>🏢 Department</th>';
+        html += '<th>💼 Job Title</th>';
+        html += '<th style="width: 100px;">📊 Status</th>';
+        html += '<th style="width: 120px;">🏷️ Work Status</th>';
+        html += '<th style="width: 100px;">🕌 Religion</th>';
+        html += '<th style="width: 100px;">📄 Resume</th>';
+        html += '<th style="width: 150px;">⚙️ Actions</th>';
         html += '</tr></thead><tbody>';
         
         employees.forEach(employee => {
             html += '<tr>';
-            html += `<td>${employee.full_name || '-'}</td>`;
+            
+            // Profile Picture - use photo_url (actual DB column name)
+            const profilePicUrl = employee.photo_url || '/static/images/default_avatar.svg';
+            html += `<td><img src="${profilePicUrl}" alt="Profile" class="profile-pic-small" onerror="this.src='/static/images/default_avatar.svg'" /></td>`;
+            
+            // Name
+            html += `<td><strong>${employee.full_name || '-'}</strong></td>`;
+            
+            // Employee ID
+            html += `<td>${employee.employee_id || '-'}</td>`;
+            
+            // Email
             html += `<td>${employee.email || '-'}</td>`;
+            
+            // Department
             html += `<td>${employee.department || '-'}</td>`;
-            html += `<td>${employee.position || '-'}</td>`;
-            html += `<td>${employee.employment_status || '-'}</td>`;
-            html += `<td><button class="btn-secondary btn-sm" onclick="openEditEmployeeModal('${employee.id || employee.email}')">✏️ Edit</button></td>`;
+            
+            // Job Title
+            html += `<td>${employee.job_title || '-'}</td>`;
+            
+            // Status - use status (actual DB column name)
+            html += `<td>${employee.status || '-'}</td>`;
+            
+            // Work Status - Note: This column doesn't exist in DB, will show '-'
+            html += `<td>${employee.work_status || '-'}</td>`;
+            
+            // Religion
+            html += `<td>${employee.religion || '-'}</td>`;
+            
+            // Resume
+            if (employee.resume_url) {
+                html += `<td>
+                    <button class="btn-secondary btn-xs" onclick="window.open('${employee.resume_url}', '_blank')" title="View Resume">👁️</button>
+                    <button class="btn-secondary btn-xs" onclick="downloadResume('${employee.resume_url}', '${employee.full_name}')" title="Download Resume">⬇️</button>
+                </td>`;
+            } else {
+                html += `<td>-</td>`;
+            }
+            
+            // Actions
+            html += `<td>
+                <button class="btn-secondary btn-sm" onclick="openEditEmployeeModal('${employee.id || employee.email}')" title="Edit Employee">✏️ Edit</button>
+                <button class="btn-danger btn-sm" onclick="deleteEmployee('${employee.id || employee.email}', '${employee.full_name}')" title="Delete Employee">🗑️ Delete</button>
+            </td>`;
+            
             html += '</tr>';
         });
         
         html += '</tbody></table>';
         return html;
+    }
+    
+    // Helper function to download resume
+    function downloadResume(url, employeeName) {
+        if (!url) return;
+        
+        // Get file extension from URL
+        const urlParts = url.split('.');
+        const extension = urlParts.length > 1 ? urlParts[urlParts.length - 1].split('?')[0] : 'pdf';
+        
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${employeeName}_resume.${extension}`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // Helper function to delete employee
+    async function deleteEmployee(employeeId, employeeName) {
+        if (!confirm(`Are you sure you want to delete employee "${employeeName}"? This action cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/employees/${employeeId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`Employee "${employeeName}" has been deleted successfully.`);
+                loadEmployeeList(); // Reload the employee list
+            } else {
+                alert(`Failed to delete employee: ${data.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting employee:', error);
+            alert('Error deleting employee. Please try again.');
+        }
+    }
+    
+    // Table sorting functionality
+    let currentSort = { column: null, direction: 'asc' };
+    let cachedEmployees = [];
+    
+    function setupTableSorting() {
+        // Add click handlers to sortable headers
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('sortable') || e.target.closest('.sortable')) {
+                const header = e.target.classList.contains('sortable') ? e.target : e.target.closest('.sortable');
+                const sortColumn = header.getAttribute('data-sort');
+                sortEmployeeTable(sortColumn);
+            }
+        });
+    }
+    
+    function sortEmployeeTable(column) {
+        // Toggle direction if same column, else default to ascending
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+        
+        // Sort the cached employees array
+        const sortedEmployees = [...cachedEmployees].sort((a, b) => {
+            let aVal = '';
+            let bVal = '';
+            
+            if (column === 'name') {
+                aVal = (a.full_name || '').toLowerCase();
+                bVal = (b.full_name || '').toLowerCase();
+            } else if (column === 'email') {
+                aVal = (a.email || '').toLowerCase();
+                bVal = (b.email || '').toLowerCase();
+            }
+            
+            if (currentSort.direction === 'asc') {
+                return aVal.localeCompare(bVal);
+            } else {
+                return bVal.localeCompare(aVal);
+            }
+        });
+        
+        // Rebuild and display the sorted table
+        const tableHtml = buildEmployeeTable(sortedEmployees);
+        document.getElementById('employeeTable').innerHTML = tableHtml;
+        
+        // Update sort indicators
+        updateSortIndicators();
+    }
+    
+    function updateSortIndicators() {
+        // Reset all indicators
+        document.querySelectorAll('.sort-indicator').forEach(indicator => {
+            indicator.textContent = '↕';
+        });
+        
+        // Update current sorted column indicator
+        if (currentSort.column) {
+            const header = document.querySelector(`[data-sort="${currentSort.column}"]`);
+            if (header) {
+                const indicator = header.querySelector('.sort-indicator');
+                if (indicator) {
+                    indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                }
+            }
+        }
     }
     
     async function loadAllAttendance() {
@@ -1371,6 +1540,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch (error) {
                     console.error('Error exporting payroll:', error);
                     alert('Error exporting payroll data');
+                }
+            });
+        }
+        
+        // Download All PDFs button
+        const downloadAllPDFsBtn = document.getElementById('downloadAllPDFsBtn');
+        if (downloadAllPDFsBtn) {
+            downloadAllPDFsBtn.addEventListener('click', async () => {
+                alert('📥 Download All PDFs Feature\n\nThis feature will generate comprehensive PDF profiles for all employees.\n\nStatus: Coming Soon\nRequires: Backend PDF generation service\n\nPlease use individual employee view/edit for now.');
+                // TODO: Implement PDF generation for all employees
+                // This would call: POST /api/admin/employees/generate-pdfs
+                // Backend would need to implement PDF generation using reportlab or similar
+            });
+        }
+        
+        // Print All Profiles button
+        const printAllProfilesBtn = document.getElementById('printAllProfilesBtn');
+        if (printAllProfilesBtn) {
+            printAllProfilesBtn.addEventListener('click', () => {
+                if (!confirm('Print all employee profiles?')) {
+                    return;
+                }
+                
+                // Store current display state
+                const currentTab = document.querySelector('.tab-pane.active');
+                
+                // Show employee table for printing
+                const employeeTab = document.getElementById('employeesTab');
+                if (employeeTab) {
+                    // Add print class to trigger print styles
+                    document.body.classList.add('printing');
+                    window.print();
+                    document.body.classList.remove('printing');
                 }
             });
         }
@@ -3203,4 +3405,121 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSalaryHistoryEmployeeSelector();
     loadEmployeeHistory();
     loadVariablePercentageRules();
+    
+    // Setup file upload handlers
+    setupFileUploadHandlers();
 });
+
+// File upload handling functions (defined globally)
+function setupFileUploadHandlers() {
+    // Profile picture preview for new employee
+    const newProfilePicInput = document.getElementById('newEmpProfilePic');
+    if (newProfilePicInput) {
+        newProfilePicInput.addEventListener('change', function(e) {
+            handleProfilePicChange(e, 'new');
+        });
+    }
+    
+    // Resume upload for new employee
+    const newResumeInput = document.getElementById('newEmpResume');
+    if (newResumeInput) {
+        newResumeInput.addEventListener('change', function(e) {
+            handleResumeChange(e, 'new');
+        });
+    }
+    
+    // Profile picture preview for edit employee
+    const editProfilePicInput = document.getElementById('editEmpProfilePic');
+    if (editProfilePicInput) {
+        editProfilePicInput.addEventListener('change', function(e) {
+            handleProfilePicChange(e, 'edit');
+        });
+    }
+    
+    // Resume upload for edit employee
+    const editResumeInput = document.getElementById('editEmpResume');
+    if (editResumeInput) {
+        editResumeInput.addEventListener('change', function(e) {
+            handleResumeChange(e, 'edit');
+        });
+    }
+}
+
+function handleProfilePicChange(event, formType) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Profile picture must be less than 5MB.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById(`${formType}EmpProfilePicPreview`);
+            if (preview) {
+                preview.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+        
+        // Update file name display
+        const nameDiv = document.getElementById(`${formType}EmpProfilePicName`);
+        if (nameDiv) {
+            nameDiv.textContent = file.name;
+        }
+    }
+}
+
+function handleResumeChange(event, formType) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a PDF or Word document.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Resume must be less than 10MB.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Update file name display
+        const nameDiv = document.getElementById(`${formType}EmpResumeName`);
+        if (nameDiv) {
+            nameDiv.textContent = file.name;
+        }
+    }
+}
+
+function clearProfilePicPreview(formType) {
+    const input = document.getElementById(`${formType}EmpProfilePic`);
+    const preview = document.getElementById(`${formType}EmpProfilePicPreview`);
+    const nameDiv = document.getElementById(`${formType}EmpProfilePicName`);
+    
+    if (input) input.value = '';
+    if (preview) preview.src = '/static/images/default_avatar.svg';
+    if (nameDiv) nameDiv.textContent = 'No file selected';
+}
+
+function clearResume(formType) {
+    const input = document.getElementById(`${formType}EmpResume`);
+    const nameDiv = document.getElementById(`${formType}EmpResumeName`);
+    
+    if (input) input.value = '';
+    if (nameDiv) nameDiv.textContent = 'No file selected';
+}

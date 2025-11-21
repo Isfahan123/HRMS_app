@@ -27,7 +27,8 @@ from services.supabase_service import (
     submit_leave_request,
     insert_employee,
     update_employee,
-    run_payroll
+    run_payroll,
+    delete_employee
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -633,6 +634,22 @@ async def update_employee_admin(employee_id: str, request: Request):
             return {"success": False, "message": "Failed to update employee"}
     except Exception as e:
         print(f"Error updating employee: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/employees/{employee_id}")
+async def delete_employee_endpoint(employee_id: str):
+    """
+    Delete an employee (admin only)
+    """
+    try:
+        result = delete_employee(employee_id)
+        
+        if result.get("success"):
+            return {"success": True, "message": "Employee deleted successfully"}
+        else:
+            return {"success": False, "message": result.get("error", "Failed to delete employee")}
+    except Exception as e:
+        print(f"Error deleting employee: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.get("/api/admin/payroll-runs")
