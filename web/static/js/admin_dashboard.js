@@ -675,84 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    window.editVariablePercentageRule = async function(ruleId) {
-        try {
-            // Fetch all rules
-            const response = await fetch('/api/admin/variable-percentage');
-            const data = await response.json();
-            
-            if (!data.success || !data.data) {
-                alert('Error loading rule data');
-                return;
-            }
-            
-            // Find the specific rule
-            const rule = data.data.find(r => r.id === ruleId);
-            if (!rule) {
-                alert('Rule not found');
-                return;
-            }
-            
-            // Show the form
-            showAddVariablePercentageForm();
-            
-            // Pre-populate the form with existing rule data
-            document.getElementById('varPctName').value = rule.name || '';
-            document.getElementById('varPctType').value = rule.type || '';
-            document.getElementById('varPctPercentage').value = rule.percentage || '';
-            document.getElementById('varPctApplyTo').value = rule.apply_to || '';
-            toggleEmployeeSelection(); // Show/hide department/employee fields
-            document.getElementById('varPctDepartment').value = rule.department || '';
-            document.getElementById('varPctEmployee').value = rule.employee_email || '';
-            document.getElementById('varPctBaseOn').value = rule.base_on || '';
-            document.getElementById('varPctFrequency').value = rule.frequency || '';
-            document.getElementById('varPctStatus').value = rule.status || '';
-            document.getElementById('varPctStartDate').value = rule.start_date || '';
-            document.getElementById('varPctEndDate').value = rule.end_date || '';
-            document.getElementById('varPctDescription').value = rule.description || '';
-            
-            // Change form title to indicate edit mode
-            const formTitle = document.querySelector('#addVariablePercentageForm h4');
-            if (formTitle) formTitle.textContent = 'Edit Variable Percentage Rule';
-            
-            // Change button text
-            const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
-            if (submitBtn) submitBtn.textContent = 'Update Rule';
-            
-            // Store the rule ID for update
-            const form = document.getElementById('newVariablePercentageForm');
-            form.setAttribute('data-rule-id', ruleId);
-            form.setAttribute('data-edit-mode', 'true');
-            
-        } catch (error) {
-            console.error('Error loading rule for edit:', error);
-            alert('Error loading rule data');
-        }
-    };
-    
-    window.deleteVariablePercentageRule = async function(ruleId) {
-        if (!confirm('Are you sure you want to delete this variable percentage rule?')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/admin/variable-percentage/${ruleId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('✅ Rule deleted successfully');
-                loadVariablePercentageRules();
-            } else {
-                alert(`❌ ${result.message}`);
-            }
-        } catch (error) {
-            console.error('Error deleting variable percentage rule:', error);
-            alert('❌ Error deleting rule');
-        }
-    };
+    // Old edit and delete functions removed - replaced with EPF/SOCSO/EIS configuration system
     
     window.includeInNextPayroll = async function(recordId) {
         if (!confirm('Mark this employee to be included in the next payroll run?')) {
@@ -805,6 +728,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (tabName === 'employeeHistory') {
                         console.log('🔄 Reloading employment history data...');
                         loadEmployeeHistory();
+                    } else if (tabName === 'salaryHistory') {
+                        console.log('🔄 Loading salary history...');
+                        loadSalaryHistory();
+                    } else if (tabName === 'payroll') {
+                        console.log('🔄 Loading payroll runs...');
+                        loadPayrollRuns();
                     }
                 } else {
                     console.error('❌ Tab pane not found:', tabName + 'Tab');
@@ -870,6 +799,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (subtabName === 'leaveApprovedRejected') {
                     console.log('🔄 Loading approved/rejected leave requests...');
                     loadApprovedRejectedLeaveRequests();
+                } else if (subtabName === 'leaveAnnualBalance') {
+                    console.log('🔄 Loading annual leave balances...');
+                    loadLeaveBalances();
+                } else if (subtabName === 'leaveSickBalance') {
+                    console.log('🔄 Loading sick leave balances...');
+                    loadSickLeaveBalances();
+                } else if (subtabName === 'leaveUnpaid') {
+                    console.log('🔄 Loading unpaid leave summary...');
+                    loadUnpaidLeaveSummary();
+                } else if (subtabName === 'payrollBonuses') {
+                    console.log('🔄 Loading bonuses...');
+                    loadBonuses();
+                } else if (subtabName === 'payrollVariable') {
+                    console.log('🔄 Loading variable percentage rules...');
+                    loadVariablePercentageRules();
+                } else if (subtabName === 'engagementsView') {
+                    console.log('🔄 Loading engagements...');
+                    // Load all engagements
+                    if (typeof loadAllEngagements === 'function') {
+                        loadAllEngagements();
+                    }
                 }
             });
         });
@@ -2408,159 +2358,179 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Variable Percentage Management Functions
-    window.showAddVariablePercentageForm = function() {
-        document.getElementById('addVariablePercentageForm').style.display = 'block';
-    };
-    
-    window.hideAddVariablePercentageForm = function() {
-        document.getElementById('addVariablePercentageForm').style.display = 'none';
-        const form = document.getElementById('newVariablePercentageForm');
-        form.reset();
-        document.getElementById('addVariablePercentageMessage').style.display = 'none';
-        
-        // Reset edit mode
-        form.removeAttribute('data-rule-id');
-        form.removeAttribute('data-edit-mode');
-        
-        // Reset form title and button
-        const formTitle = document.querySelector('#addVariablePercentageForm h4');
-        if (formTitle) formTitle.textContent = 'Add Variable Percentage Rule';
-        
-        const submitBtn = document.querySelector('#newVariablePercentageForm button[type="submit"]');
-        if (submitBtn) submitBtn.textContent = 'Create Rule';
-        
-        // Hide conditional fields
-        document.getElementById('varPctDepartmentGroup').style.display = 'none';
-        document.getElementById('varPctEmployeeGroup').style.display = 'none';
-    };
-    
-    window.toggleEmployeeSelection = function() {
-        const applyTo = document.getElementById('varPctApplyTo').value;
-        const deptGroup = document.getElementById('varPctDepartmentGroup');
-        const empGroup = document.getElementById('varPctEmployeeGroup');
-        
-        if (applyTo === 'department') {
-            deptGroup.style.display = 'block';
-            empGroup.style.display = 'none';
-        } else if (applyTo === 'individual') {
-            deptGroup.style.display = 'none';
-            empGroup.style.display = 'block';
-        } else {
-            deptGroup.style.display = 'none';
-            empGroup.style.display = 'none';
-        }
-    };
+    // Old variable percentage functions removed - replaced with EPF/SOCSO/EIS configuration
     
     async function loadVariablePercentageRules() {
+        // This function now loads EPF/SOCSO/EIS configuration instead of bonus rules
+        // Load the default or active configuration from the server
         try {
-            const response = await fetch('/api/admin/variable-percentage');
+            const configName = document.getElementById('varConfigName')?.value || 'default';
+            const response = await fetch(`/api/admin/variable-config/${configName}`);
+            
+            // Check if endpoint exists
+            if (response.status === 404) {
+                console.log('⚠️ Variable config API endpoint not yet implemented, using default values');
+                return;
+            }
+            
             const data = await response.json();
             
-            const container = document.getElementById('variablePercentageRulesTable');
-            if (!container) return;
-            
-            if (data.success && data.data && data.data.length > 0) {
-                let html = '<h4 style="margin-top: 20px; margin-bottom: 15px;">Active Variable Percentage Rules</h4>';
-                html += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Rule Name</th>';
-                html += '<th style="padding: 10px;">Type</th>';
-                html += '<th style="padding: 10px;">Percentage</th>';
-                html += '<th style="padding: 10px;">Apply To</th>';
-                html += '<th style="padding: 10px;">Base On</th>';
-                html += '<th style="padding: 10px;">Frequency</th>';
-                html += '<th style="padding: 10px;">Status</th>';
-                html += '<th style="padding: 10px;">Actions</th>';
-                html += '</tr></thead><tbody>';
+            if (data.success && data.config) {
+                const config = data.config;
                 
-                data.data.forEach(rule => {
-                    const statusClass = rule.status === 'active' ? 'color: #2e7d32;' : 'color: #f57c00;';
-                    const applyToText = rule.apply_to === 'all' ? 'All Employees' : 
-                                      rule.apply_to === 'department' ? `Dept: ${rule.department || '-'}` :
-                                      rule.apply_to === 'individual' ? `Emp: ${rule.employee_email || '-'}` : '-';
-                    
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;"><strong>${rule.name || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">${rule.type || '-'}</td>`;
-                    html += `<td style="padding: 10px;"><strong>${rule.percentage}%</strong></td>`;
-                    html += `<td style="padding: 10px;">${applyToText}</td>`;
-                    html += `<td style="padding: 10px;">${(rule.base_on || '').replace('_', ' ') || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${rule.frequency || '-'}</td>`;
-                    html += `<td style="padding: 10px; ${statusClass}"><strong>${rule.status || '-'}</strong></td>`;
-                    html += `<td style="padding: 10px;">`;
-                    html += `<button class="btn-secondary btn-sm" onclick="editVariablePercentageRule('${rule.id}')">✏️ Edit</button> `;
-                    html += `<button class="btn-secondary btn-sm" onclick="deleteVariablePercentageRule('${rule.id}')">🗑️ Delete</button>`;
-                    html += `</td>`;
-                    html += '</tr>';
-                });
+                // Load EPF Part A values with null checks
+                const epfPartAEmployee = document.getElementById('epfPartAEmployee');
+                const epfPartAEmployer = document.getElementById('epfPartAEmployer');
+                const epfPartAEmployeeOver20k = document.getElementById('epfPartAEmployeeOver20k');
+                const epfPartAEmployerOver20k = document.getElementById('epfPartAEmployerOver20k');
+                const epfPartAEmployerBonus = document.getElementById('epfPartAEmployerBonus');
                 
-                html += '</tbody></table>';
-                html += `<p style="margin-top: 10px; color: #666; font-size: 14px;">${data.data.length} rule(s) configured</p>`;
-                container.innerHTML = html;
+                if (epfPartAEmployee) epfPartAEmployee.value = config.epf_part_a_employee || 11.0;
+                if (epfPartAEmployer) epfPartAEmployer.value = config.epf_part_a_employer || 12.0;
+                if (epfPartAEmployeeOver20k) epfPartAEmployeeOver20k.value = config.epf_part_a_employee_over20k || 11.0;
+                if (epfPartAEmployerOver20k) epfPartAEmployerOver20k.value = config.epf_part_a_employer_over20k || 12.0;
+                if (epfPartAEmployerBonus) epfPartAEmployerBonus.value = config.epf_part_a_employer_bonus || 13.0;
+                
+                // Load EPF Part B values with null checks
+                const epfPartBEmployee = document.getElementById('epfPartBEmployee');
+                const epfPartBEmployer = document.getElementById('epfPartBEmployer');
+                const epfPartBEmployeeOver20k = document.getElementById('epfPartBEmployeeOver20k');
+                const epfPartBEmployerOver20k = document.getElementById('epfPartBEmployerOver20k');
+                
+                if (epfPartBEmployee) epfPartBEmployee.value = config.epf_part_b_employee || 0.0;
+                if (epfPartBEmployer) epfPartBEmployer.value = config.epf_part_b_employer || 13.0;
+                if (epfPartBEmployeeOver20k) epfPartBEmployeeOver20k.value = config.epf_part_b_employee_over20k || 0.0;
+                if (epfPartBEmployerOver20k) epfPartBEmployerOver20k.value = config.epf_part_b_employer_over20k || 13.0;
+                
+                // Load EPF Part E values with null checks
+                const epfPartEEmployee = document.getElementById('epfPartEEmployee');
+                const epfPartEEmployer = document.getElementById('epfPartEEmployer');
+                const epfPartEEmployeeOver20k = document.getElementById('epfPartEEmployeeOver20k');
+                const epfPartEEmployerOver20kFixed = document.getElementById('epfPartEEmployerOver20kFixed');
+                
+                if (epfPartEEmployee) epfPartEEmployee.value = config.epf_part_e_employee || 0.0;
+                if (epfPartEEmployer) epfPartEEmployer.value = config.epf_part_e_employer || 4.0;
+                if (epfPartEEmployeeOver20k) epfPartEEmployeeOver20k.value = config.epf_part_e_employee_over20k || 0.0;
+                if (epfPartEEmployerOver20kFixed) epfPartEEmployerOver20kFixed.value = config.epf_part_e_employer_over20k_fixed || 5.0;
+                
+                // Load SOCSO values with null checks
+                const socsoFirstEmployee = document.getElementById('socsoFirstEmployee');
+                const socsoFirstEmployer = document.getElementById('socsoFirstEmployer');
+                const socsoSecondEmployee = document.getElementById('socsoSecondEmployee');
+                const socsoSecondEmployer = document.getElementById('socsoSecondEmployer');
+                
+                if (socsoFirstEmployee) socsoFirstEmployee.value = config.socso_first_employee || 0.5;
+                if (socsoFirstEmployer) socsoFirstEmployer.value = config.socso_first_employer || 1.75;
+                if (socsoSecondEmployee) socsoSecondEmployee.value = config.socso_second_employee || 0.0;
+                if (socsoSecondEmployer) socsoSecondEmployer.value = config.socso_second_employer || 1.25;
+                
+                // Load EIS values with null checks
+                const eisEmployee = document.getElementById('eisEmployee');
+                const eisEmployer = document.getElementById('eisEmployer');
+                
+                if (eisEmployee) eisEmployee.value = config.eis_employee || 0.2;
+                if (eisEmployer) eisEmployer.value = config.eis_employer || 0.2;
+                
+                console.log('✅ Loaded variable percentage configuration:', configName);
             } else {
-                container.innerHTML = '<p style="color: #666;">No variable percentage rules configured yet. Click "Add Variable Percentage Rule" to create one.</p>';
+                console.log('⚠️ No configuration found, using defaults');
+                // Load default values (already set in HTML)
             }
         } catch (error) {
-            console.error('Error loading variable percentage rules:', error);
-            const container = document.getElementById('variablePercentageRulesTable');
-            if (container) container.innerHTML = '<p style="color: #f44336;">Error loading rules.</p>';
+            console.error('Error loading variable percentage configuration:', error);
+            console.log('⚠️ Using default values from HTML');
         }
     }
     
-    // Handle new variable percentage form submission
-    const newVariablePercentageForm = document.getElementById('newVariablePercentageForm');
-    if (newVariablePercentageForm) {
-        newVariablePercentageForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    // Save variable percentage configuration
+    window.saveVariableConfig = async function() {
+        try {
+            const configName = document.getElementById('varConfigName')?.value || 'default';
             
-            const formData = new FormData(newVariablePercentageForm);
-            const data = {};
+            // Helper function to safely get and parse float values
+            const safeParseFloat = (elementId, defaultValue) => {
+                const element = document.getElementById(elementId);
+                if (!element || !element.value) return defaultValue;
+                const value = parseFloat(element.value);
+                return isNaN(value) ? defaultValue : value;
+            };
             
-            for (let [key, value] of formData.entries()) {
-                data[key] = value;
+            const config = {
+                config_name: configName,
+                // EPF Part A
+                epf_part_a_employee: safeParseFloat('epfPartAEmployee', 11.0),
+                epf_part_a_employer: safeParseFloat('epfPartAEmployer', 12.0),
+                epf_part_a_employee_over20k: safeParseFloat('epfPartAEmployeeOver20k', 11.0),
+                epf_part_a_employer_over20k: safeParseFloat('epfPartAEmployerOver20k', 12.0),
+                epf_part_a_employer_bonus: safeParseFloat('epfPartAEmployerBonus', 13.0),
+                // EPF Part B
+                epf_part_b_employee: safeParseFloat('epfPartBEmployee', 0.0),
+                epf_part_b_employer: safeParseFloat('epfPartBEmployer', 13.0),
+                epf_part_b_employee_over20k: safeParseFloat('epfPartBEmployeeOver20k', 0.0),
+                epf_part_b_employer_over20k: safeParseFloat('epfPartBEmployerOver20k', 13.0),
+                // EPF Part E
+                epf_part_e_employee: safeParseFloat('epfPartEEmployee', 0.0),
+                epf_part_e_employer: safeParseFloat('epfPartEEmployer', 4.0),
+                epf_part_e_employee_over20k: safeParseFloat('epfPartEEmployeeOver20k', 0.0),
+                epf_part_e_employer_over20k_fixed: safeParseFloat('epfPartEEmployerOver20kFixed', 5.0),
+                // SOCSO
+                socso_first_employee: safeParseFloat('socsoFirstEmployee', 0.5),
+                socso_first_employer: safeParseFloat('socsoFirstEmployer', 1.75),
+                socso_second_employee: safeParseFloat('socsoSecondEmployee', 0.0),
+                socso_second_employer: safeParseFloat('socsoSecondEmployer', 1.25),
+                // EIS
+                eis_employee: safeParseFloat('eisEmployee', 0.2),
+                eis_employer: safeParseFloat('eisEmployer', 0.2)
+            };
+            
+            const response = await fetch('/api/admin/variable-config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            });
+            
+            // Check if endpoint exists
+            if (response.status === 404) {
+                alert('⚠️ Save functionality requires backend API implementation.\n\nConfiguration changes are currently stored locally in the browser only.\n\nAPI endpoint needed: POST /api/admin/variable-config');
+                console.warn('Variable config save API endpoint not yet implemented');
+                return;
             }
             
-            // Check if we're in edit mode
-            const isEditMode = this.getAttribute('data-edit-mode') === 'true';
-            const ruleId = this.getAttribute('data-rule-id');
+            const result = await response.json();
             
-            try {
-                const url = isEditMode ? `/api/admin/variable-percentage/${ruleId}` : '/api/admin/variable-percentage';
-                const method = isEditMode ? 'PUT' : 'POST';
-                
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                const messageDiv = document.getElementById('addVariablePercentageMessage');
-                messageDiv.style.display = 'block';
-                
-                if (result.success) {
-                    messageDiv.className = 'success-message';
-                    messageDiv.textContent = isEditMode ? '✅ Variable percentage rule updated successfully!' : '✅ Variable percentage rule created successfully!';
-                    
-                    setTimeout(() => {
-                        hideAddVariablePercentageForm();
-                        loadVariablePercentageRules();
-                    }, 1500);
-                } else {
-                    messageDiv.className = 'error-message';
-                    messageDiv.textContent = result.message || (isEditMode ? 'Failed to update rule' : 'Failed to create rule');
-                }
-            } catch (error) {
-                console.error('Error saving variable percentage rule:', error);
-                const messageDiv = document.getElementById('addVariablePercentageMessage');
-                messageDiv.style.display = 'block';
-                messageDiv.className = 'error-message';
-                messageDiv.textContent = 'Error saving rule';
+            if (result.success) {
+                alert(`✅ Configuration "${configName}" saved successfully!`);
+                const displayElement = document.getElementById('configNameDisplay');
+                if (displayElement) displayElement.textContent = configName;
+            } else {
+                alert(`❌ Failed to save configuration: ${result.message || 'Unknown error'}`);
             }
+        } catch (error) {
+            console.error('Error saving variable configuration:', error);
+            alert('❌ Error saving configuration');
+        }
+    };
+    
+    // Load variable percentage configuration
+    window.loadVariableConfig = async function() {
+        const configName = prompt('Enter configuration name to load:', 'default');
+        if (configName) {
+            document.getElementById('varConfigName').value = configName;
+            document.getElementById('configNameDisplay').textContent = configName;
+            await loadVariablePercentageRules();
+        }
+    };
+    
+    // Update config name display when typing
+    const varConfigNameInput = document.getElementById('varConfigName');
+    if (varConfigNameInput) {
+        varConfigNameInput.addEventListener('input', function() {
+            document.getElementById('configNameDisplay').textContent = this.value || 'default';
         });
     }
+
     
     // Skipped Payroll Management Functions
     window.loadSkippedPayroll = async function() {
@@ -2768,6 +2738,240 @@ document.addEventListener('DOMContentLoaded', function() {
                 messageDiv.textContent = 'Error submitting leave request: ' + error.message;
             }
         });
+        
+        // Handle leave balance loading when employee is selected
+        const employeeSelect = document.getElementById('adminLeaveEmployeeId');
+        const refreshBalanceBtn = document.getElementById('adminRefreshBalance');
+        
+        async function loadEmployeeLeaveBalance() {
+            const employeeEmail = employeeSelect.value;
+            if (!employeeEmail) {
+                document.getElementById('adminAnnualBalance').textContent = 'Select an employee to view balance';
+                document.getElementById('adminSickBalance').textContent = 'Select an employee to view balance';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/leave-balance/${encodeURIComponent(employeeEmail)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const annualBalance = data.balances.annual || 0;
+                    const sickBalance = data.balances.sick || 0;
+                    document.getElementById('adminAnnualBalance').textContent = `${annualBalance} days remaining`;
+                    document.getElementById('adminSickBalance').textContent = `${sickBalance} days remaining`;
+                } else {
+                    document.getElementById('adminAnnualBalance').textContent = 'Error loading balance';
+                    document.getElementById('adminSickBalance').textContent = 'Error loading balance';
+                }
+            } catch (error) {
+                console.error('Error loading leave balance:', error);
+                document.getElementById('adminAnnualBalance').textContent = 'Error loading balance';
+                document.getElementById('adminSickBalance').textContent = 'Error loading balance';
+            }
+        }
+        
+        if (employeeSelect) {
+            employeeSelect.addEventListener('change', loadEmployeeLeaveBalance);
+        }
+        
+        if (refreshBalanceBtn) {
+            refreshBalanceBtn.addEventListener('click', loadEmployeeLeaveBalance);
+        }
+        
+        // Handle sick leave type selection to show info
+        const leaveTypeSelect = document.getElementById('adminLeaveType');
+        const sickLeaveInfo = document.getElementById('adminSickLeaveInfo');
+        
+        if (leaveTypeSelect && sickLeaveInfo) {
+            leaveTypeSelect.addEventListener('change', function() {
+                const selectedType = this.value.toLowerCase();
+                if (selectedType === 'sick' || selectedType === 'hospitalization') {
+                    sickLeaveInfo.style.display = 'block';
+                } else {
+                    sickLeaveInfo.style.display = 'none';
+                }
+            });
+        }
+        
+        // Handle half-day period visibility
+        const halfDayCheckbox = document.getElementById('adminLeaveHalfDay');
+        const halfDayPeriod = document.getElementById('adminHalfDayPeriod');
+        const durationInput = document.getElementById('adminLeaveDuration');
+        
+        if (halfDayCheckbox && halfDayPeriod && durationInput) {
+            halfDayCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    durationInput.value = 0.5;
+                    // For half-day, set end date same as start date
+                    const startDate = document.getElementById('adminLeaveStartDate');
+                    const endDate = document.getElementById('adminLeaveEndDate');
+                    if (startDate && endDate && startDate.value) {
+                        endDate.value = startDate.value;
+                    }
+                    updateWorkingDaysDisplay();
+                } else {
+                    if (durationInput.value == 0.5) {
+                        durationInput.value = 1;
+                    }
+                    updateWorkingDaysDisplay();
+                }
+            });
+        }
+        
+        // Handle document upload
+        const uploadBtn = document.getElementById('adminUploadDocument');
+        const removeBtn = document.getElementById('adminRemoveDocument');
+        const fileInput = document.getElementById('adminDocumentInput');
+        const docName = document.getElementById('adminDocumentName');
+        
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    docName.textContent = this.files[0].name;
+                    removeBtn.style.display = 'inline-block';
+                }
+            });
+        }
+        
+        if (removeBtn && fileInput) {
+            removeBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                docName.textContent = '';
+                this.style.display = 'none';
+            });
+        }
+        
+        // Calculate working days between dates
+        function calculateWorkingDays(startDate, endDate, excludeWeekends = true) {
+            if (!startDate || !endDate) return 0;
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (end < start) return 0;
+            
+            let days = 0;
+            const current = new Date(start);
+            
+            while (current <= end) {
+                const dayOfWeek = current.getDay();
+                if (!excludeWeekends || (dayOfWeek !== 0 && dayOfWeek !== 6)) {
+                    days++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return days;
+        }
+        
+        // Update working days display
+        function updateWorkingDaysDisplay() {
+            const startDate = document.getElementById('adminLeaveStartDate').value;
+            const endDate = document.getElementById('adminLeaveEndDate').value;
+            const display = document.getElementById('adminWorkingDaysDisplay');
+            const halfDay = document.getElementById('adminLeaveHalfDay');
+            
+            if (!startDate || !endDate) {
+                display.textContent = 'Working days: - (excludes weekends & holidays)';
+                return;
+            }
+            
+            // For half-day leave, validate that start and end dates are the same
+            if (halfDay && halfDay.checked) {
+                if (startDate !== endDate) {
+                    display.textContent = 'Half-day leave must have same start and end date';
+                    display.style.color = '#d32f2f';
+                } else {
+                    display.textContent = 'Working days: 0.5 (half-day)';
+                    display.style.color = '#555';
+                }
+                return;
+            }
+            
+            display.style.color = '#555';
+            const days = calculateWorkingDays(startDate, endDate);
+            display.textContent = `Working days: ${days} (excludes weekends & holidays)`;
+        }
+        
+        // Update dates when duration changes
+        const durationField = document.getElementById('adminLeaveDuration');
+        if (durationField) {
+            durationField.addEventListener('change', function() {
+                const duration = parseFloat(this.value);
+                const startDate = document.getElementById('adminLeaveStartDate');
+                const endDate = document.getElementById('adminLeaveEndDate');
+                
+                if (startDate.value) {
+                    const start = new Date(startDate.value);
+                    
+                    // Handle fractional days (e.g., 0.5, 1.5)
+                    if (duration === 0.5 || (duration % 1 === 0.5)) {
+                        // For half-day or half-day increments, end date should be same as start
+                        // or we calculate the whole days and the last day is half
+                        const wholeDays = Math.floor(duration);
+                        let workingDaysAdded = 0;
+                        const current = new Date(start);
+                        
+                        // Add whole working days
+                        while (workingDaysAdded < wholeDays) {
+                            const dayOfWeek = current.getDay();
+                            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                                workingDaysAdded++;
+                            }
+                            if (workingDaysAdded < wholeDays) {
+                                current.setDate(current.getDate() + 1);
+                            }
+                        }
+                        
+                        endDate.value = current.toISOString().split('T')[0];
+                    } else {
+                        // For whole days, calculate normally
+                        let workingDaysAdded = 0;
+                        const current = new Date(start);
+                        const targetDays = Math.round(duration);
+                        
+                        while (workingDaysAdded < targetDays) {
+                            const dayOfWeek = current.getDay();
+                            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                                workingDaysAdded++;
+                            }
+                            if (workingDaysAdded < targetDays) {
+                                current.setDate(current.getDate() + 1);
+                            }
+                        }
+                        
+                        endDate.value = current.toISOString().split('T')[0];
+                    }
+                    
+                    updateWorkingDaysDisplay();
+                }
+            });
+        }
+        
+        // Update working days when dates change
+        const startDateField = document.getElementById('adminLeaveStartDate');
+        const endDateField = document.getElementById('adminLeaveEndDate');
+        
+        if (startDateField) {
+            startDateField.addEventListener('change', updateWorkingDaysDisplay);
+        }
+        
+        if (endDateField) {
+            endDateField.addEventListener('change', updateWorkingDaysDisplay);
+        }
+        
+        // Initialize with current dates
+        if (startDateField && endDateField) {
+            const today = new Date().toISOString().split('T')[0];
+            if (!startDateField.value) startDateField.value = today;
+            if (!endDateField.value) endDateField.value = today;
+            updateWorkingDaysDisplay();
+        }
     }
     
     window.closeEditEmploymentHistoryModal = function() {

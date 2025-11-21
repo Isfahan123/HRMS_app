@@ -545,50 +545,141 @@
                     
                     <!-- Submit Leave Request Subtab -->
                     <div id="leaveSubmitSubtab" class="subtab-content">
-                        <h3>Submit Leave Request (Admin)</h3>
+                        <h3>👨‍💼 Submit Leave Request (Admin)</h3>
                         <div class="form-section">
                             <form id="adminLeaveRequestForm">
-                                <div class="form-row">
+                                <!-- Employee Selection Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">👤 Employee Selection</legend>
                                     <div class="form-group">
                                         <label for="adminLeaveEmployeeId">Employee:</label>
                                         <select id="adminLeaveEmployeeId" name="employee_id" required>
-                                            <option value="">Select Employee</option>
+                                            <option value="">Select or search employee...</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="adminLeaveType">Leave Type:</label>
-                                        <select id="adminLeaveType" name="leave_type" required>
-                                            <option value="">Select leave type</option>
-                                            <option value="annual">Annual Leave</option>
-                                            <option value="sick">Sick Leave</option>
-                                            <option value="emergency">Emergency Leave</option>
-                                            <option value="unpaid">Unpaid Leave</option>
-                                            <option value="maternity">Maternity Leave</option>
-                                            <option value="paternity">Paternity Leave</option>
+                                </fieldset>
+
+                                <!-- Employee Leave Balance Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 2px solid #ccc; border-radius: 8px; background-color: #f8f9fa;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">📊 Employee Leave Balance</legend>
+                                    <div id="adminLeaveBalanceDisplay" style="padding: 10px;">
+                                        <div style="font-size: 14px; color: #2e7d32; margin: 5px 0;">
+                                            <strong>Annual Leave:</strong> <span id="adminAnnualBalance">Select an employee to view balance</span>
+                                        </div>
+                                        <div style="font-size: 14px; color: #d32f2f; margin: 5px 0;">
+                                            <strong>Sick Leave:</strong> <span id="adminSickBalance">Select an employee to view balance</span>
+                                        </div>
+                                        <button type="button" id="adminRefreshBalance" class="btn-secondary" style="margin-top: 10px;">🔄 Refresh Balance</button>
+                                    </div>
+                                </fieldset>
+
+                                <!-- Leave Request Details Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">📝 Leave Request Details</legend>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="adminLeaveType">Leave Type:</label>
+                                            <select id="adminLeaveType" name="leave_type" required>
+                                                <option value="">Select leave type</option>
+                                                <option value="sick">Sick</option>
+                                                <option value="hospitalization">Hospitalization</option>
+                                                <option value="annual">Annual</option>
+                                                <option value="emergency">Emergency</option>
+                                                <option value="unpaid">Unpaid</option>
+                                                <option value="maternity">Maternity</option>
+                                                <option value="paternity">Paternity</option>
+                                                <option value="others">Others</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="adminLeaveState">State (for holiday rules):</label>
+                                            <select id="adminLeaveState" name="state">
+                                                <option value="All Malaysia">All Malaysia</option>
+                                                <option value="JOHORE">JOHORE</option>
+                                                <option value="KEDAH">KEDAH</option>
+                                                <option value="KELANTAN">KELANTAN</option>
+                                                <option value="MELAKA">MELAKA</option>
+                                                <option value="NEGERI SEMBILAN">NEGERI SEMBILAN</option>
+                                                <option value="PAHANG">PAHANG</option>
+                                                <option value="PERAK">PERAK</option>
+                                                <option value="PERLIS">PERLIS</option>
+                                                <option value="PULAU PINANG">PULAU PINANG</option>
+                                                <option value="SELANGOR">SELANGOR</option>
+                                                <option value="TERENGGANU">TERENGGANU</option>
+                                                <option value="KUALA LUMPUR">KUALA LUMPUR</option>
+                                                <option value="PUTRAJAYA">PUTRAJAYA</option>
+                                                <option value="LABUAN">LABUAN</option>
+                                                <option value="SABAH">SABAH</option>
+                                                <option value="SARAWAK">SARAWAK</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Half Day Controls -->
+                                    <div class="form-group" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                        <label style="margin: 0;">
+                                            <input type="checkbox" id="adminLeaveHalfDay" name="is_half_day">
+                                            Half Day Leave (counts as 0.5 day)
+                                        </label>
+                                        <label for="adminHalfDayPeriod" style="margin: 0;">Period:</label>
+                                        <select id="adminHalfDayPeriod" name="half_day_period" style="padding: 5px;">
+                                            <option value="morning">Morning (8:00 AM - 1:00 PM)</option>
+                                            <option value="afternoon">Afternoon (1:00 PM - 6:00 PM)</option>
                                         </select>
                                     </div>
-                                </div>
-                                <div class="form-row">
+
                                     <div class="form-group">
-                                        <label for="adminLeaveStartDate">Start Date:</label>
-                                        <input type="date" id="adminLeaveStartDate" name="start_date" required>
+                                        <label for="adminLeaveTitle">Leave Title:</label>
+                                        <input type="text" id="adminLeaveTitle" name="title" placeholder="Enter a brief title for the leave request..." required>
                                     </div>
+
+                                    <!-- Sick Leave Information (hidden by default, shown for sick leave) -->
+                                    <div id="adminSickLeaveInfo" style="display: none; padding: 10px; background-color: #fff3cd; border-left: 4px solid #ffc107; margin: 10px 0; border-radius: 4px;">
+                                        <p style="margin: 0; color: #856404;">ℹ️ <strong>Sick Leave Information:</strong> Medical certificate may be required for sick leave exceeding certain days as per company policy.</p>
+                                    </div>
+
+                                    <!-- Leave Duration Input -->
                                     <div class="form-group">
-                                        <label for="adminLeaveEndDate">End Date:</label>
-                                        <input type="date" id="adminLeaveEndDate" name="end_date" required>
+                                        <label for="adminLeaveDuration">Leave duration:</label>
+                                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                            <input type="number" id="adminLeaveDuration" name="duration" min="0.5" max="365" step="0.5" value="1" style="width: 100px; padding: 8px;">
+                                            <span>working days</span>
+                                            <span style="color: #666; font-style: italic;">(excludes weekends & holidays)</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="adminLeaveTitle">Reason:</label>
-                                    <input type="text" id="adminLeaveTitle" name="title" placeholder="Brief reason for leave" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>
-                                        <input type="checkbox" id="adminLeaveHalfDay" name="is_half_day">
-                                        Half Day
-                                    </label>
-                                </div>
-                                <button type="submit" class="btn-primary">Submit Leave Request</button>
+
+                                    <!-- Date Selection -->
+                                    <div class="form-group">
+                                        <label>Or select dates:</label>
+                                        <div class="form-row">
+                                            <div class="form-group" style="flex: 1;">
+                                                <label for="adminLeaveStartDate">Start:</label>
+                                                <input type="date" id="adminLeaveStartDate" name="start_date" required>
+                                            </div>
+                                            <div class="form-group" style="flex: 1;">
+                                                <label for="adminLeaveEndDate">End:</label>
+                                                <input type="date" id="adminLeaveEndDate" name="end_date" required>
+                                            </div>
+                                        </div>
+                                        <div id="adminWorkingDaysDisplay" style="color: #555; margin-top: 5px; font-style: italic;">
+                                            Working days: 1 (excludes weekends & holidays)
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <!-- Document Upload Section -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 10px;">📎 Supporting Documents</legend>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <button type="button" id="adminUploadDocument" class="btn-secondary">Upload Document</button>
+                                        <button type="button" id="adminRemoveDocument" class="btn-secondary" style="display: none;">Remove</button>
+                                        <span id="adminDocumentName" style="color: #666;"></span>
+                                    </div>
+                                    <input type="file" id="adminDocumentInput" style="display: none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                </fieldset>
+
+                                <button type="submit" class="btn-primary">Submit Request for Employee</button>
                                 <div id="adminLeaveFormMessage" style="display: none; margin-top: 10px;"></div>
                             </form>
                         </div>
@@ -1062,127 +1153,225 @@
                     <div id="payrollVariableSubtab" class="subtab-content">
                         <h3>📊 Variable Percentage Configuration</h3>
                         <p style="color: #666; margin-bottom: 20px;">
-                            Configure variable percentage bonuses and allowances for employees. These can be performance-based, 
-                            department-based, or applied company-wide.
+                            Configure custom percentage rates for EPF, SOCSO, and EIS payroll calculations. 
+                            These rates will override the fixed contribution tables when Variable Percentage mode is active.
                         </p>
                         
-                        <!-- Add Variable % Button -->
-                        <button class="btn-primary" onclick="showAddVariablePercentageForm()" style="margin-bottom: 20px;">
-                            ➕ Add Variable Percentage Rule
-                        </button>
-                        
-                        <!-- Add Variable % Form (hidden by default) -->
-                        <div id="addVariablePercentageForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                            <h4>Add Variable Percentage Rule</h4>
-                            <form id="newVariablePercentageForm">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="varPctName">Rule Name:*</label>
-                                        <input type="text" id="varPctName" name="name" required placeholder="e.g., Q1 Performance Bonus">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="varPctType">Type:*</label>
-                                        <select id="varPctType" name="type" required>
-                                            <option value="">Select Type</option>
-                                            <option value="bonus">Bonus</option>
-                                            <option value="allowance">Allowance</option>
-                                            <option value="commission">Commission</option>
-                                            <option value="incentive">Incentive</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="varPctPercentage">Percentage:*</label>
-                                        <input type="number" id="varPctPercentage" name="percentage" required min="0" max="100" step="0.01" placeholder="e.g., 5.5">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="varPctApplyTo">Apply To:*</label>
-                                        <select id="varPctApplyTo" name="apply_to" required onchange="toggleEmployeeSelection()">
-                                            <option value="">Select</option>
-                                            <option value="all">All Employees</option>
-                                            <option value="department">Department</option>
-                                            <option value="individual">Individual Employee</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group" id="varPctDepartmentGroup" style="display: none;">
-                                        <label for="varPctDepartment">Department:</label>
-                                        <select id="varPctDepartment" name="department">
-                                            <option value="">Select Department</option>
-                                            <option value="IT">IT</option>
-                                            <option value="HR">HR</option>
-                                            <option value="Finance">Finance</option>
-                                            <option value="Marketing">Marketing</option>
-                                            <option value="Operations">Operations</option>
-                                            <option value="Sales">Sales</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group" id="varPctEmployeeGroup" style="display: none;">
-                                        <label for="varPctEmployee">Employee:</label>
-                                        <select id="varPctEmployee" name="employee_email">
-                                            <option value="">Select Employee</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="varPctBaseOn">Calculate Based On:*</label>
-                                        <select id="varPctBaseOn" name="base_on" required>
-                                            <option value="">Select</option>
-                                            <option value="basic_salary">Basic Salary</option>
-                                            <option value="gross_salary">Gross Salary</option>
-                                            <option value="net_salary">Net Salary</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="varPctFrequency">Frequency:*</label>
-                                        <select id="varPctFrequency" name="frequency" required>
-                                            <option value="">Select</option>
-                                            <option value="monthly">Monthly</option>
-                                            <option value="quarterly">Quarterly</option>
-                                            <option value="annually">Annually</option>
-                                            <option value="one-time">One-Time</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="varPctStatus">Status:*</label>
-                                        <select id="varPctStatus" name="status" required>
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="varPctStartDate">Start Date:</label>
-                                        <input type="date" id="varPctStartDate" name="start_date">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="varPctEndDate">End Date:</label>
-                                        <input type="date" id="varPctEndDate" name="end_date">
-                                    </div>
-                                </div>
-                                
+                        <!-- Configuration Name and Actions -->
+                        <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+                            <div class="form-row">
                                 <div class="form-group">
-                                    <label for="varPctDescription">Description:</label>
-                                    <textarea id="varPctDescription" name="description" rows="3" placeholder="Optional description of this variable percentage rule"></textarea>
+                                    <label for="varConfigName">Configuration Name:</label>
+                                    <input type="text" id="varConfigName" value="default" placeholder="e.g., default, 2024-standard">
                                 </div>
-                                
-                                <div style="margin-top: 15px;">
-                                    <button type="submit" class="btn-primary">Save Rule</button>
-                                    <button type="button" class="btn-secondary" onclick="hideAddVariablePercentageForm()">Cancel</button>
+                                <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                                    <button class="btn-primary" onclick="saveVariableConfig()">💾 Save Config</button>
+                                    <button class="btn-secondary" onclick="loadVariableConfig()">⤵ Load Config</button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable configuration area -->
+                        <div style="max-height: 600px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            
+                            <!-- EPF Configuration -->
+                            <fieldset style="margin-bottom: 25px; padding: 20px; border: 2px solid #4CAF50; border-radius: 8px;">
+                                <legend style="font-weight: bold; font-size: 16px; color: #4CAF50; padding: 0 10px;">
+                                    EPF (Employee Provident Fund) - KWSP Third Schedule (Parts A-E)
+                                </legend>
                                 
-                                <div id="addVariablePercentageMessage" style="display: none; margin-top: 10px;"></div>
-                            </form>
+                                <div style="background-color: #E3F2FD; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                                    <p style="margin: 0; color: #1976D2; font-size: 12px;">
+                                        💡 Configure EPF rates according to KWSP Third Schedule Parts A-E. Official EPF contribution parts based on citizenship, age, and election date.
+                                    </p>
+                                </div>
+
+                                <!-- Part A: Under 60 - Malaysian Citizens, PRs, Non-citizens (before 1998) -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 5px;">Part A: Under 60 - Malaysian Citizens, PRs, Non-citizens (before 1 Aug 1998)</legend>
+                                    <p style="color: #666; font-size: 11px; font-style: italic; margin: 5px 0 10px 0;">
+                                        Automatic EPF contribution for Malaysian citizens, permanent residents, and non-citizens who elected before 1 Aug 1998 (under 60 years)
+                                    </p>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (Table/Basic):</label>
+                                            <input type="number" id="epfPartAEmployee" value="11.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate (Table/Basic):</label>
+                                            <input type="number" id="epfPartAEmployer" value="12.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="margin: 15px 0 10px 0; color: #2c3e50;">For wages exceeding RM20,000:</h5>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartAEmployeeOver20k" value="11.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartAEmployerOver20k" value="12.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="margin: 15px 0 10px 0; color: #8B4513;">Bonus Rule (basic ≤RM5k + bonus >RM5k):</h5>
+                                    <div class="form-group">
+                                        <label>Employer Rate (Bonus Rule):</label>
+                                        <input type="number" id="epfPartAEmployerBonus" value="13.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                    </div>
+                                </fieldset>
+
+                                <!-- Part B: Under 60 - Non-citizens (on/after 1 Aug 1998) -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 5px;">Part B: Under 60 - Non-citizens (on/after 1 Aug 1998)</legend>
+                                    <p style="color: #666; font-size: 11px; font-style: italic; margin: 5px 0 10px 0;">
+                                        Non-citizens under 60 who elected EPF on/after 1 Aug 1998 (voluntary contribution)
+                                    </p>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (Table):</label>
+                                            <input type="number" id="epfPartBEmployee" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate (Table):</label>
+                                            <input type="number" id="epfPartBEmployer" value="13.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="margin: 15px 0 10px 0; color: #2c3e50;">For wages exceeding RM20,000:</h5>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartBEmployeeOver20k" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartBEmployerOver20k" value="13.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <!-- Part E: 60+ - Malaysian Citizens -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 5px;">Part E: 60 and above - Malaysian Citizens</legend>
+                                    <p style="color: #666; font-size: 11px; font-style: italic; margin: 5px 0 10px 0;">
+                                        Malaysian citizens 60 and above (automatic EPF)
+                                    </p>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (Table):</label>
+                                            <input type="number" id="epfPartEEmployee" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate (Table):</label>
+                                            <input type="number" id="epfPartEEmployer" value="4.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                            <small style="color: #666;">(or Fixed RM5)</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="margin: 15px 0 10px 0; color: #2c3e50;">For wages exceeding RM20,000:</h5>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartEEmployeeOver20k" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer (>RM20k):</label>
+                                            <input type="number" id="epfPartEEmployerOver20kFixed" value="5.0" min="0" max="50" step="1" style="width: 100px;"> RM (Fixed)
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </fieldset>
+
+                            <!-- SOCSO Configuration -->
+                            <fieldset style="margin-bottom: 25px; padding: 20px; border: 2px solid #2196F3; border-radius: 8px;">
+                                <legend style="font-weight: bold; font-size: 16px; color: #2196F3; padding: 0 10px;">
+                                    SOCSO (Workers' Social Security Act 1969) - PERKESO
+                                </legend>
+                                
+                                <div style="background-color: #E1F5FE; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                                    <p style="margin: 0; color: #0277BD; font-size: 12px;">
+                                        💡 SOCSO operates under two contribution categories based on age and schemes covered
+                                    </p>
+                                </div>
+
+                                <!-- First Category: Under 60 -->
+                                <fieldset style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 5px;">First Category (Under 60 years)</legend>
+                                    <p style="color: #666; font-size: 11px; font-style: italic; margin: 5px 0 10px 0;">
+                                        Both Employment Injury Scheme and Invalidity Pension Scheme
+                                    </p>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate:</label>
+                                            <input type="number" id="socsoFirstEmployee" value="0.5" min="0" max="5" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate:</label>
+                                            <input type="number" id="socsoFirstEmployer" value="1.75" min="0" max="5" step="0.05" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <!-- Second Category: 60 and above -->
+                                <fieldset style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 5px;">Second Category (60 years and above)</legend>
+                                    <p style="color: #666; font-size: 11px; font-style: italic; margin: 5px 0 10px 0;">
+                                        Employment Injury Scheme only (no Invalidity Pension)
+                                    </p>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate:</label>
+                                            <input type="number" id="socsoSecondEmployee" value="0.0" min="0" max="5" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate:</label>
+                                            <input type="number" id="socsoSecondEmployer" value="1.25" min="0" max="5" step="0.05" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </fieldset>
+
+                            <!-- EIS Configuration -->
+                            <fieldset style="margin-bottom: 25px; padding: 20px; border: 2px solid #FF9800; border-radius: 8px;">
+                                <legend style="font-weight: bold; font-size: 16px; color: #FF9800; padding: 0 10px;">
+                                    EIS (Employment Insurance System)
+                                </legend>
+                                
+                                <div style="background-color: #FFF3E0; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                                    <p style="margin: 0; color: #E65100; font-size: 12px;">
+                                        💡 EIS provides temporary financial assistance to retrenched workers
+                                    </p>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Employee Rate:</label>
+                                        <input type="number" id="eisEmployee" value="0.2" min="0" max="2" step="0.1" style="width: 100px;"> %
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Employer Rate:</label>
+                                        <input type="number" id="eisEmployer" value="0.2" min="0" max="2" step="0.1" style="width: 100px;"> %
+                                    </div>
+                                </div>
+                            </fieldset>
+
                         </div>
                         
-                        <!-- Variable % Rules Table -->
-                        <div id="variablePercentageRulesTable">
-                            <p style="color: #666;">Loading variable percentage rules...</p>
+                        <!-- Save Actions at Bottom -->
+                        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; text-align: center;">
+                            <button class="btn-primary" onclick="saveVariableConfig()" style="padding: 12px 30px; font-size: 16px;">
+                                💾 Save All Configuration
+                            </button>
+                            <p style="margin: 10px 0 0 0; color: #666; font-size: 12px;">
+                                Configuration will be saved as "<span id="configNameDisplay">default</span>"
+                            </p>
                         </div>
                     </div>
                     
@@ -1436,8 +1625,8 @@
                     
                     <!-- Engagements Subtabs -->
                     <div class="subtabs">
-                        <button class="subtab-button active" data-subtab="engagementsSubmit">Submit</button>
-                        <button class="subtab-button" data-subtab="engagementsView">View All</button>
+                        <button class="subtab-button active" data-subtab="engagementsSubmit">📝 Submit Engagement</button>
+                        <button class="subtab-button" data-subtab="engagementsView">📚 View Engagements</button>
                     </div>
                     
                     <!-- Submit Engagement Subtab -->
