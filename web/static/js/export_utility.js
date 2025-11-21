@@ -119,8 +119,11 @@ class ExportUtility {
                 const values = [];
                 
                 cells.forEach(cell => {
-                    // Skip action columns
-                    if (cell.textContent.toLowerCase().includes('action')) return;
+                    // Skip columns marked as non-exportable or action columns
+                    if (cell.hasAttribute('data-export-exclude') || 
+                        cell.textContent.toLowerCase().includes('action')) {
+                        return;
+                    }
                     
                     let text = cell.textContent.trim();
                     // Remove extra whitespace

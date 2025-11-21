@@ -7,6 +7,7 @@ class NotificationSystem {
     constructor() {
         this.notifications = [];
         this.container = null;
+        this.confirmCallbacks = new Map(); // Store callbacks securely
         this.init();
     }
 
@@ -62,7 +63,7 @@ class NotificationSystem {
      * Show notification with custom type
      */
     show(message, type = 'info', duration = 4000) {
-        const id = 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const id = 'notif_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
         
         const notification = {
             id: id,
@@ -232,22 +233,26 @@ class NotificationSystem {
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-        // Store callbacks
-        window[`confirm_${modalId}_ok`] = onConfirm;
-        window[`confirm_${modalId}_cancel`] = onCancel;
+        // Store callbacks securely in Map
+        this.confirmCallbacks.set(modalId, {
+            onConfirm: onConfirm,
+            onCancel: onCancel
+        });
     }
 
     handleConfirmOk(modalId) {
-        const callback = window[`confirm_${modalId}_ok`];
-        if (callback) callback();
+        const callbacks = this.confirmCallbacks.get(modalId);
+        if (callbacks && callbacks.onConfirm) {
+            callbacks.onConfirm();
+        }
         
         this.removeConfirmModal(modalId);
     }
 
     handleConfirmCancel(modalId, hasCallback) {
-        if (hasCallback) {
-            const callback = window[`confirm_${modalId}_cancel`];
-            if (callback) callback();
+        const callbacks = this.confirmCallbacks.get(modalId);
+        if (hasCallback && callbacks && callbacks.onCancel) {
+            callbacks.onCancel();
         }
         
         this.removeConfirmModal(modalId);
@@ -259,9 +264,8 @@ class NotificationSystem {
             modal.remove();
         }
         
-        // Clean up callbacks
-        delete window[`confirm_${modalId}_ok`];
-        delete window[`confirm_${modalId}_cancel`];
+        // Clean up callbacks from Map
+        this.confirmCallbacks.delete(modalId);
     }
 
     /**

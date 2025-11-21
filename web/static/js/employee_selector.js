@@ -266,7 +266,8 @@ class EmployeeSelector {
     }
 
     selectEmployee(employeeId) {
-        const employee = this.employees.find(emp => emp.id === employeeId);
+        // Convert to string for comparison since onclick passes string
+        const employee = this.employees.find(emp => emp.id.toString() === employeeId.toString());
         if (employee && this.onSelectCallback) {
             this.selectedEmployee = employee;
             this.onSelectCallback(employee);
