@@ -798,16 +798,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('✅ Subtab clicked:', subtabName || 'Month: ' + monthValue);
                 
-                // Get parent tab to scope subtab switching
-                const parentContainer = this.closest('.tab-pane');
-                if (!parentContainer) {
-                    console.error('❌ Parent container not found for subtab');
-                    return;
-                }
-                
                 // If this is a month tab (for payroll history)
                 if (monthValue) {
                     // Handle month tab switching
+                    const parentContainer = this.closest('.tab-pane');
+                    if (!parentContainer) {
+                        console.error('❌ Parent container not found for subtab');
+                        return;
+                    }
                     const monthButtons = parentContainer.querySelectorAll('[data-month]');
                     monthButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
@@ -819,12 +817,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                // Regular subtab switching
-                const containerSubtabButtons = parentContainer.querySelectorAll('.subtab-button:not([data-month])');
-                const containerSubtabContents = parentContainer.querySelectorAll('.subtab-content');
+                // Regular subtab switching - find the immediate parent subtabs container
+                const subtabsContainer = this.closest('.subtabs');
+                if (!subtabsContainer) {
+                    console.error('❌ Subtabs container not found for subtab button');
+                    return;
+                }
                 
-                containerSubtabButtons.forEach(btn => btn.classList.remove('active'));
-                containerSubtabContents.forEach(content => content.classList.remove('active'));
+                // Find the parent that contains both the buttons and content
+                // This could be either a .tab-pane or a .subtab-content (for nested subtabs)
+                let contentParent = subtabsContainer.parentElement;
+                
+                // Remove active class from sibling buttons in the same subtabs container
+                const siblingButtons = subtabsContainer.querySelectorAll('.subtab-button');
+                siblingButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Remove active class from sibling content divs at the same level
+                const siblingContents = contentParent.querySelectorAll(':scope > .subtab-content');
+                siblingContents.forEach(content => content.classList.remove('active'));
                 
                 // Add active class to clicked button and corresponding content
                 this.classList.add('active');
