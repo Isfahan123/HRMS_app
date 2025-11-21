@@ -108,6 +108,11 @@ async def test_subtabs(request: Request):
     """Test page to verify subtabs fix"""
     return templates.TemplateResponse("test_subtabs.html", {"request": request})
 
+@app.get("/ux-demo", response_class=HTMLResponse)
+async def ux_demo(request: Request):
+    """UX components demonstration page"""
+    return templates.TemplateResponse("ux_demo.html", {"request": request})
+
 @app.get("/WEB_INTERFACE_GUIDE.md")
 async def serve_guide():
     """Serve the web interface guide"""

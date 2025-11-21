@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UX Demo - HRMS</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=3.0">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .demo-section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .demo-section h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .demo-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>🎨 UX Components Demo</h1>
+            <div class="user-info">
+                <a href="/" style="color: white; text-decoration: none;">← Back to Login</a>
+            </div>
+        </header>
+
+        <div class="demo-container">
+            <!-- Toast Notifications -->
+            <div class="demo-section">
+                <h2>📢 Toast Notifications</h2>
+                <div class="demo-buttons">
+                    <button class="btn-success" onclick="Toast.success('Operation completed successfully!')">
+                        Success Toast
+                    </button>
+                    <button class="btn-danger" onclick="Toast.error('Something went wrong!')">
+                        Error Toast
+                    </button>
+                    <button class="btn-primary" onclick="Toast.warning('Please review this carefully')">
+                        Warning Toast
+                    </button>
+                    <button class="btn-secondary" onclick="Toast.info('This is some helpful information')">
+                        Info Toast
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading States -->
+            <div class="demo-section">
+                <h2>⏳ Loading States</h2>
+                <div class="demo-buttons">
+                    <button class="btn-primary" onclick="showLoadingOverlay()">
+                        Show Loading Overlay
+                    </button>
+                    <button class="btn-secondary" onclick="LoadingOverlay.hide()">
+                        Hide Loading Overlay
+                    </button>
+                    <button id="loadingBtn" class="btn-primary" onclick="toggleButtonLoading(this)">
+                        Click to Load
+                    </button>
+                </div>
+                
+                <h3 style="margin-top: 30px;">Skeleton Screens</h3>
+                <div id="skeletonDemo"></div>
+                <button class="btn-primary" onclick="showSkeletonDemo()">Show Skeleton Table</button>
+            </div>
+
+            <!-- Badges -->
+            <div class="demo-section">
+                <h2>🏷️ Badges</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <span class="badge primary">Primary</span>
+                    <span class="badge success">Success</span>
+                    <span class="badge warning">Warning</span>
+                    <span class="badge danger">Danger</span>
+                    <span class="badge info">Info</span>
+                </div>
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="demo-section">
+                <h2>📊 Progress Bars</h2>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div>
+                        <p>Default Progress (75%)</p>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 75%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Success Progress (100%)</p>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill success" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Warning Progress (50%)</p>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill warning" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Danger Progress (25%)</p>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill danger" style="width: 25%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty States -->
+            <div class="demo-section">
+                <h2>📭 Empty State</h2>
+                <div id="emptyStateDemo"></div>
+                <button class="btn-primary" onclick="showEmptyStateDemo()">Show Empty State</button>
+            </div>
+
+            <!-- Form Validation -->
+            <div class="demo-section">
+                <h2>✅ Form Validation</h2>
+                <form onsubmit="return false;">
+                    <div class="form-group has-error">
+                        <label for="errorField">Field with Error</label>
+                        <input type="text" id="errorField" value="Invalid input">
+                        <div class="form-error">This field contains an error</div>
+                    </div>
+                    
+                    <div class="form-group has-success">
+                        <label for="successField">Field with Success</label>
+                        <input type="text" id="successField" value="Valid input">
+                        <div class="form-success">This field is valid</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="normalField">Normal Field</label>
+                        <input type="text" id="normalField" placeholder="Enter text">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Message Types -->
+            <div class="demo-section">
+                <h2>💬 Message Types</h2>
+                <div class="success-message">
+                    <span>✓</span>
+                    <div>This is a success message</div>
+                </div>
+                
+                <div class="error-message">
+                    <span>✕</span>
+                    <div>This is an error message</div>
+                </div>
+                
+                <div class="warning-message">
+                    <span>⚠</span>
+                    <div>This is a warning message</div>
+                </div>
+                
+                <div class="info-message">
+                    <span>ℹ</span>
+                    <div>This is an info message</div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="demo-section">
+                <h2>🔘 Button States</h2>
+                <div class="demo-buttons">
+                    <button class="btn-primary">Primary Button</button>
+                    <button class="btn-secondary">Secondary Button</button>
+                    <button class="btn-success">Success Button</button>
+                    <button class="btn-danger">Danger Button</button>
+                    <button class="btn-primary" disabled>Disabled Button</button>
+                </div>
+            </div>
+
+            <!-- Cards with Hover -->
+            <div class="demo-section">
+                <h2>📇 Interactive Cards</h2>
+                <div class="demo-grid">
+                    <div class="summary-card">
+                        <h3>Total Employees</h3>
+                        <p style="font-size: 32px; font-weight: bold; color: #3498db;">125</p>
+                        <p style="color: #7f8c8d;">Active staff members</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Pending Leaves</h3>
+                        <p style="font-size: 32px; font-weight: bold; color: #e74c3c;">8</p>
+                        <p style="color: #7f8c8d;">Awaiting approval</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>This Month Payroll</h3>
+                        <p style="font-size: 32px; font-weight: bold; color: #27ae60;">RM 450K</p>
+                        <p style="color: #7f8c8d;">Total disbursement</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utility Functions -->
+            <div class="demo-section">
+                <h2>🛠️ Utility Functions</h2>
+                <div class="demo-buttons">
+                    <button class="btn-primary" onclick="copyToClipboard('Hello from HRMS!')">
+                        Copy to Clipboard
+                    </button>
+                    <button class="btn-primary" onclick="testFormatCurrency()">
+                        Format Currency
+                    </button>
+                    <button class="btn-primary" onclick="testFormatDate()">
+                        Format Date
+                    </button>
+                    <button class="btn-primary" onclick="testExportCSV()">
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/ux-utils.js"></script>
+    <script>
+        function showLoadingOverlay() {
+            LoadingOverlay.show('Processing your request...');
+            setTimeout(() => {
+                LoadingOverlay.hide();
+                Toast.success('Loading complete!');
+            }, 3000);
+        }
+
+        function toggleButtonLoading(btn) {
+            setButtonLoading(btn, true);
+            setTimeout(() => {
+                setButtonLoading(btn, false);
+                Toast.success('Operation completed!');
+            }, 2000);
+        }
+
+        function showSkeletonDemo() {
+            showSkeleton('skeletonDemo', 'table', 5);
+            setTimeout(() => {
+                document.getElementById('skeletonDemo').innerHTML = '<p style="color: #27ae60;">✓ Content loaded!</p>';
+            }, 3000);
+        }
+
+        function showEmptyStateDemo() {
+            showEmptyState(
+                'emptyStateDemo',
+                '📭',
+                'No Data Available',
+                'There are no items to display at this time. Add some data to get started.',
+                'Add New Item',
+                () => Toast.info('Add button clicked!')
+            );
+        }
+
+        function testFormatCurrency() {
+            const amount = 12345.67;
+            const formatted = formatCurrency(amount);
+            Toast.info(`Formatted: ${formatted}`);
+        }
+
+        function testFormatDate() {
+            const date = new Date().toISOString();
+            const formatted = formatDate(date);
+            Toast.info(`Formatted: ${formatted}`);
+        }
+
+        function testExportCSV() {
+            const data = [
+                { name: 'John Doe', department: 'IT', salary: 5000 },
+                { name: 'Jane Smith', department: 'HR', salary: 4500 },
+                { name: 'Bob Johnson', department: 'Finance', salary: 5500 }
+            ];
+            downloadCSV(data, 'demo_export.csv');
+        }
+
+        // Show welcome message
+        setTimeout(() => {
+            Toast.info('Welcome to the UX Demo! Try out the different components.', 'Welcome');
+        }, 500);
+    </script>
+</body>
+</html>
