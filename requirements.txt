@@ -11,9 +11,16 @@ tabula-py==2.9.0
 PyPDF2==3.0.1
 num2words==0.5.13
 holidays==0.81
+
+# FastAPI stack
 fastapi==0.115.5
 uvicorn==0.32.1
 jinja2==3.1.4
 python-multipart==0.0.18
+
+# REQUIRED for FastAPI to run under cPanel Passenger
+asgiref==3.8.1
+
+
 
 
