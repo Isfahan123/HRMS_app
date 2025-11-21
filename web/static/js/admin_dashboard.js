@@ -805,6 +805,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (tabName === 'employeeHistory') {
                         console.log('🔄 Reloading employment history data...');
                         loadEmployeeHistory();
+                    } else if (tabName === 'salaryHistory') {
+                        console.log('🔄 Loading salary history...');
+                        loadSalaryHistory();
+                    } else if (tabName === 'payroll') {
+                        console.log('🔄 Loading payroll runs...');
+                        loadPayrollRuns();
                     }
                 } else {
                     console.error('❌ Tab pane not found:', tabName + 'Tab');
@@ -870,6 +876,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (subtabName === 'leaveApprovedRejected') {
                     console.log('🔄 Loading approved/rejected leave requests...');
                     loadApprovedRejectedLeaveRequests();
+                } else if (subtabName === 'leaveAnnualBalance') {
+                    console.log('🔄 Loading annual leave balances...');
+                    loadLeaveBalances();
+                } else if (subtabName === 'leaveSickBalance') {
+                    console.log('🔄 Loading sick leave balances...');
+                    loadSickLeaveBalances();
+                } else if (subtabName === 'leaveUnpaid') {
+                    console.log('🔄 Loading unpaid leave summary...');
+                    loadUnpaidLeaveSummary();
+                } else if (subtabName === 'payrollBonuses') {
+                    console.log('🔄 Loading bonuses...');
+                    loadBonuses();
+                } else if (subtabName === 'payrollVariable') {
+                    console.log('🔄 Loading variable percentage rules...');
+                    loadVariablePercentageRules();
+                } else if (subtabName === 'engagementsView') {
+                    console.log('🔄 Loading engagements...');
+                    // Trigger the search to load engagements
+                    const searchBtn = document.getElementById('searchEngagementsBtn');
+                    if (searchBtn) searchBtn.click();
                 }
             });
         });
