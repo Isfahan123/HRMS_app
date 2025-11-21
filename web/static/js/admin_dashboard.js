@@ -459,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpName').value = employee.full_name || '';
                 document.getElementById('editEmpEmail').value = employee.email || '';
                 document.getElementById('editEmpEmployeeID').value = employee.employee_id || '';
+                // Personal Information
                 document.getElementById('editEmpGender').value = employee.gender || '';
                 document.getElementById('editEmpDOB').value = employee.date_of_birth || '';
                 document.getElementById('editEmpNRIC').value = employee.nric || '';
@@ -468,16 +469,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpReligion').value = employee.religion || '';
                 document.getElementById('editEmpMaritalStatus').value = employee.marital_status || '';
                 document.getElementById('editEmpChildren').value = employee.number_of_children || '0';
+                document.getElementById('editEmpSpouseWorking').value = employee.spouse_working || '';
+                // Contact Information
+                document.getElementById('editEmpUsername').value = employee.username || '';
                 document.getElementById('editEmpPhone').value = employee.phone_number || '';
                 document.getElementById('editEmpAddress').value = employee.address || '';
                 document.getElementById('editEmpCity').value = employee.city || '';
                 document.getElementById('editEmpState').value = employee.state || '';
                 document.getElementById('editEmpZipcode').value = employee.zipcode || '';
+                // Employment Information
                 document.getElementById('editEmpDepartment').value = employee.department || '';
+                document.getElementById('editEmpJobTitle').value = employee.job_title || '';
                 document.getElementById('editEmpPosition').value = employee.position || '';
+                document.getElementById('editEmpFunctionalGroup').value = employee.functional_group || '';
+                document.getElementById('editEmpEmploymentType').value = employee.employment_type || 'Full-time';
                 document.getElementById('editEmpRole').value = employee.role || 'employee';
                 document.getElementById('editEmpStatus').value = employee.employment_status || 'Active';
+                document.getElementById('editEmpWorkStatus').value = employee.work_status || 'On Duty';
+                document.getElementById('editEmpPayrollStatus').value = employee.payroll_status || 'Active Payroll';
                 document.getElementById('editEmpJoinDate').value = employee.join_date || '';
+                // EPF/SOCSO Information
                 document.getElementById('editEmpEPFNumber').value = employee.epf_number || '';
                 document.getElementById('editEmpSOCSONumber').value = employee.socso_number || '';
                 document.getElementById('editEmpIncomeTaxNumber').value = employee.income_tax_number || '';
@@ -814,11 +825,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (subtabName === 'payrollVariable') {
                     console.log('🔄 Loading variable percentage rules...');
                     loadVariablePercentageRules();
+                } else if (subtabName === 'payrollLHDN') {
+                    console.log('🔄 Loading LHDN Tax configuration...');
+                    // Load tax rates by default when LHDN tab is opened
+                    if (typeof loadTaxRatesFromAPI === 'function') {
+                        loadTaxRatesFromAPI();
+                    }
+                    if (typeof loadReliefMaximumsFromAPI === 'function') {
+                        loadReliefMaximumsFromAPI();
+                    }
+                    if (typeof loadReliefOverridesFromAPI === 'function') {
+                        loadReliefOverridesFromAPI();
+                    }
                 } else if (subtabName === 'engagementsView') {
                     console.log('🔄 Loading engagements...');
                     // Load all engagements
                     if (typeof loadAllEngagements === 'function') {
                         loadAllEngagements();
+                    }
+                } else if (subtabName === 'lhdnTaxRates') {
+                    console.log('🔄 Loading LHDN tax rates...');
+                    if (typeof loadTaxRatesFromAPI === 'function') {
+                        loadTaxRatesFromAPI();
+                    }
+                } else if (subtabName === 'lhdnReliefMax') {
+                    console.log('🔄 Loading tax relief maximums...');
+                    if (typeof loadReliefMaximumsFromAPI === 'function') {
+                        loadReliefMaximumsFromAPI();
+                    }
+                } else if (subtabName === 'lhdnReliefOverrides') {
+                    console.log('🔄 Loading relief overrides...');
+                    if (typeof loadReliefOverridesFromAPI === 'function') {
+                        loadReliefOverridesFromAPI();
                     }
                 }
             });
@@ -960,11 +998,41 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = {
                 full_name: document.getElementById('newEmpName').value,
                 email: document.getElementById('newEmpEmail').value,
-                department: document.getElementById('newEmpDepartment').value,
-                position: document.getElementById('newEmpPosition').value,
                 password: document.getElementById('newEmpPassword').value,
+                // Personal Information
+                gender: document.getElementById('newEmpGender').value,
+                date_of_birth: document.getElementById('newEmpDOB').value,
+                nric: document.getElementById('newEmpNRIC').value,
+                nationality: document.getElementById('newEmpNationality').value,
+                citizenship: document.getElementById('newEmpCitizenship').value,
+                race: document.getElementById('newEmpRace').value,
+                religion: document.getElementById('newEmpReligion').value,
+                marital_status: document.getElementById('newEmpMaritalStatus').value,
+                number_of_children: document.getElementById('newEmpChildren').value,
+                spouse_working: document.getElementById('newEmpSpouseWorking').value,
+                // Contact Information
+                username: document.getElementById('newEmpUsername').value,
+                phone_number: document.getElementById('newEmpPhone').value,
+                address: document.getElementById('newEmpAddress').value,
+                city: document.getElementById('newEmpCity').value,
+                state: document.getElementById('newEmpState').value,
+                zipcode: document.getElementById('newEmpZipcode').value,
+                // Employment Information
+                employee_id: document.getElementById('newEmpEmployeeID').value,
+                department: document.getElementById('newEmpDepartment').value,
+                job_title: document.getElementById('newEmpJobTitle').value,
+                position: document.getElementById('newEmpPosition').value,
+                functional_group: document.getElementById('newEmpFunctionalGroup').value,
+                employment_type: document.getElementById('newEmpEmploymentType').value,
                 role: document.getElementById('newEmpRole').value,
-                employment_status: 'active'
+                employment_status: document.getElementById('newEmpStatus').value,
+                work_status: document.getElementById('newEmpWorkStatus').value,
+                payroll_status: document.getElementById('newEmpPayrollStatus').value,
+                join_date: document.getElementById('newEmpJoinDate').value,
+                // EPF/SOCSO Information
+                epf_number: document.getElementById('newEmpEPFNumber').value,
+                socso_number: document.getElementById('newEmpSOCSONumber').value,
+                income_tax_number: document.getElementById('newEmpIncomeTaxNumber').value
             };
             
             try {
