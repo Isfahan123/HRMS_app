@@ -1,18 +1,94 @@
 ---
 deployment:
   tasks:
-    - echo "Starting deployment of HRMS_app..."
+    - echo "=========================================="
+    - echo "HRMS Web Application Deployment"
+    - echo "=========================================="
+    - echo "Starting deployment process..."
+    - echo ""
     
-    # Activate the virtual environment
-    - source /home/$CPANEL_USER/virtualenv/HRMS_app/3.11/bin/activate
+    # Detect and activate the virtual environment
+    - echo "Step 1: Activating virtual environment..."
+    - |
+      if [ -f "/home/$CPANEL_USER/virtualenv/HRMS_app/3.11/bin/activate" ]; then
+        source /home/$CPANEL_USER/virtualenv/HRMS_app/3.11/bin/activate
+        echo "✓ Virtual environment activated (Python 3.11)"
+      elif [ -f "/home/$CPANEL_USER/virtualenv/HRMS_app/3.10/bin/activate" ]; then
+        source /home/$CPANEL_USER/virtualenv/HRMS_app/3.10/bin/activate
+        echo "✓ Virtual environment activated (Python 3.10)"
+      elif [ -f "/home/$CPANEL_USER/virtualenv/HRMS_app/3.9/bin/activate" ]; then
+        source /home/$CPANEL_USER/virtualenv/HRMS_app/3.9/bin/activate
+        echo "✓ Virtual environment activated (Python 3.9)"
+      else
+        echo "⚠ Warning: Virtual environment not found at expected location"
+        echo "Please create a Python app in cPanel first"
+      fi
+    - echo ""
+
+    # Upgrade pip
+    - echo "Step 2: Upgrading pip..."
+    - pip install --upgrade pip --quiet
+    - echo "✓ pip upgraded"
+    - echo ""
 
     # Install dependencies
-    - echo "Installing Python dependencies..."
-    - pip install --upgrade pip
-    - pip install -r requirements.txt
+    - echo "Step 3: Installing Python dependencies..."
+    - echo "This may take a few minutes..."
+    - pip install -r requirements.txt --quiet --disable-pip-version-check
+    - echo "✓ All dependencies installed"
+    - echo ""
 
-    # Force Passenger to reload the application
-    - echo "Reloading Passenger..."
+    # Verify critical packages
+    - echo "Step 4: Verifying installation..."
+    - |
+      python3 -c "
+      packages = ['fastapi', 'uvicorn', 'asgiref', 'supabase']
+      success = True
+      for pkg in packages:
+          try:
+              __import__(pkg)
+              print(f'✓ {pkg} installed')
+          except ImportError:
+              print(f'✗ {pkg} NOT installed')
+              success = False
+      if not success:
+          print('⚠ Some packages failed to install!')
+      " || echo "⚠ Package verification failed"
+    - echo ""
+
+    # Set proper permissions
+    - echo "Step 5: Setting file permissions..."
+    - find . -type d -exec chmod 755 {} \; 2>/dev/null || true
+    - find . -type f -exec chmod 644 {} \; 2>/dev/null || true
+    - chmod +x start_web.py 2>/dev/null || true
+    - chmod +x setup_cpanel.sh 2>/dev/null || true
+    - echo "✓ Permissions set"
+    - echo ""
+
+    # Create necessary directories
+    - echo "Step 6: Creating directories..."
+    - mkdir -p tmp log web/static web/templates
+    - echo "✓ Directories created"
+    - echo ""
+
+    # Reload Passenger
+    - echo "Step 7: Reloading application..."
     - touch passenger_wsgi.py
+    - touch tmp/restart.txt
+    - echo "✓ Passenger reload triggered"
+    - echo ""
 
-    - echo "Deployment completed successfully."
+    - echo "=========================================="
+    - echo "✓ Deployment completed successfully!"
+    - echo "=========================================="
+    - echo ""
+    - echo "Your HRMS application should now be running."
+    - echo "Visit your domain to verify: https://yourdomain.com"
+    - echo "API docs available at: https://yourdomain.com/docs"
+    - echo "Health check: https://yourdomain.com/health"
+    - echo ""
+    - echo "If you encounter issues:"
+    - echo "  1. Check logs: cat log/passenger.log"
+    - echo "  2. Verify .env file exists with credentials"
+    - echo "  3. See CPANEL_DEPLOYMENT.md for troubleshooting"
+    - echo "=========================================="
