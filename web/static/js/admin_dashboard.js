@@ -2833,6 +2833,12 @@ document.addEventListener('DOMContentLoaded', function() {
             halfDayCheckbox.addEventListener('change', function() {
                 if (this.checked) {
                     durationInput.value = 0.5;
+                    // For half-day, set end date same as start date
+                    const startDate = document.getElementById('adminLeaveStartDate');
+                    const endDate = document.getElementById('adminLeaveEndDate');
+                    if (startDate && endDate && startDate.value) {
+                        endDate.value = startDate.value;
+                    }
                     updateWorkingDaysDisplay();
                 } else {
                     if (durationInput.value == 0.5) {
@@ -2905,11 +2911,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // For half-day leave, validate that start and end dates are the same
             if (halfDay && halfDay.checked) {
-                display.textContent = 'Working days: 0.5 (half-day)';
+                if (startDate !== endDate) {
+                    display.textContent = 'Half-day leave must have same start and end date';
+                    display.style.color = '#d32f2f';
+                } else {
+                    display.textContent = 'Working days: 0.5 (half-day)';
+                    display.style.color = '#555';
+                }
                 return;
             }
             
+            display.style.color = '#555';
             const days = calculateWorkingDays(startDate, endDate);
             display.textContent = `Working days: ${days} (excludes weekends & holidays)`;
         }
@@ -2920,25 +2934,50 @@ document.addEventListener('DOMContentLoaded', function() {
             durationField.addEventListener('change', function() {
                 const duration = parseFloat(this.value);
                 const startDate = document.getElementById('adminLeaveStartDate');
+                const endDate = document.getElementById('adminLeaveEndDate');
                 
                 if (startDate.value) {
                     const start = new Date(startDate.value);
-                    let daysToAdd = Math.ceil(duration);
-                    let workingDaysAdded = 0;
-                    const current = new Date(start);
                     
-                    while (workingDaysAdded < daysToAdd) {
-                        const dayOfWeek = current.getDay();
-                        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                            workingDaysAdded++;
+                    // Handle fractional days (e.g., 0.5, 1.5)
+                    if (duration === 0.5 || (duration % 1 === 0.5)) {
+                        // For half-day or half-day increments, end date should be same as start
+                        // or we calculate the whole days and the last day is half
+                        const wholeDays = Math.floor(duration);
+                        let workingDaysAdded = 0;
+                        const current = new Date(start);
+                        
+                        // Add whole working days
+                        while (workingDaysAdded < wholeDays) {
+                            const dayOfWeek = current.getDay();
+                            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                                workingDaysAdded++;
+                            }
+                            if (workingDaysAdded < wholeDays) {
+                                current.setDate(current.getDate() + 1);
+                            }
                         }
-                        if (workingDaysAdded < daysToAdd) {
-                            current.setDate(current.getDate() + 1);
+                        
+                        endDate.value = current.toISOString().split('T')[0];
+                    } else {
+                        // For whole days, calculate normally
+                        let workingDaysAdded = 0;
+                        const current = new Date(start);
+                        const targetDays = Math.round(duration);
+                        
+                        while (workingDaysAdded < targetDays) {
+                            const dayOfWeek = current.getDay();
+                            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                                workingDaysAdded++;
+                            }
+                            if (workingDaysAdded < targetDays) {
+                                current.setDate(current.getDate() + 1);
+                            }
                         }
+                        
+                        endDate.value = current.toISOString().split('T')[0];
                     }
                     
-                    const endDate = document.getElementById('adminLeaveEndDate');
-                    endDate.value = current.toISOString().split('T')[0];
                     updateWorkingDaysDisplay();
                 }
             });
