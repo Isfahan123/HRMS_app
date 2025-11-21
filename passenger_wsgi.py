@@ -60,7 +60,9 @@ except ImportError as e:
 
 # For debugging: print successful initialization
 # This will appear in Passenger logs
-if os.environ.get('DEBUG', '').lower() in ('true', '1', 'yes'):
+# Set DEBUG=1 or DEBUG=true in environment to enable
+debug_enabled = os.environ.get('DEBUG', '').lower() in ('1', 'true')
+if debug_enabled:
     print("✓ HRMS WSGI application initialized successfully")
     print(f"✓ Python path: {sys.path[0]}")
     print(f"✓ Application type: {type(application)}")

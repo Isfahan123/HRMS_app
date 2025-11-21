@@ -40,20 +40,7 @@ deployment:
 
     # Verify critical packages
     - echo "Step 4: Verifying installation..."
-    - |
-      python3 -c "
-      packages = ['fastapi', 'uvicorn', 'asgiref', 'supabase']
-      success = True
-      for pkg in packages:
-          try:
-              __import__(pkg)
-              print(f'✓ {pkg} installed')
-          except ImportError:
-              print(f'✗ {pkg} NOT installed')
-              success = False
-      if not success:
-          print('⚠ Some packages failed to install!')
-      " || echo "⚠ Package verification failed"
+    - python3 verify_packages.py || echo "⚠ Some packages failed to install!"
     - echo ""
 
     # Set proper permissions

@@ -5,6 +5,8 @@
 PassengerEnabled On
 
 # Set the Python version (adjust based on your cPanel Python selector)
+# Update the version number (3.11) to match your virtual environment
+# Common paths: 3.8, 3.9, 3.10, 3.11, 3.12
 PassengerPython /home/$CPANEL_USER/virtualenv/HRMS_app/3.11/bin/python
 
 # Set the application root

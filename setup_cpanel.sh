@@ -50,9 +50,14 @@ print_info "Found Python version: $PYTHON_VERSION"
 PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
 PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
 
-if [ "$PYTHON_MAJOR" -lt 3 ] || [ "$PYTHON_MINOR" -lt 8 ]; then
+# Check if Python version is at least 3.8
+if [ "$PYTHON_MAJOR" -lt 3 ]; then
     print_error "Python 3.8 or higher is required!"
     print_info "Current version: $PYTHON_VERSION"
+    exit 1
+elif [ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 8 ]; then
+    print_error "Python 3.8 or higher is required!"
+    print_info "Current version: $PYTHON_VERSION (need at least 3.8)"
     exit 1
 fi
 
@@ -200,23 +205,29 @@ if [ "$ALL_FILES_EXIST" = false ]; then
     exit 1
 fi
 
+# Function to test Python imports
+test_import() {
+    local module=$1
+    local description=$2
+    if python3 -c "import $module; print('OK')" 2>/dev/null; then
+        print_success "$description imports successfully"
+        return 0
+    else
+        print_error "Failed to import $description"
+        return 1
+    fi
+}
+
 # Step 8: Test imports
 echo ""
 echo "Step 8: Testing application imports..."
 
-if python3 -c "from web_app import app; print('OK')" 2>/dev/null; then
-    print_success "FastAPI app imports successfully"
-else
-    print_error "Failed to import FastAPI app"
+if ! test_import "web_app" "FastAPI app"; then
     print_info "Check if all dependencies are installed"
     print_info "Run: pip install -r requirements.txt"
 fi
 
-if python3 -c "import passenger_wsgi; print('OK')" 2>/dev/null; then
-    print_success "WSGI adapter imports successfully"
-else
-    print_error "Failed to import WSGI adapter"
-fi
+test_import "passenger_wsgi" "WSGI adapter"
 
 # Step 9: Create necessary directories
 echo ""
