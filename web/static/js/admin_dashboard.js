@@ -110,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
         employees.forEach(employee => {
             html += '<tr>';
             
-            // Profile Picture
-            const profilePicUrl = employee.profile_picture_url || '/static/images/default_avatar.svg';
+            // Profile Picture - use photo_url (actual DB column name)
+            const profilePicUrl = employee.photo_url || '/static/images/default_avatar.svg';
             html += `<td><img src="${profilePicUrl}" alt="Profile" class="profile-pic-small" onerror="this.src='/static/images/default_avatar.svg'" /></td>`;
             
             // Name
@@ -129,10 +129,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Job Title
             html += `<td>${employee.job_title || '-'}</td>`;
             
-            // Status
-            html += `<td>${employee.employment_status || '-'}</td>`;
+            // Status - use status (actual DB column name)
+            html += `<td>${employee.status || '-'}</td>`;
             
-            // Work Status
+            // Work Status - Note: This column doesn't exist in DB, will show '-'
             html += `<td>${employee.work_status || '-'}</td>`;
             
             // Religion
