@@ -28,7 +28,11 @@ from services.supabase_service import (
     insert_employee,
     update_employee,
     run_payroll,
-    delete_employee
+    delete_employee,
+    upload_profile_picture,
+    upload_resume,
+    get_payroll_settings,
+    update_payroll_settings
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -2269,6 +2273,185 @@ async def export_payroll_runs_csv():
     except Exception as e:
         print(f"Error exporting payroll runs: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# File Upload Endpoints
+# ============================================================================
+
+@app.post("/api/employees/{employee_id}/profile-picture")
+async def upload_employee_profile_picture(employee_id: str, file: UploadFile = File(...)):
+    """Upload profile picture for an employee"""
+    try:
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('image/'):
+            return {"success": False, "message": "Only image files are allowed"}
+        
+        # Validate file size (5MB limit)
+        contents = await file.read()
+        if len(contents) > 5 * 1024 * 1024:
+            return {"success": False, "message": "File size must be less than 5MB"}
+        
+        # Save temporarily
+        temp_dir = "/tmp"
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"profile_{employee_id}_{file.filename}")
+        
+        with open(temp_path, "wb") as f:
+            f.write(contents)
+        
+        # Upload to Supabase storage
+        photo_url = upload_profile_picture(temp_path, employee_id)
+        
+        # Clean up temp file
+        try:
+            os.remove(temp_path)
+        except:
+            pass
+        
+        if photo_url:
+            return {
+                "success": True, 
+                "message": "Profile picture uploaded successfully",
+                "photo_url": photo_url
+            }
+        else:
+            return {"success": False, "message": "Failed to upload profile picture"}
+    
+    except Exception as e:
+        print(f"Error uploading profile picture: {str(e)}")
+        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+
+@app.post("/api/employees/{employee_id}/resume")
+async def upload_employee_resume(employee_id: str, file: UploadFile = File(...)):
+    """Upload resume/CV for an employee"""
+    try:
+        # Validate file type
+        allowed_types = ['application/pdf', 'application/msword', 
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        if not file.content_type or file.content_type not in allowed_types:
+            return {"success": False, "message": "Only PDF, DOC, and DOCX files are allowed"}
+        
+        # Validate file size (10MB limit)
+        contents = await file.read()
+        if len(contents) > 10 * 1024 * 1024:
+            return {"success": False, "message": "File size must be less than 10MB"}
+        
+        # Save temporarily
+        temp_dir = "/tmp"
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"resume_{employee_id}_{file.filename}")
+        
+        with open(temp_path, "wb") as f:
+            f.write(contents)
+        
+        # Upload to Supabase storage
+        resume_url = upload_resume(temp_path, employee_id)
+        
+        # Clean up temp file
+        try:
+            os.remove(temp_path)
+        except:
+            pass
+        
+        if resume_url:
+            return {
+                "success": True, 
+                "message": "Resume uploaded successfully",
+                "resume_url": resume_url
+            }
+        else:
+            return {"success": False, "message": "Failed to upload resume"}
+    
+    except Exception as e:
+        print(f"Error uploading resume: {str(e)}")
+        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+
+# ============================================================================
+# Payroll Settings Endpoints
+# ============================================================================
+
+@app.get("/api/admin/payroll/settings")
+async def get_payroll_settings_api():
+    """Get current payroll settings (calculation method preference)"""
+    try:
+        settings = get_payroll_settings()
+        return {
+            "success": True,
+            "data": settings
+        }
+    except Exception as e:
+        print(f"Error getting payroll settings: {str(e)}")
+        return {
+            "success": False, 
+            "message": str(e),
+            "data": {"calculation_method": "fixed"}
+        }
+
+@app.post("/api/admin/payroll/settings")
+async def update_payroll_settings_api(settings: Dict[str, Any]):
+    """Update payroll settings (calculation method preference)"""
+    try:
+        calculation_method = settings.get('calculation_method')
+        
+        if calculation_method and calculation_method not in ['fixed', 'variable']:
+            return {
+                "success": False,
+                "message": "calculation_method must be 'fixed' or 'variable'"
+            }
+        
+        # Update settings
+        success = update_payroll_settings(
+            calculation_method=calculation_method,
+            active_variable_config=settings.get('active_variable_config')
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Payroll settings updated successfully"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to update payroll settings"
+            }
+    
+    except Exception as e:
+        print(f"Error updating payroll settings: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+# ============================================================================
+# TP1 Relief Claims Endpoints (Placeholder for future implementation)
+# ============================================================================
+
+@app.get("/api/admin/tp1-reliefs/{employee_id}")
+async def get_tp1_reliefs(employee_id: str, year: Optional[int] = None, month: Optional[int] = None):
+    """Get TP1 relief claims for an employee (placeholder)"""
+    return {
+        "success": False,
+        "message": "TP1 relief claims API is not yet implemented. This endpoint is reserved for future use.",
+        "data": []
+    }
+
+@app.post("/api/admin/tp1-reliefs")
+async def create_tp1_relief(relief_data: Dict[str, Any]):
+    """Create/update TP1 relief claims (placeholder)"""
+    return {
+        "success": False,
+        "message": "TP1 relief claims API is not yet implemented. This endpoint is reserved for future use."
+    }
+
+# ============================================================================
+# Bulk Operations Endpoints
+# ============================================================================
+
+@app.post("/api/admin/employees/generate-pdfs")
+async def generate_all_employee_pdfs():
+    """Generate PDFs for all employees and return as ZIP (placeholder)"""
+    return {
+        "success": False,
+        "message": "Bulk PDF generation is not yet implemented. This feature requires PDF generation library integration."
+    }
 
 @app.get("/health")
 async def health_check():
