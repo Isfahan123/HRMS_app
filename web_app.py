@@ -2550,6 +2550,83 @@ async def generate_all_employee_pdfs():
         "message": "Bulk PDF generation is not yet implemented. This feature requires PDF generation library integration."
     }
 
+# ============================================================================
+# Location Autocomplete Endpoint
+# ============================================================================
+
+@app.get("/api/location/autocomplete")
+async def location_autocomplete(query: str, country: Optional[str] = None):
+    """
+    Location autocomplete using Geoapify API
+    
+    Args:
+        query: Search query (minimum 3 characters)
+        country: Optional 2-letter country code (e.g., 'MY' for Malaysia)
+    
+    Returns:
+        List of location suggestions with description and place_id
+    """
+    try:
+        import requests
+        
+        # Validate query length
+        if not query or len(query.strip()) < 3:
+            return {"success": True, "data": []}
+        
+        # Geoapify API configuration
+        GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_KEY', 'c664905ab3824cde9203a35f4804ecdd')
+        AUTOCOMPLETE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
+        
+        # Build request parameters
+        params = {
+            "text": query.strip(),
+            "apiKey": GEOAPIFY_API_KEY,
+            "type": "city",
+            "limit": 7,
+        }
+        
+        # Add country filter if specified
+        if country:
+            params["filter"] = f"countrycode:{country.lower()}"
+        
+        # Make request to Geoapify API
+        response = requests.get(AUTOCOMPLETE_URL, params=params, timeout=6)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Parse results
+        features = data.get("features", [])
+        results = []
+        
+        for feature in features:
+            props = feature.get("properties", {})
+            
+            # Build description from city, state, country
+            desc_parts = [
+                props.get("city") or props.get("name"),
+                props.get("state"),
+                props.get("country")
+            ]
+            description = ", ".join([p for p in desc_parts if p])
+            
+            results.append({
+                "description": description,
+                "place_id": str(props.get("place_id", "")),
+                "city": props.get("city") or props.get("name"),
+                "state": props.get("state"),
+                "country": props.get("country"),
+                "formatted": props.get("formatted")
+            })
+        
+        return {"success": True, "data": results}
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Geoapify API: {str(e)}")
+        return {"success": False, "message": f"Location service error: {str(e)}", "data": []}
+    except Exception as e:
+        print(f"Error in location autocomplete: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
