@@ -3528,7 +3528,9 @@
                 remainingChildren.forEach((child, i) => {
                     child.dataset.index = i;
                     child.querySelector('strong').textContent = `Child ${i + 1}:`;
-                    child.querySelector('button').onclick = () => removeChildEntry(i);
+                    // Use setAttribute to avoid closure issues
+                    const removeBtn = child.querySelector('button');
+                    removeBtn.setAttribute('onclick', `removeChildEntry(${i})`);
                 });
                 updateChildrenSummary();
             }
@@ -3577,9 +3579,14 @@
                 if (response.ok) {
                     const data = await response.json();
                     populatePayrollForm(data);
+                } else if (response.status === 404) {
+                    // Endpoint not implemented yet or no data exists
+                    console.log('Payroll info not found, using defaults');
+                    // Form will remain empty, which is acceptable
                 }
             } catch (error) {
-                console.error('Error loading payroll information:', error);
+                console.log('Payroll info API not available yet:', error.message);
+                // Gracefully continue with empty form
             }
         }
         
@@ -3672,14 +3679,19 @@
                 });
                 
                 if (response.ok) {
-                    alert('Payroll information saved successfully!');
+                    showMessage('Payroll information saved successfully!', 'success');
                     closePayrollInfoModal();
+                } else if (response.status === 404 || response.status === 501) {
+                    // API endpoint not implemented yet
+                    showMessage('Payroll info API not available yet. Feature coming soon.', 'warning');
+                    console.log('Payroll data that would be saved:', formData);
                 } else {
-                    alert('Error saving payroll information. Please try again.');
+                    showMessage('Error saving payroll information. Please try again.', 'error');
                 }
             } catch (error) {
-                console.error('Error saving payroll information:', error);
-                alert('Error saving payroll information. Please try again.');
+                console.log('Payroll info API not available:', error.message);
+                showMessage('Payroll info API not available yet. Feature coming soon.', 'warning');
+                console.log('Payroll data that would be saved:', formData);
             }
         });
         
@@ -3700,26 +3712,42 @@
         
         function openQuickTP1Reliefs() {
             const employeeId = document.getElementById('payrollEmployeeId').value;
+            if (!employeeId) {
+                showMessage('Please save employee information first.', 'warning');
+                return;
+            }
             // Save current payroll dialog state before switching
             closePayrollInfoModal();
-            // Note: The actual TP1 Reliefs dialog integration would happen here
-            // when the TP1 Reliefs button in the Payroll tab is implemented
-            // For now, display an informative message
-            showMessage('Quick TP1 Reliefs feature will integrate with the TP1 Reliefs button in the Payroll tab once backend is ready.', 'info');
+            // Display user-friendly message
+            showMessage('TP1 Reliefs feature integration coming soon.', 'info');
+            // Note: The actual integration with TP1 Reliefs dialog would be:
+            // - Check if TP1 button exists in Payroll tab
+            // - Trigger TP1 dialog with pre-selected employee
+            // - Return to this dialog after TP1 completion
         }
         
         function showMessage(text, type) {
             // Simple message display function
+            const colors = {
+                'info': '#2196f3',
+                'success': '#4caf50',
+                'warning': '#ff9800',
+                'error': '#f44336'
+            };
             const messageDiv = document.createElement('div');
             messageDiv.style.cssText = `
                 position: fixed; top: 20px; right: 20px; padding: 15px 20px;
-                background: ${type === 'info' ? '#2196f3' : '#4caf50'};
+                background: ${colors[type] || colors.info};
                 color: white; border-radius: 5px; z-index: 10000;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease-out;
             `;
             messageDiv.textContent = text;
             document.body.appendChild(messageDiv);
-            setTimeout(() => messageDiv.remove(), 4000);
+            setTimeout(() => {
+                messageDiv.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => messageDiv.remove(), 300);
+            }, 3500);
         }
     </script>
 </body>
