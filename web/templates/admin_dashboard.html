@@ -3508,9 +3508,13 @@
                             <option value="0">0% (Not claimed)</option>
                         </select>
                     </div>
-                    <button type="button" onclick="removeChildEntry(${childIndex})" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️</button>
+                    <button type="button" class="child-remove-btn">🗑️</button>
                 </div>
             `;
+            
+            // Add event listener for remove button
+            const removeBtn = childDiv.querySelector('.child-remove-btn');
+            removeBtn.addEventListener('click', () => removeChildEntry(childIndex));
             
             container.appendChild(childDiv);
             childrenEntries.push(childDiv);
@@ -3528,9 +3532,13 @@
                 remainingChildren.forEach((child, i) => {
                     child.dataset.index = i;
                     child.querySelector('strong').textContent = `Child ${i + 1}:`;
-                    // Use setAttribute to avoid closure issues
+                    // Use addEventListener to avoid closure issues and inline handlers
                     const removeBtn = child.querySelector('button');
-                    removeBtn.setAttribute('onclick', `removeChildEntry(${i})`);
+                    // Remove old listeners by cloning
+                    const newRemoveBtn = removeBtn.cloneNode(true);
+                    removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+                    // Add new listener with correct index
+                    newRemoveBtn.addEventListener('click', () => removeChildEntry(i));
                 });
                 updateChildrenSummary();
             }
@@ -3735,17 +3743,26 @@
                 'error': '#f44336'
             };
             const messageDiv = document.createElement('div');
+            messageDiv.className = 'toast-message';
             messageDiv.style.cssText = `
                 position: fixed; top: 20px; right: 20px; padding: 15px 20px;
                 background: ${colors[type] || colors.info};
                 color: white; border-radius: 5px; z-index: 10000;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                animation: slideIn 0.3s ease-out;
+                opacity: 0; transform: translateX(400px);
+                transition: all 0.3s ease-out;
             `;
             messageDiv.textContent = text;
             document.body.appendChild(messageDiv);
+            // Trigger animation
             setTimeout(() => {
-                messageDiv.style.animation = 'slideOut 0.3s ease-out';
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateX(0)';
+            }, 10);
+            // Remove after delay
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                messageDiv.style.transform = 'translateX(400px)';
                 setTimeout(() => messageDiv.remove(), 300);
             }, 3500);
         }
