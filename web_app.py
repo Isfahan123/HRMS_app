@@ -1457,12 +1457,23 @@ async def get_tp1_reliefs(employee_id: str, year: int, month: int):
     """
     Get TP1 tax relief data for an employee for a specific month
     """
+    # TP1 relief item key prefixes (must match JavaScript TP1_ITEMS keys)
+    TP1_RELIEF_PREFIXES = [
+        'parent_', 'medical_', 'lifestyle_', 'sports_', 'support_', 
+        'self_edu_', 'breastfeeding_', 'childcare_', 'sspn_', 'alimony_', 
+        'epf_voluntary', 'life_insurance_', 'education_medical_insurance',
+        'prs_', 'socso_eis_', 'domestic_tourism', 'ev_charging_'
+    ]
+    
     try:
         # Get monthly deductions which includes TP1 relief data
         deductions_data = get_monthly_deductions(employee_id, year, month)
         
-        # Extract TP1 relief items (they are prefixed with tp1_ or specific relief keys)
-        tp1_data = {k: v for k, v in deductions_data.items() if any(prefix in k for prefix in ['parent_', 'medical_', 'lifestyle_', 'sports_', 'education_', 'support_', 'self_edu_', 'breastfeeding_', 'childcare_', 'sspn_', 'alimony_', 'epf_voluntary', 'life_insurance_', 'prs_', 'socso_eis_', 'domestic_tourism', 'ev_charging_'])}
+        # Extract TP1 relief items by checking if key starts with any relief prefix
+        tp1_data = {
+            k: v for k, v in deductions_data.items() 
+            if any(k.startswith(prefix) or k == prefix for prefix in TP1_RELIEF_PREFIXES)
+        }
         
         return {"success": True, "data": tp1_data}
     except Exception as e:

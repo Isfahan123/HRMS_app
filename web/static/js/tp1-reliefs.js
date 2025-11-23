@@ -4,6 +4,42 @@
  * Based on core/tax_relief_catalog.py
  */
 
+// Helper function to show messages (fallback if not defined globally)
+function showMessage(message, type) {
+    if (typeof window.showMessage === 'function') {
+        window.showMessage(message, type);
+        return;
+    }
+    
+    // Fallback: create a simple message display
+    const colors = {
+        'success': '#4caf50',
+        'error': '#f44336',
+        'warning': '#ff9800',
+        'info': '#2196f3'
+    };
+    
+    const msgDiv = document.createElement('div');
+    msgDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 10000;
+        max-width: 400px;
+    `;
+    msgDiv.textContent = message;
+    document.body.appendChild(msgDiv);
+    
+    setTimeout(() => {
+        msgDiv.remove();
+    }, 3000);
+}
+
 // Relief Groups with caps
 const RELIEF_GROUPS = {
     'G1_PARENT': { id: 'G1_PARENT', description: 'Parent / grandparent expenses', cap: 8000.0 },
