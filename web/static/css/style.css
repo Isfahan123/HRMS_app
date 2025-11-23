@@ -1608,3 +1608,27 @@ textarea:disabled {
 .btn-import-holidays:hover {
     background-color: #218838 !important;
 }
+
+/* Child Entry Remove Button */
+.child-remove-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.child-remove-btn:hover {
+    background: #d32f2f;
+}
+
+/* Toast Message Notifications */
+.toast-message {
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 350px;
+    word-wrap: break-word;
+}

@@ -1016,6 +1016,7 @@
                                 
                                 <div style="margin-top: 20px;">
                                     <button type="submit" class="btn-primary">Save Changes</button>
+                                    <button type="button" class="btn-secondary" onclick="openPayrollInfoFromEdit()" style="margin-left: 10px;">📋 Payroll Info</button>
                                     <button type="button" class="btn-secondary" onclick="closeEditEmployeeModal()">Cancel</button>
                                 </div>
                                 
@@ -3189,6 +3190,880 @@
                         if (result.city) {
                             editTertiaryLocationField.value = result.city;
                         }
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Payroll Information Dialog (Borang Cukai Pendapatan) -->
+    <div id="payrollInfoModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>📋 BORANG CUKAI PENDAPATAN - Payroll & Tax Relief Information</h3>
+                <span class="modal-close" onclick="closePayrollInfoModal()">&times;</span>
+            </div>
+            
+            <!-- Guidance Banner -->
+            <div style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 12px; font-weight: bold;">
+                ⚠️ TP1 Itemized Reliefs moved: Use Admin ▶ TP1 Reliefs to manage monthly claims. 
+                This dialog only captures base payroll, zakat & rebates. SOCSO+EIS auto-applied in PCB LP1.
+            </div>
+            
+            <form id="payrollInfoForm">
+                <input type="hidden" id="payrollEmployeeId">
+                
+                <!-- Basic Payroll Section -->
+                <fieldset style="border: 2px solid #cccccc; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <legend style="font-weight: bold; color: #2c3e50; padding: 0 10px;">📊 SARAAN BULAN SEMASA - Monthly Salary</legend>
+                    
+                    <!-- Tax & Statutory Information -->
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🏛️ Tax & Statutory Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="payrollTaxNumber">Tax Number:</label>
+                                <input type="text" id="payrollTaxNumber" style="width: 100%; padding: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollEPFNumber">EPF Number:</label>
+                                <input type="text" id="payrollEPFNumber" style="width: 100%; padding: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollSOCSONumber">SOCSO Number:</label>
+                                <input type="text" id="payrollSOCSONumber" style="width: 100%; padding: 8px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Disability Status -->
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🦽 Disability Status - Tax Relief Eligibility</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="payrollIndividualDisabled" style="margin-right: 5px;">
+                                    Individual Disabled (OKU) - B4
+                                </label>
+                                <p style="font-size: 11px; color: #666; margin: 5px 0 0 20px;">Check if registered as OKU with LHDN (automatic RM6,000 relief)</p>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="payrollSpouseDisabled" style="margin-right: 5px;">
+                                    Spouse Disabled (OKU) - B15
+                                </label>
+                                <p style="font-size: 11px; color: #666; margin: 5px 0 0 20px;">Check if spouse is registered as OKU with LHDN (automatic RM5,000 relief)</p>
+                            </div>
+                        </div>
+                        <p style="font-size: 10px; color: #666; font-style: italic; margin-top: 5px;">📝 Note: These are automatic LHDN reliefs - no amount input needed</p>
+                    </div>
+                    
+                    <!-- Basic Salary and Bank Info -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="payrollBasicSalary">Gaji Pokok + Elaun Kena Cukai (RM):</label>
+                            <input type="number" id="payrollBasicSalary" step="0.01" min="0" max="9999999.99" style="width: 100%; padding: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="payrollBankName">Bank Name:</label>
+                            <select id="payrollBankName" style="width: 100%; padding: 8px;" onchange="toggleCustomBankName()">
+                                <option value="">Select Bank...</option>
+                                <option value="Maybank">Maybank (Malayan Banking Berhad)</option>
+                                <option value="CIMB">CIMB Bank</option>
+                                <option value="Public Bank">Public Bank Berhad</option>
+                                <option value="RHB">RHB Bank</option>
+                                <option value="Hong Leong">Hong Leong Bank</option>
+                                <option value="AmBank">AmBank (AmBank Group)</option>
+                                <option value="OCBC">OCBC Bank Malaysia</option>
+                                <option value="Standard Chartered">Standard Chartered Bank Malaysia</option>
+                                <option value="HSBC">HSBC Bank Malaysia</option>
+                                <option value="UOB">UOB Malaysia</option>
+                                <option value="Bank Islam">Bank Islam Malaysia</option>
+                                <option value="Bank Rakyat">Bank Rakyat</option>
+                                <option value="BSN">BSN (Bank Simpanan Nasional)</option>
+                                <option value="Affin">Affin Bank</option>
+                                <option value="Alliance">Alliance Bank Malaysia</option>
+                                <option value="Other">Other (Specify)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="payrollCustomBankGroup" style="display: none;">
+                            <label for="payrollCustomBank">Custom Bank Name:</label>
+                            <input type="text" id="payrollCustomBank" placeholder="Enter bank name..." style="width: 100%; padding: 8px;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="payrollBankAccount">Account Number:</label>
+                            <input type="text" id="payrollBankAccount" style="width: 100%; padding: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="payrollTaxStatus">Tax Resident Status:</label>
+                            <select id="payrollTaxStatus" style="width: 100%; padding: 8px;" title="Resident: 182+ days in Malaysia (Progressive tax 0%-30%, full reliefs). Non-Resident: <182 days (Flat 30% tax, limited reliefs)">
+                                <option value="Resident">Resident</option>
+                                <option value="Non-Resident">Non-Resident</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Allowances Section -->
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-top: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">💰 Allowances</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="payrollMealAllowance">Meal Allowance (RM):</label>
+                                <input type="number" id="payrollMealAllowance" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollTransportAllowance">Transport Allowance (RM):</label>
+                                <input type="number" id="payrollTransportAllowance" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollMedicalAllowance">Medical Allowance (RM):</label>
+                                <input type="number" id="payrollMedicalAllowance" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="payrollPhoneAllowance">Phone Allowance (RM):</label>
+                                <input type="number" id="payrollPhoneAllowance" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollOtherAllowance">Other Allowance (RM):</label>
+                                <input type="number" id="payrollOtherAllowance" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <!-- Children Management Section -->
+                <fieldset style="border: 2px solid #cccccc; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <legend style="font-weight: bold; color: #2c3e50; padding: 0 10px;">👶 Individual Children Management</legend>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 10px;">📌 LHDN B16 Child Relief - All children must be UNMARRIED (belum berkahwin)</p>
+                    
+                    <button type="button" onclick="addChildEntry()" class="btn-primary" style="margin-bottom: 10px;">➕ Add Child</button>
+                    
+                    <div id="childrenContainer" style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px; background: #fafafa;">
+                        <!-- Children entries will be added here dynamically -->
+                    </div>
+                    
+                    <!-- Children Summary -->
+                    <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px;">
+                        <strong>📊 Summary:</strong>
+                        <span id="childrenSummary" style="margin-left: 10px;">Normal <18: 0 | Normal 18+ matrikulasi: 0 | Normal 18+ diploma: 0 | OKU any age: 0 | OKU 18+ belajar: 0</span>
+                    </div>
+                    
+                    <p style="font-size: 10px; color: #666; font-style: italic; margin-top: 10px;">
+                        • 100% = Only you claim | 50% = Shared with ex-spouse | 0% = Other parent claims<br>
+                        • Normal: &lt;18=RM2K | 18+ matrikulasi=RM2K | 18+ diploma=RM8K<br>
+                        • OKU (no age limit): Any age=RM8K | 18+ belajar=RM8K+RM8K=RM16K total
+                    </p>
+                </fieldset>
+                
+                <!-- Additional Benefits Section -->
+                <fieldset style="border: 2px solid #cccccc; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <legend style="font-weight: bold; color: #2c3e50; padding: 0 10px;">🏦 Additional Benefits & Contributions</legend>
+                    
+                    <!-- SIP Section -->
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">📈 Share Investment Plan (SIP)</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="payrollSIPParticipation">SIP Participation:</label>
+                                <select id="payrollSIPParticipation" style="width: 100%; padding: 8px;">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollSIPType">SIP Type:</label>
+                                <select id="payrollSIPType" style="width: 100%; padding: 8px;">
+                                    <option value="None">None</option>
+                                    <option value="Fixed Amount">Fixed Amount</option>
+                                    <option value="Percentage">Percentage</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollSIPAmount">SIP Amount/Rate:</label>
+                                <input type="number" id="payrollSIPAmount" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional EPF Section -->
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">💼 Additional EPF Contributions</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="payrollAdditionalEPF">Additional EPF:</label>
+                                <select id="payrollAdditionalEPF" style="width: 100%; padding: 8px;">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollAdditionalEPFAmount">Additional EPF Amount (RM):</label>
+                                <input type="number" id="payrollAdditionalEPFAmount" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PRS Section -->
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🎯 Private Retirement Scheme (PRS)</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="payrollPRSParticipation">PRS Participation:</label>
+                                <select id="payrollPRSParticipation" style="width: 100%; padding: 8px;">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="payrollPRSAmount">PRS Amount (RM):</label>
+                                <input type="number" id="payrollPRSAmount" step="0.01" min="0" max="99999.99" style="width: 100%; padding: 8px;">
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <!-- Action Buttons -->
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn-secondary" onclick="openQuickTP1Reliefs()" style="margin-right: 10px;">✨ Quick TP1 Reliefs</button>
+                    <button type="submit" class="btn-primary">💾 Save</button>
+                    <button type="button" class="btn-secondary" onclick="closePayrollInfoModal()">❌ Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Payroll Information Dialog Functions
+        let childrenEntries = [];
+        
+        function openPayrollInfoModal(employeeId) {
+            document.getElementById('payrollInfoModal').style.display = 'block';
+            document.getElementById('payrollEmployeeId').value = employeeId;
+            loadPayrollInformation(employeeId);
+        }
+        
+        function closePayrollInfoModal() {
+            document.getElementById('payrollInfoModal').style.display = 'none';
+            document.getElementById('payrollInfoForm').reset();
+            childrenEntries = [];
+            document.getElementById('childrenContainer').innerHTML = '';
+            updateChildrenSummary();
+        }
+        
+        function openPayrollInfoFromEdit() {
+            // Get the employee ID from the edit form
+            const employeeId = document.getElementById('editEmpId').value;
+            if (employeeId) {
+                // Close the edit modal
+                closeEditEmployeeModal();
+                // Open the payroll info modal
+                openPayrollInfoModal(employeeId);
+            } else {
+                alert('Unable to determine employee ID');
+            }
+        }
+        
+        function toggleCustomBankName() {
+            const bankSelect = document.getElementById('payrollBankName');
+            const customGroup = document.getElementById('payrollCustomBankGroup');
+            if (bankSelect.value === 'Other') {
+                customGroup.style.display = 'block';
+            } else {
+                customGroup.style.display = 'none';
+            }
+        }
+        
+        function addChildEntry() {
+            const container = document.getElementById('childrenContainer');
+            const childIndex = childrenEntries.length;
+            
+            const childDiv = document.createElement('div');
+            childDiv.className = 'child-entry';
+            childDiv.style.cssText = 'border: 1px solid #ddd; border-radius: 5px; padding: 10px; margin-bottom: 10px; background-color: #fff;';
+            childDiv.dataset.index = childIndex;
+            
+            childDiv.innerHTML = `
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <strong style="min-width: 60px;">Child ${childIndex + 1}:</strong>
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="font-size: 11px; display: block; margin-bottom: 3px;">Category:</label>
+                        <select class="child-category" onchange="updateChildrenSummary()" style="width: 100%; padding: 5px; font-size: 12px;">
+                            <option value="normal_under_18">Normal - Under 18 years (RM2,000)</option>
+                            <option value="normal_18_matric">Normal - 18+ matrikulasi/A-Level Malaysia (RM2,000)</option>
+                            <option value="normal_18_diploma">Normal - 18+ diploma/degree (RM8,000)</option>
+                            <option value="oku_any_age">OKU - Any age, not studying (RM8,000)</option>
+                            <option value="oku_18_studying">OKU - 18+ studying diploma/degree (RM16,000)</option>
+                        </select>
+                    </div>
+                    <div style="min-width: 150px;">
+                        <label style="font-size: 11px; display: block; margin-bottom: 3px;">Custody:</label>
+                        <select class="child-custody" onchange="updateChildrenSummary()" style="width: 100%; padding: 5px; font-size: 12px;">
+                            <option value="100">100% (Full claim)</option>
+                            <option value="50">50% (Shared)</option>
+                            <option value="0">0% (Not claimed)</option>
+                        </select>
+                    </div>
+                    <button type="button" class="child-remove-btn">🗑️</button>
+                </div>
+            `;
+            
+            // Add event listener for remove button
+            const removeBtn = childDiv.querySelector('.child-remove-btn');
+            removeBtn.addEventListener('click', () => removeChildEntry(childIndex));
+            
+            container.appendChild(childDiv);
+            childrenEntries.push(childDiv);
+            updateChildrenSummary();
+        }
+        
+        function removeChildEntry(index) {
+            const container = document.getElementById('childrenContainer');
+            const childDiv = container.querySelector(`[data-index="${index}"]`);
+            if (childDiv) {
+                childDiv.remove();
+                childrenEntries = childrenEntries.filter((_, i) => i !== index);
+                // Renumber remaining children
+                const remainingChildren = container.querySelectorAll('.child-entry');
+                remainingChildren.forEach((child, i) => {
+                    child.dataset.index = i;
+                    child.querySelector('strong').textContent = `Child ${i + 1}:`;
+                    // Use addEventListener to avoid closure issues and inline handlers
+                    const removeBtn = child.querySelector('button');
+                    // Remove old listeners by cloning
+                    const newRemoveBtn = removeBtn.cloneNode(true);
+                    removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+                    // Add new listener with correct index
+                    newRemoveBtn.addEventListener('click', () => removeChildEntry(i));
+                });
+                updateChildrenSummary();
+            }
+        }
+        
+        function updateChildrenSummary() {
+            const container = document.getElementById('childrenContainer');
+            const children = container.querySelectorAll('.child-entry');
+            
+            let normalUnder18 = 0;
+            let normalMatric = 0;
+            let normalDiploma = 0;
+            let okuAnyAge = 0;
+            let okuStudying = 0;
+            
+            children.forEach(child => {
+                const category = child.querySelector('.child-category').value;
+                const custody = parseInt(child.querySelector('.child-custody').value) / 100;
+                
+                switch(category) {
+                    case 'normal_under_18':
+                        normalUnder18 += custody;
+                        break;
+                    case 'normal_18_matric':
+                        normalMatric += custody;
+                        break;
+                    case 'normal_18_diploma':
+                        normalDiploma += custody;
+                        break;
+                    case 'oku_any_age':
+                        okuAnyAge += custody;
+                        break;
+                    case 'oku_18_studying':
+                        okuStudying += custody;
+                        break;
+                }
+            });
+            
+            const summary = `Normal <18: ${normalUnder18.toFixed(1)} | Normal 18+ matrikulasi: ${normalMatric.toFixed(1)} | Normal 18+ diploma: ${normalDiploma.toFixed(1)} | OKU any age: ${okuAnyAge.toFixed(1)} | OKU 18+ belajar: ${okuStudying.toFixed(1)}`;
+            document.getElementById('childrenSummary').textContent = summary;
+        }
+        
+        async function loadPayrollInformation(employeeId) {
+            try {
+                const response = await fetch(`/api/admin/payroll-info/${employeeId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    populatePayrollForm(data);
+                } else if (response.status === 404) {
+                    // Endpoint not implemented yet or no data exists
+                    console.log('Payroll info not found, using defaults');
+                    // Form will remain empty, which is acceptable
+                }
+            } catch (error) {
+                console.log('Payroll info API not available yet:', error.message);
+                // Gracefully continue with empty form
+            }
+        }
+        
+        function populatePayrollForm(data) {
+            // Populate form fields
+            document.getElementById('payrollTaxNumber').value = data.income_tax_number || '';
+            document.getElementById('payrollEPFNumber').value = data.epf_number || '';
+            document.getElementById('payrollSOCSONumber').value = data.socso_number || '';
+            document.getElementById('payrollIndividualDisabled').checked = data.is_individual_disabled || false;
+            document.getElementById('payrollSpouseDisabled').checked = data.is_spouse_disabled || false;
+            document.getElementById('payrollBasicSalary').value = data.basic_salary || '';
+            document.getElementById('payrollBankName').value = data.bank_name || '';
+            document.getElementById('payrollCustomBank').value = data.bank_name_custom || '';
+            document.getElementById('payrollBankAccount').value = data.bank_account || '';
+            document.getElementById('payrollTaxStatus').value = data.tax_resident_status || 'Resident';
+            
+            // Allowances
+            document.getElementById('payrollMealAllowance').value = data.meal_allowance || '';
+            document.getElementById('payrollTransportAllowance').value = data.transport_allowance || '';
+            document.getElementById('payrollMedicalAllowance').value = data.medical_allowance || '';
+            document.getElementById('payrollPhoneAllowance').value = data.phone_allowance || '';
+            document.getElementById('payrollOtherAllowance').value = data.other_allowance || '';
+            
+            // Benefits
+            document.getElementById('payrollSIPParticipation').value = data.sip_participation || 'No';
+            document.getElementById('payrollSIPType').value = data.sip_type || 'None';
+            document.getElementById('payrollSIPAmount').value = data.sip_amount_rate || '';
+            document.getElementById('payrollAdditionalEPF').value = data.additional_epf_enabled || 'No';
+            document.getElementById('payrollAdditionalEPFAmount').value = data.additional_epf_amount || '';
+            document.getElementById('payrollPRSParticipation').value = data.prs_participation || 'No';
+            document.getElementById('payrollPRSAmount').value = data.prs_amount || '';
+            
+            toggleCustomBankName();
+            
+            // Load children if available
+            if (data.children && data.children.length > 0) {
+                data.children.forEach((child, index) => {
+                    addChildEntry();
+                    // Populate child data
+                    const container = document.getElementById('childrenContainer');
+                    const childDiv = container.querySelector(`[data-index="${index}"]`);
+                    if (childDiv && child.category && child.custody !== undefined) {
+                        childDiv.querySelector('.child-category').value = child.category;
+                        childDiv.querySelector('.child-custody').value = child.custody.toString();
+                        updateChildrenSummary();
+                    }
+                });
+            }
+        }
+        
+        // Handle form submission
+        document.getElementById('payrollInfoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('payrollEmployeeId').value;
+            const formData = {
+                employee_id: employeeId,
+                income_tax_number: document.getElementById('payrollTaxNumber').value,
+                epf_number: document.getElementById('payrollEPFNumber').value,
+                socso_number: document.getElementById('payrollSOCSONumber').value,
+                is_individual_disabled: document.getElementById('payrollIndividualDisabled').checked,
+                is_spouse_disabled: document.getElementById('payrollSpouseDisabled').checked,
+                basic_salary: parseFloat(document.getElementById('payrollBasicSalary').value) || 0,
+                bank_name: document.getElementById('payrollBankName').value,
+                bank_name_custom: document.getElementById('payrollCustomBank').value,
+                bank_account: document.getElementById('payrollBankAccount').value,
+                tax_resident_status: document.getElementById('payrollTaxStatus').value,
+                meal_allowance: parseFloat(document.getElementById('payrollMealAllowance').value) || 0,
+                transport_allowance: parseFloat(document.getElementById('payrollTransportAllowance').value) || 0,
+                medical_allowance: parseFloat(document.getElementById('payrollMedicalAllowance').value) || 0,
+                phone_allowance: parseFloat(document.getElementById('payrollPhoneAllowance').value) || 0,
+                other_allowance: parseFloat(document.getElementById('payrollOtherAllowance').value) || 0,
+                sip_participation: document.getElementById('payrollSIPParticipation').value,
+                sip_type: document.getElementById('payrollSIPType').value,
+                sip_amount_rate: parseFloat(document.getElementById('payrollSIPAmount').value) || 0,
+                additional_epf_enabled: document.getElementById('payrollAdditionalEPF').value,
+                additional_epf_amount: parseFloat(document.getElementById('payrollAdditionalEPFAmount').value) || 0,
+                prs_participation: document.getElementById('payrollPRSParticipation').value,
+                prs_amount: parseFloat(document.getElementById('payrollPRSAmount').value) || 0,
+                children: collectChildrenData()
+            };
+            
+            try {
+                const response = await fetch('/api/admin/payroll-info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    showMessage('Payroll information saved successfully!', 'success');
+                    closePayrollInfoModal();
+                } else if (response.status === 404 || response.status === 501) {
+                    // API endpoint not implemented yet
+                    showMessage('Payroll info API not available yet. Feature coming soon.', 'warning');
+                    console.log('Payroll data that would be saved:', formData);
+                } else {
+                    showMessage('Error saving payroll information. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.log('Payroll info API not available:', error.message);
+                showMessage('Payroll info API not available yet. Feature coming soon.', 'warning');
+                console.log('Payroll data that would be saved:', formData);
+            }
+        });
+        
+        function collectChildrenData() {
+            const container = document.getElementById('childrenContainer');
+            const children = container.querySelectorAll('.child-entry');
+            const childrenData = [];
+            
+            children.forEach(child => {
+                childrenData.push({
+                    category: child.querySelector('.child-category').value,
+                    custody: parseInt(child.querySelector('.child-custody').value)
+                });
+            });
+            
+            return childrenData;
+        }
+        
+        function openQuickTP1Reliefs() {
+            const employeeId = document.getElementById('payrollEmployeeId').value;
+            if (!employeeId) {
+                showMessage('Please save employee information first.', 'warning');
+                return;
+            }
+            // Save current payroll dialog state before switching
+            closePayrollInfoModal();
+            // Display user-friendly message
+            showMessage('TP1 Reliefs feature integration coming soon.', 'info');
+            // Note: The actual integration with TP1 Reliefs dialog would be:
+            // - Check if TP1 button exists in Payroll tab
+            // - Trigger TP1 dialog with pre-selected employee
+            // - Return to this dialog after TP1 completion
+        }
+        
+        function showMessage(text, type) {
+            // Simple message display function
+            const colors = {
+                'info': '#2196f3',
+                'success': '#4caf50',
+                'warning': '#ff9800',
+                'error': '#f44336'
+            };
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'toast-message';
+            messageDiv.style.cssText = `
+                position: fixed; top: 20px; right: 20px; padding: 15px 20px;
+                background: ${colors[type] || colors.info};
+                color: white; border-radius: 5px; z-index: 10000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                opacity: 0; transform: translateX(400px);
+                transition: all 0.3s ease-out;
+            `;
+            messageDiv.textContent = text;
+            document.body.appendChild(messageDiv);
+            // Trigger animation
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateX(0)';
+            }, 10);
+            // Remove after delay
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                messageDiv.style.transform = 'translateX(400px)';
+                setTimeout(() => messageDiv.remove(), 300);
+            }, 3500);
+        }
+    </script>
+
+    <!-- Place Lookup Dialog -->
+    <div id="placeLookupModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>🔍 Find Place</h3>
+                <span class="modal-close" onclick="closePlaceLookupModal()">&times;</span>
+            </div>
+            
+            <form id="placeLookupForm" onsubmit="searchPlaces(event)">
+                <div class="form-group">
+                    <label for="placeSearchInput">Search Location:</label>
+                    <input type="text" id="placeSearchInput" placeholder="Type school, institution, or place name and press Enter" style="width: 100%; padding: 10px;" required>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn-primary">🔍 Search</button>
+                </div>
+            </form>
+            
+            <div id="placeSearchResults" style="margin-top: 20px; max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
+                <p style="color: #666; text-align: center;">Enter a search term and press Search to find places</p>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn-primary" onclick="selectPlace()">Select</button>
+                <button type="button" class="btn-secondary" onclick="closePlaceLookupModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Selector Dialog -->
+    <div id="employeeSelectorModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>👥 Select Employee</h3>
+                <span class="modal-close" onclick="closeEmployeeSelectorModal()">&times;</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="employeeSearchInput">Search employees by name or email:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="employeeSearchInput" placeholder="Type to search..." style="flex: 1; padding: 8px;">
+                    <button type="button" class="btn-primary" onclick="searchEmployees()">Search</button>
+                </div>
+            </div>
+            
+            <div id="employeeSelectorResults" style="margin-top: 20px; overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f0f0f0;">
+                            <th style="padding: 10px; text-align: left;">Name</th>
+                            <th style="padding: 10px; text-align: left;">Employee ID</th>
+                            <th style="padding: 10px; text-align: left;">Email</th>
+                            <th style="padding: 10px; text-align: left;">Department</th>
+                            <th style="padding: 10px; text-align: center;">Select</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeSelectorTableBody">
+                        <tr>
+                            <td colspan="5" style="padding: 20px; text-align: center; color: #666;">
+                                Use the search box to find employees
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn-secondary" onclick="closeEmployeeSelectorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Place Lookup Dialog Functions
+        let placeSearchResults = [];
+        let selectedPlaceIndex = -1;
+        let placeLookupCallback = null;
+        
+        function openPlaceLookupModal(callback, initialQuery = '') {
+            document.getElementById('placeLookupModal').style.display = 'block';
+            document.getElementById('placeSearchInput').value = initialQuery;
+            placeLookupCallback = callback;
+            selectedPlaceIndex = -1;
+            
+            if (initialQuery) {
+                searchPlaces(null, initialQuery);
+            }
+        }
+        
+        function closePlaceLookupModal() {
+            document.getElementById('placeLookupModal').style.display = 'none';
+            placeSearchResults = [];
+            selectedPlaceIndex = -1;
+            placeLookupCallback = null;
+            document.getElementById('placeSearchResults').innerHTML = '<p style="color: #666; text-align: center;">Enter a search term and press Search to find places</p>';
+        }
+        
+        async function searchPlaces(event, queryOverride = null) {
+            if (event) event.preventDefault();
+            
+            const query = queryOverride || document.getElementById('placeSearchInput').value.trim();
+            if (!query) {
+                showMessage('Please enter a search term', 'warning');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('placeSearchResults');
+            resultsDiv.innerHTML = '<p style="color: #666; text-align: center;">🔍 Searching...</p>';
+            
+            try {
+                // Using existing location autocomplete API if available, otherwise provide local results
+                // This matches the Python GUI behavior which also uses location services
+                placeSearchResults = [
+                    {
+                        properties: {
+                            name: query,
+                            formatted: `${query}, Malaysia`,
+                            city: query.split(',')[0].trim(),
+                            country: 'Malaysia'
+                        }
+                    }
+                ];
+                // Note: For production, integrate with actual geocoding service
+                // Example: fetch to geoapify or Google Places API
+                displayPlaceResults();
+            } catch (error) {
+                console.error('Place search error:', error);
+                showMessage('Error searching places', 'error');
+                resultsDiv.innerHTML = '<p style="color: #f44336; text-align: center;">Error searching places</p>';
+            }
+        }
+        
+        function displayPlaceResults() {
+            const resultsDiv = document.getElementById('placeSearchResults');
+            
+            if (placeSearchResults.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #666; text-align: center;">No results found</p>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 5px;">';
+            placeSearchResults.forEach((result, index) => {
+                const props = result.properties || result;
+                const name = props.name || '';
+                const formatted = props.formatted || props.address || '';
+                
+                html += `
+                    <div 
+                        class="place-result-item" 
+                        data-index="${index}"
+                        onclick="selectPlaceItem(${index})"
+                        style="padding: 12px; border: 2px solid ${selectedPlaceIndex === index ? '#2196f3' : '#ddd'}; 
+                               border-radius: 5px; cursor: pointer; background: ${selectedPlaceIndex === index ? '#e3f2fd' : 'white'};"
+                        onmouseover="this.style.background='#f5f5f5'"
+                        onmouseout="this.style.background='${selectedPlaceIndex === index ? '#e3f2fd' : 'white'}'"
+                    >
+                        <strong>${name || 'Unknown'}</strong><br>
+                        <small style="color: #666;">${formatted || 'No address available'}</small>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function selectPlaceItem(index) {
+            selectedPlaceIndex = index;
+            displayPlaceResults();
+        }
+        
+        function selectPlace() {
+            if (selectedPlaceIndex < 0 || selectedPlaceIndex >= placeSearchResults.length) {
+                showMessage('Please select a place from the results', 'warning');
+                return;
+            }
+            
+            const selectedPlace = placeSearchResults[selectedPlaceIndex];
+            const props = selectedPlace.properties || selectedPlace;
+            
+            if (placeLookupCallback) {
+                placeLookupCallback({
+                    name: props.name || '',
+                    formatted: props.formatted || props.address || '',
+                    city: props.city || '',
+                    country: props.country || '',
+                    full_data: selectedPlace
+                });
+            }
+            
+            closePlaceLookupModal();
+        }
+        
+        // Employee Selector Dialog Functions
+        let employeeSelectorCallback = null;
+        let employeeSelectorResults = [];
+        
+        function openEmployeeSelectorModal(callback, prefilter = '') {
+            document.getElementById('employeeSelectorModal').style.display = 'block';
+            document.getElementById('employeeSearchInput').value = prefilter;
+            employeeSelectorCallback = callback;
+            
+            if (prefilter) {
+                searchEmployees();
+            }
+        }
+        
+        function closeEmployeeSelectorModal() {
+            document.getElementById('employeeSelectorModal').style.display = 'none';
+            employeeSelectorCallback = null;
+            employeeSelectorResults = [];
+            document.getElementById('employeeSelectorTableBody').innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">Use the search box to find employees</td></tr>';
+        }
+        
+        async function searchEmployees() {
+            const query = document.getElementById('employeeSearchInput').value.trim();
+            const tbody = document.getElementById('employeeSelectorTableBody');
+            
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">🔍 Searching...</td></tr>';
+            
+            try {
+                const response = await fetch('/api/employees');
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    // Filter locally if query provided (backend doesn't support search param yet)
+                    let results = data.data;
+                    if (query) {
+                        const lowerQuery = query.toLowerCase();
+                        results = results.filter(emp => 
+                            (emp.full_name && emp.full_name.toLowerCase().includes(lowerQuery)) ||
+                            (emp.email && emp.email.toLowerCase().includes(lowerQuery)) ||
+                            (emp.employee_id && emp.employee_id.toLowerCase().includes(lowerQuery))
+                        );
+                    }
+                    employeeSelectorResults = results;
+                    displayEmployeeResults();
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No employees found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Employee search error:', error);
+                showMessage('Error loading employees', 'error');
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #f44336;">Error loading employees</td></tr>';
+            }
+        }
+        
+        function displayEmployeeResults() {
+            const tbody = document.getElementById('employeeSelectorTableBody');
+            
+            if (employeeSelectorResults.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No employees found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            employeeSelectorResults.forEach((emp, index) => {
+                html += `
+                    <tr style="border-bottom: 1px solid #ddd;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+                        <td style="padding: 10px;">${emp.full_name || '-'}</td>
+                        <td style="padding: 10px;">${emp.employee_id || emp.id || '-'}</td>
+                        <td style="padding: 10px;">${emp.email || '-'}</td>
+                        <td style="padding: 10px;">${emp.department || '-'}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <button class="btn-primary btn-sm" onclick="selectEmployee(${index})">Select</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        function selectEmployee(index) {
+            if (index < 0 || index >= employeeSelectorResults.length) {
+                return;
+            }
+            
+            const selectedEmployee = employeeSelectorResults[index];
+            
+            if (employeeSelectorCallback) {
+                employeeSelectorCallback(selectedEmployee);
+            }
+            
+            closeEmployeeSelectorModal();
+        }
+        
+        // Make search work on Enter key
+        document.addEventListener('DOMContentLoaded', function() {
+            const employeeSearchInput = document.getElementById('employeeSearchInput');
+            if (employeeSearchInput) {
+                employeeSearchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        searchEmployees();
                     }
                 });
             }

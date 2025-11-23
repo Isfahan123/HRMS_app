@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Actions
             html += `<td>
                 <button class="btn-secondary btn-sm" onclick="openEditEmployeeModal('${employee.id || employee.email}')" title="Edit Employee">✏️ Edit</button>
+                <button class="btn-secondary btn-sm" onclick="openPayrollInfoModal('${employee.id || employee.email}')" title="Payroll Info">📋</button>
                 <button class="btn-danger btn-sm" onclick="deleteEmployee('${employee.id || employee.email}', '${employee.full_name}')" title="Delete Employee">🗑️ Delete</button>
             </td>`;
             
