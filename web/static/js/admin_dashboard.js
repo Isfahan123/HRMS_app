@@ -1802,6 +1802,166 @@ document.addEventListener('DOMContentLoaded', function() {
             }
     }
     
+    // Adjust Leave Balance Functions
+    window.adjustLeaveBalance = function(email) {
+        // Find the balance data for this employee
+        const balance = annualLeaveBalancesData.find(b => b.email === email);
+        if (!balance) {
+            alert('Employee data not found');
+            return;
+        }
+        
+        // Populate form
+        document.getElementById('adjustEmployeeEmail').value = email;
+        document.getElementById('adjustEmployeeName').textContent = `${balance.full_name} (${email})`;
+        document.getElementById('adjustAnnualEntitlement').value = balance.annual_entitlement || balance.total_leave || 14;
+        document.getElementById('adjustUsedDays').value = balance.used_days || balance.used_leave || 0;
+        document.getElementById('adjustCarriedForward').value = balance.carried_forward || 0;
+        
+        // Show modal
+        document.getElementById('adjustLeaveBalanceModal').style.display = 'block';
+    };
+    
+    window.closeAdjustLeaveBalanceModal = function() {
+        document.getElementById('adjustLeaveBalanceModal').style.display = 'none';
+    };
+    
+    // Handle adjust form submission
+    const adjustLeaveBalanceForm = document.getElementById('adjustLeaveBalanceForm');
+    if (adjustLeaveBalanceForm) {
+        adjustLeaveBalanceForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('adjustEmployeeEmail').value;
+            const yearSelector = document.getElementById('annualLeaveYearSelector');
+            const year = yearSelector ? yearSelector.value : new Date().getFullYear();
+            
+            const data = {
+                year: parseInt(year),
+                annual_entitlement: parseFloat(document.getElementById('adjustAnnualEntitlement').value),
+                used_days: parseFloat(document.getElementById('adjustUsedDays').value),
+                carried_forward: parseFloat(document.getElementById('adjustCarriedForward').value)
+            };
+            
+            try {
+                const response = await fetch(`/api/admin/leave-balances/${encodeURIComponent(email)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Leave balance updated successfully');
+                    closeAdjustLeaveBalanceModal();
+                    loadLeaveBalances();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to update leave balance'));
+                }
+            } catch (error) {
+                console.error('Error updating leave balance:', error);
+                alert('Error updating leave balance');
+            }
+        });
+    }
+    
+    // Set Carry Forward for All Functions
+    window.openSetCarryForwardAllModal = function() {
+        document.getElementById('setCarryForwardAllModal').style.display = 'block';
+    };
+    
+    window.closeSetCarryForwardAllModal = function() {
+        document.getElementById('setCarryForwardAllModal').style.display = 'none';
+    };
+    
+    const setCarryForwardAllForm = document.getElementById('setCarryForwardAllForm');
+    if (setCarryForwardAllForm) {
+        setCarryForwardAllForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const days = parseInt(document.getElementById('carryForwardDays').value);
+            const appliesTo = document.getElementById('carryForwardAppliesTo').value;
+            const yearSelector = document.getElementById('annualLeaveYearSelector');
+            const currentYear = yearSelector ? parseInt(yearSelector.value) : new Date().getFullYear();
+            
+            if (!confirm(`Set ${days} carried forward days for all employees for year ${currentYear + 1}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/leave-balances/set-carry-forward-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_year: currentYear,
+                        next_year: currentYear + 1,
+                        days: days,
+                        applies_to: appliesTo
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message || 'Carried forward set successfully for all employees');
+                    closeSetCarryForwardAllModal();
+                    loadLeaveBalances();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to set carry forward'));
+                }
+            } catch (error) {
+                console.error('Error setting carry forward:', error);
+                alert('Error setting carry forward for all');
+            }
+        });
+    }
+    
+    // Process Carry Forward Functions
+    window.openProcessCarryForwardModal = function() {
+        document.getElementById('processCarryForwardModal').style.display = 'block';
+    };
+    
+    window.closeProcessCarryForwardModal = function() {
+        document.getElementById('processCarryForwardModal').style.display = 'none';
+    };
+    
+    window.confirmProcessCarryForward = async function() {
+        const maxDays = parseInt(document.getElementById('carryForwardMaxDays').value);
+        const yearSelector = document.getElementById('annualLeaveYearSelector');
+        const year = yearSelector ? parseInt(yearSelector.value) : new Date().getFullYear();
+        
+        if (!confirm(`Process year-end carry forward for all employees from ${year} to ${year + 1}?\n\nMaximum carry forward: ${maxDays} days`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/admin/leave-balances/carry-forward', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    year: year,
+                    rules: {
+                        max_carry_forward: maxDays
+                    }
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(result.message || 'Carry forward processed successfully');
+                closeProcessCarryForwardModal();
+                loadLeaveBalances();
+            } else {
+                alert('Error: ' + (result.message || 'Failed to process carry forward'));
+            }
+        } catch (error) {
+            console.error('Error processing carry forward:', error);
+            alert('Error processing carry forward');
+        }
+    };
+    
     let sickLeaveBalancesData = []; // Store for filtering
     
     async function loadSickLeaveBalances() {
@@ -3625,6 +3785,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const refreshAnnualLeaveBtn = document.getElementById('refreshAnnualLeaveBtn');
     if (refreshAnnualLeaveBtn) {
         refreshAnnualLeaveBtn.addEventListener('click', loadLeaveBalances);
+    }
+    
+    // Setup carry forward buttons
+    const processCarryForwardBtn = document.getElementById('processCarryForwardBtn');
+    if (processCarryForwardBtn) {
+        processCarryForwardBtn.addEventListener('click', openProcessCarryForwardModal);
+    }
+    
+    const setCarryForwardAllBtn = document.getElementById('setCarryForwardAllBtn');
+    if (setCarryForwardAllBtn) {
+        setCarryForwardAllBtn.addEventListener('click', openSetCarryForwardAllModal);
     }
     
     // Load all new data on init

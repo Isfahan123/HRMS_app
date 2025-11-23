@@ -1289,7 +1289,9 @@
                         </div>
                         
                         <!-- Action Buttons -->
-                        <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                        <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="processCarryForwardBtn" class="btn-primary">🔄 Process Year-End Carry Forward</button>
+                            <button id="setCarryForwardAllBtn" class="btn-primary">📝 Set Carried Forward for All</button>
                             <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">📊 Export to CSV</button>
                         </div>
                         
@@ -3904,6 +3906,102 @@
             
             <div style="margin-top: 20px; text-align: right;">
                 <button type="button" class="btn-secondary" onclick="closeEmployeeSelectorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adjust Leave Balance Modal -->
+    <div id="adjustLeaveBalanceModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>✏️ Adjust Leave Balance</h3>
+                <span class="modal-close" onclick="closeAdjustLeaveBalanceModal()">&times;</span>
+            </div>
+            <form id="adjustLeaveBalanceForm">
+                <input type="hidden" id="adjustEmployeeEmail">
+                <div class="form-group">
+                    <label>Employee:</label>
+                    <p id="adjustEmployeeName" style="font-weight: bold; color: #667eea;"></p>
+                </div>
+                <div class="form-group">
+                    <label for="adjustAnnualEntitlement">Annual Entitlement (days):</label>
+                    <input type="number" id="adjustAnnualEntitlement" min="0" step="0.5" required style="width: 100%; padding: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="adjustUsedDays">Used Days:</label>
+                    <input type="number" id="adjustUsedDays" min="0" step="0.5" required style="width: 100%; padding: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="adjustCarriedForward">Carried Forward (days):</label>
+                    <input type="number" id="adjustCarriedForward" min="0" step="0.5" required style="width: 100%; padding: 8px;">
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">💾 Save Changes</button>
+                    <button type="button" class="btn-secondary" onclick="closeAdjustLeaveBalanceModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Set Carry Forward for All Modal -->
+    <div id="setCarryForwardAllModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>📝 Set Carried Forward for All</h3>
+                <span class="modal-close" onclick="closeSetCarryForwardAllModal()">&times;</span>
+            </div>
+            <form id="setCarryForwardAllForm">
+                <p style="color: #666; margin-bottom: 15px;">
+                    This will set the carried forward days for all employees for the next year.
+                </p>
+                <div class="form-group">
+                    <label for="carryForwardDays">Carried Forward Days:</label>
+                    <input type="number" id="carryForwardDays" min="0" max="30" value="0" required style="width: 100%; padding: 8px;">
+                    <small style="color: #666;">Maximum 30 days</small>
+                </div>
+                <div class="form-group">
+                    <label for="carryForwardAppliesTo">Apply To:</label>
+                    <select id="carryForwardAppliesTo" style="width: 100%; padding: 8px;">
+                        <option value="all">All Employees</option>
+                        <option value="active">Active Employees Only</option>
+                    </select>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">✓ Apply to All</button>
+                    <button type="button" class="btn-secondary" onclick="closeSetCarryForwardAllModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Process Carry Forward Modal -->
+    <div id="processCarryForwardModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>🔄 Process Year-End Carry Forward</h3>
+                <span class="modal-close" onclick="closeProcessCarryForwardModal()">&times;</span>
+            </div>
+            <div>
+                <p style="color: #666; margin-bottom: 15px;">
+                    This will automatically calculate and apply carry forward for all employees based on their unused leave for the current year.
+                </p>
+                <div style="background: #fff3cd; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <strong>⚠️ Important:</strong>
+                    <ul style="margin: 10px 0 0 20px; color: #856404;">
+                        <li>This will calculate carry forward based on current year's unused leave</li>
+                        <li>Maximum carry forward limits will be applied as per company policy</li>
+                        <li>This action will create/update leave balance records for next year</li>
+                    </ul>
+                </div>
+                <div class="form-group">
+                    <label for="carryForwardMaxDays">Maximum Carry Forward (days):</label>
+                    <input type="number" id="carryForwardMaxDays" min="0" max="30" value="14" style="width: 100%; padding: 8px;">
+                    <small style="color: #666;">Maximum days that can be carried forward per employee</small>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="button" class="btn-primary" onclick="confirmProcessCarryForward()" style="flex: 1;">🔄 Process Now</button>
+                    <button type="button" class="btn-secondary" onclick="closeProcessCarryForwardModal()">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
