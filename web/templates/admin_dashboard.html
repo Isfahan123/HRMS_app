@@ -34,6 +34,9 @@
                 <span style="margin-left: 15px;">📘 <a href="/WEB_INTERFACE_GUIDE.md" target="_blank" style="color: #1976d2; text-decoration: none;">View Full User Guide</a></span>
             </div>
             
+            <!-- Pending Requests Widget -->
+            <div id="pendingRequestsWidget" style="margin-bottom: 20px;"></div>
+            
             <div class="tab-content">
                 <!-- Employees Tab -->
                 <div id="employeesTab" class="tab-pane active">
@@ -3029,6 +3032,9 @@
     <script src="/static/js/help-overlay.js"></script>
     <script src="/static/js/table-enhancements.js"></script>
     <script src="/static/js/location-autocomplete.js"></script>
+    <script src="/static/js/employee-selector.js"></script>
+    <script src="/static/js/pending-requests-widget.js"></script>
+    <script src="/static/js/tp1-reliefs.js"></script>
     <script src="/static/js/admin_dashboard.js"></script>
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>
@@ -3585,29 +3591,42 @@
             try {
                 const response = await fetch(`/api/admin/payroll-info/${employeeId}`);
                 if (response.ok) {
-                    const data = await response.json();
-                    populatePayrollForm(data);
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        populatePayrollForm(result.data);
+                    }
                 } else if (response.status === 404) {
-                    // Endpoint not implemented yet or no data exists
+                    // No data exists yet
                     console.log('Payroll info not found, using defaults');
                     // Form will remain empty, which is acceptable
                 }
             } catch (error) {
-                console.log('Payroll info API not available yet:', error.message);
+                console.error('Error loading payroll info:', error);
                 // Gracefully continue with empty form
             }
         }
         
         function populatePayrollForm(data) {
             // Populate form fields
-            document.getElementById('payrollTaxNumber').value = data.income_tax_number || '';
+            document.getElementById('payrollTaxNumber').value = data.tax_number || data.income_tax_number || '';
             document.getElementById('payrollEPFNumber').value = data.epf_number || '';
             document.getElementById('payrollSOCSONumber').value = data.socso_number || '';
             document.getElementById('payrollIndividualDisabled').checked = data.is_individual_disabled || false;
             document.getElementById('payrollSpouseDisabled').checked = data.is_spouse_disabled || false;
             document.getElementById('payrollBasicSalary').value = data.basic_salary || '';
-            document.getElementById('payrollBankName').value = data.bank_name || '';
-            document.getElementById('payrollCustomBank').value = data.bank_name_custom || '';
+            
+            // Handle bank name (check if it's in the dropdown list)
+            const bankSelect = document.getElementById('payrollBankName');
+            const bankName = data.bank_name || '';
+            const bankOptions = Array.from(bankSelect.options).map(opt => opt.value);
+            
+            if (bankName && bankOptions.includes(bankName)) {
+                bankSelect.value = bankName;
+            } else if (bankName && !bankOptions.includes(bankName)) {
+                bankSelect.value = 'Other';
+                document.getElementById('payrollCustomBank').value = bankName;
+            }
+            
             document.getElementById('payrollBankAccount').value = data.bank_account || '';
             document.getElementById('payrollTaxStatus').value = data.tax_resident_status || 'Resident';
             
@@ -3652,14 +3671,13 @@
             const employeeId = document.getElementById('payrollEmployeeId').value;
             const formData = {
                 employee_id: employeeId,
-                income_tax_number: document.getElementById('payrollTaxNumber').value,
+                tax_number: document.getElementById('payrollTaxNumber').value,
                 epf_number: document.getElementById('payrollEPFNumber').value,
                 socso_number: document.getElementById('payrollSOCSONumber').value,
                 is_individual_disabled: document.getElementById('payrollIndividualDisabled').checked,
                 is_spouse_disabled: document.getElementById('payrollSpouseDisabled').checked,
                 basic_salary: parseFloat(document.getElementById('payrollBasicSalary').value) || 0,
-                bank_name: document.getElementById('payrollBankName').value,
-                bank_name_custom: document.getElementById('payrollCustomBank').value,
+                bank_name: document.getElementById('payrollBankName').value === 'Other' ? document.getElementById('payrollCustomBank').value : document.getElementById('payrollBankName').value,
                 bank_account: document.getElementById('payrollBankAccount').value,
                 tax_resident_status: document.getElementById('payrollTaxStatus').value,
                 meal_allowance: parseFloat(document.getElementById('payrollMealAllowance').value) || 0,
@@ -3674,7 +3692,9 @@
                 additional_epf_amount: parseFloat(document.getElementById('payrollAdditionalEPFAmount').value) || 0,
                 prs_participation: document.getElementById('payrollPRSParticipation').value,
                 prs_amount: parseFloat(document.getElementById('payrollPRSAmount').value) || 0,
-                children: collectChildrenData()
+                children: collectChildrenData(),
+                year: new Date().getFullYear(),
+                month: new Date().getMonth() + 1
             };
             
             try {
@@ -3686,20 +3706,17 @@
                     body: JSON.stringify(formData)
                 });
                 
-                if (response.ok) {
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
                     showMessage('Payroll information saved successfully!', 'success');
                     closePayrollInfoModal();
-                } else if (response.status === 404 || response.status === 501) {
-                    // API endpoint not implemented yet
-                    showMessage('Payroll info API not available yet. Feature coming soon.', 'warning');
-                    console.log('Payroll data that would be saved:', formData);
                 } else {
-                    showMessage('Error saving payroll information. Please try again.', 'error');
+                    showMessage(result.message || 'Error saving payroll information. Please try again.', 'error');
                 }
             } catch (error) {
-                console.log('Payroll info API not available:', error.message);
-                showMessage('Payroll info API not available yet. Feature coming soon.', 'warning');
-                console.log('Payroll data that would be saved:', formData);
+                console.error('Error saving payroll info:', error);
+                showMessage('Error saving payroll information. Please try again.', 'error');
             }
         });
         
@@ -3721,17 +3738,17 @@
         function openQuickTP1Reliefs() {
             const employeeId = document.getElementById('payrollEmployeeId').value;
             if (!employeeId) {
-                showMessage('Please save employee information first.', 'warning');
+                showMessage('Please select an employee first.', 'warning');
                 return;
             }
-            // Save current payroll dialog state before switching
-            closePayrollInfoModal();
-            // Display user-friendly message
-            showMessage('TP1 Reliefs feature integration coming soon.', 'info');
-            // Note: The actual integration with TP1 Reliefs dialog would be:
-            // - Check if TP1 button exists in Payroll tab
-            // - Trigger TP1 dialog with pre-selected employee
-            // - Return to this dialog after TP1 completion
+            
+            // Get current year and month
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            
+            // Open TP1 reliefs modal
+            showTP1ReliefsModal(employeeId, year, month);
         }
         
         function showMessage(text, type) {
@@ -3767,6 +3784,19 @@
             }, 3500);
         }
     </script>
+
+    <!-- TP1 Reliefs Modal -->
+    <div id="tp1ReliefsModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>📋 TP1 Tax Relief Items (Malaysian Tax Relief)</h3>
+                <span class="modal-close" onclick="closeTP1ReliefsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="tp1ReliefsContainer"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Place Lookup Dialog -->
     <div id="placeLookupModal" class="modal" style="display: none;">
