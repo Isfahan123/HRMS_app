@@ -2359,7 +2359,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 if (filteredData.length === 0) {
-                    tableContainer.innerHTML = '<p style="color: #666;">No salary history records found matching the filters.</p>';
+                    let message = '<p style="color: #666;">No salary history records found';
+                    if (employeeFilter) {
+                        message += ' for the selected employee';
+                    }
+                    message += '.</p>';
+                    if (employeeFilter) {
+                        message += '<p style="color: #999; font-size: 14px; margin-top: 10px;">This employee has no salary change history yet. You can add salary changes using the form on the left.</p>';
+                    }
+                    tableContainer.innerHTML = message;
                     return;
                 }
                 
@@ -2405,7 +2413,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 html += '</tbody></table>';
-                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} salary change record(s)</p>`;
+                let summaryText = `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} salary change record(s)`;
+                if (employeeFilter) {
+                    summaryText += ` for selected employee`;
+                }
+                summaryText += '</p>';
+                html += summaryText;
                 tableContainer.innerHTML = html;
             } else {
                 tableContainer.innerHTML = '<p style="color: #666;">No salary history records found. Record salary changes using the "Record Salary Change" button above.</p>';
@@ -2511,6 +2524,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedOption = this.options[this.selectedIndex];
             const salary = selectedOption.dataset.salary || 0;
             const selectedEmail = selectedOption.value;
+            const employeeName = selectedOption.textContent;
             
             const salaryDisplay = document.getElementById('currentSalaryDisplay');
             if (salaryDisplay) {
@@ -2529,12 +2543,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 prevSalaryInput.value = parseFloat(salary).toFixed(2);
             }
             
+            // Show/update employee status indicator
+            const statusDiv = document.getElementById('salaryHistoryEmployeeStatus');
+            const statusName = document.getElementById('salaryHistoryEmployeeName');
+            
             // Filter the table to show only this employee's salary history
             if (selectedEmail) {
                 const employeeFilterInput = document.getElementById('salaryHistoryEmployeeFilter');
                 if (employeeFilterInput) {
                     employeeFilterInput.value = selectedEmail;
                 }
+                
+                // Show status indicator
+                if (statusDiv && statusName) {
+                    statusName.textContent = employeeName;
+                    statusDiv.style.display = 'block';
+                }
+                
+                loadSalaryHistory();
+            } else {
+                // Clear the filter when "Select Employee" is chosen
+                const employeeFilterInput = document.getElementById('salaryHistoryEmployeeFilter');
+                if (employeeFilterInput) {
+                    employeeFilterInput.value = '';
+                }
+                // Reset salary display
+                if (salaryDisplay) {
+                    salaryDisplay.textContent = 'RM 0.00';
+                }
+                
+                // Hide status indicator
+                if (statusDiv) {
+                    statusDiv.style.display = 'none';
+                }
+                
                 loadSalaryHistory();
             }
         });
