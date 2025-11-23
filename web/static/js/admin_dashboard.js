@@ -2286,6 +2286,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('salaryHistoryEmployeeSelect').addEventListener('change', function(e) {
             const selectedOption = this.options[this.selectedIndex];
             const salary = selectedOption.dataset.salary || 0;
+            const selectedEmail = selectedOption.value;
             
             const salaryDisplay = document.getElementById('currentSalaryDisplay');
             if (salaryDisplay) {
@@ -2295,13 +2296,22 @@ document.addEventListener('DOMContentLoaded', function() {
             // Auto-fill the employee email in the form
             const emailInput = document.getElementById('salaryChangeEmployee');
             if (emailInput) {
-                emailInput.value = selectedOption.value;
+                emailInput.value = selectedEmail;
             }
             
             // Auto-fill previous salary
             const prevSalaryInput = document.getElementById('salaryChangePrevious');
             if (prevSalaryInput) {
                 prevSalaryInput.value = parseFloat(salary).toFixed(2);
+            }
+            
+            // Filter the table to show only this employee's salary history
+            if (selectedEmail) {
+                const employeeFilterInput = document.getElementById('salaryHistoryEmployeeFilter');
+                if (employeeFilterInput) {
+                    employeeFilterInput.value = selectedEmail;
+                }
+                loadSalaryHistory();
             }
         });
     }
@@ -2572,13 +2582,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const selectors = [
                 document.getElementById('empHistoryEmployeeSelect'),
-                document.getElementById('editEmpHistoryEmployeeSelect')
+                document.getElementById('editEmpHistoryEmployeeSelect'),
+                document.getElementById('empHistoryEmployeeQuickSelect')
             ];
             
             if (data.success && data.data && data.data.length > 0) {
                 selectors.forEach(selector => {
                     if (!selector) return;
-                    selector.innerHTML = '<option value="">Select Employee</option>';
+                    // Different default text for the quick select
+                    if (selector.id === 'empHistoryEmployeeQuickSelect') {
+                        selector.innerHTML = '<option value="">All Employees</option>';
+                    } else {
+                        selector.innerHTML = '<option value="">Select Employee</option>';
+                    }
                     data.data.forEach(emp => {
                         const option = document.createElement('option');
                         option.value = emp.email;
@@ -2590,6 +2606,22 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error loading employees for employment history:', error);
         }
+    }
+    
+    // Add event listener for quick employee selection in employment history
+    if (document.getElementById('empHistoryEmployeeQuickSelect')) {
+        document.getElementById('empHistoryEmployeeQuickSelect').addEventListener('change', function(e) {
+            const selectedEmail = this.value;
+            
+            // Update the text filter to match the selected employee
+            const employeeFilterInput = document.getElementById('empHistoryEmployeeFilter');
+            if (employeeFilterInput) {
+                employeeFilterInput.value = selectedEmail;
+            }
+            
+            // Reload the table with the filter applied
+            loadEmployeeHistory();
+        });
     }
     
     async function loadEmployeeHistory() {
