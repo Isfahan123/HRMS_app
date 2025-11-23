@@ -33,7 +33,9 @@ from services.supabase_service import (
     upload_profile_picture,
     upload_resume,
     get_payroll_settings,
-    update_payroll_settings
+    update_payroll_settings,
+    get_monthly_deductions,
+    upsert_monthly_deductions
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -1360,6 +1362,89 @@ async def delete_employment_history(record_id: str):
             return {"success": False, "message": "Failed to delete employee history record"}
     except Exception as e:
         print(f"Error deleting employee history: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/payroll-info/{employee_id}")
+async def get_payroll_info(employee_id: str):
+    """
+    Get payroll information (monthly deductions, tax info, etc.) for an employee
+    """
+    try:
+        # Get current year and month
+        now = datetime.now()
+        year = now.year
+        month = now.month
+        
+        # Get monthly deductions data
+        deductions_data = get_monthly_deductions(employee_id, year, month)
+        
+        # Get employee basic info for defaults
+        employee_response = supabase.table("employees").select("*").eq("id", employee_id).execute()
+        employee_data = employee_response.data[0] if employee_response.data else {}
+        
+        # Merge employee data with deductions data
+        result = {
+            "employee_id": employee_id,
+            "year": year,
+            "month": month,
+            "tax_number": employee_data.get("income_tax_number", ""),
+            "epf_number": employee_data.get("epf_number", ""),
+            "socso_number": employee_data.get("socso_number", ""),
+            "bank_name": employee_data.get("bank_name", ""),
+            "bank_account": employee_data.get("bank_account", ""),
+            "basic_salary": employee_data.get("basic_salary", 0.0),
+            **deductions_data  # Include all deductions data
+        }
+        
+        return {"success": True, "data": result}
+    except Exception as e:
+        print(f"Error getting payroll info: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/payroll-info")
+async def save_payroll_info(request: Request):
+    """
+    Save payroll information (monthly deductions, tax info, etc.) for an employee
+    """
+    try:
+        data = await request.json()
+        
+        employee_id = data.get("employee_id")
+        if not employee_id:
+            return {"success": False, "message": "Missing employee_id"}
+        
+        year = data.get("year", datetime.now().year)
+        month = data.get("month", datetime.now().month)
+        
+        # Update employee basic info (bank, tax numbers)
+        employee_updates = {}
+        if "tax_number" in data:
+            employee_updates["income_tax_number"] = data["tax_number"]
+        if "epf_number" in data:
+            employee_updates["epf_number"] = data["epf_number"]
+        if "socso_number" in data:
+            employee_updates["socso_number"] = data["socso_number"]
+        if "bank_name" in data:
+            employee_updates["bank_name"] = data["bank_name"]
+        if "bank_account" in data:
+            employee_updates["bank_account"] = data["bank_account"]
+        if "basic_salary" in data:
+            employee_updates["basic_salary"] = data["basic_salary"]
+        
+        if employee_updates:
+            supabase.table("employees").update(employee_updates).eq("id", employee_id).execute()
+        
+        # Save monthly deductions data
+        deductions_data = {k: v for k, v in data.items() if k not in ["employee_id", "year", "month", "tax_number", "epf_number", "socso_number", "bank_name", "bank_account", "basic_salary"]}
+        
+        success = upsert_monthly_deductions(employee_id, year, month, deductions_data)
+        
+        if success:
+            return {"success": True, "message": "Payroll information saved successfully"}
+        else:
+            return {"success": False, "message": "Failed to save payroll information"}
+    except Exception as e:
+        print(f"Error saving payroll info: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.put("/api/admin/salary-history/{record_id}")
