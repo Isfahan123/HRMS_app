@@ -586,12 +586,23 @@ class LeaveCalendar {
 // Global instance
 let leaveCalendar;
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if calendar container exists
+// Initialize leave calendar
+function initLeaveCalendar() {
     const calendarContainer = document.getElementById('leaveCalendar');
     if (calendarContainer) {
+        console.log('Initializing Leave Calendar...');
         leaveCalendar = new LeaveCalendar('leaveCalendar');
         leaveCalendar.init();
+    } else {
+        console.warn('Calendar container not found, scheduling retry...');
+        setTimeout(initLeaveCalendar, 100);
     }
-});
+}
+
+// Initialize immediately since script loads at bottom of page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLeaveCalendar);
+} else {
+    // DOM already loaded
+    initLeaveCalendar();
+}

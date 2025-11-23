@@ -470,11 +470,26 @@ window.toggleExpiryDate = toggleExpiryDate;
 // Global instance
 let bonusManager;
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    const bonusTab = document.getElementById('bonusTab');
+// Initialize bonus manager
+function initBonusManager() {
+    const bonusTab = document.getElementById('payrollBonusesSubtab');
     if (bonusTab) {
+        console.log('Initializing Bonus Manager...');
         bonusManager = new BonusManager();
-        bonusManager.init();
+        bonusManager.init().catch(err => {
+            console.error('Failed to initialize Bonus Manager:', err);
+            alert('Bonus manager not loaded. Please refresh the page');
+        });
+    } else {
+        console.warn('Bonus tab not found, scheduling retry...');
+        setTimeout(initBonusManager, 100);
     }
-});
+}
+
+// Initialize immediately since script loads at bottom of page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBonusManager);
+} else {
+    // DOM already loaded
+    initBonusManager();
+}

@@ -43,8 +43,18 @@ let currentReliefMaximums = [];
 let currentOverrides = [];
 let employeesList = [];
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize LHDN configuration
+function initLHDNConfig() {
+    // Check if LHDN tab exists
+    const lhdnTab = document.getElementById('payrollLHDNSubtab');
+    if (!lhdnTab) {
+        console.warn('LHDN tab not found, scheduling retry...');
+        setTimeout(initLHDNConfig, 100);
+        return;
+    }
+    
+    console.log('Initializing LHDN Configuration...');
+    
     // Load tax rates from API
     loadTaxRatesFromAPI();
     
@@ -56,7 +66,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load employees list for override selection
     loadEmployeesForOverrides();
-});
+}
+
+// Initialize immediately since script loads at bottom of page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLHDNConfig);
+} else {
+    // DOM already loaded
+    initLHDNConfig();
+}
 
 /**
  * Load tax rates from API
