@@ -86,7 +86,7 @@ class EmployeeSelector {
                                 </tr>
                             </thead>
                             <tbody id="employeeSelectorTableBody">
-                                <tr><td colspan="${this.options.multiSelect ? '6' : '6'}" style="text-align: center; padding: 20px;">Loading...</td></tr>
+                                <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -203,41 +203,99 @@ class EmployeeSelector {
     }
     
     renderEmployees() {
+        const colspanCount = this.options.multiSelect ? 6 : 6;
+        
         if (this.filteredEmployees.length === 0) {
-            this.tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">No employees match your search criteria</td></tr>';
+            this.tableBody.innerHTML = `<tr><td colspan="${colspanCount}" style="text-align: center; padding: 20px; color: #999;">No employees match your search criteria</td></tr>`;
             document.getElementById('employeeSelectorCount').textContent = '0';
             return;
         }
         
         document.getElementById('employeeSelectorCount').textContent = this.filteredEmployees.length;
         
-        this.tableBody.innerHTML = this.filteredEmployees.map(emp => `
-            <tr style="border-bottom: 1px solid #e0e0e0; hover: background: #f5f5f5;" 
-                onmouseover="this.style.background='#f5f5f5'" 
-                onmouseout="this.style.background='white'"
-                ${!this.options.multiSelect ? `ondblclick="document.querySelector('#employeeSelectorModal').dispatchEvent(new CustomEvent('employeeSelected', {detail: ${JSON.stringify(emp).replace(/"/g, '&quot;')}}))"` : ''}>
-                ${this.options.multiSelect ? `
-                    <td style="padding: 10px; text-align: center;">
-                        <input type="checkbox" class="employee-checkbox" data-employee-id="${emp.id}" 
-                               ${this.selectedEmployees.some(e => e.id === emp.id) ? 'checked' : ''}
-                               onchange="document.querySelector('#employeeSelectorModal').dispatchEvent(new CustomEvent('employeeToggled', {detail: ${JSON.stringify(emp).replace(/"/g, '&quot;')}}))">
-                    </td>
-                ` : ''}
-                <td style="padding: 10px;">${emp.full_name || '-'}</td>
-                <td style="padding: 10px;">${emp.employee_id || '-'}</td>
-                <td style="padding: 10px;"><small>${emp.email || '-'}</small></td>
-                <td style="padding: 10px;">${emp.department || '-'}</td>
-                <td style="padding: 10px;">${emp.position || '-'}</td>
-                ${!this.options.multiSelect ? `
-                    <td style="padding: 10px; text-align: center;">
-                        <button type="button" class="btn-primary btn-sm" 
-                                onclick="document.querySelector('#employeeSelectorModal').dispatchEvent(new CustomEvent('employeeSelected', {detail: ${JSON.stringify(emp).replace(/"/g, '&quot;')}}))">
-                            Select
-                        </button>
-                    </td>
-                ` : ''}
-            </tr>
-        `).join('');
+        // Clear tbody
+        this.tableBody.innerHTML = '';
+        
+        // Create rows using DOM methods to avoid XSS
+        this.filteredEmployees.forEach((emp, index) => {
+            const row = document.createElement('tr');
+            row.style.borderBottom = '1px solid #e0e0e0';
+            row.onmouseover = () => row.style.background = '#f5f5f5';
+            row.onmouseout = () => row.style.background = 'white';
+            
+            if (this.options.multiSelect) {
+                // Checkbox cell
+                const checkCell = document.createElement('td');
+                checkCell.style.cssText = 'padding: 10px; text-align: center;';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'employee-checkbox';
+                checkbox.dataset.employeeId = emp.id;
+                checkbox.checked = this.selectedEmployees.some(e => e.id === emp.id);
+                checkbox.addEventListener('change', () => {
+                    const event = new CustomEvent('employeeToggled', { detail: emp });
+                    document.querySelector('#employeeSelectorModal').dispatchEvent(event);
+                });
+                checkCell.appendChild(checkbox);
+                row.appendChild(checkCell);
+            } else {
+                // Double-click to select
+                row.ondblclick = () => {
+                    const event = new CustomEvent('employeeSelected', { detail: emp });
+                    document.querySelector('#employeeSelectorModal').dispatchEvent(event);
+                };
+            }
+            
+            // Name cell
+            const nameCell = document.createElement('td');
+            nameCell.style.padding = '10px';
+            nameCell.textContent = emp.full_name || '-';
+            row.appendChild(nameCell);
+            
+            // Employee ID cell
+            const idCell = document.createElement('td');
+            idCell.style.padding = '10px';
+            idCell.textContent = emp.employee_id || '-';
+            row.appendChild(idCell);
+            
+            // Email cell
+            const emailCell = document.createElement('td');
+            emailCell.style.padding = '10px';
+            const emailSmall = document.createElement('small');
+            emailSmall.textContent = emp.email || '-';
+            emailCell.appendChild(emailSmall);
+            row.appendChild(emailCell);
+            
+            // Department cell
+            const deptCell = document.createElement('td');
+            deptCell.style.padding = '10px';
+            deptCell.textContent = emp.department || '-';
+            row.appendChild(deptCell);
+            
+            // Position cell
+            const posCell = document.createElement('td');
+            posCell.style.padding = '10px';
+            posCell.textContent = emp.position || '-';
+            row.appendChild(posCell);
+            
+            if (!this.options.multiSelect) {
+                // Action button cell
+                const actionCell = document.createElement('td');
+                actionCell.style.cssText = 'padding: 10px; text-align: center;';
+                const selectBtn = document.createElement('button');
+                selectBtn.type = 'button';
+                selectBtn.className = 'btn-primary btn-sm';
+                selectBtn.textContent = 'Select';
+                selectBtn.addEventListener('click', () => {
+                    const event = new CustomEvent('employeeSelected', { detail: emp });
+                    document.querySelector('#employeeSelectorModal').dispatchEvent(event);
+                });
+                actionCell.appendChild(selectBtn);
+                row.appendChild(actionCell);
+            }
+            
+            this.tableBody.appendChild(row);
+        });
         
         // Update selected info
         if (this.options.multiSelect) {

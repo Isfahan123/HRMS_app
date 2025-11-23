@@ -1380,7 +1380,7 @@ async def get_payroll_info(employee_id: str):
         
         # Get employee basic info for defaults
         employee_response = supabase.table("employees").select("*").eq("id", employee_id).execute()
-        employee_data = employee_response.data[0] if employee_response.data else {}
+        employee_data = employee_response.data[0] if employee_response.data and len(employee_response.data) > 0 else {}
         
         # Merge employee data with deductions data
         result = {
@@ -1406,6 +1406,11 @@ async def save_payroll_info(request: Request):
     """
     Save payroll information (monthly deductions, tax info, etc.) for an employee
     """
+    # Fields that should be saved to the employees table (not monthly deductions)
+    EMPLOYEE_TABLE_FIELDS = ["tax_number", "epf_number", "socso_number", "bank_name", "bank_account", "basic_salary"]
+    # Fields that should not be saved to monthly deductions
+    EXCLUDED_FROM_DEDUCTIONS = ["employee_id", "year", "month"] + EMPLOYEE_TABLE_FIELDS
+    
     try:
         data = await request.json()
         
@@ -1434,8 +1439,8 @@ async def save_payroll_info(request: Request):
         if employee_updates:
             supabase.table("employees").update(employee_updates).eq("id", employee_id).execute()
         
-        # Save monthly deductions data
-        deductions_data = {k: v for k, v in data.items() if k not in ["employee_id", "year", "month", "tax_number", "epf_number", "socso_number", "bank_name", "bank_account", "basic_salary"]}
+        # Save monthly deductions data (excluding employee table fields)
+        deductions_data = {k: v for k, v in data.items() if k not in EXCLUDED_FROM_DEDUCTIONS}
         
         success = upsert_monthly_deductions(employee_id, year, month, deductions_data)
         
