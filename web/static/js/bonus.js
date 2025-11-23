@@ -127,9 +127,7 @@ class BonusManager {
                     <td>${bonus.description || '-'}</td>
                     <td>
                         <button onclick="bonusManager.editBonus('${bonus.id}')" class="btn-sm btn-secondary">Edit</button>
-                        ${bonus.status === 'pending' ? `
-                            <button onclick="bonusManager.deleteBonus('${bonus.id}')" class="btn-sm btn-danger">Delete</button>
-                        ` : ''}
+                        <button onclick="bonusManager.deleteBonus('${bonus.id}')" class="btn-sm btn-danger">Delete</button>
                     </td>
                 </tr>
             `;
