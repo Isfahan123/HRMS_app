@@ -3262,7 +3262,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="payrollBasicSalary">Gaji Pokok + Elaun Kena Cukai (RM):</label>
-                            <input type="number" id="payrollBasicSalary" step="0.01" min="0" max="999999.99" style="width: 100%; padding: 8px;">
+                            <input type="number" id="payrollBasicSalary" step="0.01" min="0" max="9999999.99" style="width: 100%; padding: 8px;">
                         </div>
                         <div class="form-group">
                             <label for="payrollBankName">Bank Name:</label>
@@ -3457,7 +3457,7 @@
         
         function openPayrollInfoFromEdit() {
             // Get the employee ID from the edit form
-            const employeeId = document.getElementById('editEmployeeId').value;
+            const employeeId = document.getElementById('editEmpId').value;
             if (employeeId) {
                 // Close the edit modal
                 closeEditEmployeeModal();
@@ -3616,9 +3616,16 @@
             
             // Load children if available
             if (data.children && data.children.length > 0) {
-                data.children.forEach(child => {
+                data.children.forEach((child, index) => {
                     addChildEntry();
-                    // Populate child data (would need to be enhanced)
+                    // Populate child data
+                    const container = document.getElementById('childrenContainer');
+                    const childDiv = container.querySelector(`[data-index="${index}"]`);
+                    if (childDiv && child.category && child.custody !== undefined) {
+                        childDiv.querySelector('.child-category').value = child.category;
+                        childDiv.querySelector('.child-custody').value = child.custody.toString();
+                        updateChildrenSummary();
+                    }
                 });
             }
         }
@@ -3693,9 +3700,26 @@
         
         function openQuickTP1Reliefs() {
             const employeeId = document.getElementById('payrollEmployeeId').value;
-            // This would integrate with the existing TP1 Reliefs functionality
-            alert('TP1 Reliefs dialog would open here for employee ' + employeeId);
-            // TODO: Integrate with existing TP1 Reliefs button functionality
+            // Save current payroll dialog state before switching
+            closePayrollInfoModal();
+            // Note: The actual TP1 Reliefs dialog integration would happen here
+            // when the TP1 Reliefs button in the Payroll tab is implemented
+            // For now, display an informative message
+            showMessage('Quick TP1 Reliefs feature will integrate with the TP1 Reliefs button in the Payroll tab once backend is ready.', 'info');
+        }
+        
+        function showMessage(text, type) {
+            // Simple message display function
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed; top: 20px; right: 20px; padding: 15px 20px;
+                background: ${type === 'info' ? '#2196f3' : '#4caf50'};
+                color: white; border-radius: 5px; z-index: 10000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            `;
+            messageDiv.textContent = text;
+            document.body.appendChild(messageDiv);
+            setTimeout(() => messageDiv.remove(), 4000);
         }
     </script>
 </body>
