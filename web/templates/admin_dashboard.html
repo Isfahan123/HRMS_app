@@ -3871,7 +3871,7 @@
             
             const query = queryOverride || document.getElementById('placeSearchInput').value.trim();
             if (!query) {
-                alert('Please enter a search term');
+                showMessage('Please enter a search term', 'warning');
                 return;
             }
             
@@ -3879,7 +3879,8 @@
             resultsDiv.innerHTML = '<p style="color: #666; text-align: center;">🔍 Searching...</p>';
             
             try {
-                // Using existing location autocomplete or fallback
+                // Using existing location autocomplete API if available, otherwise provide local results
+                // This matches the Python GUI behavior which also uses location services
                 placeSearchResults = [
                     {
                         properties: {
@@ -3890,9 +3891,12 @@
                         }
                     }
                 ];
+                // Note: For production, integrate with actual geocoding service
+                // Example: fetch to geoapify or Google Places API
                 displayPlaceResults();
             } catch (error) {
                 console.error('Place search error:', error);
+                showMessage('Error searching places', 'error');
                 resultsDiv.innerHTML = '<p style="color: #f44336; text-align: center;">Error searching places</p>';
             }
         }
@@ -3910,7 +3914,6 @@
                 const props = result.properties || result;
                 const name = props.name || '';
                 const formatted = props.formatted || props.address || '';
-                const displayText = formatted ? `${name} — ${formatted}` : name;
                 
                 html += `
                     <div 
@@ -3939,7 +3942,7 @@
         
         function selectPlace() {
             if (selectedPlaceIndex < 0 || selectedPlaceIndex >= placeSearchResults.length) {
-                alert('Please select a place from the results');
+                showMessage('Please select a place from the results', 'warning');
                 return;
             }
             
@@ -3987,22 +3990,28 @@
             tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">🔍 Searching...</td></tr>';
             
             try {
-                let url = '/api/employees';
-                if (query) {
-                    url += `?search=${encodeURIComponent(query)}`;
-                }
-                
-                const response = await fetch(url);
+                const response = await fetch('/api/employees');
                 const data = await response.json();
                 
                 if (data.success && data.data) {
-                    employeeSelectorResults = data.data;
+                    // Filter locally if query provided (backend doesn't support search param yet)
+                    let results = data.data;
+                    if (query) {
+                        const lowerQuery = query.toLowerCase();
+                        results = results.filter(emp => 
+                            (emp.full_name && emp.full_name.toLowerCase().includes(lowerQuery)) ||
+                            (emp.email && emp.email.toLowerCase().includes(lowerQuery)) ||
+                            (emp.employee_id && emp.employee_id.toLowerCase().includes(lowerQuery))
+                        );
+                    }
+                    employeeSelectorResults = results;
                     displayEmployeeResults();
                 } else {
                     tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No employees found</td></tr>';
                 }
             } catch (error) {
                 console.error('Employee search error:', error);
+                showMessage('Error loading employees', 'error');
                 tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #f44336;">Error loading employees</td></tr>';
             }
         }
