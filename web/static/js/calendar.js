@@ -30,31 +30,76 @@ class LeaveCalendar {
             const response = await fetch('/api/holidays');
             const data = await response.json();
             
-            if (data.success && data.data) {
+            if (data.success && data.data && data.data.length > 0) {
                 // Store full holiday details for management
                 this.holidayDetails = data.data;
                 // Extract just the dates for quick lookup
                 this.holidays = data.data.map(h => h.date);
+                console.log(`Loaded ${data.data.length} holidays from database`);
             } else {
-                // Fall back to sample data
-                this.holidayDetails = [
-                    {id: 1, date: '2024-01-01', name: 'New Year\'s Day', type: 'national'},
-                    {id: 2, date: '2024-02-10', name: 'Chinese New Year', type: 'national'},
-                    {id: 3, date: '2024-05-01', name: 'Labour Day', type: 'national'},
-                    {id: 4, date: '2024-08-31', name: 'Merdeka Day', type: 'national'},
-                    {id: 5, date: '2024-12-25', name: 'Christmas Day', type: 'national'}
-                ];
-                this.holidays = this.holidayDetails.map(h => h.date);
+                // No holidays in database
+                console.warn('No holidays found in database. Use "Import Malaysia Holidays" button to load holidays.');
+                this.holidayDetails = [];
+                this.holidays = [];
+                
+                // Show helpful message to user
+                this.showHolidayHint();
             }
         } catch (error) {
             console.error('Error loading holidays:', error);
-            // Fall back to sample data on error
-            this.holidayDetails = [
-                {id: 1, date: '2024-01-01', name: 'New Year\'s Day', type: 'national'},
-                {id: 2, date: '2024-05-01', name: 'Labour Day', type: 'national'}
-            ];
-            this.holidays = this.holidayDetails.map(h => h.date);
+            this.holidayDetails = [];
+            this.holidays = [];
         }
+    }
+    
+    /**
+     * Show hint to import holidays if none exist
+     */
+    showHolidayHint() {
+        // Only show once per session
+        if (sessionStorage.getItem('holidayHintShown')) return;
+        
+        setTimeout(() => {
+            const hint = document.createElement('div');
+            hint.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: #fff3cd;
+                border: 2px solid #ffc107;
+                border-radius: 8px;
+                padding: 15px 20px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                max-width: 350px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            hint.innerHTML = `
+                <div style="display: flex; align-items: start; gap: 10px;">
+                    <span style="font-size: 24px;">💡</span>
+                    <div style="flex: 1;">
+                        <strong style="display: block; margin-bottom: 5px;">No Holidays Loaded</strong>
+                        <p style="margin: 0; font-size: 14px; color: #666;">
+                            Click the <strong style="color: #667eea;">🇲🇾 Import Malaysia Holidays</strong> button above to automatically load public holidays.
+                        </p>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                style="margin-top: 10px; padding: 5px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Got it
+                        </button>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: none; border: none; font-size: 20px; cursor: pointer; color: #999;">&times;</button>
+                </div>
+            `;
+            document.body.appendChild(hint);
+            
+            sessionStorage.setItem('holidayHintShown', 'true');
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (hint.parentElement) hint.remove();
+            }, 10000);
+        }, 1000);
     }
 
     /**
@@ -180,7 +225,10 @@ class LeaveCalendar {
                 <button onclick="leaveCalendar.goToToday()" class="btn-secondary">Today</button>
                 <button onclick="leaveCalendar.showAddHolidayModal()" class="btn-primary" style="margin-left: 20px;">➕ Add Holiday</button>
                 <button onclick="leaveCalendar.showHolidayListModal()" class="btn-secondary">📋 Manage Holidays</button>
-                <button onclick="leaveCalendar.showImportMalaysiaHolidaysModal()" class="btn-secondary btn-import-holidays">🇲🇾 Import Malaysia Holidays</button>
+                <button onclick="leaveCalendar.showImportMalaysiaHolidaysModal()" class="btn-secondary btn-import-holidays" 
+                        style="background: ${this.holidays.length === 0 ? '#28a745' : '#6c757d'}; color: white; border: none; font-weight: ${this.holidays.length === 0 ? 'bold' : 'normal'};">
+                    🇲🇾 Import Malaysia Holidays${this.holidays.length === 0 ? ' ⚠️' : ''}
+                </button>
             </div>
             <table class="calendar-table">
                 <thead>
