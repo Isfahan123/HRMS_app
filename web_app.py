@@ -904,6 +904,73 @@ async def get_sick_leave_balances():
         print(f"Error getting sick leave balances: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.put("/api/admin/leave-balances/{employee_email}")
+async def update_leave_balance(employee_email: str, request: Request):
+    """
+    Update an employee's leave balance
+    """
+    try:
+        from services.supabase_service import update_employee_leave_balance
+        data = await request.json()
+        
+        year = data.get('year', datetime.now().year)
+        employee_email_decoded = employee_email.replace('%40', '@')
+        
+        # Get employee_id from email
+        emp_response = supabase.table("employees").select("employee_id").eq("email", employee_email_decoded).execute()
+        if not emp_response.data:
+            return {"success": False, "message": "Employee not found"}
+        
+        employee_id = emp_response.data[0]['employee_id']
+        
+        # Update balance
+        result = update_employee_leave_balance(employee_id, year, data)
+        
+        return {"success": True, "message": "Leave balance updated successfully"}
+    except Exception as e:
+        print(f"Error updating leave balance: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-balances/carry-forward")
+async def process_carry_forward(request: Request):
+    """
+    Process year-end carry forward for all employees
+    """
+    try:
+        from services.supabase_service import process_year_end_carry_forward
+        data = await request.json()
+        
+        year = data.get('year', datetime.now().year)
+        rules = data.get('rules', {})
+        
+        result = process_year_end_carry_forward(year, rules)
+        
+        return {"success": result, "message": "Carry forward processed successfully" if result else "Failed to process carry forward"}
+    except Exception as e:
+        print(f"Error processing carry forward: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-balances/set-carry-forward-all")
+async def set_carry_forward_all(request: Request):
+    """
+    Set carried forward days for all employees
+    """
+    try:
+        from services.supabase_service import set_carried_forward_for_all
+        data = await request.json()
+        
+        current_year = data.get('current_year', datetime.now().year)
+        next_year = data.get('next_year', current_year + 1)
+        days = data.get('days', 0)
+        applies_to = data.get('applies_to', 'all')
+        
+        result = set_carried_forward_for_all(current_year, next_year, days, applies_to)
+        
+        return {"success": result, "message": f"Set {days} carried forward days for all employees" if result else "Failed to set carried forward"}
+    except Exception as e:
+        print(f"Error setting carry forward for all: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/admin/unpaid-leave-summary")
 async def get_unpaid_leave_summary():
     """
@@ -1977,6 +2044,47 @@ async def delete_leave_entitlement(entitlement_id: int):
             return {"success": False, "message": "Leave entitlement not found"}
     except Exception as e:
         print(f"Error deleting leave entitlement: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+# ====================
+# Leave Policies Endpoints
+# ====================
+
+@app.get("/api/admin/leave-policies")
+async def get_leave_policies():
+    """Get company leave policies"""
+    try:
+        from services.supabase_service import get_company_leave_policies
+        policies = get_company_leave_policies()
+        return {"success": True, "data": policies}
+    except Exception as e:
+        print(f"Error getting leave policies: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-policies")
+async def update_leave_policies(request: Request):
+    """Update company leave policies"""
+    try:
+        from services.supabase_service import update_company_leave_policy
+        data = await request.json()
+        
+        # Update each policy
+        admin_email = "admin"  # Could be extracted from session
+        success = True
+        
+        for policy_name, policy_value in data.items():
+            # Convert to string for storage
+            value_str = str(policy_value)
+            if not update_company_leave_policy(policy_name, value_str, admin_email):
+                success = False
+                break
+        
+        if success:
+            return {"success": True, "message": "Leave policies updated successfully"}
+        else:
+            return {"success": False, "message": "Failed to update some policies"}
+    except Exception as e:
+        print(f"Error updating leave policies: {str(e)}")
         return {"success": False, "message": str(e)}
 
 # ====================

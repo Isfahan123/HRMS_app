@@ -478,25 +478,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function buildPayrollRunsTable(runs) {
-        let html = '<table><thead><tr>';
-        html += '<th>Employee</th><th>Month</th><th>Basic Salary</th><th>Gross Pay</th><th>Deductions</th><th>Net Pay</th><th>Status</th>';
+        let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+        html += '<th style="padding: 10px; text-align: left;">Employee</th>';
+        html += '<th style="padding: 10px; text-align: left;">Month</th>';
+        html += '<th style="padding: 10px; text-align: right;">Basic Salary</th>';
+        html += '<th style="padding: 10px; text-align: right;">Gross Pay</th>';
+        html += '<th style="padding: 10px; text-align: right;">Deductions</th>';
+        html += '<th style="padding: 10px; text-align: right;">Net Pay</th>';
+        html += '<th style="padding: 10px; text-align: center;">Status</th>';
         html += '</tr></thead><tbody>';
         
         runs.forEach(run => {
-            html += '<tr>';
+            html += '<tr style="border-bottom: 1px solid #eee;">';
             // Try multiple fields for employee name
             const employeeName = run.employee_name || run.employee?.full_name || run.employee_email || '-';
-            html += `<td>${employeeName}</td>`;
-            html += `<td>${run.month_year || run.payroll_date || '-'}</td>`;
-            html += `<td>${formatCurrency(run.basic_salary)}</td>`;
-            html += `<td>${formatCurrency(run.gross_pay)}</td>`;
-            html += `<td>${formatCurrency(run.total_deductions)}</td>`;
-            html += `<td>${formatCurrency(run.net_pay)}</td>`;
-            html += `<td>${run.status || '-'}</td>`;
+            html += `<td style="padding: 10px;">${employeeName}</td>`;
+            html += `<td style="padding: 10px;">${run.month_year || run.payroll_date || '-'}</td>`;
+            html += `<td style="padding: 10px; text-align: right;">${formatCurrency(run.basic_salary)}</td>`;
+            html += `<td style="padding: 10px; text-align: right;"><strong>${formatCurrency(run.gross_pay)}</strong></td>`;
+            html += `<td style="padding: 10px; text-align: right;">${formatCurrency(run.total_deductions)}</td>`;
+            html += `<td style="padding: 10px; text-align: right;"><strong style="color: #059669;">${formatCurrency(run.net_pay)}</strong></td>`;
+            const statusColor = run.status === 'Completed' ? '#059669' : run.status === 'Pending' ? '#d97706' : '#666';
+            html += `<td style="padding: 10px; text-align: center;"><span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">${run.status || 'Pending'}</span></td>`;
             html += '</tr>';
         });
         
         html += '</tbody></table>';
+        html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${runs.length} payroll record(s)</p>`;
         return html;
     }
     
@@ -1697,46 +1705,270 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load leave balances
+    let annualLeaveBalancesData = []; // Store for filtering
+    
     async function loadLeaveBalances() {
         try {
-            const response = await fetch('/api/admin/leave-balances');
+            // Populate year selector if not already done
+            const yearSelector = document.getElementById('annualLeaveYearSelector');
+            if (yearSelector && yearSelector.options.length === 0) {
+                const currentYear = new Date().getFullYear();
+                for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    if (year === currentYear) option.selected = true;
+                    yearSelector.appendChild(option);
+                }
+            }
+            
+            const year = yearSelector ? yearSelector.value : new Date().getFullYear();
+            const response = await fetch(`/api/admin/leave-balances?year=${year}`);
             const data = await response.json();
             
             const tbody = document.getElementById('annualLeaveBalanceTable');
             if (!tbody) return;
             
-            if (data.success && data.data && data.data.length > 0) {
-                let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Employee ID</th>';
-                html += '<th style="padding: 10px;">Name</th>';
-                html += '<th style="padding: 10px; text-align: center;">Total Entitled</th>';
-                html += '<th style="padding: 10px; text-align: center;">Used</th>';
-                html += '<th style="padding: 10px; text-align: center;">Pending</th>';
-                html += '<th style="padding: 10px; text-align: center;">Remaining</th>';
-                html += '</tr></thead><tbody>';
-                
-                data.data.forEach(balance => {
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;">${balance.employee_id || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${balance.full_name || '-'}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.total_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.used_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.pending_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;"><strong>${balance.remaining_leave || 0}</strong></td>`;
-                    html += '</tr>';
-                });
-                
-                html += '</tbody></table>';
-                tbody.innerHTML = html;
-            } else {
-                tbody.innerHTML = '<p>No leave balance data available.</p>';
-            }
+            annualLeaveBalancesData = data.success && data.data ? data.data : [];
+            applyAnnualLeaveFilters();
+            
         } catch (error) {
             console.error('Error loading leave balances:', error);
             const tbody = document.getElementById('annualLeaveBalanceTable');
             if (tbody) tbody.innerHTML = '<p>Error loading leave balances.</p>';
         }
     }
+    
+    function applyAnnualLeaveFilters() {
+        const filterText = document.getElementById('annualLeaveEmployeeFilter')?.value.toLowerCase() || '';
+        
+        // Filter data
+        const filteredData = annualLeaveBalancesData.filter(balance => {
+            const searchText = `${balance.full_name || ''} ${balance.email || ''} ${balance.department || ''}`.toLowerCase();
+            return searchText.includes(filterText);
+        });
+        
+        displayAnnualLeaveBalances(filteredData);
+    }
+    
+    function displayAnnualLeaveBalances(data) {
+        const tbody = document.getElementById('annualLeaveBalanceTable');
+        if (!tbody) return;
+        
+        if (data.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 14px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px; text-align: left;">Employee Email</th>';
+                html += '<th style="padding: 10px; text-align: left;">Employee Name</th>';
+                html += '<th style="padding: 10px; text-align: left;">Department</th>';
+                html += '<th style="padding: 10px; text-align: center;">Employment Type</th>';
+                html += '<th style="padding: 10px; text-align: center;">Years of Service</th>';
+                html += '<th style="padding: 10px; text-align: center;">Annual<br>Entitlement</th>';
+                html += '<th style="padding: 10px; text-align: center;">Used This<br>Year</th>';
+                html += '<th style="padding: 10px; text-align: center;">Remaining<br>Balance</th>';
+                html += '<th style="padding: 10px; text-align: center;">Carried<br>Forward</th>';
+                html += '<th style="padding: 10px; text-align: center;">Total<br>Available</th>';
+                html += '<th style="padding: 10px; text-align: center;">Actions</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.forEach(balance => {
+                    // Calculate values with fallbacks
+                    const annualEntitlement = balance.annual_entitlement || balance.total_leave || 14;
+                    const usedDays = balance.used_days || balance.used_leave || 0;
+                    const carriedForward = balance.carried_forward || 0;
+                    const totalAvailable = balance.total_available || (annualEntitlement + carriedForward);
+                    const remainingBalance = balance.remaining_days || balance.remaining_leave || (totalAvailable - usedDays);
+                    const yearsOfService = balance.years_of_service !== undefined ? balance.years_of_service.toFixed(1) : '-';
+                    
+                    // Color coding for low balances
+                    let rowStyle = '';
+                    if (remainingBalance <= 0) {
+                        rowStyle = 'background: #fee; ';
+                    } else if (remainingBalance < 3) {
+                        rowStyle = 'background: #fffbeb; ';
+                    }
+                    
+                    html += `<tr style="border-bottom: 1px solid #eee; ${rowStyle}">`;
+                    html += `<td style="padding: 10px;">${balance.email || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${balance.full_name || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${balance.department || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${balance.employment_type || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${yearsOfService}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${annualEntitlement}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${usedDays}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;"><strong style="color: ${remainingBalance <= 0 ? '#dc2626' : remainingBalance < 3 ? '#d97706' : '#059669'};">${remainingBalance}</strong></td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${carriedForward}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${totalAvailable}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;"><button class="btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="adjustLeaveBalance('${balance.email}')">Adjust</button></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${data.length} employee(s)</p>`;
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<p>No leave balance data available.</p>';
+            }
+    }
+    
+    // Adjust Leave Balance Functions
+    window.adjustLeaveBalance = function(email) {
+        // Find the balance data for this employee
+        const balance = annualLeaveBalancesData.find(b => b.email === email);
+        if (!balance) {
+            alert('Employee data not found');
+            return;
+        }
+        
+        // Populate form
+        document.getElementById('adjustEmployeeEmail').value = email;
+        document.getElementById('adjustEmployeeName').textContent = `${balance.full_name} (${email})`;
+        document.getElementById('adjustAnnualEntitlement').value = balance.annual_entitlement || balance.total_leave || 14;
+        document.getElementById('adjustUsedDays').value = balance.used_days || balance.used_leave || 0;
+        document.getElementById('adjustCarriedForward').value = balance.carried_forward || 0;
+        
+        // Show modal
+        document.getElementById('adjustLeaveBalanceModal').style.display = 'block';
+    };
+    
+    window.closeAdjustLeaveBalanceModal = function() {
+        document.getElementById('adjustLeaveBalanceModal').style.display = 'none';
+    };
+    
+    // Handle adjust form submission
+    const adjustLeaveBalanceForm = document.getElementById('adjustLeaveBalanceForm');
+    if (adjustLeaveBalanceForm) {
+        adjustLeaveBalanceForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('adjustEmployeeEmail').value;
+            const yearSelector = document.getElementById('annualLeaveYearSelector');
+            const year = yearSelector ? yearSelector.value : new Date().getFullYear();
+            
+            const data = {
+                year: parseInt(year),
+                annual_entitlement: parseFloat(document.getElementById('adjustAnnualEntitlement').value),
+                used_days: parseFloat(document.getElementById('adjustUsedDays').value),
+                carried_forward: parseFloat(document.getElementById('adjustCarriedForward').value)
+            };
+            
+            try {
+                const response = await fetch(`/api/admin/leave-balances/${encodeURIComponent(email)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Leave balance updated successfully');
+                    closeAdjustLeaveBalanceModal();
+                    loadLeaveBalances();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to update leave balance'));
+                }
+            } catch (error) {
+                console.error('Error updating leave balance:', error);
+                alert('Error updating leave balance');
+            }
+        });
+    }
+    
+    // Set Carry Forward for All Functions
+    window.openSetCarryForwardAllModal = function() {
+        document.getElementById('setCarryForwardAllModal').style.display = 'block';
+    };
+    
+    window.closeSetCarryForwardAllModal = function() {
+        document.getElementById('setCarryForwardAllModal').style.display = 'none';
+    };
+    
+    const setCarryForwardAllForm = document.getElementById('setCarryForwardAllForm');
+    if (setCarryForwardAllForm) {
+        setCarryForwardAllForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const days = parseInt(document.getElementById('carryForwardDays').value);
+            const appliesTo = document.getElementById('carryForwardAppliesTo').value;
+            const yearSelector = document.getElementById('annualLeaveYearSelector');
+            const currentYear = yearSelector ? parseInt(yearSelector.value) : new Date().getFullYear();
+            
+            if (!confirm(`Set ${days} carried forward days for all employees for year ${currentYear + 1}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/leave-balances/set-carry-forward-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_year: currentYear,
+                        next_year: currentYear + 1,
+                        days: days,
+                        applies_to: appliesTo
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message || 'Carried forward set successfully for all employees');
+                    closeSetCarryForwardAllModal();
+                    loadLeaveBalances();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to set carry forward'));
+                }
+            } catch (error) {
+                console.error('Error setting carry forward:', error);
+                alert('Error setting carry forward for all');
+            }
+        });
+    }
+    
+    // Process Carry Forward Functions
+    window.openProcessCarryForwardModal = function() {
+        document.getElementById('processCarryForwardModal').style.display = 'block';
+    };
+    
+    window.closeProcessCarryForwardModal = function() {
+        document.getElementById('processCarryForwardModal').style.display = 'none';
+    };
+    
+    window.confirmProcessCarryForward = async function() {
+        const maxDays = parseInt(document.getElementById('carryForwardMaxDays').value);
+        const yearSelector = document.getElementById('annualLeaveYearSelector');
+        const year = yearSelector ? parseInt(yearSelector.value) : new Date().getFullYear();
+        
+        if (!confirm(`Process year-end carry forward for all employees from ${year} to ${year + 1}?\n\nMaximum carry forward: ${maxDays} days`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/admin/leave-balances/carry-forward', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    year: year,
+                    rules: {
+                        max_carry_forward: maxDays
+                    }
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(result.message || 'Carry forward processed successfully');
+                closeProcessCarryForwardModal();
+                loadLeaveBalances();
+            } else {
+                alert('Error: ' + (result.message || 'Failed to process carry forward'));
+            }
+        } catch (error) {
+            console.error('Error processing carry forward:', error);
+            alert('Error processing carry forward');
+        }
+    };
     
     let sickLeaveBalancesData = []; // Store for filtering
     
@@ -2135,7 +2367,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 if (filteredData.length === 0) {
-                    tableContainer.innerHTML = '<p style="color: #666;">No salary history records found matching the filters.</p>';
+                    let message = '<p style="color: #666;">No salary history records found';
+                    if (employeeFilter) {
+                        message += ' for the selected employee';
+                    }
+                    message += '.</p>';
+                    if (employeeFilter) {
+                        message += '<p style="color: #999; font-size: 14px; margin-top: 10px;">This employee has no salary change history yet. You can add salary changes using the form on the left.</p>';
+                    }
+                    tableContainer.innerHTML = message;
                     return;
                 }
                 
@@ -2181,7 +2421,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 html += '</tbody></table>';
-                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} salary change record(s)</p>`;
+                let summaryText = `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${filteredData.length} salary change record(s)`;
+                if (employeeFilter) {
+                    summaryText += ` for selected employee`;
+                }
+                summaryText += '</p>';
+                html += summaryText;
                 tableContainer.innerHTML = html;
             } else {
                 tableContainer.innerHTML = '<p style="color: #666;">No salary history records found. Record salary changes using the "Record Salary Change" button above.</p>';
@@ -2286,6 +2531,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('salaryHistoryEmployeeSelect').addEventListener('change', function(e) {
             const selectedOption = this.options[this.selectedIndex];
             const salary = selectedOption.dataset.salary || 0;
+            const selectedEmail = selectedOption.value;
+            const employeeName = selectedOption.textContent;
             
             const salaryDisplay = document.getElementById('currentSalaryDisplay');
             if (salaryDisplay) {
@@ -2295,13 +2542,50 @@ document.addEventListener('DOMContentLoaded', function() {
             // Auto-fill the employee email in the form
             const emailInput = document.getElementById('salaryChangeEmployee');
             if (emailInput) {
-                emailInput.value = selectedOption.value;
+                emailInput.value = selectedEmail;
             }
             
             // Auto-fill previous salary
             const prevSalaryInput = document.getElementById('salaryChangePrevious');
             if (prevSalaryInput) {
                 prevSalaryInput.value = parseFloat(salary).toFixed(2);
+            }
+            
+            // Show/update employee status indicator
+            const statusDiv = document.getElementById('salaryHistoryEmployeeStatus');
+            const statusName = document.getElementById('salaryHistoryEmployeeName');
+            
+            // Filter the table to show only this employee's salary history
+            if (selectedEmail) {
+                const employeeFilterInput = document.getElementById('salaryHistoryEmployeeFilter');
+                if (employeeFilterInput) {
+                    employeeFilterInput.value = selectedEmail;
+                }
+                
+                // Show status indicator
+                if (statusDiv && statusName) {
+                    statusName.textContent = employeeName;
+                    statusDiv.style.display = 'block';
+                }
+                
+                loadSalaryHistory();
+            } else {
+                // Clear the filter when "Select Employee" is chosen
+                const employeeFilterInput = document.getElementById('salaryHistoryEmployeeFilter');
+                if (employeeFilterInput) {
+                    employeeFilterInput.value = '';
+                }
+                // Reset salary display
+                if (salaryDisplay) {
+                    salaryDisplay.textContent = 'RM 0.00';
+                }
+                
+                // Hide status indicator
+                if (statusDiv) {
+                    statusDiv.style.display = 'none';
+                }
+                
+                loadSalaryHistory();
             }
         });
     }
@@ -2572,13 +2856,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const selectors = [
                 document.getElementById('empHistoryEmployeeSelect'),
-                document.getElementById('editEmpHistoryEmployeeSelect')
+                document.getElementById('editEmpHistoryEmployeeSelect'),
+                document.getElementById('empHistoryEmployeeQuickSelect')
             ];
             
             if (data.success && data.data && data.data.length > 0) {
                 selectors.forEach(selector => {
                     if (!selector) return;
-                    selector.innerHTML = '<option value="">Select Employee</option>';
+                    // Different default text for the quick select
+                    if (selector.id === 'empHistoryEmployeeQuickSelect') {
+                        selector.innerHTML = '<option value="">All Employees</option>';
+                    } else {
+                        selector.innerHTML = '<option value="">Select Employee</option>';
+                    }
                     data.data.forEach(emp => {
                         const option = document.createElement('option');
                         option.value = emp.email;
@@ -2590,6 +2880,22 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error loading employees for employment history:', error);
         }
+    }
+    
+    // Add event listener for quick employee selection in employment history
+    if (document.getElementById('empHistoryEmployeeQuickSelect')) {
+        document.getElementById('empHistoryEmployeeQuickSelect').addEventListener('change', function(e) {
+            const selectedEmail = this.value;
+            
+            // Update the text filter to match the selected employee
+            const employeeFilterInput = document.getElementById('empHistoryEmployeeFilter');
+            if (employeeFilterInput) {
+                employeeFilterInput.value = selectedEmail;
+            }
+            
+            // Reload the table with the filter applied
+            loadEmployeeHistory();
+        });
     }
     
     async function loadEmployeeHistory() {
@@ -3513,6 +3819,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const employmentActInfoBtn = document.getElementById('employmentActInfoBtn');
     if (employmentActInfoBtn) {
         employmentActInfoBtn.addEventListener('click', showEmploymentActInfo);
+    }
+    
+    // Setup annual leave balance event listeners
+    const annualLeaveEmployeeFilter = document.getElementById('annualLeaveEmployeeFilter');
+    if (annualLeaveEmployeeFilter) {
+        annualLeaveEmployeeFilter.addEventListener('input', applyAnnualLeaveFilters);
+    }
+    
+    const annualLeaveYearSelector = document.getElementById('annualLeaveYearSelector');
+    if (annualLeaveYearSelector) {
+        annualLeaveYearSelector.addEventListener('change', loadLeaveBalances);
+    }
+    
+    const refreshAnnualLeaveBtn = document.getElementById('refreshAnnualLeaveBtn');
+    if (refreshAnnualLeaveBtn) {
+        refreshAnnualLeaveBtn.addEventListener('click', loadLeaveBalances);
+    }
+    
+    // Setup carry forward buttons
+    const processCarryForwardBtn = document.getElementById('processCarryForwardBtn');
+    if (processCarryForwardBtn) {
+        processCarryForwardBtn.addEventListener('click', openProcessCarryForwardModal);
+    }
+    
+    const setCarryForwardAllBtn = document.getElementById('setCarryForwardAllBtn');
+    if (setCarryForwardAllBtn) {
+        setCarryForwardAllBtn.addEventListener('click', openSetCarryForwardAllModal);
     }
     
     // Load all new data on init

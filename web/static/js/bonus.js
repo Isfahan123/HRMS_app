@@ -89,7 +89,7 @@ class BonusManager {
         if (this.bonuses.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 20px;">
+                    <td colspan="9" style="text-align: center; padding: 20px;">
                         No bonuses found. Click "Add Bonus" to create one.
                     </td>
                 </tr>
@@ -104,21 +104,30 @@ class BonusManager {
             const formattedAmount = bonus.amount && !isNaN(parseFloat(bonus.amount)) 
                 ? `RM ${parseFloat(bonus.amount).toFixed(2)}` 
                 : '-';
+            // Format bonus type - show custom type if available
+            const displayType = (bonus.bonus_type === 'Other' && bonus.custom_type) 
+                ? `Other (${bonus.custom_type})` 
+                : (bonus.bonus_type || '-');
+            // Format expiry date
+            const expiryDate = bonus.expiry_date || 'No Expiry';
+            // Format recurring status
+            const recurringText = bonus.is_recurring 
+                ? (bonus.recurrence_frequency ? `Yes (${bonus.recurrence_frequency})` : 'Yes')
+                : 'No';
+            
             html += `
                 <tr>
                     <td>${bonus.employee_name || '-'}</td>
-                    <td>${bonus.bonus_type || '-'}</td>
-                    <td>${formattedAmount}</td>
-                    <td>${bonus.description || '-'}</td>
+                    <td>${displayType}</td>
+                    <td style="text-align: right;">${formattedAmount}</td>
                     <td>${bonus.effective_date || '-'}</td>
+                    <td>${expiryDate}</td>
                     <td><span class="badge badge-${statusBadge}">${bonus.status}</span></td>
-                    <td>${bonus.approved_by || '-'}</td>
+                    <td>${recurringText}</td>
+                    <td>${bonus.description || '-'}</td>
                     <td>
                         <button onclick="bonusManager.editBonus('${bonus.id}')" class="btn-sm btn-secondary">Edit</button>
-                        ${bonus.status === 'pending' ? `
-                            <button onclick="bonusManager.approveBonus('${bonus.id}')" class="btn-sm btn-success">Approve</button>
-                            <button onclick="bonusManager.deleteBonus('${bonus.id}')" class="btn-sm btn-danger">Delete</button>
-                        ` : ''}
+                        <button onclick="bonusManager.deleteBonus('${bonus.id}')" class="btn-sm btn-danger">Delete</button>
                     </td>
                 </tr>
             `;
@@ -237,15 +246,33 @@ class BonusManager {
      */
     async submitBonus() {
         const bonusId = document.getElementById('bonusId').value;
+        const bonusType = document.getElementById('bonusType').value;
+        
         const formData = {
             employee_id: document.getElementById('bonusEmployeeId').value,
-            bonus_type: document.getElementById('bonusType').value,
+            bonus_type: bonusType,
             amount: document.getElementById('bonusAmount').value,
             description: document.getElementById('bonusDescription').value,
             effective_date: document.getElementById('bonusEffectiveDate').value,
             status: document.getElementById('bonusStatus').value,
             is_recurring: document.getElementById('bonusIsRecurring').checked
         };
+        
+        // Add custom_type if bonus type is "Other"
+        if (bonusType === 'Other') {
+            const customType = document.getElementById('bonusCustomType');
+            if (customType && customType.value.trim()) {
+                formData.custom_type = customType.value.trim();
+            }
+        }
+        
+        // Add recurrence_frequency if recurring is checked
+        if (formData.is_recurring) {
+            const recurrenceFreq = document.getElementById('bonusRecurrence');
+            if (recurrenceFreq && recurrenceFreq.value) {
+                formData.recurrence_frequency = recurrenceFreq.value;
+            }
+        }
         
         // Add expiry_date if checkbox is checked
         if (document.getElementById('bonusHasExpiry').checked) {
@@ -309,6 +336,25 @@ class BonusManager {
         document.getElementById('bonusEffectiveDate').value = bonus.effective_date;
         document.getElementById('bonusStatus').value = bonus.status || 'Pending';
         document.getElementById('bonusIsRecurring').checked = bonus.is_recurring || false;
+        
+        // Trigger custom type display if needed
+        if (bonus.bonus_type === 'Other' && bonus.custom_type) {
+            // Ensure custom type field is visible
+            const customTypeGroup = document.getElementById('bonusCustomTypeGroup');
+            if (customTypeGroup) {
+                customTypeGroup.style.display = 'block';
+                document.getElementById('bonusCustomType').value = bonus.custom_type;
+            }
+        }
+        
+        // Handle recurrence frequency
+        if (bonus.is_recurring && bonus.recurrence_frequency) {
+            const recurrenceGroup = document.getElementById('bonusRecurrenceGroup');
+            if (recurrenceGroup) {
+                recurrenceGroup.style.display = 'block';
+                document.getElementById('bonusRecurrence').value = bonus.recurrence_frequency;
+            }
+        }
         
         // Handle expiry date
         if (bonus.expiry_date) {
@@ -424,11 +470,26 @@ window.toggleExpiryDate = toggleExpiryDate;
 // Global instance
 let bonusManager;
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    const bonusTab = document.getElementById('bonusTab');
+// Initialize bonus manager
+function initBonusManager() {
+    const bonusTab = document.getElementById('payrollBonusesSubtab');
     if (bonusTab) {
+        console.log('Initializing Bonus Manager...');
         bonusManager = new BonusManager();
-        bonusManager.init();
+        bonusManager.init().catch(err => {
+            console.error('Failed to initialize Bonus Manager:', err);
+            alert('Bonus manager not loaded. Please refresh the page');
+        });
+    } else {
+        console.warn('Bonus tab not found, scheduling retry...');
+        setTimeout(initBonusManager, 100);
     }
-});
+}
+
+// Initialize immediately since script loads at bottom of page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBonusManager);
+} else {
+    // DOM already loaded
+    initBonusManager();
+}

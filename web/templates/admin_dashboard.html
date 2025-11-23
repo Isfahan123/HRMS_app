@@ -1266,11 +1266,37 @@
                     
                     <!-- Annual Leave Balance Subtab -->
                     <div id="leaveAnnualBalanceSubtab" class="subtab-content">
-                        <h3>Annual Leave Balance</h3>
-                        <div style="margin-bottom: 15px;">
-                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">Export to CSV</button>
+                        <h3>🏥 Annual Leave Balance Management</h3>
+                        
+                        <!-- Filters and Controls -->
+                        <div style="background: #f7f9fc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 250px;">
+                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Employee:</label>
+                                    <input type="text" id="annualLeaveEmployeeFilter" placeholder="Search by name, email, or department..." 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div style="min-width: 120px;">
+                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Year:</label>
+                                    <select id="annualLeaveYearSelector" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <!-- Years will be populated by JS -->
+                                    </select>
+                                </div>
+                                <div style="padding-top: 26px;">
+                                    <button id="refreshAnnualLeaveBtn" class="btn-secondary" style="padding: 8px 15px;">🔄 Refresh</button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="annualLeaveBalanceTable">Loading...</div>
+                        
+                        <!-- Action Buttons -->
+                        <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="processCarryForwardBtn" class="btn-primary">🔄 Process Year-End Carry Forward</button>
+                            <button id="setCarryForwardAllBtn" class="btn-primary">📝 Set Carried Forward for All</button>
+                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">📊 Export to CSV</button>
+                        </div>
+                        
+                        <!-- Balance Table -->
+                        <div id="annualLeaveBalanceTable" style="overflow-x: auto;">Loading...</div>
                     </div>
                     
                     <!-- Sick Leave Balance Subtab -->
@@ -1376,6 +1402,18 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        <!-- Company Leave Policies Section -->
+                        <div style="margin-top: 40px;">
+                            <h4 style="color: #667eea;">Company Leave Policies</h4>
+                            <p style="color: #666; margin-bottom: 15px;">Configure global leave policy settings</p>
+                            
+                            <button id="configureLeavePoliciesBtn" class="btn-primary" style="margin-bottom: 15px;">⚙️ Configure Leave Policies</button>
+                            
+                            <div id="leavePoliciesSummary" style="background: #f7f9fc; padding: 15px; border-radius: 8px;">
+                                <p style="margin: 0; color: #666;">Click "Configure Leave Policies" to manage carry forward settings, pro-rating, and other global policies.</p>
+                            </div>
                         </div>
                         
                         <!-- Leave Type Modal -->
@@ -1494,6 +1532,73 @@
                                     <div style="margin-top: 20px;">
                                         <button type="submit" class="btn-primary">💾 Save</button>
                                         <button type="button" class="btn-secondary" onclick="closeEntitlementModal()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Leave Policies Modal -->
+                        <div id="leavePoliciesModal" class="modal" style="display: none;">
+                            <div class="modal-content" style="max-width: 700px;">
+                                <div class="modal-header">
+                                    <h3>⚙️ Company Leave Policy Configuration</h3>
+                                    <span class="modal-close" onclick="closeLeavePoliciesModal()">&times;</span>
+                                </div>
+                                <form id="leavePoliciesForm">
+                                    <!-- Carry Forward Settings -->
+                                    <div style="margin-bottom: 25px;">
+                                        <h4 style="color: #667eea; margin-bottom: 10px;">Annual Leave Carry Forward</h4>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyCarryForwardEnabled">Carry Forward:</label>
+                                            <select id="policyCarryForwardEnabled" style="width: 100%; padding: 8px;">
+                                                <option value="true">Enabled</option>
+                                                <option value="false">Disabled</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyMaxCarryForward">Maximum Days:</label>
+                                            <input type="number" id="policyMaxCarryForward" min="0" max="30" value="10" 
+                                                   style="width: 100%; padding: 8px;" placeholder="10">
+                                            <small style="color: #666;">Maximum days that can be carried forward</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyExpiryMonths">Expires After:</label>
+                                            <input type="number" id="policyExpiryMonths" min="1" max="24" value="6" 
+                                                   style="width: 100%; padding: 8px;" placeholder="6">
+                                            <small style="color: #666;">Months before carried forward days expire</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyCarryForwardAppliesTo">Applies To:</label>
+                                            <select id="policyCarryForwardAppliesTo" style="width: 100%; padding: 8px;">
+                                                <option value="all">All employees</option>
+                                                <option value="full_time_only">Full-time employees only</option>
+                                                <option value="exclude_interns">All except interns</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Other Settings -->
+                                    <div style="margin-bottom: 25px;">
+                                        <h4 style="color: #667eea; margin-bottom: 10px;">Other Leave Settings</h4>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyProRateEntitlement">Pro-rate for Partial Year:</label>
+                                            <select id="policyProRateEntitlement" style="width: 100%; padding: 8px;">
+                                                <option value="true">Enabled</option>
+                                                <option value="false">Disabled</option>
+                                            </select>
+                                            <small style="color: #666;">Pro-rate entitlement for employees who join mid-year</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                                        <button type="button" class="btn-secondary" onclick="resetLeavePolicies()">Reset to Defaults</button>
+                                        <button type="submit" class="btn-primary" style="flex: 1;">💾 Save Policies</button>
+                                        <button type="button" class="btn-secondary" onclick="closeLeavePoliciesModal()">Cancel</button>
                                     </div>
                                 </form>
                             </div>
@@ -1728,18 +1833,19 @@
                             <thead>
                                 <tr>
                                     <th style="text-align: left; padding: 12px;">Employee</th>
-                                    <th style="text-align: left; padding: 12px;">Type</th>
-                                    <th style="text-align: right; padding: 12px;">Amount</th>
-                                    <th style="text-align: left; padding: 12px;">Description</th>
+                                    <th style="text-align: left; padding: 12px;">Bonus Type</th>
+                                    <th style="text-align: right; padding: 12px;">Amount (RM)</th>
                                     <th style="text-align: left; padding: 12px;">Effective Date</th>
+                                    <th style="text-align: left; padding: 12px;">Expiry Date</th>
                                     <th style="text-align: center; padding: 12px;">Status</th>
-                                    <th style="text-align: left; padding: 12px;">Approved By</th>
+                                    <th style="text-align: center; padding: 12px;">Recurring</th>
+                                    <th style="text-align: left; padding: 12px;">Description</th>
                                     <th style="text-align: center; padding: 12px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="bonusTableBody">
                                 <tr>
-                                    <td colspan="8" style="text-align: center; padding: 20px;">
+                                    <td colspan="9" style="text-align: center; padding: 20px;">
                                         Loading bonuses...
                                     </td>
                                 </tr>
@@ -2113,6 +2219,9 @@
                                         <span style="color: #666;">Last Updated:</span>
                                         <span id="lastUpdatedDisplay" style="color: #666;">Never</span>
                                     </div>
+                                </div>
+                                <div id="salaryHistoryEmployeeStatus" style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-radius: 4px; display: none; font-size: 13px; color: #1976d2;">
+                                    📊 Viewing salary history for: <strong id="salaryHistoryEmployeeName"></strong>
                                 </div>
                             </div>
                             
@@ -2518,6 +2627,18 @@
                             
                             <div id="addEmploymentHistoryMessage" style="display: none; margin-top: 10px;"></div>
                         </form>
+                    </div>
+                    
+                    <!-- Employee Selection (Quick Filter) -->
+                    <div class="form-section" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px;">
+                        <h4 style="margin-top: 0; color: #667eea;">Quick Employee Selection</h4>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="empHistoryEmployeeQuickSelect">Select Employee to View History:</label>
+                            <select id="empHistoryEmployeeQuickSelect" style="width: 100%; padding: 8px;">
+                                <option value="">All Employees</option>
+                            </select>
+                        </div>
+                        <p style="font-size: 12px; color: #666; margin: 8px 0 0 0;">Select an employee to view their employment history, or leave as "All Employees" to see everyone's records.</p>
                     </div>
                     
                     <!-- Filter Section -->
@@ -3867,6 +3988,102 @@
             
             <div style="margin-top: 20px; text-align: right;">
                 <button type="button" class="btn-secondary" onclick="closeEmployeeSelectorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adjust Leave Balance Modal -->
+    <div id="adjustLeaveBalanceModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>✏️ Adjust Leave Balance</h3>
+                <span class="modal-close" onclick="closeAdjustLeaveBalanceModal()">&times;</span>
+            </div>
+            <form id="adjustLeaveBalanceForm">
+                <input type="hidden" id="adjustEmployeeEmail">
+                <div class="form-group">
+                    <label>Employee:</label>
+                    <p id="adjustEmployeeName" style="font-weight: bold; color: #667eea;"></p>
+                </div>
+                <div class="form-group">
+                    <label for="adjustAnnualEntitlement">Annual Entitlement (days):</label>
+                    <input type="number" id="adjustAnnualEntitlement" min="0" step="0.5" required style="width: 100%; padding: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="adjustUsedDays">Used Days:</label>
+                    <input type="number" id="adjustUsedDays" min="0" step="0.5" required style="width: 100%; padding: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="adjustCarriedForward">Carried Forward (days):</label>
+                    <input type="number" id="adjustCarriedForward" min="0" step="0.5" required style="width: 100%; padding: 8px;">
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">💾 Save Changes</button>
+                    <button type="button" class="btn-secondary" onclick="closeAdjustLeaveBalanceModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Set Carry Forward for All Modal -->
+    <div id="setCarryForwardAllModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>📝 Set Carried Forward for All</h3>
+                <span class="modal-close" onclick="closeSetCarryForwardAllModal()">&times;</span>
+            </div>
+            <form id="setCarryForwardAllForm">
+                <p style="color: #666; margin-bottom: 15px;">
+                    This will set the carried forward days for all employees for the next year.
+                </p>
+                <div class="form-group">
+                    <label for="carryForwardDays">Carried Forward Days:</label>
+                    <input type="number" id="carryForwardDays" min="0" max="30" value="0" required style="width: 100%; padding: 8px;">
+                    <small style="color: #666;">Maximum 30 days</small>
+                </div>
+                <div class="form-group">
+                    <label for="carryForwardAppliesTo">Apply To:</label>
+                    <select id="carryForwardAppliesTo" style="width: 100%; padding: 8px;">
+                        <option value="all">All Employees</option>
+                        <option value="active">Active Employees Only</option>
+                    </select>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">✓ Apply to All</button>
+                    <button type="button" class="btn-secondary" onclick="closeSetCarryForwardAllModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Process Carry Forward Modal -->
+    <div id="processCarryForwardModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>🔄 Process Year-End Carry Forward</h3>
+                <span class="modal-close" onclick="closeProcessCarryForwardModal()">&times;</span>
+            </div>
+            <div>
+                <p style="color: #666; margin-bottom: 15px;">
+                    This will automatically calculate and apply carry forward for all employees based on their unused leave for the current year.
+                </p>
+                <div style="background: #fff3cd; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <strong>⚠️ Important:</strong>
+                    <ul style="margin: 10px 0 0 20px; color: #856404;">
+                        <li>This will calculate carry forward based on current year's unused leave</li>
+                        <li>Maximum carry forward limits will be applied as per company policy</li>
+                        <li>This action will create/update leave balance records for next year</li>
+                    </ul>
+                </div>
+                <div class="form-group">
+                    <label for="carryForwardMaxDays">Maximum Carry Forward (days):</label>
+                    <input type="number" id="carryForwardMaxDays" min="0" max="30" value="14" style="width: 100%; padding: 8px;">
+                    <small style="color: #666;">Maximum days that can be carried forward per employee</small>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="button" class="btn-primary" onclick="confirmProcessCarryForward()" style="flex: 1;">🔄 Process Now</button>
+                    <button type="button" class="btn-secondary" onclick="closeProcessCarryForwardModal()">Cancel</button>
+                </div>
             </div>
         </div>
     </div>

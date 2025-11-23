@@ -210,10 +210,20 @@ function navigateToEngagements() {
     }
 }
 
-// Initialize widget when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize widget
+function initPendingRequestsWidget() {
     // Only initialize on admin dashboard
-    if (document.getElementById('pendingRequestsWidget')) {
+    const widget = document.getElementById('pendingRequestsWidget');
+    if (widget) {
+        console.log('Initializing Pending Requests Widget...');
         window.pendingRequestsWidget = new PendingRequestsWidget('pendingRequestsWidget');
     }
-});
+}
+
+// Initialize immediately since script loads at bottom of page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPendingRequestsWidget);
+} else {
+    // DOM already loaded
+    initPendingRequestsWidget();
+}
