@@ -1452,6 +1452,50 @@ async def save_payroll_info(request: Request):
         print(f"Error saving payroll info: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.get("/api/admin/tp1-reliefs/{employee_id}/{year}/{month}")
+async def get_tp1_reliefs(employee_id: str, year: int, month: int):
+    """
+    Get TP1 tax relief data for an employee for a specific month
+    """
+    try:
+        # Get monthly deductions which includes TP1 relief data
+        deductions_data = get_monthly_deductions(employee_id, year, month)
+        
+        # Extract TP1 relief items (they are prefixed with tp1_ or specific relief keys)
+        tp1_data = {k: v for k, v in deductions_data.items() if any(prefix in k for prefix in ['parent_', 'medical_', 'lifestyle_', 'sports_', 'education_', 'support_', 'self_edu_', 'breastfeeding_', 'childcare_', 'sspn_', 'alimony_', 'epf_voluntary', 'life_insurance_', 'prs_', 'socso_eis_', 'domestic_tourism', 'ev_charging_'])}
+        
+        return {"success": True, "data": tp1_data}
+    except Exception as e:
+        print(f"Error getting TP1 relief data: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/tp1-reliefs")
+async def save_tp1_reliefs(request: Request):
+    """
+    Save TP1 tax relief data for an employee for a specific month
+    """
+    try:
+        data = await request.json()
+        
+        employee_id = data.get("employee_id")
+        if not employee_id:
+            return {"success": False, "message": "Missing employee_id"}
+        
+        year = data.get("year", datetime.now().year)
+        month = data.get("month", datetime.now().month)
+        relief_data = data.get("relief_data", {})
+        
+        # Save TP1 relief data to monthly deductions
+        success = upsert_monthly_deductions(employee_id, year, month, relief_data)
+        
+        if success:
+            return {"success": True, "message": "TP1 relief data saved successfully"}
+        else:
+            return {"success": False, "message": "Failed to save TP1 relief data"}
+    except Exception as e:
+        print(f"Error saving TP1 relief data: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.put("/api/admin/salary-history/{record_id}")
 async def update_salary_history(record_id: str, request: Request):
     """

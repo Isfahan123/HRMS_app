@@ -3034,6 +3034,7 @@
     <script src="/static/js/location-autocomplete.js"></script>
     <script src="/static/js/employee-selector.js"></script>
     <script src="/static/js/pending-requests-widget.js"></script>
+    <script src="/static/js/tp1-reliefs.js"></script>
     <script src="/static/js/admin_dashboard.js"></script>
     <script src="/static/js/bonus.js"></script>
     <script src="/static/js/calendar.js"></script>
@@ -3737,17 +3738,17 @@
         function openQuickTP1Reliefs() {
             const employeeId = document.getElementById('payrollEmployeeId').value;
             if (!employeeId) {
-                showMessage('Please save employee information first.', 'warning');
+                showMessage('Please select an employee first.', 'warning');
                 return;
             }
-            // Save current payroll dialog state before switching
-            closePayrollInfoModal();
-            // Display user-friendly message
-            showMessage('TP1 Reliefs feature integration coming soon.', 'info');
-            // Note: The actual integration with TP1 Reliefs dialog would be:
-            // - Check if TP1 button exists in Payroll tab
-            // - Trigger TP1 dialog with pre-selected employee
-            // - Return to this dialog after TP1 completion
+            
+            // Get current year and month
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            
+            // Open TP1 reliefs modal
+            showTP1ReliefsModal(employeeId, year, month);
         }
         
         function showMessage(text, type) {
@@ -3783,6 +3784,19 @@
             }, 3500);
         }
     </script>
+
+    <!-- TP1 Reliefs Modal -->
+    <div id="tp1ReliefsModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>📋 TP1 Tax Relief Items (Malaysian Tax Relief)</h3>
+                <span class="modal-close" onclick="closeTP1ReliefsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="tp1ReliefsContainer"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Place Lookup Dialog -->
     <div id="placeLookupModal" class="modal" style="display: none;">
