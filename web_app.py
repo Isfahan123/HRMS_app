@@ -2047,6 +2047,47 @@ async def delete_leave_entitlement(entitlement_id: int):
         return {"success": False, "message": str(e)}
 
 # ====================
+# Leave Policies Endpoints
+# ====================
+
+@app.get("/api/admin/leave-policies")
+async def get_leave_policies():
+    """Get company leave policies"""
+    try:
+        from services.supabase_service import get_company_leave_policies
+        policies = get_company_leave_policies()
+        return {"success": True, "data": policies}
+    except Exception as e:
+        print(f"Error getting leave policies: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/leave-policies")
+async def update_leave_policies(request: Request):
+    """Update company leave policies"""
+    try:
+        from services.supabase_service import update_company_leave_policy
+        data = await request.json()
+        
+        # Update each policy
+        admin_email = "admin"  # Could be extracted from session
+        success = True
+        
+        for policy_name, policy_value in data.items():
+            # Convert to string for storage
+            value_str = str(policy_value)
+            if not update_company_leave_policy(policy_name, value_str, admin_email):
+                success = False
+                break
+        
+        if success:
+            return {"success": True, "message": "Leave policies updated successfully"}
+        else:
+            return {"success": False, "message": "Failed to update some policies"}
+    except Exception as e:
+        print(f"Error updating leave policies: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+# ====================
 # Calendar & Holidays Endpoints
 # ====================
 

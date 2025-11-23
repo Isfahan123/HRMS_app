@@ -582,3 +582,141 @@ window.editLeaveType = editLeaveType;
 window.editEntitlement = editEntitlement;
 window.deleteLeaveType = deleteLeaveType;
 window.deleteEntitlement = deleteEntitlement;
+
+/**
+ * Leave Policies Configuration
+ */
+function openLeavePoliciesModal() {
+    document.getElementById('leavePoliciesModal').style.display = 'block';
+    loadLeavePolicies();
+}
+
+function closeLeavePoliciesModal() {
+    document.getElementById('leavePoliciesModal').style.display = 'none';
+}
+
+async function loadLeavePolicies() {
+    try {
+        const response = await fetch('/api/admin/leave-policies');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            const policies = data.data;
+            document.getElementById('policyCarryForwardEnabled').value = policies.carry_forward_enabled || 'true';
+            document.getElementById('policyMaxCarryForward').value = policies.max_carry_forward_days || 10;
+            document.getElementById('policyExpiryMonths').value = policies.carry_forward_expiry_months || 6;
+            document.getElementById('policyCarryForwardAppliesTo').value = policies.carry_forward_applies_to || 'all';
+            document.getElementById('policyProRateEntitlement').value = policies.pro_rate_entitlement || 'true';
+            
+            updateLeavePoliciesSummary(policies);
+            updateCarryForwardFieldsState();
+        }
+    } catch (error) {
+        console.error('Error loading leave policies:', error);
+    }
+}
+
+function updateCarryForwardFieldsState() {
+    const enabled = document.getElementById('policyCarryForwardEnabled').value === 'true';
+    document.getElementById('policyMaxCarryForward').disabled = !enabled;
+    document.getElementById('policyExpiryMonths').disabled = !enabled;
+    document.getElementById('policyCarryForwardAppliesTo').disabled = !enabled;
+}
+
+function updateLeavePoliciesSummary(policies) {
+    const summary = document.getElementById('leavePoliciesSummary');
+    if (!summary) return;
+    
+    const cfEnabled = policies.carry_forward_enabled === 'true' || policies.carry_forward_enabled === true;
+    const maxDays = policies.max_carry_forward_days || 10;
+    const expiryMonths = policies.carry_forward_expiry_months || 6;
+    const proRate = policies.pro_rate_entitlement === 'true' || policies.pro_rate_entitlement === true;
+    
+    summary.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+                <strong>Carry Forward:</strong><br>
+                <span style="color: ${cfEnabled ? '#059669' : '#dc2626'};">${cfEnabled ? 'Enabled' : 'Disabled'}</span>
+            </div>
+            ${cfEnabled ? `
+                <div>
+                    <strong>Max Carry Forward:</strong><br>
+                    <span style="color: #667eea;">${maxDays} days</span>
+                </div>
+                <div>
+                    <strong>Expires After:</strong><br>
+                    <span style="color: #667eea;">${expiryMonths} months</span>
+                </div>
+            ` : ''}
+            <div>
+                <strong>Pro-rate Entitlement:</strong><br>
+                <span style="color: ${proRate ? '#059669' : '#dc2626'};">${proRate ? 'Enabled' : 'Disabled'}</span>
+            </div>
+        </div>
+    `;
+}
+
+function resetLeavePolicies() {
+    document.getElementById('policyCarryForwardEnabled').value = 'true';
+    document.getElementById('policyMaxCarryForward').value = 10;
+    document.getElementById('policyExpiryMonths').value = 6;
+    document.getElementById('policyCarryForwardAppliesTo').value = 'all';
+    document.getElementById('policyProRateEntitlement').value = 'true';
+    updateCarryForwardFieldsState();
+}
+
+// Event listeners for leave policies
+document.addEventListener('DOMContentLoaded', function() {
+    const configurePoliciesBtn = document.getElementById('configureLeavePoliciesBtn');
+    if (configurePoliciesBtn) {
+        configurePoliciesBtn.addEventListener('click', openLeavePoliciesModal);
+    }
+    
+    const policyCarryForwardEnabled = document.getElementById('policyCarryForwardEnabled');
+    if (policyCarryForwardEnabled) {
+        policyCarryForwardEnabled.addEventListener('change', updateCarryForwardFieldsState);
+    }
+    
+    const leavePoliciesForm = document.getElementById('leavePoliciesForm');
+    if (leavePoliciesForm) {
+        leavePoliciesForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const policies = {
+                carry_forward_enabled: document.getElementById('policyCarryForwardEnabled').value,
+                max_carry_forward_days: parseInt(document.getElementById('policyMaxCarryForward').value),
+                carry_forward_expiry_months: parseInt(document.getElementById('policyExpiryMonths').value),
+                carry_forward_applies_to: document.getElementById('policyCarryForwardAppliesTo').value,
+                pro_rate_entitlement: document.getElementById('policyProRateEntitlement').value
+            };
+            
+            try {
+                const response = await fetch('/api/admin/leave-policies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(policies)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Leave policies updated successfully!\n\nChanges will take effect immediately for new balance calculations.');
+                    closeLeavePoliciesModal();
+                    updateLeavePoliciesSummary(policies);
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to update policies'));
+                }
+            } catch (error) {
+                console.error('Error saving leave policies:', error);
+                alert('Error saving leave policies');
+            }
+        });
+    }
+    
+    // Load policies summary on page load
+    loadLeavePolicies();
+});
+
+window.openLeavePoliciesModal = openLeavePoliciesModal;
+window.closeLeavePoliciesModal = closeLeavePoliciesModal;
+window.resetLeavePolicies = resetLeavePolicies;

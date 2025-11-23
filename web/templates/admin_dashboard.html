@@ -1404,6 +1404,18 @@
                             </table>
                         </div>
                         
+                        <!-- Company Leave Policies Section -->
+                        <div style="margin-top: 40px;">
+                            <h4 style="color: #667eea;">Company Leave Policies</h4>
+                            <p style="color: #666; margin-bottom: 15px;">Configure global leave policy settings</p>
+                            
+                            <button id="configureLeavePoliciesBtn" class="btn-primary" style="margin-bottom: 15px;">⚙️ Configure Leave Policies</button>
+                            
+                            <div id="leavePoliciesSummary" style="background: #f7f9fc; padding: 15px; border-radius: 8px;">
+                                <p style="margin: 0; color: #666;">Click "Configure Leave Policies" to manage carry forward settings, pro-rating, and other global policies.</p>
+                            </div>
+                        </div>
+                        
                         <!-- Leave Type Modal -->
                         <div id="leaveTypeModal" class="modal" style="display: none;">
                             <div class="modal-content">
@@ -1520,6 +1532,73 @@
                                     <div style="margin-top: 20px;">
                                         <button type="submit" class="btn-primary">💾 Save</button>
                                         <button type="button" class="btn-secondary" onclick="closeEntitlementModal()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Leave Policies Modal -->
+                        <div id="leavePoliciesModal" class="modal" style="display: none;">
+                            <div class="modal-content" style="max-width: 700px;">
+                                <div class="modal-header">
+                                    <h3>⚙️ Company Leave Policy Configuration</h3>
+                                    <span class="modal-close" onclick="closeLeavePoliciesModal()">&times;</span>
+                                </div>
+                                <form id="leavePoliciesForm">
+                                    <!-- Carry Forward Settings -->
+                                    <div style="margin-bottom: 25px;">
+                                        <h4 style="color: #667eea; margin-bottom: 10px;">Annual Leave Carry Forward</h4>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyCarryForwardEnabled">Carry Forward:</label>
+                                            <select id="policyCarryForwardEnabled" style="width: 100%; padding: 8px;">
+                                                <option value="true">Enabled</option>
+                                                <option value="false">Disabled</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyMaxCarryForward">Maximum Days:</label>
+                                            <input type="number" id="policyMaxCarryForward" min="0" max="30" value="10" 
+                                                   style="width: 100%; padding: 8px;" placeholder="10">
+                                            <small style="color: #666;">Maximum days that can be carried forward</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyExpiryMonths">Expires After:</label>
+                                            <input type="number" id="policyExpiryMonths" min="1" max="24" value="6" 
+                                                   style="width: 100%; padding: 8px;" placeholder="6">
+                                            <small style="color: #666;">Months before carried forward days expire</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyCarryForwardAppliesTo">Applies To:</label>
+                                            <select id="policyCarryForwardAppliesTo" style="width: 100%; padding: 8px;">
+                                                <option value="all">All employees</option>
+                                                <option value="full_time_only">Full-time employees only</option>
+                                                <option value="exclude_interns">All except interns</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Other Settings -->
+                                    <div style="margin-bottom: 25px;">
+                                        <h4 style="color: #667eea; margin-bottom: 10px;">Other Leave Settings</h4>
+                                        
+                                        <div class="form-group">
+                                            <label for="policyProRateEntitlement">Pro-rate for Partial Year:</label>
+                                            <select id="policyProRateEntitlement" style="width: 100%; padding: 8px;">
+                                                <option value="true">Enabled</option>
+                                                <option value="false">Disabled</option>
+                                            </select>
+                                            <small style="color: #666;">Pro-rate entitlement for employees who join mid-year</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                                        <button type="button" class="btn-secondary" onclick="resetLeavePolicies()">Reset to Defaults</button>
+                                        <button type="submit" class="btn-primary" style="flex: 1;">💾 Save Policies</button>
+                                        <button type="button" class="btn-secondary" onclick="closeLeavePoliciesModal()">Cancel</button>
                                     </div>
                                 </form>
                             </div>
