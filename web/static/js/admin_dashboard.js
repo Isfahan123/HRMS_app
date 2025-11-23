@@ -1697,45 +1697,109 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load leave balances
+    let annualLeaveBalancesData = []; // Store for filtering
+    
     async function loadLeaveBalances() {
         try {
-            const response = await fetch('/api/admin/leave-balances');
+            // Populate year selector if not already done
+            const yearSelector = document.getElementById('annualLeaveYearSelector');
+            if (yearSelector && yearSelector.options.length === 0) {
+                const currentYear = new Date().getFullYear();
+                for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    if (year === currentYear) option.selected = true;
+                    yearSelector.appendChild(option);
+                }
+            }
+            
+            const year = yearSelector ? yearSelector.value : new Date().getFullYear();
+            const response = await fetch(`/api/admin/leave-balances?year=${year}`);
             const data = await response.json();
             
             const tbody = document.getElementById('annualLeaveBalanceTable');
             if (!tbody) return;
             
-            if (data.success && data.data && data.data.length > 0) {
-                let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-                html += '<th style="padding: 10px;">Employee ID</th>';
-                html += '<th style="padding: 10px;">Name</th>';
-                html += '<th style="padding: 10px; text-align: center;">Total Entitled</th>';
-                html += '<th style="padding: 10px; text-align: center;">Used</th>';
-                html += '<th style="padding: 10px; text-align: center;">Pending</th>';
-                html += '<th style="padding: 10px; text-align: center;">Remaining</th>';
-                html += '</tr></thead><tbody>';
-                
-                data.data.forEach(balance => {
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += `<td style="padding: 10px;">${balance.employee_id || '-'}</td>`;
-                    html += `<td style="padding: 10px;">${balance.full_name || '-'}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.total_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.used_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;">${balance.pending_leave || 0}</td>`;
-                    html += `<td style="padding: 10px; text-align: center;"><strong>${balance.remaining_leave || 0}</strong></td>`;
-                    html += '</tr>';
-                });
-                
-                html += '</tbody></table>';
-                tbody.innerHTML = html;
-            } else {
-                tbody.innerHTML = '<p>No leave balance data available.</p>';
-            }
+            annualLeaveBalancesData = data.success && data.data ? data.data : [];
+            applyAnnualLeaveFilters();
+            
         } catch (error) {
             console.error('Error loading leave balances:', error);
             const tbody = document.getElementById('annualLeaveBalanceTable');
             if (tbody) tbody.innerHTML = '<p>Error loading leave balances.</p>';
         }
+    }
+    
+    function applyAnnualLeaveFilters() {
+        const filterText = document.getElementById('annualLeaveEmployeeFilter')?.value.toLowerCase() || '';
+        
+        // Filter data
+        const filteredData = annualLeaveBalancesData.filter(balance => {
+            const searchText = `${balance.full_name || ''} ${balance.email || ''} ${balance.department || ''}`.toLowerCase();
+            return searchText.includes(filterText);
+        });
+        
+        displayAnnualLeaveBalances(filteredData);
+    }
+    
+    function displayAnnualLeaveBalances(data) {
+        const tbody = document.getElementById('annualLeaveBalanceTable');
+        if (!tbody) return;
+        
+        if (data.length > 0) {
+                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 14px;"><thead><tr style="background: #667eea; color: white;">';
+                html += '<th style="padding: 10px; text-align: left;">Employee Email</th>';
+                html += '<th style="padding: 10px; text-align: left;">Employee Name</th>';
+                html += '<th style="padding: 10px; text-align: left;">Department</th>';
+                html += '<th style="padding: 10px; text-align: center;">Employment Type</th>';
+                html += '<th style="padding: 10px; text-align: center;">Years of Service</th>';
+                html += '<th style="padding: 10px; text-align: center;">Annual<br>Entitlement</th>';
+                html += '<th style="padding: 10px; text-align: center;">Used This<br>Year</th>';
+                html += '<th style="padding: 10px; text-align: center;">Remaining<br>Balance</th>';
+                html += '<th style="padding: 10px; text-align: center;">Carried<br>Forward</th>';
+                html += '<th style="padding: 10px; text-align: center;">Total<br>Available</th>';
+                html += '<th style="padding: 10px; text-align: center;">Actions</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.forEach(balance => {
+                    // Calculate values with fallbacks
+                    const annualEntitlement = balance.annual_entitlement || balance.total_leave || 14;
+                    const usedDays = balance.used_days || balance.used_leave || 0;
+                    const carriedForward = balance.carried_forward || 0;
+                    const totalAvailable = balance.total_available || (annualEntitlement + carriedForward);
+                    const remainingBalance = balance.remaining_days || balance.remaining_leave || (totalAvailable - usedDays);
+                    const yearsOfService = balance.years_of_service !== undefined ? balance.years_of_service.toFixed(1) : '-';
+                    
+                    // Color coding for low balances
+                    let rowStyle = '';
+                    if (remainingBalance <= 0) {
+                        rowStyle = 'background: #fee; ';
+                    } else if (remainingBalance < 3) {
+                        rowStyle = 'background: #fffbeb; ';
+                    }
+                    
+                    html += `<tr style="border-bottom: 1px solid #eee; ${rowStyle}">`;
+                    html += `<td style="padding: 10px;">${balance.email || '-'}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${balance.full_name || '-'}</strong></td>`;
+                    html += `<td style="padding: 10px;">${balance.department || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${balance.employment_type || '-'}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${yearsOfService}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${annualEntitlement}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${usedDays}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;"><strong style="color: ${remainingBalance <= 0 ? '#dc2626' : remainingBalance < 3 ? '#d97706' : '#059669'};">${remainingBalance}</strong></td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${carriedForward}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;">${totalAvailable}</td>`;
+                    html += `<td style="padding: 10px; text-align: center;"><button class="btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="adjustLeaveBalance('${balance.email}')">Adjust</button></td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${data.length} employee(s)</p>`;
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<p>No leave balance data available.</p>';
+            }
     }
     
     let sickLeaveBalancesData = []; // Store for filtering
@@ -3545,6 +3609,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const employmentActInfoBtn = document.getElementById('employmentActInfoBtn');
     if (employmentActInfoBtn) {
         employmentActInfoBtn.addEventListener('click', showEmploymentActInfo);
+    }
+    
+    // Setup annual leave balance event listeners
+    const annualLeaveEmployeeFilter = document.getElementById('annualLeaveEmployeeFilter');
+    if (annualLeaveEmployeeFilter) {
+        annualLeaveEmployeeFilter.addEventListener('input', applyAnnualLeaveFilters);
+    }
+    
+    const annualLeaveYearSelector = document.getElementById('annualLeaveYearSelector');
+    if (annualLeaveYearSelector) {
+        annualLeaveYearSelector.addEventListener('change', loadLeaveBalances);
+    }
+    
+    const refreshAnnualLeaveBtn = document.getElementById('refreshAnnualLeaveBtn');
+    if (refreshAnnualLeaveBtn) {
+        refreshAnnualLeaveBtn.addEventListener('click', loadLeaveBalances);
     }
     
     // Load all new data on init

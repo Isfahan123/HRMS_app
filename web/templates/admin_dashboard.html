@@ -1266,11 +1266,35 @@
                     
                     <!-- Annual Leave Balance Subtab -->
                     <div id="leaveAnnualBalanceSubtab" class="subtab-content">
-                        <h3>Annual Leave Balance</h3>
-                        <div style="margin-bottom: 15px;">
-                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">Export to CSV</button>
+                        <h3>🏥 Annual Leave Balance Management</h3>
+                        
+                        <!-- Filters and Controls -->
+                        <div style="background: #f7f9fc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 250px;">
+                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Employee:</label>
+                                    <input type="text" id="annualLeaveEmployeeFilter" placeholder="Search by name, email, or department..." 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div style="min-width: 120px;">
+                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Year:</label>
+                                    <select id="annualLeaveYearSelector" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <!-- Years will be populated by JS -->
+                                    </select>
+                                </div>
+                                <div style="padding-top: 26px;">
+                                    <button id="refreshAnnualLeaveBtn" class="btn-secondary" style="padding: 8px 15px;">🔄 Refresh</button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="annualLeaveBalanceTable">Loading...</div>
+                        
+                        <!-- Action Buttons -->
+                        <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                            <button id="exportLeaveBalancesCSVBtn" class="btn-secondary">📊 Export to CSV</button>
+                        </div>
+                        
+                        <!-- Balance Table -->
+                        <div id="annualLeaveBalanceTable" style="overflow-x: auto;">Loading...</div>
                     </div>
                     
                     <!-- Sick Leave Balance Subtab -->
