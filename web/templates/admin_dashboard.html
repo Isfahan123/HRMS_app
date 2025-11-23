@@ -3767,5 +3767,298 @@
             }, 3500);
         }
     </script>
+
+    <!-- Place Lookup Dialog -->
+    <div id="placeLookupModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>🔍 Find Place</h3>
+                <span class="modal-close" onclick="closePlaceLookupModal()">&times;</span>
+            </div>
+            
+            <form id="placeLookupForm" onsubmit="searchPlaces(event)">
+                <div class="form-group">
+                    <label for="placeSearchInput">Search Location:</label>
+                    <input type="text" id="placeSearchInput" placeholder="Type school, institution, or place name and press Enter" style="width: 100%; padding: 10px;" required>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn-primary">🔍 Search</button>
+                </div>
+            </form>
+            
+            <div id="placeSearchResults" style="margin-top: 20px; max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
+                <p style="color: #666; text-align: center;">Enter a search term and press Search to find places</p>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn-primary" onclick="selectPlace()">Select</button>
+                <button type="button" class="btn-secondary" onclick="closePlaceLookupModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Selector Dialog -->
+    <div id="employeeSelectorModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>👥 Select Employee</h3>
+                <span class="modal-close" onclick="closeEmployeeSelectorModal()">&times;</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="employeeSearchInput">Search employees by name or email:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="employeeSearchInput" placeholder="Type to search..." style="flex: 1; padding: 8px;">
+                    <button type="button" class="btn-primary" onclick="searchEmployees()">Search</button>
+                </div>
+            </div>
+            
+            <div id="employeeSelectorResults" style="margin-top: 20px; overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f0f0f0;">
+                            <th style="padding: 10px; text-align: left;">Name</th>
+                            <th style="padding: 10px; text-align: left;">Employee ID</th>
+                            <th style="padding: 10px; text-align: left;">Email</th>
+                            <th style="padding: 10px; text-align: left;">Department</th>
+                            <th style="padding: 10px; text-align: center;">Select</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeSelectorTableBody">
+                        <tr>
+                            <td colspan="5" style="padding: 20px; text-align: center; color: #666;">
+                                Use the search box to find employees
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn-secondary" onclick="closeEmployeeSelectorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Place Lookup Dialog Functions
+        let placeSearchResults = [];
+        let selectedPlaceIndex = -1;
+        let placeLookupCallback = null;
+        
+        function openPlaceLookupModal(callback, initialQuery = '') {
+            document.getElementById('placeLookupModal').style.display = 'block';
+            document.getElementById('placeSearchInput').value = initialQuery;
+            placeLookupCallback = callback;
+            selectedPlaceIndex = -1;
+            
+            if (initialQuery) {
+                searchPlaces(null, initialQuery);
+            }
+        }
+        
+        function closePlaceLookupModal() {
+            document.getElementById('placeLookupModal').style.display = 'none';
+            placeSearchResults = [];
+            selectedPlaceIndex = -1;
+            placeLookupCallback = null;
+            document.getElementById('placeSearchResults').innerHTML = '<p style="color: #666; text-align: center;">Enter a search term and press Search to find places</p>';
+        }
+        
+        async function searchPlaces(event, queryOverride = null) {
+            if (event) event.preventDefault();
+            
+            const query = queryOverride || document.getElementById('placeSearchInput').value.trim();
+            if (!query) {
+                alert('Please enter a search term');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('placeSearchResults');
+            resultsDiv.innerHTML = '<p style="color: #666; text-align: center;">🔍 Searching...</p>';
+            
+            try {
+                // Using existing location autocomplete or fallback
+                placeSearchResults = [
+                    {
+                        properties: {
+                            name: query,
+                            formatted: `${query}, Malaysia`,
+                            city: query.split(',')[0].trim(),
+                            country: 'Malaysia'
+                        }
+                    }
+                ];
+                displayPlaceResults();
+            } catch (error) {
+                console.error('Place search error:', error);
+                resultsDiv.innerHTML = '<p style="color: #f44336; text-align: center;">Error searching places</p>';
+            }
+        }
+        
+        function displayPlaceResults() {
+            const resultsDiv = document.getElementById('placeSearchResults');
+            
+            if (placeSearchResults.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #666; text-align: center;">No results found</p>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 5px;">';
+            placeSearchResults.forEach((result, index) => {
+                const props = result.properties || result;
+                const name = props.name || '';
+                const formatted = props.formatted || props.address || '';
+                const displayText = formatted ? `${name} — ${formatted}` : name;
+                
+                html += `
+                    <div 
+                        class="place-result-item" 
+                        data-index="${index}"
+                        onclick="selectPlaceItem(${index})"
+                        style="padding: 12px; border: 2px solid ${selectedPlaceIndex === index ? '#2196f3' : '#ddd'}; 
+                               border-radius: 5px; cursor: pointer; background: ${selectedPlaceIndex === index ? '#e3f2fd' : 'white'};"
+                        onmouseover="this.style.background='#f5f5f5'"
+                        onmouseout="this.style.background='${selectedPlaceIndex === index ? '#e3f2fd' : 'white'}'"
+                    >
+                        <strong>${name || 'Unknown'}</strong><br>
+                        <small style="color: #666;">${formatted || 'No address available'}</small>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function selectPlaceItem(index) {
+            selectedPlaceIndex = index;
+            displayPlaceResults();
+        }
+        
+        function selectPlace() {
+            if (selectedPlaceIndex < 0 || selectedPlaceIndex >= placeSearchResults.length) {
+                alert('Please select a place from the results');
+                return;
+            }
+            
+            const selectedPlace = placeSearchResults[selectedPlaceIndex];
+            const props = selectedPlace.properties || selectedPlace;
+            
+            if (placeLookupCallback) {
+                placeLookupCallback({
+                    name: props.name || '',
+                    formatted: props.formatted || props.address || '',
+                    city: props.city || '',
+                    country: props.country || '',
+                    full_data: selectedPlace
+                });
+            }
+            
+            closePlaceLookupModal();
+        }
+        
+        // Employee Selector Dialog Functions
+        let employeeSelectorCallback = null;
+        let employeeSelectorResults = [];
+        
+        function openEmployeeSelectorModal(callback, prefilter = '') {
+            document.getElementById('employeeSelectorModal').style.display = 'block';
+            document.getElementById('employeeSearchInput').value = prefilter;
+            employeeSelectorCallback = callback;
+            
+            if (prefilter) {
+                searchEmployees();
+            }
+        }
+        
+        function closeEmployeeSelectorModal() {
+            document.getElementById('employeeSelectorModal').style.display = 'none';
+            employeeSelectorCallback = null;
+            employeeSelectorResults = [];
+            document.getElementById('employeeSelectorTableBody').innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">Use the search box to find employees</td></tr>';
+        }
+        
+        async function searchEmployees() {
+            const query = document.getElementById('employeeSearchInput').value.trim();
+            const tbody = document.getElementById('employeeSelectorTableBody');
+            
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">🔍 Searching...</td></tr>';
+            
+            try {
+                let url = '/api/employees';
+                if (query) {
+                    url += `?search=${encodeURIComponent(query)}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    employeeSelectorResults = data.data;
+                    displayEmployeeResults();
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No employees found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Employee search error:', error);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #f44336;">Error loading employees</td></tr>';
+            }
+        }
+        
+        function displayEmployeeResults() {
+            const tbody = document.getElementById('employeeSelectorTableBody');
+            
+            if (employeeSelectorResults.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No employees found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            employeeSelectorResults.forEach((emp, index) => {
+                html += `
+                    <tr style="border-bottom: 1px solid #ddd;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+                        <td style="padding: 10px;">${emp.full_name || '-'}</td>
+                        <td style="padding: 10px;">${emp.employee_id || emp.id || '-'}</td>
+                        <td style="padding: 10px;">${emp.email || '-'}</td>
+                        <td style="padding: 10px;">${emp.department || '-'}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <button class="btn-primary btn-sm" onclick="selectEmployee(${index})">Select</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        function selectEmployee(index) {
+            if (index < 0 || index >= employeeSelectorResults.length) {
+                return;
+            }
+            
+            const selectedEmployee = employeeSelectorResults[index];
+            
+            if (employeeSelectorCallback) {
+                employeeSelectorCallback(selectedEmployee);
+            }
+            
+            closeEmployeeSelectorModal();
+        }
+        
+        // Make search work on Enter key
+        document.addEventListener('DOMContentLoaded', function() {
+            const employeeSearchInput = document.getElementById('employeeSearchInput');
+            if (employeeSearchInput) {
+                employeeSearchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        searchEmployees();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
