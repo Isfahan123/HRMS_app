@@ -44,11 +44,15 @@ function closeEntitlementModal() {
     document.getElementById('entitlementModal').style.display = 'none';
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize leave configuration
+function initLeaveConfiguration() {
     // Setup leave configuration if tab exists
     const leaveConfigTab = document.getElementById('leaveConfigSubtab');
-    if (!leaveConfigTab) return;
+    if (!leaveConfigTab) {
+        console.warn('Leave config tab not found, scheduling retry...');
+        setTimeout(initLeaveConfiguration, 100);
+        return;
+    }
     
     // Add Leave Type button
     const addLeaveTypeBtn = document.getElementById('addLeaveTypeBtn');
@@ -81,9 +85,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load initial data
+    console.log('Loading leave types and entitlements...');
     loadLeaveTypes();
     loadEntitlements();
-});
+}
+
+// Call initialization immediately since script is loaded at bottom of page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLeaveConfiguration);
+} else {
+    // DOM already loaded
+    initLeaveConfiguration();
+}
 
 /**
  * Load leave types from database
@@ -665,8 +678,8 @@ function resetLeavePolicies() {
     updateCarryForwardFieldsState();
 }
 
-// Event listeners for leave policies
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize leave policies
+function initLeavePolicies() {
     const configurePoliciesBtn = document.getElementById('configureLeavePoliciesBtn');
     if (configurePoliciesBtn) {
         configurePoliciesBtn.addEventListener('click', openLeavePoliciesModal);
@@ -714,8 +727,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load policies summary on page load
+    console.log('Loading leave policies...');
     loadLeavePolicies();
-});
+}
+
+// Initialize leave policies when ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLeavePolicies);
+} else {
+    initLeavePolicies();
+}
 
 window.openLeavePoliciesModal = openLeavePoliciesModal;
 window.closeLeavePoliciesModal = closeLeavePoliciesModal;

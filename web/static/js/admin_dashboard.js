@@ -478,25 +478,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function buildPayrollRunsTable(runs) {
-        let html = '<table><thead><tr>';
-        html += '<th>Employee</th><th>Month</th><th>Basic Salary</th><th>Gross Pay</th><th>Deductions</th><th>Net Pay</th><th>Status</th>';
+        let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
+        html += '<th style="padding: 10px; text-align: left;">Employee</th>';
+        html += '<th style="padding: 10px; text-align: left;">Month</th>';
+        html += '<th style="padding: 10px; text-align: right;">Basic Salary</th>';
+        html += '<th style="padding: 10px; text-align: right;">Gross Pay</th>';
+        html += '<th style="padding: 10px; text-align: right;">Deductions</th>';
+        html += '<th style="padding: 10px; text-align: right;">Net Pay</th>';
+        html += '<th style="padding: 10px; text-align: center;">Status</th>';
         html += '</tr></thead><tbody>';
         
         runs.forEach(run => {
-            html += '<tr>';
+            html += '<tr style="border-bottom: 1px solid #eee;">';
             // Try multiple fields for employee name
             const employeeName = run.employee_name || run.employee?.full_name || run.employee_email || '-';
-            html += `<td>${employeeName}</td>`;
-            html += `<td>${run.month_year || run.payroll_date || '-'}</td>`;
-            html += `<td>${formatCurrency(run.basic_salary)}</td>`;
-            html += `<td>${formatCurrency(run.gross_pay)}</td>`;
-            html += `<td>${formatCurrency(run.total_deductions)}</td>`;
-            html += `<td>${formatCurrency(run.net_pay)}</td>`;
-            html += `<td>${run.status || '-'}</td>`;
+            html += `<td style="padding: 10px;">${employeeName}</td>`;
+            html += `<td style="padding: 10px;">${run.month_year || run.payroll_date || '-'}</td>`;
+            html += `<td style="padding: 10px; text-align: right;">${formatCurrency(run.basic_salary)}</td>`;
+            html += `<td style="padding: 10px; text-align: right;"><strong>${formatCurrency(run.gross_pay)}</strong></td>`;
+            html += `<td style="padding: 10px; text-align: right;">${formatCurrency(run.total_deductions)}</td>`;
+            html += `<td style="padding: 10px; text-align: right;"><strong style="color: #059669;">${formatCurrency(run.net_pay)}</strong></td>`;
+            const statusColor = run.status === 'Completed' ? '#059669' : run.status === 'Pending' ? '#d97706' : '#666';
+            html += `<td style="padding: 10px; text-align: center;"><span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">${run.status || 'Pending'}</span></td>`;
             html += '</tr>';
         });
         
         html += '</tbody></table>';
+        html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${runs.length} payroll record(s)</p>`;
         return html;
     }
     
