@@ -1,4 +1,6 @@
 ---
+# HRMS Web Application - cPanel Deployment Configuration
+# Compatible with Exabytes and other cPanel hosting providers
 deployment:
   tasks:
     - echo "=========================================="

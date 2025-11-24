@@ -5,6 +5,11 @@ This file is the entry point for Passenger (cPanel Python hosting).
 It converts the FastAPI ASGI application to a WSGI application
 that Passenger can serve.
 
+Compatible with:
+- Exabytes cPanel hosting
+- General cPanel with Passenger
+- Any hosting provider that supports Passenger for Python
+
 DO NOT MODIFY unless you know what you're doing!
 """
 

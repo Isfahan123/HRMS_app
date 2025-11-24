@@ -1,5 +1,6 @@
 # HRMS Web Application - Apache/cPanel Configuration
 # This file configures Apache to use Passenger for Python applications
+# Compatible with Exabytes and other cPanel hosting providers
 
 # Enable Passenger
 PassengerEnabled On
@@ -7,13 +8,21 @@ PassengerEnabled On
 # Set the Python version (adjust based on your cPanel Python selector)
 # Update the version number (3.11) to match your virtual environment
 # Common paths: 3.8, 3.9, 3.10, 3.11, 3.12
+# For Exabytes: Replace $CPANEL_USER with your actual cPanel username
 PassengerPython /home/$CPANEL_USER/virtualenv/HRMS_app/3.11/bin/python
 
 # Set the application root
+# For Exabytes: Replace $CPANEL_USER with your actual cPanel username
 PassengerAppRoot /home/$CPANEL_USER/public_html/HRMS_app
 
 # Set the startup file (WSGI entry point)
 PassengerStartupFile passenger_wsgi.py
+
+# Performance tuning for Passenger
+# Adjust based on your hosting plan resources
+PassengerMinInstances 1
+PassengerMaxPoolSize 4
+PassengerStartTimeout 600
 
 # Application environment
 SetEnv ENVIRONMENT production
