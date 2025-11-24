@@ -1261,17 +1261,28 @@ async def get_salary_history():
     Get salary change history for employees
     """
     try:
-        # Query salary history from employee_history table
-        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(100).execute()
+        # Query salary history from employee_history table with employee names
+        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("effective_date", desc=True).limit(100).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        # Filter for salary-related changes
-        salary_changes = [
-            record for record in response.data 
-            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']
-        ]
+        # Filter for salary-related changes and flatten employee data
+        salary_changes = []
+        for record in response.data:
+            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']:
+                # Flatten employee data for frontend
+                if 'employees' in record and record['employees']:
+                    record['employee_name'] = record['employees'].get('full_name', '')
+                    record['employee_email'] = record['employees'].get('email', record.get('employee_email', ''))
+                    # Remove nested object
+                    del record['employees']
+                else:
+                    # Set defaults if employee data is missing
+                    record['employee_name'] = ''
+                    record['employee_email'] = record.get('employee_email', '')
+                
+                salary_changes.append(record)
         
         return {"success": True, "data": salary_changes}
     except Exception as e:
