@@ -1900,7 +1900,8 @@ async def get_relief_overrides():
                         emp_response = supabase.table("employees").select("full_name").eq("id", employee_id).execute()
                         if emp_response.data and len(emp_response.data) > 0:
                             employee_name = emp_response.data[0].get("full_name")
-                    except:
+                    except Exception as e:
+                        print(f"Warning: Could not fetch employee name for {employee_id}: {e}")
                         pass  # If fetch fails, use employee_id
                 
                 overrides.append({
@@ -1935,7 +1936,8 @@ async def create_relief_override(data: Dict[str, Any]):
             if emp_response.data and len(emp_response.data) > 0:
                 employee_name = emp_response.data[0].get("full_name")
                 employee_email = emp_response.data[0].get("email")
-        except:
+        except Exception as e:
+            print(f"Warning: Could not fetch employee info for {employee_id}: {e}")
             pass  # Continue without employee info if fetch fails
         
         # Use effective_year to create effective_from date
@@ -1977,7 +1979,8 @@ async def update_relief_override(override_id: str, data: Dict[str, Any]):
                 if emp_response.data and len(emp_response.data) > 0:
                     employee_name = emp_response.data[0].get("full_name")
                     employee_email = emp_response.data[0].get("email")
-            except:
+            except Exception as e:
+                print(f"Warning: Could not fetch employee info for {employee_id}: {e}")
                 pass
         
         # Use effective_year to update effective_from/to dates
