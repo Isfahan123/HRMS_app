@@ -592,7 +592,7 @@ function populateReliefItemTable() {
         }
         
         html += `
-            <tr class="relief-item-row" data-key="${item.key}" data-code="${item.code}" data-desc="${item.description.toLowerCase()}">
+            <tr class="relief-item-row" data-key="${item.key}" data-code="${item.code}" data-desc="${item.description.toLowerCase()}" onclick="selectReliefRow(this)">
                 <td style="padding: 8px;">${item.code}</td>
                 <td style="padding: 8px;">${item.key}</td>
                 <td style="padding: 8px;">${item.description}</td>
@@ -605,7 +605,8 @@ function populateReliefItemTable() {
                            step="0.01" 
                            min="0"
                            style="width: 100px; padding: 4px;"
-                           onchange="updateItemEffective('${item.key}')">
+                           onchange="updateItemEffective('${item.key}')"
+                           onfocus="selectReliefRow(this.closest('tr'))">
                 </td>
                 <td style="padding: 8px; text-align: right; background: ${bgColor};" id="eff_${item.key}">
                     ${effectiveCap ? formatMoney(effectiveCap) : '-'}
@@ -615,7 +616,8 @@ function populateReliefItemTable() {
                            id="pcb_${item.key}" 
                            ${pcbChecked}
                            ${pcbIndeterminate}
-                           onchange="updateItemEffective('${item.key}')">
+                           onchange="updateItemEffective('${item.key}')"
+                           onfocus="selectReliefRow(this.closest('tr'))">
                 </td>
                 <td style="padding: 8px; text-align: right;">${defaultCycle || '-'}</td>
                 <td style="padding: 8px;">
@@ -625,7 +627,8 @@ function populateReliefItemTable() {
                            placeholder="(inherit)"
                            step="1" 
                            min="0"
-                           style="width: 80px; padding: 4px;">
+                           style="width: 80px; padding: 4px;"
+                           onfocus="selectReliefRow(this.closest('tr'))">
                 </td>
             </tr>
         `;
@@ -818,9 +821,76 @@ async function saveReliefOverrides() {
     }
 }
 
+// Select a relief row (for visual feedback like Python GUI)
+let selectedReliefRow = null;
+function selectReliefRow(row) {
+    // Remove previous selection
+    if (selectedReliefRow) {
+        selectedReliefRow.style.backgroundColor = '';
+    }
+    // Highlight new selection
+    if (row) {
+        row.style.backgroundColor = '#e3f2fd';
+        selectedReliefRow = row;
+    }
+}
+
 // Reload relief overrides
 function reloadReliefOverrides() {
     loadReliefOverridesFromAPI();
+}
+
+// Clear selected relief override (matches Python GUI)
+async function clearSelectedReliefOverride() {
+    let itemKey = null;
+    
+    // Try to get item key from selected row
+    if (selectedReliefRow) {
+        itemKey = selectedReliefRow.dataset.key;
+    }
+    
+    // If no selected row, try focused element
+    if (!itemKey) {
+        const focusedElement = document.activeElement;
+        if (focusedElement && focusedElement.id) {
+            const match = focusedElement.id.match(/^(cap|pcb|cycle)_(.+)$/);
+            if (match) {
+                itemKey = match[2];
+            }
+        }
+    }
+    
+    // If still no item key, show error
+    if (!itemKey) {
+        showMessage('Please select a row first by clicking on it', 'warning');
+        return;
+    }
+    
+    // Check if this item has an override
+    if (!itemOverrides[itemKey]) {
+        showMessage(`No override found for item: ${itemKey}`, 'warning');
+        return;
+    }
+    
+    if (!confirm(`Clear override for item "${itemKey}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/lhdn/relief-item-overrides/${itemKey}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showMessage(`Cleared override for ${itemKey}`, 'success');
+            await loadReliefOverridesFromAPI();
+        } else {
+            showMessage('Error clearing override', 'error');
+        }
+    } catch (error) {
+        console.error('Error clearing override:', error);
+        showMessage('Error clearing override: ' + error.message, 'error');
+    }
 }
 
 // Clear all relief overrides
