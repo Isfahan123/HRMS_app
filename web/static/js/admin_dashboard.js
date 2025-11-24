@@ -486,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '<th style="padding: 10px; text-align: right;">Deductions</th>';
         html += '<th style="padding: 10px; text-align: right;">Net Pay</th>';
         html += '<th style="padding: 10px; text-align: center;">Status</th>';
+        html += '<th style="padding: 10px; text-align: center;">Actions</th>';
         html += '</tr></thead><tbody>';
         
         runs.forEach(run => {
@@ -500,6 +501,19 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<td style="padding: 10px; text-align: right;"><strong style="color: #059669;">${formatCurrency(run.net_pay)}</strong></td>`;
             const statusColor = run.status === 'Completed' ? '#059669' : run.status === 'Pending' ? '#d97706' : '#666';
             html += `<td style="padding: 10px; text-align: center;"><span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">${run.status || 'Pending'}</span></td>`;
+            
+            // Actions column with download payslip button
+            html += '<td style="padding: 10px; text-align: center;">';
+            // Need employee_id and payroll run id for download
+            const employeeId = run.employee_id || run.employee?.id;
+            const payrollRunId = run.id;
+            if (employeeId && payrollRunId) {
+                html += `<button onclick="downloadPayslip('${employeeId}', '${payrollRunId}')" class="btn-sm btn-secondary" title="Download Payslip PDF">📄 Payslip</button>`;
+            } else {
+                html += '<span style="color: #999;">N/A</span>';
+            }
+            html += '</td>';
+            
             html += '</tr>';
         });
         
@@ -507,6 +521,42 @@ document.addEventListener('DOMContentLoaded', function() {
         html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${runs.length} payroll record(s)</p>`;
         return html;
     }
+    
+    // Global function for downloading payslip
+    window.downloadPayslip = async function(employeeId, payrollRunId) {
+        try {
+            // Show loading state
+            console.log(`Downloading payslip for employee ${employeeId}, payroll run ${payrollRunId}`);
+            
+            // Fetch the payslip PDF
+            const response = await fetch(`/api/payroll/payslip/${employeeId}/${payrollRunId}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to generate payslip');
+            }
+            
+            // Get the blob data
+            const blob = await response.blob();
+            
+            // Create a download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `payslip_${employeeId}_${payrollRunId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            console.log('Payslip downloaded successfully');
+        } catch (error) {
+            console.error('Error downloading payslip:', error);
+            alert('Error downloading payslip: ' + error.message);
+        }
+    };
     
     // Global functions for leave approval
     window.approveLeave = async function(leaveId) {
