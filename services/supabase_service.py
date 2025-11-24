@@ -1808,11 +1808,15 @@ def get_all_attendance_records() -> list:
         records = []
         for record in result.data:
             if 'employees' in record and record['employees']:
-                # Add flattened fields for frontend
-                record['full_name'] = record['employees']['full_name']
-                record['email'] = record['employees']['email']
+                # Add flattened fields for frontend using .get() for safety
+                record['full_name'] = record['employees'].get('full_name', '')
+                record['email'] = record['employees'].get('email', record.get('employee_email', ''))
                 # Remove nested object to avoid duplication
                 del record['employees']
+            else:
+                # Set default values if employee data is missing
+                record['full_name'] = ''
+                record['email'] = record.get('employee_email', '')
             records.append(record)
         
         return records
