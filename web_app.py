@@ -12,6 +12,7 @@ import os
 import csv
 import io
 import requests
+import logging
 from datetime import datetime
 
 # Import configuration
@@ -794,6 +795,41 @@ async def delete_bonus(bonus_id: str):
         print(f"Error deleting bonus: {str(e)}")
         return {"success": False, "message": str(e)}
 
+def _safe_to_float(value):
+    """
+    Safely convert a value to float, handling dicts, numbers, and None.
+    
+    Args:
+        value: Can be None, a number, a string, or a dictionary
+        
+    Returns:
+        float: Converted value or 0.0 on failure
+        
+    Examples:
+        - _safe_to_float(None) -> 0.0
+        - _safe_to_float(100) -> 100.0
+        - _safe_to_float("150") -> 150.0
+        - _safe_to_float({"transport": 100, "housing": 200}) -> 300.0
+        - _safe_to_float({}) -> 0.0
+    """
+    if value is None:
+        return 0.0
+    if isinstance(value, dict):
+        # Sum all numeric values in the dictionary
+        total = 0.0
+        for key, v in value.items():
+            if v is not None:
+                try:
+                    total += float(v)
+                except (ValueError, TypeError):
+                    logging.warning(f"Could not convert dictionary value for key '{key}': {v!r}")
+        return total
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        logging.warning(f"Could not convert value to float: {value!r}")
+        return 0.0
+
 @app.get("/api/payroll/payslip/{employee_id}/{payroll_run_id}")
 async def generate_payslip(employee_id: str, payroll_run_id: str):
     """
@@ -828,14 +864,14 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
             "position": employee.get("position", ""),
             "pay_period": payroll.get("month_year", ""),
             "pay_date": payroll.get("created_at", "")[:10] if payroll.get("created_at") else "",
-            "basic_salary": float(payroll.get("basic_salary", 0)),
-            "allowances": float(payroll.get("allowances", 0)),
-            "bonuses": float(payroll.get("bonuses", 0)),
-            "epf_employee": float(payroll.get("epf_employee", 0)),
-            "socso_employee": float(payroll.get("socso_employee", 0)),
-            "eis": float(payroll.get("eis", 0)),
-            "pcb": float(payroll.get("pcb", 0)),
-            "unpaid_leave_deduction": float(payroll.get("unpaid_leave_deduction", 0))
+            "basic_salary": _safe_to_float(payroll.get("basic_salary", 0)),
+            "allowances": _safe_to_float(payroll.get("allowances", 0)),
+            "bonuses": _safe_to_float(payroll.get("bonuses", 0)),
+            "epf_employee": _safe_to_float(payroll.get("epf_employee", 0)),
+            "socso_employee": _safe_to_float(payroll.get("socso_employee", 0)),
+            "eis": _safe_to_float(payroll.get("eis", 0)),
+            "pcb": _safe_to_float(payroll.get("pcb", 0)),
+            "unpaid_leave_deduction": _safe_to_float(payroll.get("unpaid_leave_deduction", 0))
         }
         
         # Create temp directory for output
