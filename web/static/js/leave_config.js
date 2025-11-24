@@ -16,11 +16,6 @@ function showAddLeaveTypeModal() {
     document.getElementById('leaveTypeId').value = '';
     currentLeaveTypeId = null;
     
-    // Set default values
-    document.getElementById('leaveTypeColor').value = '#3498db';
-    document.getElementById('leaveTypeRequiresApproval').checked = true;
-    document.getElementById('leaveTypeIsPaid').checked = true;
-    
     document.getElementById('leaveTypeModal').style.display = 'block';
 }
 
@@ -204,7 +199,7 @@ function renderLeaveTypesTable() {
     if (!tbody) return;
     
     if (currentLeaveTypes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">No leave types found. Click "Add Leave Type" to create one.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">No leave types found. Click "Add Leave Type" to create one.</td></tr>';
         return;
     }
     
@@ -215,19 +210,12 @@ function renderLeaveTypesTable() {
             <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 8px;">${statusBadge}</td>
                 <td style="padding: 8px;"><strong>${type.code || '-'}</strong></td>
-                <td style="padding: 8px;">
-                    <span style="display: inline-block; width: 20px; height: 20px; background: ${type.color || '#ccc'}; border-radius: 3px; margin-right: 5px;"></span>
-                    ${type.name}
-                </td>
-                <td style="padding: 8px; font-size: 0.9em;">${type.description || '-'}</td>
+                <td style="padding: 8px;">${type.name}</td>
                 <td style="padding: 8px; text-align: center;">${type.deduct_from || 'none'}</td>
-                <td style="padding: 8px; text-align: center;">${type.requires_approval ? '✓' : '○'}</td>
                 <td style="padding: 8px; text-align: center;">${type.requires_document ? '✓' : '○'}</td>
-                <td style="padding: 8px; text-align: center;">${type.default_duration || 1.0} / ${type.max_duration || '-'} days</td>
-                <td style="padding: 8px; text-align: center;">
-                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editLeaveType(${type.id})">✏️ Edit</button>
-                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteLeaveType(${type.id})">🗑️ Delete</button>
-                </td>
+                <td style="padding: 8px; text-align: center;">${type.default_duration || 1.0}</td>
+                <td style="padding: 8px; text-align: center;">${type.max_duration || '-'}</td>
+                <td style="padding: 8px; font-size: 0.9em;">${type.description || '-'}</td>
             </tr>
         `;
     });
@@ -357,11 +345,8 @@ async function saveLeaveType() {
         code: document.getElementById('leaveTypeCode').value.toLowerCase().trim(),
         name: document.getElementById('leaveTypeName').value.trim(),
         description: document.getElementById('leaveTypeDescription').value.trim(),
-        color: document.getElementById('leaveTypeColor').value,
         deduct_from: document.getElementById('leaveTypeDeductFrom').value,
-        requires_approval: document.getElementById('leaveTypeRequiresApproval').checked,
         requires_document: document.getElementById('leaveTypeRequiresDocument').checked,
-        is_paid: document.getElementById('leaveTypeIsPaid').checked,
         default_duration: parseFloat(document.getElementById('leaveTypeDefaultDuration').value),
         max_duration: parseFloat(document.getElementById('leaveTypeMaxDuration').value),
         is_active: true
@@ -424,11 +409,8 @@ function editLeaveType(leaveTypeId) {
     document.getElementById('leaveTypeCode').value = leaveType.code || '';
     document.getElementById('leaveTypeName').value = leaveType.name || '';
     document.getElementById('leaveTypeDescription').value = leaveType.description || '';
-    document.getElementById('leaveTypeColor').value = leaveType.color || '#3498db';
     document.getElementById('leaveTypeDeductFrom').value = leaveType.deduct_from || 'none';
-    document.getElementById('leaveTypeRequiresApproval').checked = leaveType.requires_approval !== false;
     document.getElementById('leaveTypeRequiresDocument').checked = leaveType.requires_document === true;
-    document.getElementById('leaveTypeIsPaid').checked = leaveType.is_paid !== false;
     document.getElementById('leaveTypeDefaultDuration').value = leaveType.default_duration || 1.0;
     document.getElementById('leaveTypeMaxDuration').value = leaveType.max_duration || 14.0;
     

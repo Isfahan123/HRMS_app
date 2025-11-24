@@ -1363,17 +1363,16 @@
                                         <th style="padding: 8px;">Active</th>
                                         <th style="padding: 8px;">Code</th>
                                         <th style="padding: 8px;">Name</th>
-                                        <th style="padding: 8px;">Description</th>
                                         <th style="padding: 8px; text-align: center;">Deduct From</th>
-                                        <th style="padding: 8px; text-align: center;">Approval</th>
-                                        <th style="padding: 8px; text-align: center;">Doc</th>
-                                        <th style="padding: 8px; text-align: center;">Duration</th>
-                                        <th style="padding: 8px; text-align: center;">Actions</th>
+                                        <th style="padding: 8px; text-align: center;">Requires Doc</th>
+                                        <th style="padding: 8px; text-align: center;">Default Duration</th>
+                                        <th style="padding: 8px; text-align: center;">Max Duration</th>
+                                        <th style="padding: 8px;">Description</th>
                                     </tr>
                                 </thead>
                                 <tbody id="leaveTypesTableBody">
                                     <tr>
-                                        <td colspan="9" style="text-align: center; padding: 20px;">Loading...</td>
+                                        <td colspan="8" style="text-align: center; padding: 20px;">Loading...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1442,20 +1441,14 @@
                                         <textarea id="leaveTypeDescription" rows="2" style="width: 100%; padding: 8px;"
                                                   placeholder="Brief description"></textarea>
                                     </div>
-                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                        <div class="form-group">
-                                            <label for="leaveTypeColor">Display Color:</label>
-                                            <input type="color" id="leaveTypeColor" value="#3498db" style="width: 100px; height: 40px;">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="leaveTypeDeductFrom">Deduct From:</label>
-                                            <select id="leaveTypeDeductFrom" style="width: 100%; padding: 8px;">
-                                                <option value="none">None</option>
-                                                <option value="annual">Annual Leave</option>
-                                                <option value="sick">Sick Leave</option>
-                                                <option value="unpaid">Unpaid Leave</option>
-                                            </select>
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="leaveTypeDeductFrom">Deduct From:</label>
+                                        <select id="leaveTypeDeductFrom" style="width: 100%; padding: 8px;">
+                                            <option value="none">None</option>
+                                            <option value="annual">Annual Leave</option>
+                                            <option value="sick">Sick Leave</option>
+                                            <option value="unpaid">Unpaid Leave</option>
+                                        </select>
                                     </div>
                                     <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                         <div class="form-group">
@@ -1469,18 +1462,10 @@
                                                    style="width: 100%; padding: 8px;">
                                         </div>
                                     </div>
-                                    <div class="form-group" style="display: flex; gap: 20px;">
-                                        <label>
-                                            <input type="checkbox" id="leaveTypeRequiresApproval" checked>
-                                            Requires Approval
-                                        </label>
+                                    <div class="form-group">
                                         <label>
                                             <input type="checkbox" id="leaveTypeRequiresDocument">
-                                            Requires Document
-                                        </label>
-                                        <label>
-                                            <input type="checkbox" id="leaveTypeIsPaid" checked>
-                                            Is Paid
+                                            Requires Document (e.g., medical certificate)
                                         </label>
                                     </div>
                                     <div style="margin-top: 20px;">
