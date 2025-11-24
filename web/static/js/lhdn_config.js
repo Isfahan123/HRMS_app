@@ -724,7 +724,7 @@ function applyReliefFilter() {
             const cycleInput = document.getElementById(`cycle_${itemKey}`);
             
             matchesOverridden = (capInput && capInput.value.trim()) || 
-                               (pcbInput && pcbInput.checked) || 
+                               (pcbInput && (pcbInput.checked || pcbInput.indeterminate === false)) || 
                                (cycleInput && cycleInput.value.trim());
         }
         
@@ -769,14 +769,31 @@ async function saveReliefOverrides() {
             const cycleInput = document.getElementById(`cycle_${item.key}`);
             
             const capValue = capInput?.value.trim();
-            const pcbValue = pcbInput?.checked ? true : (pcbInput?.indeterminate ? null : false);
+            const pcbValue = pcbInput ? (pcbInput.checked ? true : (pcbInput.indeterminate === true ? null : false)) : null;
             const cycleValue = cycleInput?.value.trim();
             
-            if (capValue || pcbValue !== null || cycleValue) {
+            // Check if there are actual overrides to save
+            const hasCapOverride = capValue && !isNaN(parseFloat(capValue));
+            const hasPcbOverride = pcbValue !== null && pcbValue !== false;
+            const hasCycleOverride = cycleValue && !isNaN(parseInt(cycleValue));
+            
+            if (hasCapOverride || hasPcbOverride || hasCycleOverride) {
                 const payload = { item_key: item.key };
-                if (capValue) payload.cap = parseFloat(capValue);
-                if (pcbValue !== null) payload.pcb_only = pcbValue;
-                if (cycleValue) payload.cycle_years = parseInt(cycleValue);
+                if (hasCapOverride) {
+                    const parsedCap = parseFloat(capValue);
+                    if (!isNaN(parsedCap) && parsedCap >= 0) {
+                        payload.cap = parsedCap;
+                    }
+                }
+                if (hasPcbOverride) {
+                    payload.pcb_only = pcbValue;
+                }
+                if (hasCycleOverride) {
+                    const parsedCycle = parseInt(cycleValue);
+                    if (!isNaN(parsedCycle) && parsedCycle > 0) {
+                        payload.cycle_years = parsedCycle;
+                    }
+                }
                 
                 const response = await fetch('/api/admin/lhdn/relief-item-overrides', {
                     method: 'POST',
