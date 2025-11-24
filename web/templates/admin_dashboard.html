@@ -2136,23 +2136,63 @@
                         
                         <!-- Tax Relief Max Sub-subtab -->
                         <div id="lhdnReliefMaxSubtab" class="subtab-content">
-                            <h4>💼 Tax Relief Maximum Amounts</h4>
-                            <p style="color: #666; margin-bottom: 20px;">Configure maximum relief amounts for various categories</p>
+                            <h4>💼 TP1 Relief Configuration</h4>
+                            <p style="color: #666; margin-bottom: 20px;">Configure relief item caps, PCB-only flags, and cycle years. Blank override cells inherit catalog defaults.</p>
                             
-                            <button class="btn-primary" onclick="editAllReliefs()" style="margin-bottom: 15px;">✏️ Edit All Reliefs</button>
+                            <!-- Group Caps Table -->
+                            <div style="margin-bottom: 40px;">
+                                <h5 style="color: #667eea; margin-bottom: 15px;">📊 Relief Group Caps</h5>
+                                <button class="btn-primary btn-sm" onclick="editReliefGroups()" style="margin-bottom: 10px;">✏️ Edit Group Caps</button>
+                                
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 10px; text-align: left;">Group ID</th>
+                                            <th style="padding: 10px; text-align: left;">Description</th>
+                                            <th style="padding: 10px; text-align: right;">Default Cap (RM)</th>
+                                            <th style="padding: 10px; text-align: right;">Override Cap (RM)</th>
+                                            <th style="padding: 10px; text-align: right;">Effective Cap (RM)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reliefGroupsBody">
+                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                             
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="background: #667eea; color: white;">
-                                        <th style="padding: 10px; text-align: left;">Relief Category</th>
-                                        <th style="padding: 10px; text-align: right;">Maximum Amount (RM)</th>
-                                        <th style="padding: 10px; text-align: center;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reliefMaxBody">
-                                    <tr><td colspan="3" style="padding: 15px; text-align: center;">Loading...</td></tr>
-                                </tbody>
-                            </table>
+                            <!-- Relief Items Table -->
+                            <div>
+                                <h5 style="color: #667eea; margin-bottom: 15px;">📋 Relief Item Configuration</h5>
+                                <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+                                    <button class="btn-primary btn-sm" onclick="editAllReliefs()">✏️ Edit All Items</button>
+                                    <input type="text" id="reliefItemFilter" placeholder="Filter by code, key, or description..." 
+                                           style="padding: 8px; width: 300px;">
+                                    <label style="display: flex; align-items: center; gap: 5px;">
+                                        <input type="checkbox" id="showOverriddenOnly">
+                                        <span>Only Show Overridden</span>
+                                    </label>
+                                </div>
+                                
+                                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 8px; text-align: left;">Code</th>
+                                            <th style="padding: 8px; text-align: left;">Item Key</th>
+                                            <th style="padding: 8px; text-align: left;">Description</th>
+                                            <th style="padding: 8px; text-align: right;">Default Cap (RM)</th>
+                                            <th style="padding: 8px; text-align: right;">Override Cap (RM)</th>
+                                            <th style="padding: 8px; text-align: right;">Effective Cap (RM)</th>
+                                            <th style="padding: 8px; text-align: center;">PCB Only?</th>
+                                            <th style="padding: 8px; text-align: center;">Default Cycle (Yrs)</th>
+                                            <th style="padding: 8px; text-align: center;">Override Cycle (Yrs)</th>
+                                            <th style="padding: 8px; text-align: center;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reliefMaxBody">
+                                        <tr><td colspan="10" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         
                         <!-- Relief Overrides Sub-subtab -->
@@ -2909,11 +2949,12 @@
     </div>
     
     <div id="reliefEditModal" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 650px;">
             <span class="close" onclick="closeReliefEditModal()">&times;</span>
-            <h3>Edit Tax Relief Maximum</h3>
+            <h3>Edit Relief Item Configuration</h3>
             <form id="reliefEditForm">
                 <input type="hidden" id="reliefCode" value="">
+                <input type="hidden" id="reliefItemKey" value="">
                 <input type="hidden" id="reliefIndex" value="">
                 
                 <div class="form-group">
@@ -2926,15 +2967,52 @@
                     <textarea id="reliefDescription" rows="2" readonly style="background: #f5f5f5;"></textarea>
                 </div>
                 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="reliefDefaultCap">Default Cap (RM):</label>
+                        <input type="number" id="reliefDefaultCap" step="0.01" min="0" readonly style="background: #f5f5f5;">
+                        <small style="color: #666;">Catalog default value</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reliefOverrideCap">Override Cap (RM):</label>
+                        <input type="number" id="reliefOverrideCap" step="0.01" min="0">
+                        <small style="color: #666;">Leave blank to inherit default</small>
+                    </div>
+                </div>
+                
                 <div class="form-group">
-                    <label for="reliefMaxAmount">Maximum Amount (RM):*</label>
-                    <input type="number" id="reliefMaxAmount" step="0.01" min="0" required>
-                    <small style="color: #666;">Maximum deductible amount for this relief category</small>
+                    <label for="reliefEffectiveCap">Effective Cap (RM):</label>
+                    <input type="number" id="reliefEffectiveCap" step="0.01" min="0" readonly style="background: #e8f5e9;">
+                    <small style="color: #666;">Calculated: Override or Default</small>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="reliefPcbOnly">
+                        <span>PCB Only (Employee pays via employer only)</span>
+                    </label>
+                    <small style="color: #666;">Check if relief is only claimable via PCB, not in TP1</small>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="reliefDefaultCycle">Default Cycle (Years):</label>
+                        <input type="number" id="reliefDefaultCycle" step="1" min="0" readonly style="background: #f5f5f5;">
+                        <small style="color: #666;">Catalog default cycle</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reliefOverrideCycle">Override Cycle (Years):</label>
+                        <input type="number" id="reliefOverrideCycle" step="1" min="0">
+                        <small style="color: #666;">Leave blank to inherit default</small>
+                    </div>
                 </div>
                 
                 <div style="margin-top: 20px; display: flex; gap: 10px;">
                     <button type="submit" class="btn-primary">💾 Save</button>
                     <button type="button" class="btn-secondary" onclick="closeReliefEditModal()">Cancel</button>
+                    <button type="button" class="btn-secondary" onclick="clearReliefOverrides()" style="margin-left: auto;">🔄 Clear All Overrides</button>
                 </div>
                 
                 <div id="reliefEditMessage" style="display: none; margin-top: 15px;"></div>
