@@ -17,8 +17,8 @@ class Config:
     APP_VERSION = "2.0.0"
     APP_DESCRIPTION = "Human Resource Management System"
     
-    # Environment
-    ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
+    # Environment (defaults to development for safety)
+    ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes", "on")
     
     # Web Server

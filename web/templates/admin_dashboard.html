@@ -3139,18 +3139,19 @@
         </div>
     </div>
 
-    <script src="/static/js/ux-utils.js"></script>
-    <script src="/static/js/help-overlay.js"></script>
-    <script src="/static/js/table-enhancements.js"></script>
-    <script src="/static/js/location-autocomplete.js"></script>
-    <script src="/static/js/employee-selector.js"></script>
-    <script src="/static/js/pending-requests-widget.js"></script>
-    <script src="/static/js/tp1-reliefs.js"></script>
-    <script src="/static/js/admin_dashboard.js"></script>
-    <script src="/static/js/bonus.js"></script>
-    <script src="/static/js/calendar.js"></script>
-    <script src="/static/js/leave_config.js"></script>
-    <script src="/static/js/lhdn_config.js"></script>
+    {% include 'includes/app_config.html' %}
+    <script src="/static/js/ux-utils.js?v={{ app_version }}"></script>
+    <script src="/static/js/help-overlay.js?v={{ app_version }}"></script>
+    <script src="/static/js/table-enhancements.js?v={{ app_version }}"></script>
+    <script src="/static/js/location-autocomplete.js?v={{ app_version }}"></script>
+    <script src="/static/js/employee-selector.js?v={{ app_version }}"></script>
+    <script src="/static/js/pending-requests-widget.js?v={{ app_version }}"></script>
+    <script src="/static/js/tp1-reliefs.js?v={{ app_version }}"></script>
+    <script src="/static/js/admin_dashboard.js?v={{ app_version }}"></script>
+    <script src="/static/js/bonus.js?v={{ app_version }}"></script>
+    <script src="/static/js/calendar.js?v={{ app_version }}"></script>
+    <script src="/static/js/leave_config.js?v={{ app_version }}"></script>
+    <script src="/static/js/lhdn_config.js?v={{ app_version }}"></script>
     
     <script>
         // Bonus form toggle functions (matching Python GUI behavior)
@@ -4306,6 +4307,5 @@
             }
         });
     </script>
-    {% include 'includes/app_config.html' %}
 </body>
 </html>
