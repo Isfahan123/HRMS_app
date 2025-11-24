@@ -1281,7 +1281,7 @@
                                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                                 </div>
                                 <div style="min-width: 120px;">
-                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Year:</label>
+                                    <label for="annualLeaveYearSelector" style="font-weight: 600; margin-bottom: 5px; display: block;">Year:</label>
                                     <select id="annualLeaveYearSelector" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                                         <!-- Years will be populated by JS -->
                                     </select>
@@ -1316,7 +1316,7 @@
                                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                                 </div>
                                 <div style="min-width: 120px;">
-                                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Year:</label>
+                                    <label for="sickLeaveYearSelector" style="font-weight: 600; margin-bottom: 5px; display: block;">Year:</label>
                                     <select id="sickLeaveYearSelector" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                                         <!-- Years will be populated by JS -->
                                     </select>
@@ -2987,7 +2987,7 @@
                 </div>
                 
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Type:</label>
+                    <label for="holidayType" style="display: block; margin-bottom: 5px; font-weight: bold;">Type:</label>
                     <select id="holidayType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <option value="national">🇲🇾 National</option>
                         <option value="state">📍 State Specific</option>
@@ -3610,7 +3610,7 @@
                     <strong style="min-width: 60px;">Child ${childIndex + 1}:</strong>
                     <div style="flex: 1; min-width: 200px;">
                         <label style="font-size: 11px; display: block; margin-bottom: 3px;">Category:</label>
-                        <select class="child-category" onchange="updateChildrenSummary()" style="width: 100%; padding: 5px; font-size: 12px;">
+                        <select class="child-category" onchange="updateChildrenSummary()" style="width: 100%; padding: 5px; font-size: 12px;" aria-label="Child ${childIndex + 1} category">
                             <option value="normal_under_18">Normal - Under 18 years (RM2,000)</option>
                             <option value="normal_18_matric">Normal - 18+ matrikulasi/A-Level Malaysia (RM2,000)</option>
                             <option value="normal_18_diploma">Normal - 18+ diploma/degree (RM8,000)</option>
@@ -3620,7 +3620,7 @@
                     </div>
                     <div style="min-width: 150px;">
                         <label style="font-size: 11px; display: block; margin-bottom: 3px;">Custody:</label>
-                        <select class="child-custody" onchange="updateChildrenSummary()" style="width: 100%; padding: 5px; font-size: 12px;">
+                        <select class="child-custody" onchange="updateChildrenSummary()" style="width: 100%; padding: 5px; font-size: 12px;" aria-label="Child ${childIndex + 1} custody percentage">
                             <option value="100">100% (Full claim)</option>
                             <option value="50">50% (Shared)</option>
                             <option value="0">0% (Not claimed)</option>
