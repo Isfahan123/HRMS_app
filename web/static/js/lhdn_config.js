@@ -823,6 +823,8 @@ async function saveReliefOverrides() {
 
 // Select a relief row (for visual feedback like Python GUI)
 let selectedReliefRow = null;
+const SELECTED_ROW_BG_COLOR = '#e3f2fd';
+
 function selectReliefRow(row) {
     // Remove previous selection
     if (selectedReliefRow) {
@@ -830,7 +832,7 @@ function selectReliefRow(row) {
     }
     // Highlight new selection
     if (row) {
-        row.style.backgroundColor = '#e3f2fd';
+        row.style.backgroundColor = SELECTED_ROW_BG_COLOR;
         selectedReliefRow = row;
     }
 }
@@ -867,7 +869,7 @@ async function clearSelectedReliefOverride() {
     }
     
     // Check if this item has an override
-    if (!itemOverrides[itemKey]) {
+    if (!itemOverrides || !itemOverrides[itemKey]) {
         showMessage(`No override found for item: ${itemKey}`, 'warning');
         return;
     }
