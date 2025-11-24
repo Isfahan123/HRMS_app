@@ -48,9 +48,9 @@
                     
                     <!-- Search and Filter Bar -->
                     <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
-                        <input type="text" id="employeeSearchInput" placeholder="🔍 Search employees..." style="padding: 8px; min-width: 250px;">
+                        <input type="text" id="employeeSearchInput" placeholder="🔍 Search employees..." style="padding: 8px; min-width: 250px;" aria-label="Search employees">
                         
-                        <select id="departmentFilter" style="padding: 8px;">
+                        <select id="departmentFilter" style="padding: 8px;" aria-label="Filter by department">
                             <option value="">All Departments</option>
                             <option value="IT">IT</option>
                             <option value="HR">HR</option>
@@ -59,7 +59,7 @@
                             <option value="Operations">Operations</option>
                         </select>
                         
-                        <select id="religionFilter" style="padding: 8px;">
+                        <select id="religionFilter" style="padding: 8px;" aria-label="Filter by religion">
                             <option value="">All Religions</option>
                             <option value="Islam">Islam</option>
                             <option value="Christianity">Christianity</option>
@@ -1047,11 +1047,11 @@
                         <input type="date" id="attendanceEndDate" style="padding: 8px;">
                         
                         <label>🔍 Filter by:</label>
-                        <select id="attendanceFilterField" style="padding: 8px;">
+                        <select id="attendanceFilterField" style="padding: 8px;" aria-label="Select attendance filter field">
                             <option value="email">Email</option>
                             <option value="date">Date</option>
                         </select>
-                        <input type="text" id="attendanceSearchInput" placeholder="Search..." style="padding: 8px; min-width: 200px;">
+                        <input type="text" id="attendanceSearchInput" placeholder="Search..." style="padding: 8px; min-width: 200px;" aria-label="Search attendance records">
                         
                         <button id="exportAttendanceCSVBtn" class="btn-secondary">📤 Export to CSV</button>
                     </div>
@@ -1113,7 +1113,7 @@
                                 <button id="exportLeaveRequestsCSVBtn" class="btn-secondary">Export to CSV</button>
                             </div>
                             <div>
-                                <select id="leaveStatusFilter">
+                                <select id="leaveStatusFilter" aria-label="Filter leave requests by status">
                                     <option value="">All Statuses</option>
                                     <option value="approved">Approved</option>
                                     <option value="rejected">Rejected</option>
