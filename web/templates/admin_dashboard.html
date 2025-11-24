@@ -1948,6 +1948,74 @@
                                     </div>
                                 </fieldset>
 
+                                <!-- Part C: 60+ - PRs + Non-citizens (before 1 Aug 1998) -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 5px;">Part C: 60 and above - PRs + Non-citizens (elected before 1 Aug 1998)</legend>
+                                    <p style="color: #666; font-size: 11px; font-style: italic; margin: 5px 0 10px 0;">
+                                        Permanent residents and non-citizens 60+ who elected before 1 Aug 1998
+                                    </p>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (Table):</label>
+                                            <input type="number" id="epfPartCEmployee" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer (Table, Fixed RM):</label>
+                                            <input type="number" id="epfPartCEmployerFixed" value="5.0" min="0" max="50" step="1" style="width: 100px;"> RM
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="margin: 15px 0 10px 0; color: #2c3e50;">For wages exceeding RM20,000:</h5>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartCEmployeeOver20k" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartCEmployerOver20k" value="6.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="margin: 15px 0 10px 0; color: #8B4513;">Bonus Rule (basic ≤RM5k + bonus >RM5k):</h5>
+                                    <div class="form-group">
+                                        <label>Employer Rate (Bonus Rule):</label>
+                                        <input type="number" id="epfPartCEmployerBonus" value="6.5" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                    </div>
+                                </fieldset>
+
+                                <!-- Part D: 60+ - Non-citizens (on/after 1 Aug 1998) -->
+                                <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <legend style="font-weight: bold; padding: 0 5px;">Part D: 60 and above - Non-citizens (elected on/after 1 Aug 1998)</legend>
+                                    <p style="color: #666; font-size: 11px; font-style: italic; margin: 5px 0 10px 0;">
+                                        Non-citizens 60+ who elected to contribute on/after 1 Aug 1998
+                                    </p>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (Table):</label>
+                                            <input type="number" id="epfPartDEmployee" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer Rate (Table):</label>
+                                            <input type="number" id="epfPartDEmployer" value="4.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 style="margin: 15px 0 10px 0; color: #2c3e50;">For wages exceeding RM20,000:</h5>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Employee Rate (>RM20k):</label>
+                                            <input type="number" id="epfPartDEmployeeOver20k" value="0.0" min="0" max="20" step="0.1" style="width: 100px;"> %
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Employer (>RM20k, Fixed):</label>
+                                            <input type="number" id="epfPartDEmployerOver20kFixed" value="5.0" min="0" max="50" step="1" style="width: 100px;"> RM
+                                        </div>
+                                    </div>
+                                </fieldset>
+
                                 <!-- Part E: 60+ - Malaysian Citizens -->
                                 <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
                                     <legend style="font-weight: bold; padding: 0 5px;">Part E: 60 and above - Malaysian Citizens</legend>
