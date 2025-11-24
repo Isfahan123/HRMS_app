@@ -879,24 +879,37 @@ async def get_sick_leave_balances():
     Get sick leave balances for all employees
     """
     try:
-        # Query employees and their sick leave balances
+        # Query employees and their sick leave balances with department info
+        from services.supabase_service import get_individual_employee_sick_leave_balance
+        
         current_year = datetime.now().year
-        response = supabase.table("employees").select("id, employee_id, full_name, email").execute()
+        response = supabase.table("employees").select("id, employee_id, full_name, email, department").execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
         balances = []
         for employee in response.data:
-            from services.supabase_service import get_individual_employee_sick_leave_balance
+            # Get sick leave balance from service function
             balance = get_individual_employee_sick_leave_balance(employee['email'], current_year)
+            
+            # Map to frontend expected field names (keep all fields from service)
             balances.append({
                 "employee_id": employee['employee_id'],
                 "full_name": employee['full_name'],
                 "email": employee['email'],
-                "total_sick_leave": balance.get('total_sick_leave', 14),
-                "used_sick_leave": balance.get('used_sick_leave', 0),
-                "remaining_sick_leave": balance.get('remaining_sick_leave', 14)
+                "department": employee.get('department', ''),
+                # Sick leave fields (use correct field names from service)
+                "sick_days_entitlement": balance.get('sick_days_entitlement', 14),
+                "used_sick_days": balance.get('used_sick_days', 0),
+                "remaining_sick_days": balance.get('remaining_sick_days', 14),
+                # Hospitalization fields
+                "hospitalization_days_entitlement": balance.get('hospitalization_days_entitlement', 60),
+                "used_hospitalization_days": balance.get('used_hospitalization_days', 0),
+                "remaining_hospitalization_days": balance.get('remaining_hospitalization_days', 60),
+                # Additional info
+                "years_of_service": balance.get('years_of_service', 0.0),
+                "years_of_service_display": f"{balance.get('years_of_service', 0.0):.1f}"
             })
         
         return {"success": True, "data": balances}
