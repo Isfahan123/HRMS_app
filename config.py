@@ -3,6 +3,7 @@ Configuration module for HRMS Application
 Centralizes all configuration and provides context for templates
 """
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -70,7 +71,7 @@ class Config:
             },
             
             # Current year (useful for copyright, etc.)
-            "current_year": 2024,
+            "current_year": datetime.now().year,
         }
         
         # Merge with any additional kwargs
