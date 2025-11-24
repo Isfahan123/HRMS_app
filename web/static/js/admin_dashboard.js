@@ -3227,6 +3227,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (epfPartBEmployeeOver20k) epfPartBEmployeeOver20k.value = config.epf_part_b_employee_over20k || 0.0;
                 if (epfPartBEmployerOver20k) epfPartBEmployerOver20k.value = config.epf_part_b_employer_over20k || 13.0;
                 
+                // Load EPF Part C values with null checks
+                const epfPartCEmployee = document.getElementById('epfPartCEmployee');
+                const epfPartCEmployerFixed = document.getElementById('epfPartCEmployerFixed');
+                const epfPartCEmployeeOver20k = document.getElementById('epfPartCEmployeeOver20k');
+                const epfPartCEmployerOver20k = document.getElementById('epfPartCEmployerOver20k');
+                const epfPartCEmployerBonus = document.getElementById('epfPartCEmployerBonus');
+                
+                if (epfPartCEmployee) epfPartCEmployee.value = config.epf_part_c_employee || 0.0;
+                if (epfPartCEmployerFixed) epfPartCEmployerFixed.value = config.epf_part_c_employer_fixed || 5.0;
+                if (epfPartCEmployeeOver20k) epfPartCEmployeeOver20k.value = config.epf_part_c_employee_over20k || 0.0;
+                if (epfPartCEmployerOver20k) epfPartCEmployerOver20k.value = config.epf_part_c_employer_over20k || 6.0;
+                if (epfPartCEmployerBonus) epfPartCEmployerBonus.value = config.epf_part_c_employer_bonus || 6.5;
+                
+                // Load EPF Part D values with null checks
+                const epfPartDEmployee = document.getElementById('epfPartDEmployee');
+                const epfPartDEmployer = document.getElementById('epfPartDEmployer');
+                const epfPartDEmployeeOver20k = document.getElementById('epfPartDEmployeeOver20k');
+                const epfPartDEmployerOver20kFixed = document.getElementById('epfPartDEmployerOver20kFixed');
+                
+                if (epfPartDEmployee) epfPartDEmployee.value = config.epf_part_d_employee || 0.0;
+                if (epfPartDEmployer) epfPartDEmployer.value = config.epf_part_d_employer || 4.0;
+                if (epfPartDEmployeeOver20k) epfPartDEmployeeOver20k.value = config.epf_part_d_employee_over20k || 0.0;
+                if (epfPartDEmployerOver20kFixed) epfPartDEmployerOver20kFixed.value = config.epf_part_d_employer_over20k_fixed || 5.0;
+                
                 // Load EPF Part E values with null checks
                 const epfPartEEmployee = document.getElementById('epfPartEEmployee');
                 const epfPartEEmployer = document.getElementById('epfPartEEmployer');
@@ -3293,6 +3317,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 epf_part_b_employer: safeParseFloat('epfPartBEmployer', 13.0),
                 epf_part_b_employee_over20k: safeParseFloat('epfPartBEmployeeOver20k', 0.0),
                 epf_part_b_employer_over20k: safeParseFloat('epfPartBEmployerOver20k', 13.0),
+                // EPF Part C
+                epf_part_c_employee: safeParseFloat('epfPartCEmployee', 0.0),
+                epf_part_c_employer_fixed: safeParseFloat('epfPartCEmployerFixed', 5.0),
+                epf_part_c_employee_over20k: safeParseFloat('epfPartCEmployeeOver20k', 0.0),
+                epf_part_c_employer_over20k: safeParseFloat('epfPartCEmployerOver20k', 6.0),
+                epf_part_c_employer_bonus: safeParseFloat('epfPartCEmployerBonus', 6.5),
+                // EPF Part D
+                epf_part_d_employee: safeParseFloat('epfPartDEmployee', 0.0),
+                epf_part_d_employer: safeParseFloat('epfPartDEmployer', 4.0),
+                epf_part_d_employee_over20k: safeParseFloat('epfPartDEmployeeOver20k', 0.0),
+                epf_part_d_employer_over20k_fixed: safeParseFloat('epfPartDEmployerOver20kFixed', 5.0),
                 // EPF Part E
                 epf_part_e_employee: safeParseFloat('epfPartEEmployee', 0.0),
                 epf_part_e_employer: safeParseFloat('epfPartEEmployer', 4.0),
