@@ -187,7 +187,7 @@ async function loadLeaveTypes() {
         
     } catch (error) {
         console.error('Error loading leave types:', error);
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading leave types</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: red;">Error loading leave types</td></tr>';
     }
 }
 
