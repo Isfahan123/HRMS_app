@@ -1798,8 +1798,24 @@ def delete_profile_picture(file_path: str) -> None:
 
 def get_all_attendance_records() -> list:
     try:
-        result = supabase.table("attendance").select("*").execute()
-        return result.data
+        # Join with employees table to get employee names
+        result = supabase.table("attendance").select("*, employees(full_name, email)").execute()
+        
+        if not result.data:
+            return []
+        
+        # Flatten the employee data for easier frontend access
+        records = []
+        for record in result.data:
+            if 'employees' in record and record['employees']:
+                # Add flattened fields for frontend
+                record['full_name'] = record['employees']['full_name']
+                record['email'] = record['employees']['email']
+                # Remove nested object to avoid duplication
+                del record['employees']
+            records.append(record)
+        
+        return records
     except Exception as e:
         print(f"DEBUG: Error fetching attendance records: {str(e)}")
         return []
