@@ -559,7 +559,6 @@ class LeaveCalendar {
                 <h2>🇲🇾 Import Malaysia Public Holidays</h2>
                 <p style="color: #666; margin-bottom: 20px;">
                     Automatically import official Malaysia public holidays from the python-holidays library.
-                    Existing holidays will not be duplicated.
                 </p>
                 <form id="importMalaysiaHolidaysForm" style="text-align: left;">
                     <div class="form-group">
@@ -573,6 +572,15 @@ class LeaveCalendar {
                         </select>
                         <small style="color: #666; display: block; margin-top: 5px;">
                             Select "All Malaysia" for national holidays only, or choose a specific state to include state-specific holidays.
+                        </small>
+                    </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="importReplace" style="margin-right: 8px; cursor: pointer;">
+                            <span><strong>Replace existing holidays</strong> for this year/state</span>
+                        </label>
+                        <small style="color: #dc3545; display: block; margin-top: 5px; margin-left: 28px;">
+                            ⚠️ Warning: This will delete all existing holidays for the selected year and state before importing new ones.
                         </small>
                     </div>
                     <div style="margin-top: 20px; display: flex; gap: 10px;">
@@ -592,14 +600,15 @@ class LeaveCalendar {
             
             const year = parseInt(document.getElementById('importYear').value);
             const state = document.getElementById('importState').value;
+            const replace = document.getElementById('importReplace').checked;
             const messageDiv = document.getElementById('importMessage');
             
             try {
                 messageDiv.style.display = 'block';
                 messageDiv.className = 'info-message';
-                messageDiv.textContent = 'Importing holidays...';
+                messageDiv.textContent = replace ? 'Replacing holidays...' : 'Importing holidays...';
                 
-                const response = await fetch(`/api/holidays/import-malaysia?year=${year}&state=${encodeURIComponent(state)}`, {
+                const response = await fetch(`/api/holidays/import-malaysia?year=${year}&state=${encodeURIComponent(state)}&replace=${replace}`, {
                     method: 'POST'
                 });
                 
