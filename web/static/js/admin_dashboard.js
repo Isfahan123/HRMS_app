@@ -478,37 +478,132 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function buildPayrollRunsTable(runs) {
-        let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;">';
-        html += '<th style="padding: 10px; text-align: left;">Employee</th>';
-        html += '<th style="padding: 10px; text-align: left;">Month</th>';
-        html += '<th style="padding: 10px; text-align: right;">Basic Salary</th>';
-        html += '<th style="padding: 10px; text-align: right;">Gross Pay</th>';
-        html += '<th style="padding: 10px; text-align: right;">Deductions</th>';
-        html += '<th style="padding: 10px; text-align: right;">Net Pay</th>';
-        html += '<th style="padding: 10px; text-align: center;">Status</th>';
-        html += '<th style="padding: 10px; text-align: center;">Actions</th>';
+        // Helper function to format allowances with breakdown
+        const formatAllowances = (allowances) => {
+            if (!allowances || typeof allowances !== 'object') return 'None';
+            
+            const allowancesList = [];
+            let total = 0;
+            
+            for (const [key, value] of Object.entries(allowances)) {
+                if (value && value !== 0) {
+                    try {
+                        const amount = parseFloat(value);
+                        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        allowancesList.push(`${label}: RM ${amount.toFixed(2)}`);
+                        total += amount;
+                    } catch (e) {
+                        // Skip invalid values
+                    }
+                }
+            }
+            
+            if (allowancesList.length > 0) {
+                return allowancesList.join(', ') + ` | Total: RM ${total.toFixed(2)}`;
+            }
+            return 'None';
+        };
+        
+        // Helper function to format days (handle half-days)
+        const formatDays = (value) => {
+            if (!value || value === 0) return '0';
+            const days = parseFloat(value);
+            return days === Math.floor(days) ? Math.floor(days).toString() : days.toFixed(1);
+        };
+        
+        let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 13px;"><thead><tr style="background: #667eea; color: white;">';
+        // 20 columns matching Python GUI
+        html += '<th style="padding: 8px; text-align: left; min-width: 120px;">Employee Name</th>';
+        html += '<th style="padding: 8px; text-align: left; min-width: 90px;">Payroll Date</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 90px;">Gross Salary</th>';
+        html += '<th style="padding: 8px; text-align: left; min-width: 150px;">Allowances</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 70px;">Unpaid Days</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 90px;">Unpaid Deduction</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 85px;">EPF Employee</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 85px;">EPF Employer</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 90px;">SOCSO Employee</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 90px;">SOCSO Employer</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 85px;">EIS Employee</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 85px;">EIS Employer</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 70px;">PCB</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 70px;">SIP</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 95px;">Additional EPF</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 70px;">PRS</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 75px;">Insurance</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 100px;">Other Deductions</th>';
+        html += '<th style="padding: 8px; text-align: right; min-width: 90px;">Net Salary</th>';
+        html += '<th style="padding: 8px; text-align: center; min-width: 80px;">Actions</th>';
         html += '</tr></thead><tbody>';
         
         runs.forEach(run => {
             html += '<tr style="border-bottom: 1px solid #eee;">';
-            // Try multiple fields for employee name
+            
+            // Employee Name
             const employeeName = run.employee_name || run.employee?.full_name || run.employee_email || '-';
-            html += `<td style="padding: 10px;">${employeeName}</td>`;
-            html += `<td style="padding: 10px;">${run.month_year || run.payroll_date || '-'}</td>`;
-            html += `<td style="padding: 10px; text-align: right;">${formatCurrency(run.basic_salary)}</td>`;
-            html += `<td style="padding: 10px; text-align: right;"><strong>${formatCurrency(run.gross_pay)}</strong></td>`;
-            html += `<td style="padding: 10px; text-align: right;">${formatCurrency(run.total_deductions)}</td>`;
-            html += `<td style="padding: 10px; text-align: right;"><strong style="color: #059669;">${formatCurrency(run.net_pay)}</strong></td>`;
-            const statusColor = run.status === 'Completed' ? '#059669' : run.status === 'Pending' ? '#d97706' : '#666';
-            html += `<td style="padding: 10px; text-align: center;"><span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">${run.status || 'Pending'}</span></td>`;
+            html += `<td style="padding: 8px;">${employeeName}</td>`;
+            
+            // Payroll Date
+            html += `<td style="padding: 8px;">${run.payroll_date || run.month_year || '-'}</td>`;
+            
+            // Gross Salary
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.gross_salary)}</td>`;
+            
+            // Allowances (with breakdown)
+            const allowancesText = formatAllowances(run.allowances);
+            html += `<td style="padding: 8px;"><small>${allowancesText}</small></td>`;
+            
+            // Unpaid Days
+            html += `<td style="padding: 8px; text-align: right;">${formatDays(run.unpaid_leave_days)}</td>`;
+            
+            // Unpaid Deduction
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.unpaid_leave_deduction)}</td>`;
+            
+            // EPF Employee
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.epf_employee)}</td>`;
+            
+            // EPF Employer
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.epf_employer)}</td>`;
+            
+            // SOCSO Employee
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.socso_employee)}</td>`;
+            
+            // SOCSO Employer
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.socso_employer)}</td>`;
+            
+            // EIS Employee
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.eis_employee)}</td>`;
+            
+            // EIS Employer
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.eis_employer)}</td>`;
+            
+            // PCB (with fallback to legacy fields)
+            const pcb = run.pcb || run.pcb_tax || run.pcb_amount;
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(pcb)}</td>`;
+            
+            // SIP
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.sip_deduction)}</td>`;
+            
+            // Additional EPF
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.additional_epf_deduction)}</td>`;
+            
+            // PRS
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.prs_deduction)}</td>`;
+            
+            // Insurance
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.insurance_premium)}</td>`;
+            
+            // Other Deductions
+            html += `<td style="padding: 8px; text-align: right;">${formatCurrency(run.other_deductions)}</td>`;
+            
+            // Net Salary
+            html += `<td style="padding: 8px; text-align: right;"><strong style="color: #059669;">${formatCurrency(run.net_salary)}</strong></td>`;
             
             // Actions column with download payslip button
-            html += '<td style="padding: 10px; text-align: center;">';
-            // Need employee_id and payroll run id for download
+            html += '<td style="padding: 8px; text-align: center;">';
             const employeeId = run.employee_id || run.employee?.id;
             const payrollRunId = run.id;
             if (employeeId && payrollRunId) {
-                html += `<button onclick="downloadPayslip('${employeeId}', '${payrollRunId}')" class="btn-sm btn-secondary" title="Download Payslip PDF">📄 Payslip</button>`;
+                html += `<button onclick="downloadPayslip('${employeeId}', '${payrollRunId}')" class="btn-sm btn-secondary" title="Download Payslip PDF" style="font-size: 11px;">📄 Generate</button>`;
             } else {
                 html += '<span style="color: #999;">N/A</span>';
             }
@@ -517,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</tr>';
         });
         
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Showing ${runs.length} payroll record(s)</p>`;
         return html;
     }
