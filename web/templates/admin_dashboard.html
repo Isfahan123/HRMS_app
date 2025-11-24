@@ -2197,31 +2197,79 @@
                         
                         <!-- Relief Overrides Sub-subtab -->
                         <div id="lhdnReliefOverridesSubtab" class="subtab-content">
-                            <h4>🔧 Employee-Specific Relief Overrides</h4>
-                            <p style="color: #666; margin-bottom: 20px;">Override relief amounts for specific employees (e.g., special circumstances)</p>
+                            <h4>🔧 TP1 Relief Overrides</h4>
+                            <p style="color: #666; margin-bottom: 20px;">Configure per-item relief caps, PCB-only flags, and cycle years. Also manage group caps. Blank override cells inherit catalog defaults.</p>
                             
-                            <button class="btn-primary" onclick="addReliefOverride()" style="margin-bottom: 15px;">➕ Add Override</button>
-                            
-                            <div style="margin-bottom: 20px;">
-                                <label>Filter by Employee:</label>
-                                <input type="text" id="reliefOverrideSearch" placeholder="Search employee name or ID..." 
-                                       style="padding: 8px; width: 300px; margin-left: 10px;">
+                            <!-- Filter -->
+                            <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                                <label>Filter:</label>
+                                <input type="text" id="reliefOverrideFilter" placeholder="Filter by code, key, or description..." 
+                                       style="padding: 8px; width: 300px;">
+                                <label>
+                                    <input type="checkbox" id="reliefOverrideOnlyOverridden"> Only Overridden
+                                </label>
                             </div>
                             
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="background: #667eea; color: white;">
-                                        <th style="padding: 10px; text-align: left;">Employee</th>
-                                        <th style="padding: 10px; text-align: left;">Relief Category</th>
-                                        <th style="padding: 10px; text-align: right;">Override Amount (RM)</th>
-                                        <th style="padding: 10px; text-align: center;">Effective Period</th>
-                                        <th style="padding: 10px; text-align: center;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reliefOverridesBody">
-                                    <tr><td colspan="5" style="padding: 15px; text-align: center;">No overrides configured</td></tr>
-                                </tbody>
-                            </table>
+                            <!-- Legend -->
+                            <div style="margin-bottom: 20px; font-size: 11px;">
+                                <strong>Legend:</strong>
+                                <span style="background:#d0f5d0;padding:2px 6px;margin-left:8px;">Higher</span>
+                                <span style="background:#ffe9b3;padding:2px 6px;margin-left:4px;">Lower</span>
+                                <span style="background:#e0e0e0;padding:2px 6px;margin-left:4px;">Inherit</span>
+                                <span style="background:#ffd0d0;padding:2px 6px;margin-left:4px;">Invalid</span>
+                                <span style="background:#d0e8ff;padding:2px 6px;margin-left:4px;">PCB Only</span>
+                            </div>
+                            
+                            <!-- Group Caps Table -->
+                            <h5 style="margin-top: 30px; margin-bottom: 10px;">Group Caps</h5>
+                            <div style="overflow-x: auto; margin-bottom: 30px;">
+                                <table id="reliefGroupTable" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 10px; text-align: left;">Group ID</th>
+                                            <th style="padding: 10px; text-align: left;">Description</th>
+                                            <th style="padding: 10px; text-align: right;">Default Cap (RM)</th>
+                                            <th style="padding: 10px; text-align: right;">Override Cap (RM)</th>
+                                            <th style="padding: 10px; text-align: right;">Effective Cap (RM)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reliefGroupBody">
+                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Item Overrides Table -->
+                            <h5 style="margin-bottom: 10px;">Item Overrides</h5>
+                            <div style="overflow-x: auto;">
+                                <table id="reliefItemTable" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 10px; text-align: left;">Code</th>
+                                            <th style="padding: 10px; text-align: left;">Item Key</th>
+                                            <th style="padding: 10px; text-align: left;">Description</th>
+                                            <th style="padding: 10px; text-align: right;">Default Cap</th>
+                                            <th style="padding: 10px; text-align: right;">Override Cap</th>
+                                            <th style="padding: 10px; text-align: right;">Effective Cap</th>
+                                            <th style="padding: 10px; text-align: center;">PCB Only?</th>
+                                            <th style="padding: 10px; text-align: right;">Default Cycle</th>
+                                            <th style="padding: 10px; text-align: right;">Override Cycle</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reliefItemBody">
+                                        <tr><td colspan="9" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                                <button class="btn-primary" onclick="saveReliefOverrides()">💾 Save Changes</button>
+                                <button class="btn-secondary" onclick="reloadReliefOverrides()">↻ Reload</button>
+                                <button class="btn-secondary" onclick="clearAllReliefOverrides()" style="margin-left: auto;">♻ Reset All Overrides</button>
+                            </div>
+                            
+                            <div id="reliefOverrideStatus" style="margin-top: 15px; color: #666; font-size: 12px;"></div>
                         </div>
                     </div>
                 </div>
@@ -3020,55 +3068,6 @@
         </div>
     </div>
     
-    <div id="reliefOverrideModal" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close" onclick="closeReliefOverrideModal()">&times;</span>
-            <h3 id="reliefOverrideModalTitle">Add Relief Override</h3>
-            <form id="reliefOverrideForm">
-                <input type="hidden" id="reliefOverrideId" value="">
-                
-                <div class="form-group">
-                    <label for="overrideEmployeeId">Employee:*</label>
-                    <select id="overrideEmployeeId" required>
-                        <option value="">Select Employee</option>
-                    </select>
-                    <small style="color: #666;">Choose employee for relief override</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="overrideReliefCategory">Relief Category:*</label>
-                    <select id="overrideReliefCategory" required>
-                        <option value="">Select Relief Category</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="overrideAmount">Override Amount (RM):*</label>
-                    <input type="number" id="overrideAmount" step="0.01" min="0" required>
-                    <small style="color: #666;">Custom relief amount for this employee</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="overrideYear">Effective Year:*</label>
-                    <input type="number" id="overrideYear" min="2020" max="2030" required value="2024">
-                    <small style="color: #666;">Tax year for this override</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="overrideReason">Reason/Notes:</label>
-                    <textarea id="overrideReason" rows="3" placeholder="Optional: Explain why this override is needed"></textarea>
-                </div>
-                
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button type="submit" class="btn-primary">💾 Save</button>
-                    <button type="button" class="btn-secondary" onclick="closeReliefOverrideModal()">Cancel</button>
-                </div>
-                
-                <div id="reliefOverrideMessage" style="display: none; margin-top: 15px;"></div>
-            </form>
-        </div>
-    </div>
-
     <!-- Holiday Add/Edit Modal -->
     <div id="holidayModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">

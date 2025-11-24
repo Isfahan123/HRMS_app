@@ -1879,152 +1879,134 @@ async def update_relief_maximum(data: Dict[str, Any]):
         print(f"Error updating relief maximum: {str(e)}")
         return {"success": False, "message": str(e)}
 
-@app.get("/api/admin/lhdn/relief-overrides")
-async def get_relief_overrides():
-    """Get employee-specific relief overrides"""
+@app.get("/api/admin/lhdn/relief-item-overrides")
+async def get_relief_item_overrides():
+    """Get relief item overrides (cap, pcb_only, cycle_years) - matches Python GUI"""
     try:
-        # Query lhdn_relief_overrides table with employee information
-        response = supabase.table("lhdn_relief_overrides").select("*").execute()
+        response = supabase.table("relief_item_overrides").select("*").execute()
         
-        # Transform to expected format with employee names
+        # Return data in format matching database structure
         overrides = []
         if response.data:
             for item in response.data:
-                # Get employee name if not already in the record
-                employee_name = item.get("employee_name")
-                employee_id = item.get("employee_id")
-                
-                # If employee_name is missing, try to fetch it
-                if not employee_name and employee_id:
-                    try:
-                        emp_response = supabase.table("employees").select("full_name").eq("id", employee_id).execute()
-                        if emp_response.data and len(emp_response.data) > 0:
-                            employee_name = emp_response.data[0].get("full_name")
-                    except Exception as e:
-                        print(f"Warning: Could not fetch employee name for {employee_id}: {e}")
-                        pass  # If fetch fails, use employee_id
-                
                 overrides.append({
-                    "id": item.get("id"),
-                    "employee_id": employee_id,
-                    "employee_name": employee_name or employee_id,
-                    "relief_code": item.get("relief_category"),  # Map to relief_code for frontend
-                    "relief_category": item.get("relief_category"),
-                    "override_amount": item.get("override_amount"),
-                    "effective_year": item.get("effective_from", "").split("-")[0] if item.get("effective_from") else None,
-                    "effective_period": item.get("effective_from", "").split("-")[0] if item.get("effective_from") else None,
-                    "reason": item.get("reason")
+                    "item_key": item.get("item_key"),
+                    "cap": item.get("cap"),
+                    "pcb_only": item.get("pcb_only"),
+                    "cycle_years": item.get("cycle_years"),
+                    "updated_at": item.get("updated_at"),
+                    "created_at": item.get("created_at")
                 })
         
         return {"success": True, "data": overrides}
     except Exception as e:
-        print(f"Error fetching relief overrides: {str(e)}")
-        # Return empty array instead of error to prevent UI from breaking
+        print(f"Error fetching relief item overrides: {str(e)}")
         return {"success": True, "data": []}
 
-@app.post("/api/admin/lhdn/relief-overrides")
-async def create_relief_override(data: Dict[str, Any]):
-    """Create an employee-specific relief override"""
+@app.get("/api/admin/lhdn/relief-group-overrides")
+async def get_relief_group_overrides():
+    """Get relief group cap overrides - matches Python GUI"""
     try:
-        # Get employee name and email for denormalized storage
-        employee_id = data["employee_id"]
-        employee_name = None
-        employee_email = None
+        response = supabase.table("relief_group_overrides").select("*").execute()
         
-        try:
-            emp_response = supabase.table("employees").select("full_name, email").eq("id", employee_id).execute()
-            if emp_response.data and len(emp_response.data) > 0:
-                employee_name = emp_response.data[0].get("full_name")
-                employee_email = emp_response.data[0].get("email")
-        except Exception as e:
-            print(f"Warning: Could not fetch employee info for {employee_id}: {e}")
-            pass  # Continue without employee info if fetch fails
+        overrides = []
+        if response.data:
+            for item in response.data:
+                overrides.append({
+                    "group_id": item.get("group_id"),
+                    "cap": item.get("cap"),
+                    "updated_at": item.get("updated_at"),
+                    "created_at": item.get("created_at")
+                })
         
-        # Use effective_year to create effective_from date
-        effective_year = data.get("effective_year", datetime.now().year)
+        return {"success": True, "data": overrides}
+    except Exception as e:
+        print(f"Error fetching relief group overrides: {str(e)}")
+        return {"success": True, "data": []}
+
+@app.post("/api/admin/lhdn/relief-item-overrides")
+async def upsert_relief_item_override(data: Dict[str, Any]):
+    """Create or update relief item override (upsert) - matches Python GUI"""
+    try:
+        item_key = data.get("item_key")
+        if not item_key:
+            return {"success": False, "message": "item_key is required"}
         
-        override = {
-            "employee_id": employee_id,
-            "employee_name": employee_name,
-            "employee_email": employee_email,
-            "relief_category": data["relief_code"],
-            "override_amount": data["override_amount"],
-            "effective_from": f"{effective_year}-01-01",
-            "effective_to": f"{effective_year}-12-31",
-            "reason": data.get("reason", "")
-        }
+        override = {"item_key": item_key}
         
-        response = supabase.table("lhdn_relief_overrides").insert(override).execute()
+        # Only include fields that are provided (not None)
+        if data.get("cap") is not None:
+            override["cap"] = float(data["cap"])
+        if data.get("pcb_only") is not None:
+            override["pcb_only"] = bool(data["pcb_only"])
+        if data.get("cycle_years") is not None:
+            override["cycle_years"] = int(data["cycle_years"])
+        
+        # Upsert (insert or update if exists)
+        response = supabase.table("relief_item_overrides").upsert(override).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief override created successfully", "data": response.data[0]}
+            return {"success": True, "message": "Relief item override saved", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to create relief override"}
+            return {"success": False, "message": "Failed to save relief item override"}
     except Exception as e:
-        print(f"Error creating relief override: {str(e)}")
+        print(f"Error saving relief item override: {str(e)}")
         return {"success": False, "message": str(e)}
 
-@app.put("/api/admin/lhdn/relief-overrides/{override_id}")
-async def update_relief_override(override_id: str, data: Dict[str, Any]):
-    """Update an employee-specific relief override"""
+@app.post("/api/admin/lhdn/relief-group-overrides")
+async def upsert_relief_group_override(data: Dict[str, Any]):
+    """Create or update relief group override (upsert) - matches Python GUI"""
     try:
-        # Get employee name if employee_id changed
-        employee_id = data.get("employee_id")
-        employee_name = None
-        employee_email = None
+        group_id = data.get("group_id")
+        cap = data.get("cap")
         
-        if employee_id:
-            try:
-                emp_response = supabase.table("employees").select("full_name, email").eq("id", employee_id).execute()
-                if emp_response.data and len(emp_response.data) > 0:
-                    employee_name = emp_response.data[0].get("full_name")
-                    employee_email = emp_response.data[0].get("email")
-            except Exception as e:
-                print(f"Warning: Could not fetch employee info for {employee_id}: {e}")
-                pass
-        
-        # Use effective_year to update effective_from/to dates
-        effective_year = data.get("effective_year")
+        if not group_id:
+            return {"success": False, "message": "group_id is required"}
+        if cap is None:
+            return {"success": False, "message": "cap is required"}
         
         override = {
-            "override_amount": data["override_amount"],
-            "reason": data.get("reason", "")
+            "group_id": group_id,
+            "cap": float(cap)
         }
         
-        if employee_id:
-            override["employee_id"] = employee_id
-        if employee_name:
-            override["employee_name"] = employee_name
-        if employee_email:
-            override["employee_email"] = employee_email
-        if data.get("relief_code"):
-            override["relief_category"] = data["relief_code"]
-        if effective_year:
-            override["effective_from"] = f"{effective_year}-01-01"
-            override["effective_to"] = f"{effective_year}-12-31"
-        
-        response = supabase.table("lhdn_relief_overrides").update(override).eq("id", override_id).execute()
+        # Upsert (insert or update if exists)
+        response = supabase.table("relief_group_overrides").upsert(override).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief override updated successfully", "data": response.data[0]}
+            return {"success": True, "message": "Relief group override saved", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Relief override not found"}
+            return {"success": False, "message": "Failed to save relief group override"}
     except Exception as e:
-        print(f"Error updating relief override: {str(e)}")
+        print(f"Error saving relief group override: {str(e)}")
         return {"success": False, "message": str(e)}
 
-@app.delete("/api/admin/lhdn/relief-overrides/{override_id}")
-async def delete_relief_override(override_id: str):
-    """Delete an employee-specific relief override"""
+@app.delete("/api/admin/lhdn/relief-item-overrides/{item_key}")
+async def delete_relief_item_override(item_key: str):
+    """Delete relief item override - matches Python GUI"""
     try:
-        response = supabase.table("lhdn_relief_overrides").delete().eq("id", override_id).execute()
+        response = supabase.table("relief_item_overrides").delete().eq("item_key", item_key).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief override deleted successfully"}
+            return {"success": True, "message": "Relief item override deleted"}
         else:
-            return {"success": False, "message": "Relief override not found"}
+            return {"success": False, "message": "Relief item override not found"}
     except Exception as e:
-        print(f"Error deleting relief override: {str(e)}")
+        print(f"Error deleting relief item override: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/lhdn/relief-group-overrides/{group_id}")
+async def delete_relief_group_override(group_id: str):
+    """Delete relief group override - matches Python GUI"""
+    try:
+        response = supabase.table("relief_group_overrides").delete().eq("group_id", group_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Relief group override deleted"}
+        else:
+            return {"success": False, "message": "Relief group override not found"}
+    except Exception as e:
+        print(f"Error deleting relief group override: {str(e)}")
         return {"success": False, "message": str(e)}
 
 # ====================
