@@ -532,8 +532,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`/api/payroll/payslip/${employeeId}/${payrollRunId}`);
             
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to generate payslip');
+                // Try to parse error as JSON, fallback to text
+                let errorMessage = 'Failed to generate payslip';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.detail || errorMessage;
+                } catch (e) {
+                    // If not JSON, try to get text
+                    const errorText = await response.text();
+                    errorMessage = errorText || errorMessage;
+                }
+                throw new Error(errorMessage);
             }
             
             // Get the blob data
