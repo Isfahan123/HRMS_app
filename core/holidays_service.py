@@ -172,7 +172,7 @@ def get_holidays_python_only(year: int, state: str | None = None) -> Tuple[Set[d
     results: Set[date] = set()
     holiday_details: Dict[str, List[str]] = {}
     try:
-        from services.malaysia_holiday_service import get_normalized_holiday_events
+        from core.malaysia_holiday_service import get_normalized_holiday_events
 
         # If state is None, gather national + per-state union as before, but only from python-holidays
         def _add_events(ev_list, loc_label_override=None):

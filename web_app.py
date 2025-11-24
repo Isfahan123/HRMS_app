@@ -879,24 +879,37 @@ async def get_sick_leave_balances():
     Get sick leave balances for all employees
     """
     try:
-        # Query employees and their sick leave balances
+        # Query employees and their sick leave balances with department info
+        from services.supabase_service import get_individual_employee_sick_leave_balance
+        
         current_year = datetime.now().year
-        response = supabase.table("employees").select("id, employee_id, full_name, email").execute()
+        response = supabase.table("employees").select("id, employee_id, full_name, email, department").execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
         balances = []
         for employee in response.data:
-            from services.supabase_service import get_individual_employee_sick_leave_balance
+            # Get sick leave balance from service function
             balance = get_individual_employee_sick_leave_balance(employee['email'], current_year)
+            
+            # Map to frontend expected field names (keep all fields from service)
             balances.append({
                 "employee_id": employee['employee_id'],
                 "full_name": employee['full_name'],
                 "email": employee['email'],
-                "total_sick_leave": balance.get('total_sick_leave', 14),
-                "used_sick_leave": balance.get('used_sick_leave', 0),
-                "remaining_sick_leave": balance.get('remaining_sick_leave', 14)
+                "department": employee.get('department', ''),
+                # Sick leave fields (use correct field names from service)
+                "sick_days_entitlement": balance.get('sick_days_entitlement', 14),
+                "used_sick_days": balance.get('used_sick_days', 0),
+                "remaining_sick_days": balance.get('remaining_sick_days', 14),
+                # Hospitalization fields
+                "hospitalization_days_entitlement": balance.get('hospitalization_days_entitlement', 60),
+                "used_hospitalization_days": balance.get('used_hospitalization_days', 0),
+                "remaining_hospitalization_days": balance.get('remaining_hospitalization_days', 60),
+                # Additional info
+                "years_of_service": balance.get('years_of_service', 0.0),
+                "years_of_service_display": f"{balance.get('years_of_service', 0.0):.1f}"
             })
         
         return {"success": True, "data": balances}
@@ -1261,17 +1274,31 @@ async def get_salary_history():
     Get salary change history for employees
     """
     try:
-        # Query salary history from employee_history table
-        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(100).execute()
+        # Query salary history from employee_history table with employee names
+        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("effective_date", desc=True).limit(100).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        # Filter for salary-related changes
-        salary_changes = [
-            record for record in response.data 
-            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']
-        ]
+        # Filter for salary-related changes and flatten employee data
+        salary_changes = []
+        for record in response.data:
+            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']:
+                # Flatten employee data for frontend
+                if 'employees' in record and record['employees']:
+                    record['employee_name'] = record['employees'].get('full_name', '')
+                    record['employee_email'] = record['employees'].get('email', record.get('employee_email', ''))
+                    # Remove nested object safely
+                    del record['employees']
+                else:
+                    # Set defaults if employee data is missing
+                    record['employee_name'] = ''
+                    record['employee_email'] = record.get('employee_email', '')
+                    # Remove nested object if present but empty
+                    if 'employees' in record:
+                        del record['employees']
+                
+                salary_changes.append(record)
         
         return {"success": True, "data": salary_changes}
     except Exception as e:
@@ -1336,12 +1363,22 @@ async def get_employee_history():
     Get complete employment/re-employment history (previous jobs, companies, positions)
     """
     try:
-        response = supabase.table("employee_history").select("*").order("start_date", desc=True).limit(200).execute()
+        # Join with employees table to get employee names
+        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("start_date", desc=True).limit(200).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        return {"success": True, "data": response.data}
+        # Flatten the employee data for easier access in frontend
+        records = []
+        for record in response.data:
+            if 'employees' in record and record['employees']:
+                record['employee_name'] = record['employees']['full_name']
+                # Remove nested object to avoid duplication
+                del record['employees']
+            records.append(record)
+        
+        return {"success": True, "data": records}
     except Exception as e:
         print(f"Error getting employee history: {str(e)}")
         return {"success": False, "message": str(e)}
@@ -2770,6 +2807,29 @@ async def update_payroll_settings_api(settings: Dict[str, Any]):
     except Exception as e:
         print(f"Error updating payroll settings: {str(e)}")
         return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/variable-config/{config_name}")
+async def get_variable_config_api(config_name: str):
+    """Get variable percentage configuration (EPF/SOCSO/EIS rates)"""
+    try:
+        config = get_variable_percentage_config(config_name)
+        
+        if config:
+            return {
+                "success": True,
+                "config": config
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Configuration '{config_name}' not found"
+            }
+    except Exception as e:
+        print(f"Error getting variable config: {str(e)}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
 
 # ============================================================================
 # TP1 Relief Claims Endpoints (Placeholder for future implementation)

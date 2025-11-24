@@ -3958,9 +3958,9 @@
             </div>
             
             <div class="form-group">
-                <label for="employeeSearchInput">Search employees by name or email:</label>
+                <label for="employeeSelectorSearchInput">Search employees by name or email:</label>
                 <div style="display: flex; gap: 10px;">
-                    <input type="text" id="employeeSearchInput" placeholder="Type to search..." style="flex: 1; padding: 8px;">
+                    <input type="text" id="employeeSelectorSearchInput" placeholder="Type to search..." style="flex: 1; padding: 8px;">
                     <button type="button" class="btn-primary" onclick="searchEmployees()">Search</button>
                 </div>
             </div>
@@ -4215,7 +4215,7 @@
         
         function openEmployeeSelectorModal(callback, prefilter = '') {
             document.getElementById('employeeSelectorModal').style.display = 'block';
-            document.getElementById('employeeSearchInput').value = prefilter;
+            document.getElementById('employeeSelectorSearchInput').value = prefilter;
             employeeSelectorCallback = callback;
             
             if (prefilter) {
@@ -4231,7 +4231,7 @@
         }
         
         async function searchEmployees() {
-            const query = document.getElementById('employeeSearchInput').value.trim();
+            const query = document.getElementById('employeeSelectorSearchInput').value.trim();
             const tbody = document.getElementById('employeeSelectorTableBody');
             
             tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">🔍 Searching...</td></tr>';
@@ -4305,9 +4305,9 @@
         
         // Make search work on Enter key
         document.addEventListener('DOMContentLoaded', function() {
-            const employeeSearchInput = document.getElementById('employeeSearchInput');
-            if (employeeSearchInput) {
-                employeeSearchInput.addEventListener('keypress', function(e) {
+            const employeeSelectorSearchInput = document.getElementById('employeeSelectorSearchInput');
+            if (employeeSelectorSearchInput) {
+                employeeSelectorSearchInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         searchEmployees();

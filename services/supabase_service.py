@@ -1798,8 +1798,28 @@ def delete_profile_picture(file_path: str) -> None:
 
 def get_all_attendance_records() -> list:
     try:
-        result = supabase.table("attendance").select("*").execute()
-        return result.data
+        # Join with employees table to get employee names
+        result = supabase.table("attendance").select("*, employees(full_name, email)").execute()
+        
+        if not result.data:
+            return []
+        
+        # Flatten the employee data for easier frontend access
+        records = []
+        for record in result.data:
+            if 'employees' in record and record['employees']:
+                # Add flattened fields for frontend using .get() for safety
+                record['full_name'] = record['employees'].get('full_name', '')
+                record['email'] = record['employees'].get('email', record.get('employee_email', ''))
+                # Remove nested object to avoid duplication
+                del record['employees']
+            else:
+                # Set default values if employee data is missing
+                record['full_name'] = ''
+                record['email'] = record.get('employee_email', '')
+            records.append(record)
+        
+        return records
     except Exception as e:
         print(f"DEBUG: Error fetching attendance records: {str(e)}")
         return []
@@ -6497,9 +6517,37 @@ def load_payroll_information(employee_id: str, month_year: str) -> Optional[Dict
 def get_employee_payroll_history(employee_id: str) -> List[Dict]:
     """Get payroll history for an employee"""
     try:
-        result = supabase.table("payroll_information").select("*").eq("employee_id", employee_id).order("month_year", desc=True).execute()
+        # Query payroll_runs table for complete payroll data
+        result = supabase.table("payroll_runs").select("*").eq("employee_id", employee_id).order("month_year", desc=True).execute()
         
-        return result.data if result.data else []
+        if not result.data:
+            return []
+        
+        # Map fields to ensure consistency with frontend expectations
+        records = []
+        for record in result.data:
+            # Ensure all expected fields are present
+            mapped_record = {
+                'id': record.get('id'),
+                'employee_id': record.get('employee_id'),
+                'month_year': record.get('month_year'),
+                'basic_salary': record.get('basic_salary') or record.get('base_salary') or 0,
+                'gross_salary': record.get('gross_salary') or 0,
+                'total_deductions': record.get('total_deductions') or 0,
+                'net_pay': record.get('net_pay') or 0,
+                'status': record.get('status', 'completed'),  # Default to completed
+                'epf_employee': record.get('epf_employee') or 0,
+                'epf_employer': record.get('epf_employer') or 0,
+                'socso_employee': record.get('socso_employee') or 0,
+                'socso_employer': record.get('socso_employer') or 0,
+                'eis_employee': record.get('eis_employee') or 0,
+                'eis_employer': record.get('eis_employer') or 0,
+                'pcb': record.get('pcb') or 0,
+                'created_at': record.get('created_at')
+            }
+            records.append(mapped_record)
+        
+        return records
         
     except Exception as e:
         print(f"DEBUG: Error loading payroll history: {e}")
