@@ -12,6 +12,7 @@ import os
 import csv
 import io
 import requests
+import logging
 from datetime import datetime
 
 # Import configuration
@@ -821,13 +822,12 @@ def _safe_to_float(value):
                 try:
                     total += float(v)
                 except (ValueError, TypeError):
-                    print(f"WARNING: Could not convert dictionary value for key '{key}': {v!r}")
-                    pass
+                    logging.warning(f"Could not convert dictionary value for key '{key}': {v!r}")
         return total
     try:
         return float(value)
     except (ValueError, TypeError):
-        print(f"WARNING: Could not convert value to float: {value!r}")
+        logging.warning(f"Could not convert value to float: {value!r}")
         return 0.0
 
 @app.get("/api/payroll/payslip/{employee_id}/{payroll_run_id}")
