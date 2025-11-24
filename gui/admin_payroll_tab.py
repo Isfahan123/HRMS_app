@@ -1245,20 +1245,32 @@ class AdminPayrollTab(QWidget):
     def load_skipped_payrolls(self):
         """Load skipped payroll records from Supabase and populate the Skipped Payroll tab."""
         try:
-            # Get latest 200 skipped records
+            # Query without join to avoid foreign key relationship requirement
             resp = (
                 supabase
                 .table('payroll_run_skips')
-                .select('employee_id, payroll_date, reason, created_at, employees!inner(full_name,email)')
+                .select('employee_id, payroll_date, reason, created_at')
                 .order('created_at', desc=True)
                 .limit(200)
                 .execute()
             )
             rows = resp.data or []
+            
+            # Get unique employee IDs
+            employee_ids = list(set([row.get('employee_id') for row in rows if row.get('employee_id')]))
+            
+            # Fetch employee data for all relevant employees
+            employee_map = {}
+            if employee_ids:
+                employees_resp = supabase.table('employees').select('id, full_name, email').in_('id', employee_ids).execute()
+                if employees_resp.data:
+                    employee_map = {emp['id']: emp for emp in employees_resp.data}
+            
             self.skipped_table.setRowCount(len(rows))
             for r, row in enumerate(rows):
-                emp = row.get('employees') or {}
-                name_or_email = emp.get('full_name') or emp.get('email') or row.get('employee_id')
+                employee_id = row.get('employee_id')
+                emp = employee_map.get(employee_id, {})
+                name_or_email = emp.get('full_name') or emp.get('email') or employee_id
                 vals = [
                     name_or_email,
                     row.get('payroll_date') or '',

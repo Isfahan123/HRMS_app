@@ -1798,26 +1798,37 @@ def delete_profile_picture(file_path: str) -> None:
 
 def get_all_attendance_records() -> list:
     try:
-        # Join with employees table to get employee names
-        result = supabase.table("attendance").select("*, employees(full_name, email)").execute()
+        # Query attendance without join to avoid foreign key relationship requirement
+        result = supabase.table("attendance").select("*").execute()
         
         if not result.data:
             return []
         
-        # Flatten the employee data for easier frontend access
-        records = []
-        for record in result.data:
-            if 'employees' in record and record['employees']:
-                # Add flattened fields for frontend using .get() for safety
-                record['full_name'] = record['employees'].get('full_name', '')
-                record['email'] = record['employees'].get('email', record.get('employee_email', ''))
-                # Remove nested object to avoid duplication
-                del record['employees']
+        records = result.data
+        
+        # Get unique employee emails
+        employee_emails = list(set([rec.get("employee_email") for rec in records if rec.get("employee_email")]))
+        
+        # Fetch employee data for all relevant employees
+        employee_map = {}
+        if employee_emails:
+            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            if employees_response.data:
+                employee_map = {emp["email"]: emp for emp in employees_response.data}
+        
+        # Enrich records with employee names
+        for record in records:
+            employee_email = record.get("employee_email")
+            if employee_email and employee_email in employee_map:
+                record["full_name"] = employee_map[employee_email].get("full_name", "")
+                # Also set email field for consistency
+                if not record.get("email"):
+                    record["email"] = employee_email
             else:
-                # Set default values if employee data is missing
-                record['full_name'] = ''
-                record['email'] = record.get('employee_email', '')
-            records.append(record)
+                # Set defaults if employee data is missing
+                record["full_name"] = ""
+                if not record.get("email"):
+                    record["email"] = employee_email or ""
         
         return records
     except Exception as e:

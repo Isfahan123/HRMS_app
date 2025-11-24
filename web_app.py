@@ -1200,17 +1200,30 @@ async def get_skipped_payroll():
     try:
         # Try to query from payroll_run_skips table first (correct table used by GUI)
         try:
-            response = supabase.table("payroll_run_skips").select("*, employees!inner(full_name, email)").order("created_at", desc=True).limit(200).execute()
+            # Query without join to avoid foreign key relationship requirement
+            response = supabase.table("payroll_run_skips").select("*").order("created_at", desc=True).limit(200).execute()
             
             if response.data:
+                # Get unique employee IDs
+                employee_ids = list(set([rec.get("employee_id") for rec in response.data if rec.get("employee_id")]))
+                
+                # Fetch employee data for all relevant employees
+                employee_map = {}
+                if employee_ids:
+                    employees_response = supabase.table("employees").select("id, full_name, email").in_("id", employee_ids).execute()
+                    if employees_response.data:
+                        employee_map = {emp["id"]: emp for emp in employees_response.data}
+                
                 skipped_records = []
                 for record in response.data:
-                    employee = record.get('employees', {})
+                    employee_id = record.get('employee_id', '')
+                    employee = employee_map.get(employee_id, {})
+                    
                     skipped_records.append({
                         "id": record.get('id'),
                         "employee_name": employee.get('full_name', ''),
                         "employee_email": employee.get('email', ''),
-                        "employee_id": record.get('employee_id', ''),
+                        "employee_id": employee_id,
                         "month_year": record.get('payroll_date', ''),
                         "reason": record.get('reason', 'Not specified'),
                         "skipped_date": record.get('created_at', ''),
@@ -2347,18 +2360,31 @@ async def export_skipped_payroll_csv():
     try:
         # Try to get data from payroll_run_skips table first
         try:
-            response = supabase.table("payroll_run_skips").select("*, employees!inner(full_name, email)").order("created_at", desc=True).limit(1000).execute()
+            # Query without join to avoid foreign key relationship requirement
+            response = supabase.table("payroll_run_skips").select("*").order("created_at", desc=True).limit(1000).execute()
             
             if response.data:
+                # Get unique employee IDs
+                employee_ids = list(set([rec.get("employee_id") for rec in response.data if rec.get("employee_id")]))
+                
+                # Fetch employee data for all relevant employees
+                employee_map = {}
+                if employee_ids:
+                    employees_response = supabase.table("employees").select("id, full_name, email").in_("id", employee_ids).execute()
+                    if employees_response.data:
+                        employee_map = {emp["id"]: emp for emp in employees_response.data}
+                
                 headers = ["ID", "Employee Name", "Employee Email", "Employee ID", "Payroll Date", "Reason", "Skipped Date"]
                 rows = []
                 for record in response.data:
-                    employee = record.get('employees', {})
+                    employee_id = record.get('employee_id', '')
+                    employee = employee_map.get(employee_id, {})
+                    
                     rows.append([
                         record.get('id', ''),
                         employee.get('full_name', ''),
                         employee.get('email', ''),
-                        record.get('employee_id', ''),
+                        employee_id,
                         record.get('payroll_date', ''),
                         record.get('reason', 'Not specified'),
                         record.get('created_at', '')
