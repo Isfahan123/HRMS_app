@@ -118,9 +118,12 @@ python3 -c "from web_app import app; print('OK')"
 
 ## Common Issues
 
-### 503 Error
+### 503 Error or Blank Page
 ```bash
 cd ~/public_html/hrms
+# 1. Check .htaccess has YOUR username (not $CPANEL_USER)
+nano .htaccess
+# 2. Install dependencies
 source ~/virtualenv/hrms/3.11/bin/activate
 pip install -r requirements.txt
 touch passenger_wsgi.py
@@ -131,6 +134,9 @@ Check `.env` exists and has correct Supabase credentials:
 ```bash
 cd ~/public_html/hrms
 cat .env
+# If missing, create it:
+cp .env.example .env
+nano .env  # Add your credentials
 ```
 
 ### Module Not Found
@@ -138,7 +144,32 @@ cat .env
 cd ~/public_html/hrms
 source ~/virtualenv/hrms/3.11/bin/activate
 pip install -r requirements.txt --force-reinstall
+touch passenger_wsgi.py
 ```
+
+### Subdomain Shows No Result
+**Most Common Causes:**
+1. `.htaccess` still has `$CPANEL_USER` instead of your actual username
+2. `.env` file is missing or has wrong credentials
+3. Dependencies not installed in virtual environment
+4. Subdomain doesn't point to correct directory
+
+**Quick Fix:**
+```bash
+cd ~/public_html/hrms
+# Fix .htaccess
+nano .htaccess  # Replace $CPANEL_USER with your username
+# Create .env
+cp .env.example .env
+nano .env  # Add Supabase credentials
+# Install deps
+source ~/virtualenv/hrms/3.11/bin/activate
+pip install -r requirements.txt
+# Restart
+touch passenger_wsgi.py
+```
+
+**For detailed troubleshooting:** See [EXABYTES_TROUBLESHOOTING.md](EXABYTES_TROUBLESHOOTING.md)
 
 ---
 

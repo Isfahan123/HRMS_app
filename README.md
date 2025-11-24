@@ -138,6 +138,7 @@ ENVIRONMENT=production
 
 ### Deployment
 - **[EXABYTES_DEPLOYMENT.md](EXABYTES_DEPLOYMENT.md)** - Complete guide for Exabytes hosting 🇲🇾
+- **[EXABYTES_TROUBLESHOOTING.md](EXABYTES_TROUBLESHOOTING.md)** - Fix deployment issues 🔧
 - **[CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md)** - Complete cPanel deployment guide
 - **[CPANEL_QUICKSTART.md](CPANEL_QUICKSTART.md)** - Quick reference for cPanel
 - [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) - General deployment guide

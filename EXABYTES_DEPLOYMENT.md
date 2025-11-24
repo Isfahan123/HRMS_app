@@ -315,13 +315,18 @@ If your HRMS needs to send emails:
 
 ## 🐛 Troubleshooting Exabytes-Specific Issues
 
-### Issue: "503 Service Unavailable"
+> **📚 For comprehensive troubleshooting, see [EXABYTES_TROUBLESHOOTING.md](EXABYTES_TROUBLESHOOTING.md)**
 
-**Cause**: Virtual environment or dependencies not properly set up
+### Issue: "503 Service Unavailable" or Blank Page
+
+**Cause**: Virtual environment or dependencies not properly set up, or incorrect paths in .htaccess
 
 **Solution**:
 ```bash
 cd ~/public_html/hrms
+# 1. Check .htaccess has YOUR actual username (not $CPANEL_USER)
+nano .htaccess
+# 2. Install dependencies
 source ~/virtualenv/hrms/3.11/bin/activate
 pip install -r requirements.txt --force-reinstall
 touch passenger_wsgi.py
