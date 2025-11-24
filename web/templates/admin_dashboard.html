@@ -2095,13 +2095,16 @@
                                         <tr style="background: #667eea; color: white;">
                                             <th style="padding: 10px;">Chargeable Income From (RM)</th>
                                             <th style="padding: 10px;">To (RM)</th>
+                                            <th style="padding: 10px;">On First (RM)</th>
+                                            <th style="padding: 10px;">Next (RM)</th>
                                             <th style="padding: 10px;">Rate (%)</th>
-                                            <th style="padding: 10px;">Tax on Band (RM)</th>
+                                            <th style="padding: 10px;">Tax on First (RM)</th>
+                                            <th style="padding: 10px;">Tax on Next (RM)</th>
                                             <th style="padding: 10px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="residentTaxRatesBody">
-                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                        <tr><td colspan="8" style="padding: 15px; text-align: center;">Loading...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -2116,13 +2119,16 @@
                                         <tr style="background: #667eea; color: white;">
                                             <th style="padding: 10px;">Chargeable Income From (RM)</th>
                                             <th style="padding: 10px;">To (RM)</th>
+                                            <th style="padding: 10px;">On First (RM)</th>
+                                            <th style="padding: 10px;">Next (RM)</th>
                                             <th style="padding: 10px;">Rate (%)</th>
-                                            <th style="padding: 10px;">Tax on Band (RM)</th>
+                                            <th style="padding: 10px;">Tax on First (RM)</th>
+                                            <th style="padding: 10px;">Tax on Next (RM)</th>
                                             <th style="padding: 10px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="nonResidentTaxRatesBody">
-                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Flat 30% for non-residents</td></tr>
+                                        <tr><td colspan="8" style="padding: 15px; text-align: center;">Flat 30% for non-residents</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -2863,15 +2869,33 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="taxBracketOnFirst">On First (RM):*</label>
+                    <input type="number" id="taxBracketOnFirst" step="0.01" min="0" required>
+                    <small style="color: #666;">Cumulative amount from previous brackets</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketNext">Next (RM):*</label>
+                    <input type="number" id="taxBracketNext" step="0.01" min="0" required>
+                    <small style="color: #666;">Amount in this bracket (To - From)</small>
+                </div>
+                
+                <div class="form-group">
                     <label for="taxBracketRate">Tax Rate (%):*</label>
                     <input type="number" id="taxBracketRate" step="0.01" min="0" max="100" required>
                     <small style="color: #666;">Tax percentage for this bracket</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="taxBracketAmount">Tax on Band (RM):</label>
-                    <input type="number" id="taxBracketAmount" step="0.01" min="0">
-                    <small style="color: #666;">Tax amount for the full band (auto-calculated)</small>
+                    <label for="taxBracketTaxFirst">Tax on First (RM):*</label>
+                    <input type="number" id="taxBracketTaxFirst" step="0.01" min="0" required>
+                    <small style="color: #666;">Cumulative tax from previous brackets</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxBracketTaxNext">Tax on Next (RM):*</label>
+                    <input type="number" id="taxBracketTaxNext" step="0.01" min="0" required>
+                    <small style="color: #666;">Tax calculated for this bracket (Next × Rate / 100)</small>
                 </div>
                 
                 <div style="margin-top: 20px; display: flex; gap: 10px;">
