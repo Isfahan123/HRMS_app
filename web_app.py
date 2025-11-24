@@ -1347,7 +1347,8 @@ async def get_employee_history():
         for record in response.data:
             if 'employees' in record and record['employees']:
                 record['employee_name'] = record['employees']['full_name']
-                # Keep the nested object for backward compatibility
+                # Remove nested object to avoid duplication
+                del record['employees']
             records.append(record)
         
         return {"success": True, "data": records}
