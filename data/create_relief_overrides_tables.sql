@@ -22,7 +22,13 @@ create trigger trg_update_relief_item_overrides
 before update on public.relief_item_overrides
 for each row execute function public.update_relief_item_overrides_updated_at();
 
-PCB Bulan Semasa = [(101,923.70-100,000.00) x 0.25 +(9,400.00)-(0.00+109.85)] / (10+ 1) = 888.27
+-- Group overrides table for group-level caps
+create table if not exists public.relief_group_overrides (
+  group_id text primary key,
+  cap numeric not null,
+  updated_at timestamptz default now(),
+  created_at timestamptz default now()
+);
 
 create or replace function public.update_relief_group_overrides_updated_at()
 returns trigger as $$

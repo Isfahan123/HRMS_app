@@ -1883,20 +1883,36 @@ async def update_relief_maximum(data: Dict[str, Any]):
 async def get_relief_overrides():
     """Get employee-specific relief overrides"""
     try:
-        # Try to query relief_item_overrides table (actual table name)
-        # If it doesn't exist or has different structure, return empty array
-        response = supabase.table("relief_item_overrides").select("*").execute()
+        # Query lhdn_relief_overrides table with employee information
+        response = supabase.table("lhdn_relief_overrides").select("*").execute()
         
-        # Transform to expected format
+        # Transform to expected format with employee names
         overrides = []
         if response.data:
             for item in response.data:
+                # Get employee name if not already in the record
+                employee_name = item.get("employee_name")
+                employee_id = item.get("employee_id")
+                
+                # If employee_name is missing, try to fetch it
+                if not employee_name and employee_id:
+                    try:
+                        emp_response = supabase.table("employees").select("full_name").eq("id", employee_id).execute()
+                        if emp_response.data and len(emp_response.data) > 0:
+                            employee_name = emp_response.data[0].get("full_name")
+                    except:
+                        pass  # If fetch fails, use employee_id
+                
                 overrides.append({
-                    "id": item.get("item_key"),
-                    "relief_code": item.get("item_key"),
-                    "cap": item.get("cap"),
-                    "pcb_only": item.get("pcb_only"),
-                    "cycle_years": item.get("cycle_years")
+                    "id": item.get("id"),
+                    "employee_id": employee_id,
+                    "employee_name": employee_name or employee_id,
+                    "relief_code": item.get("relief_category"),  # Map to relief_code for frontend
+                    "relief_category": item.get("relief_category"),
+                    "override_amount": item.get("override_amount"),
+                    "effective_year": item.get("effective_from", "").split("-")[0] if item.get("effective_from") else None,
+                    "effective_period": item.get("effective_from", "").split("-")[0] if item.get("effective_from") else None,
+                    "reason": item.get("reason")
                 })
         
         return {"success": True, "data": overrides}
@@ -1909,14 +1925,31 @@ async def get_relief_overrides():
 async def create_relief_override(data: Dict[str, Any]):
     """Create an employee-specific relief override"""
     try:
+        # Get employee name and email for denormalized storage
+        employee_id = data["employee_id"]
+        employee_name = None
+        employee_email = None
+        
+        try:
+            emp_response = supabase.table("employees").select("full_name, email").eq("id", employee_id).execute()
+            if emp_response.data and len(emp_response.data) > 0:
+                employee_name = emp_response.data[0].get("full_name")
+                employee_email = emp_response.data[0].get("email")
+        except:
+            pass  # Continue without employee info if fetch fails
+        
+        # Use effective_year to create effective_from date
+        effective_year = data.get("effective_year", datetime.now().year)
+        
         override = {
-            "employee_id": data["employee_id"],
-            "relief_code": data["relief_code"],
+            "employee_id": employee_id,
+            "employee_name": employee_name,
+            "employee_email": employee_email,
+            "relief_category": data["relief_code"],
             "override_amount": data["override_amount"],
-            "effective_period": data.get("effective_period", "2024"),
-            "reason": data.get("reason", ""),
-            "created_at": datetime.utcnow().isoformat(),
-            "created_by": "admin"
+            "effective_from": f"{effective_year}-01-01",
+            "effective_to": f"{effective_year}-12-31",
+            "reason": data.get("reason", "")
         }
         
         response = supabase.table("lhdn_relief_overrides").insert(override).execute()
@@ -1930,15 +1963,42 @@ async def create_relief_override(data: Dict[str, Any]):
         return {"success": False, "message": str(e)}
 
 @app.put("/api/admin/lhdn/relief-overrides/{override_id}")
-async def update_relief_override(override_id: int, data: Dict[str, Any]):
+async def update_relief_override(override_id: str, data: Dict[str, Any]):
     """Update an employee-specific relief override"""
     try:
+        # Get employee name if employee_id changed
+        employee_id = data.get("employee_id")
+        employee_name = None
+        employee_email = None
+        
+        if employee_id:
+            try:
+                emp_response = supabase.table("employees").select("full_name, email").eq("id", employee_id).execute()
+                if emp_response.data and len(emp_response.data) > 0:
+                    employee_name = emp_response.data[0].get("full_name")
+                    employee_email = emp_response.data[0].get("email")
+            except:
+                pass
+        
+        # Use effective_year to update effective_from/to dates
+        effective_year = data.get("effective_year")
+        
         override = {
             "override_amount": data["override_amount"],
-            "effective_period": data.get("effective_period"),
-            "reason": data.get("reason", ""),
-            "updated_at": datetime.utcnow().isoformat()
+            "reason": data.get("reason", "")
         }
+        
+        if employee_id:
+            override["employee_id"] = employee_id
+        if employee_name:
+            override["employee_name"] = employee_name
+        if employee_email:
+            override["employee_email"] = employee_email
+        if data.get("relief_code"):
+            override["relief_category"] = data["relief_code"]
+        if effective_year:
+            override["effective_from"] = f"{effective_year}-01-01"
+            override["effective_to"] = f"{effective_year}-12-31"
         
         response = supabase.table("lhdn_relief_overrides").update(override).eq("id", override_id).execute()
         
@@ -1951,7 +2011,7 @@ async def update_relief_override(override_id: int, data: Dict[str, Any]):
         return {"success": False, "message": str(e)}
 
 @app.delete("/api/admin/lhdn/relief-overrides/{override_id}")
-async def delete_relief_override(override_id: int):
+async def delete_relief_override(override_id: str):
     """Delete an employee-specific relief override"""
     try:
         response = supabase.table("lhdn_relief_overrides").delete().eq("id", override_id).execute()

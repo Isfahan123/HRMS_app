@@ -499,8 +499,8 @@ function loadReliefOverrides(overrides) {
                 <td style="padding: 10px; text-align: right;">RM ${formatMoney(override.override_amount)}</td>
                 <td style="padding: 10px; text-align: center;">${override.effective_year || override.effective_period || '-'}</td>
                 <td style="padding: 10px; text-align: center;">
-                    <button class="btn-sm btn-secondary" onclick="editReliefOverride(${override.id})">✏️ Edit</button>
-                    <button class="btn-sm btn-danger" onclick="deleteReliefOverride(${override.id})">🗑️</button>
+                    <button class="btn-sm btn-secondary" onclick="editReliefOverride('${override.id}')">✏️ Edit</button>
+                    <button class="btn-sm btn-danger" onclick="deleteReliefOverride('${override.id}')">🗑️</button>
                 </td>
             </tr>
         `;
