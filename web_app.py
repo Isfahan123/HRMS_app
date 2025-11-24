@@ -1275,12 +1275,15 @@ async def get_salary_history():
                 if 'employees' in record and record['employees']:
                     record['employee_name'] = record['employees'].get('full_name', '')
                     record['employee_email'] = record['employees'].get('email', record.get('employee_email', ''))
-                    # Remove nested object
+                    # Remove nested object safely
                     del record['employees']
                 else:
                     # Set defaults if employee data is missing
                     record['employee_name'] = ''
                     record['employee_email'] = record.get('employee_email', '')
+                    # Remove nested object if present but empty
+                    if 'employees' in record:
+                        del record['employees']
                 
                 salary_changes.append(record)
         
