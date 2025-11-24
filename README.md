@@ -54,7 +54,10 @@ python start_web.py
 
 3. **Done!** Access at `https://yourdomain.com`
 
-📚 **Detailed Guide**: See [CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md) or [CPANEL_QUICKSTART.md](CPANEL_QUICKSTART.md)
+📚 **Detailed Guides**: 
+- **[EXABYTES_DEPLOYMENT.md](EXABYTES_DEPLOYMENT.md)** - Complete Exabytes cPanel guide 🇲🇾
+- [CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md) - General cPanel guide
+- [CPANEL_QUICKSTART.md](CPANEL_QUICKSTART.md) - Quick reference
 
 ## 📋 Deployment Options
 
@@ -62,7 +65,8 @@ python start_web.py
 
 Perfect for traditional web hosting with cPanel.
 
-- **Documentation**: [CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md)
+- **Exabytes Hosting (Malaysia)**: [EXABYTES_DEPLOYMENT.md](EXABYTES_DEPLOYMENT.md) 🇲🇾
+- **General cPanel**: [CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md)
 - **Quick Reference**: [CPANEL_QUICKSTART.md](CPANEL_QUICKSTART.md)
 - **Setup Script**: `./setup_cpanel.sh`
 
@@ -133,6 +137,8 @@ ENVIRONMENT=production
 - [WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md) - Web UI user guide
 
 ### Deployment
+- **[EXABYTES_DEPLOYMENT.md](EXABYTES_DEPLOYMENT.md)** - Complete guide for Exabytes hosting 🇲🇾
+- **[EXABYTES_TROUBLESHOOTING.md](EXABYTES_TROUBLESHOOTING.md)** - Fix deployment issues 🔧
 - **[CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md)** - Complete cPanel deployment guide
 - **[CPANEL_QUICKSTART.md](CPANEL_QUICKSTART.md)** - Quick reference for cPanel
 - [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) - General deployment guide
@@ -310,5 +316,6 @@ This project is private and proprietary. All rights reserved.
 **Made with ❤️ for efficient HR management**
 
 For questions about deployment, see the appropriate deployment guide:
-- **cPanel**: [CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md) or [CPANEL_QUICKSTART.md](CPANEL_QUICKSTART.md)
+- **Exabytes (Malaysia)**: [EXABYTES_DEPLOYMENT.md](EXABYTES_DEPLOYMENT.md) 🇲🇾
+- **General cPanel**: [CPANEL_DEPLOYMENT.md](CPANEL_DEPLOYMENT.md) or [CPANEL_QUICKSTART.md](CPANEL_QUICKSTART.md)
 - **Other platforms**: [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
