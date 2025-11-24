@@ -19,7 +19,7 @@ class Config:
     
     # Environment
     ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
-    DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+    DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes", "on")
     
     # Web Server
     WEB_HOST = os.getenv("WEB_HOST", "0.0.0.0")
