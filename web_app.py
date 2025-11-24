@@ -2244,8 +2244,15 @@ async def delete_holiday(holiday_id: int):
         return {"success": False, "message": str(e)}
 
 @app.post("/api/holidays/import-malaysia")
-async def import_malaysia_holidays(year: int, state: Optional[str] = None):
-    """Auto-import Malaysia public holidays for a specific year"""
+async def import_malaysia_holidays(year: int, state: Optional[str] = None, replace: bool = False):
+    """
+    Auto-import Malaysia public holidays for a specific year
+    
+    Args:
+        year: Year to import holidays for (1900-2100)
+        state: Optional state filter (e.g., 'Selangor', 'Johor'). None for national holidays.
+        replace: If True, delete existing holidays for this year/state before importing
+    """
     try:
         # Validate year parameter
         if year < 1900 or year > 2100:
@@ -2255,10 +2262,15 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None):
             }
         
         from core.holidays_service import get_holidays_for_year
-        from services.supabase_service import insert_calendar_holiday, find_calendar_holidays_for_year
+        from services.supabase_service import insert_calendar_holiday, find_calendar_holidays_for_year, delete_calendar_holidays_for_year
         
         # Normalize state parameter
         normalized_state = None if (not state or state == 'All Malaysia') else state
+        
+        # If replace=True, delete existing holidays for this year/state
+        deleted_count = 0
+        if replace:
+            deleted_count = delete_calendar_holidays_for_year(year, state=normalized_state)
         
         # Get holidays from python-holidays library
         holidays_set, holiday_details = get_holidays_for_year(
@@ -2269,6 +2281,7 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None):
         )
         
         # Fetch existing holidays for this year upfront (avoid N+1 query pattern)
+        # Note: If replace=True, this will be empty since we just deleted them
         existing_holidays = find_calendar_holidays_for_year(year, state=normalized_state)
         existing_dates = {h.get('date') for h in existing_holidays if h.get('date')}
         
@@ -2320,10 +2333,19 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None):
             except Exception as e:
                 errors.append(f"Failed to import {name} on {date_str}: {str(e)}")
         
+        # Build message based on whether replacement occurred
+        if replace and deleted_count > 0:
+            message = f"Replaced {deleted_count} existing holidays. Imported {imported_count} new holidays, skipped {skipped_count} duplicates"
+        elif replace and deleted_count == 0:
+            message = f"No existing holidays to replace. Imported {imported_count} holidays, skipped {skipped_count} duplicates"
+        else:
+            message = f"Imported {imported_count} holidays, skipped {skipped_count} duplicates"
+        
         return {
             "success": True,
-            "message": f"Imported {imported_count} holidays, skipped {skipped_count} duplicates",
+            "message": message,
             "data": {
+                "deleted": deleted_count if replace else 0,
                 "imported": imported_count,
                 "skipped": skipped_count,
                 "errors": errors

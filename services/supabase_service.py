@@ -319,6 +319,44 @@ def update_calendar_holiday_by_id(holiday_id: str, fields: Dict) -> bool:
         print(f"DEBUG: update_calendar_holiday_by_id error: {e}")
         return False
 
+
+def delete_calendar_holidays_for_year(year: int, state: str = None) -> int:
+    """
+    Delete all calendar holidays for a specific year and optionally a state.
+    Returns the number of holidays deleted.
+    
+    Args:
+        year: The year to delete holidays for
+        state: Optional state filter. If None, deletes all holidays for the year.
+               If specified, only deletes holidays for that state or nationwide holidays.
+    
+    Returns:
+        Number of holidays deleted
+    """
+    try:
+        if not _probe_table_exists('calendar_holidays'):
+            return 0
+        
+        # Get holidays to delete (to count them and filter by state if needed)
+        holidays_to_delete = find_calendar_holidays_for_year(year, state=state)
+        
+        if not holidays_to_delete:
+            return 0
+        
+        # Delete holidays by their IDs
+        deleted_count = 0
+        for holiday in holidays_to_delete:
+            holiday_id = holiday.get('id')
+            if holiday_id:
+                if delete_calendar_holiday_by_id(str(holiday_id)):
+                    deleted_count += 1
+        
+        return deleted_count
+    except Exception as e:
+        print(f"DEBUG: delete_calendar_holidays_for_year error: {e}")
+        return 0
+
+
 def upsert_hpb_config(config_name: str, year: int, details: Dict) -> bool:
     """Upsert a Had Potongan Bulanan configuration JSON for a given year."""
     try:
