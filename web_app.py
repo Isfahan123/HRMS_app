@@ -797,23 +797,37 @@ async def delete_bonus(bonus_id: str):
 def _safe_to_float(value):
     """
     Safely convert a value to float, handling dicts, numbers, and None.
-    If value is a dict, sum all numeric values.
+    
+    Args:
+        value: Can be None, a number, a string, or a dictionary
+        
+    Returns:
+        float: Converted value or 0.0 on failure
+        
+    Examples:
+        - _safe_to_float(None) -> 0.0
+        - _safe_to_float(100) -> 100.0
+        - _safe_to_float("150") -> 150.0
+        - _safe_to_float({"transport": 100, "housing": 200}) -> 300.0
+        - _safe_to_float({}) -> 0.0
     """
     if value is None:
         return 0.0
     if isinstance(value, dict):
         # Sum all numeric values in the dictionary
         total = 0.0
-        for v in value.values():
+        for key, v in value.items():
             if v is not None:
                 try:
                     total += float(v)
                 except (ValueError, TypeError):
+                    print(f"WARNING: Could not convert dictionary value for key '{key}': {v!r}")
                     pass
         return total
     try:
         return float(value)
     except (ValueError, TypeError):
+        print(f"WARNING: Could not convert value to float: {value!r}")
         return 0.0
 
 @app.get("/api/payroll/payslip/{employee_id}/{payroll_run_id}")
