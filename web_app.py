@@ -35,7 +35,8 @@ from services.supabase_service import (
     get_payroll_settings,
     update_payroll_settings,
     get_monthly_deductions,
-    upsert_monthly_deductions
+    upsert_monthly_deductions,
+    get_variable_percentage_config
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -1274,31 +1275,38 @@ async def get_salary_history():
     Get salary change history for employees
     """
     try:
-        # Query salary history from employee_history table with employee names
-        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("effective_date", desc=True).limit(100).execute()
+        # Query salary history from employee_history table without join to avoid foreign key relationship requirement
+        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(100).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        # Filter for salary-related changes and flatten employee data
-        salary_changes = []
-        for record in response.data:
-            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']:
-                # Flatten employee data for frontend
-                if 'employees' in record and record['employees']:
-                    record['employee_name'] = record['employees'].get('full_name', '')
-                    record['employee_email'] = record['employees'].get('email', record.get('employee_email', ''))
-                    # Remove nested object safely
-                    del record['employees']
-                else:
-                    # Set defaults if employee data is missing
-                    record['employee_name'] = ''
-                    record['employee_email'] = record.get('employee_email', '')
-                    # Remove nested object if present but empty
-                    if 'employees' in record:
-                        del record['employees']
-                
-                salary_changes.append(record)
+        # Filter for salary-related changes
+        salary_changes = [
+            record for record in response.data 
+            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']
+        ]
+        
+        if not salary_changes:
+            return {"success": True, "data": []}
+        
+        # Get unique employee emails
+        employee_emails = list(set([sc.get("employee_email") for sc in salary_changes if sc.get("employee_email")]))
+        
+        # Fetch employee data for all relevant employees
+        employee_map = {}
+        if employee_emails:
+            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            if employees_response.data:
+                employee_map = {emp["email"]: emp for emp in employees_response.data}
+        
+        # Enrich salary changes with employee names
+        for record in salary_changes:
+            employee_email = record.get("employee_email")
+            if employee_email and employee_email in employee_map:
+                record["employee_name"] = employee_map[employee_email].get("full_name", "")
+            else:
+                record["employee_name"] = ""
         
         return {"success": True, "data": salary_changes}
     except Exception as e:
@@ -1363,20 +1371,31 @@ async def get_employee_history():
     Get complete employment/re-employment history (previous jobs, companies, positions)
     """
     try:
-        # Join with employees table to get employee names
-        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("start_date", desc=True).limit(200).execute()
+        # Query employee_history without join to avoid foreign key relationship requirement
+        response = supabase.table("employee_history").select("*").order("start_date", desc=True).limit(200).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        # Flatten the employee data for easier access in frontend
-        records = []
-        for record in response.data:
-            if 'employees' in record and record['employees']:
-                record['employee_name'] = record['employees']['full_name']
-                # Remove nested object to avoid duplication
-                del record['employees']
-            records.append(record)
+        records = response.data
+        
+        # Get unique employee emails
+        employee_emails = list(set([rec.get("employee_email") for rec in records if rec.get("employee_email")]))
+        
+        # Fetch employee data for all relevant employees
+        employee_map = {}
+        if employee_emails:
+            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            if employees_response.data:
+                employee_map = {emp["email"]: emp for emp in employees_response.data}
+        
+        # Enrich records with employee names
+        for record in records:
+            employee_email = record.get("employee_email")
+            if employee_email and employee_email in employee_map:
+                record["employee_name"] = employee_map[employee_email].get("full_name", "")
+            else:
+                record["employee_name"] = ""
         
         return {"success": True, "data": records}
     except Exception as e:
