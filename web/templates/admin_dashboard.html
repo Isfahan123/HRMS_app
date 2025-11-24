@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HRMS Admin Dashboard</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=3.0">
+    <title>{{ page_title }}</title>
+    <meta name="description" content="{{ app_description }}">
+    <meta name="version" content="{{ app_version }}">
+    <link rel="stylesheet" href="/static/css/style.css?v={{ app_version }}">
 </head>
 <body>
     <div class="dashboard-container">
         <header class="dashboard-header">
-            <h1>HRMS Admin Dashboard</h1>
+            <h1>{{ app_name }} Admin Dashboard</h1>
             <div class="user-info">
                 <span id="welcomeMessage">Welcome, Admin</span>
+                {% if features.calendar %}
                 <button id="openCalendarBtn" class="btn-secondary" style="margin-right: 10px;">📅 Open Calendar</button>
+                {% endif %}
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
             </div>
         </header>
@@ -4301,6 +4305,26 @@
                 });
             }
         });
+        
+        // Make Python config available to JavaScript
+        window.APP_CONFIG = {
+            name: "{{ app_name }}",
+            version: "{{ app_version }}",
+            environment: "{{ environment }}",
+            apiPrefix: "{{ api_prefix }}",
+            debug: {{ debug|lower }},
+            features: {
+                calendar: {{ features.calendar|lower }},
+                bonus: {{ features.bonus|lower }},
+                payroll: {{ features.payroll|lower }},
+                engagements: {{ features.engagements|lower }}
+            }
+        };
     </script>
+    {% if debug %}
+    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 10000;">
+        v{{ app_version }} ({{ environment }})
+    </div>
+    {% endif %}
 </body>
 </html>

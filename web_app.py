@@ -14,6 +14,9 @@ import io
 import requests
 from datetime import datetime
 
+# Import configuration
+from config import config
+
 # Import existing services and business logic
 from services.supabase_service import (
     login_user_by_username, 
@@ -90,42 +93,74 @@ class EmployeeData(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Serve the login page"""
-    return templates.TemplateResponse("login.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="Login - HRMS"
+    )
+    return templates.TemplateResponse("login.html", context)
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
     """Serve the dashboard page"""
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="Employee Dashboard - HRMS"
+    )
+    return templates.TemplateResponse("dashboard.html", context)
 
 @app.get("/admin-dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
     """Serve the admin dashboard page"""
-    return templates.TemplateResponse("admin_dashboard.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="Admin Dashboard - HRMS"
+    )
+    return templates.TemplateResponse("admin_dashboard.html", context)
 
 @app.get("/demo", response_class=HTMLResponse)
 async def demo_dashboard(request: Request):
     """Serve the demo dashboard page (for testing UI without auth)"""
-    return templates.TemplateResponse("demo_dashboard.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="Demo Dashboard - HRMS"
+    )
+    return templates.TemplateResponse("demo_dashboard.html", context)
 
 @app.get("/admin-preview", response_class=HTMLResponse)
 async def admin_preview(request: Request):
     """Serve the full admin dashboard for preview (no auth required)"""
-    return templates.TemplateResponse("admin_dashboard.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="Admin Preview - HRMS"
+    )
+    return templates.TemplateResponse("admin_dashboard.html", context)
 
 @app.get("/test-subtabs", response_class=HTMLResponse)
 async def test_subtabs(request: Request):
     """Test page to verify subtabs fix"""
-    return templates.TemplateResponse("test_subtabs.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="Test Subtabs - HRMS"
+    )
+    return templates.TemplateResponse("test_subtabs.html", context)
 
 @app.get("/ux-demo", response_class=HTMLResponse)
 async def ux_demo(request: Request):
     """UX components demonstration page"""
-    return templates.TemplateResponse("ux_demo.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="UX Demo - HRMS"
+    )
+    return templates.TemplateResponse("ux_demo.html", context)
 
 @app.get("/table-test", response_class=HTMLResponse)
 async def table_test(request: Request):
     """Table mobile scrolling test page"""
-    return templates.TemplateResponse("table_test.html", {"request": request})
+    context = config.get_template_context(
+        request=request,
+        page_title="Table Test - HRMS"
+    )
+    return templates.TemplateResponse("table_test.html", context)
 
 @app.get("/WEB_INTERFACE_GUIDE.md")
 async def serve_guide():
