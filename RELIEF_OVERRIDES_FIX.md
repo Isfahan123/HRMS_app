@@ -15,23 +15,17 @@ The relief overrides feature was not displaying input/output properly in the web
    - A random PCB calculation comment was inserted in the middle of the SQL file
    - This would cause SQL execution to fail
 
-3. **API Endpoint Mismatch**
-   - GET endpoint was reading from `relief_item_overrides` (item-level config)
-   - POST/PUT/DELETE endpoints were writing to `lhdn_relief_overrides` (employee-specific)
-   - These are two different tables with different purposes!
+3. **Fundamental Design Mismatch**
+   - Web interface HTML showed "Employee-Specific Relief Overrides" 
+   - But the GET API was reading from `relief_item_overrides` (global item properties)
+   - POST/PUT/DELETE APIs tried to write to `lhdn_relief_overrides` (employee-specific amounts)
+   - Python GUI manages **global** item/group overrides, NOT employee-specific amounts
+   - **These are completely different features!**
 
-4. **Data Format Mismatch**
-   - GET endpoint returned: `{id, relief_code, cap, pcb_only, cycle_years}`
-   - Frontend expected: `{id, employee_id, employee_name, relief_category, override_amount, effective_year}`
-   - Complete incompatibility between API and UI
-
-5. **Missing Employee Information**
-   - API wasn't joining with employee table to get names
-   - Frontend showed undefined/null for employee names
-
-6. **JavaScript UUID Handling**
-   - Event handlers passed UUID without quotes: `onclick="edit(${uuid})"`
-   - Should be: `onclick="edit('${uuid}')"`
+4. **Incorrect Feature Implementation**
+   - Original web interface attempted to create an employee-specific override system
+   - This doesn't exist in the Python GUI
+   - Python GUI only has global item property overrides and group cap overrides
 
 ## Solution Implemented
 
@@ -50,67 +44,85 @@ create table if not exists public.relief_group_overrides (
 **Removed corrupted line:**
 - Deleted: `PCB Bulan Semasa = [(101,923.70-100,000.00) x 0.25 +(9,400.00)-(0.00+109.85)] / (10+ 1) = 888.27`
 
-**Added employee-specific overrides table:**
-```sql
-create table if not exists public.lhdn_relief_overrides (
-  id uuid default gen_random_uuid() primary key,
-  employee_id uuid references public.employees(id) on delete cascade,
-  employee_name varchar(255),
-  employee_email varchar(255),
-  relief_category varchar(100) not null,
-  override_amount decimal(10, 2) not null,
-  effective_from date,
-  effective_to date,
-  reason text,
-  created_at timestamptz default now()
-);
-```
+**Note:** The `lhdn_relief_overrides` table (employee-specific) was added for potential future use, but the current implementation focuses on matching the Python GUI's global overrides.
 
-### 2. Fixed API Endpoints (`web_app.py`)
+### 2. Completely Rewrote API Endpoints (`web_app.py`)
 
-#### GET Endpoint
-**Before:**
+**New endpoints matching Python GUI:**
+
 ```python
-response = supabase.table("relief_item_overrides").select("*").execute()
-# Returned: {id, relief_code, cap, pcb_only, cycle_years}
+# Get item overrides (cap, pcb_only, cycle_years)
+GET /api/admin/lhdn/relief-item-overrides
+
+# Get group cap overrides
+GET /api/admin/lhdn/relief-group-overrides
+
+# Upsert item override
+POST /api/admin/lhdn/relief-item-overrides
+Body: {item_key, cap?, pcb_only?, cycle_years?}
+
+# Upsert group override
+POST /api/admin/lhdn/relief-group-overrides
+Body: {group_id, cap}
+
+# Delete item override
+DELETE /api/admin/lhdn/relief-item-overrides/{item_key}
+
+# Delete group override
+DELETE /api/admin/lhdn/relief-group-overrides/{group_id}
 ```
 
-**After:**
-```python
-response = supabase.table("lhdn_relief_overrides").select("*").execute()
-# Returns: {id, employee_id, employee_name, relief_category, override_amount, effective_year}
-# With employee name lookup if missing
-```
+**Key Points:**
+- No employee_id parameter - these are GLOBAL overrides
+- Upsert operations (insert or update if exists)
+- Direct mapping to database tables used by Python GUI
 
-#### POST Endpoint
-**Fixed field mappings:**
-- `relief_code` → `relief_category` (database column name)
-- `effective_year` → `effective_from/effective_to` dates
-- Added employee name/email denormalization
+### 3. Completely Rewrote HTML Interface (`web/templates/admin_dashboard.html`)
 
-#### PUT Endpoint
-**Fixed:**
-- Parameter type: `int` → `str` (UUID)
-- Added employee info update support
-- Fixed field mappings
+**New layout matching Python GUI:**
 
-#### DELETE Endpoint
-**Fixed:**
-- Parameter type: `int` → `str` (UUID)
+- **Two-table layout:**
+  1. **Group Caps Table** - 5 columns: Group ID, Description, Default Cap, Override Cap, Effective Cap
+  2. **Item Overrides Table** - 9 columns: Code, Item Key, Description, caps, PCB Only, cycles
 
-### 3. Fixed JavaScript (`web/static/js/lhdn_config.js`)
+- **Features added:**
+  - Inline editing (no modal needed)
+  - Color-coded cells (Higher/Lower/Inherit/Invalid/PCB Only)
+  - Filter by code/key/description
+  - "Only Overridden" checkbox
+  - Legend explaining colors
+  - Save/Reload/Reset buttons
 
-**Before:**
+### 4. Completely Rewrote JavaScript (`web/static/js/lhdn_config.js`)
+
+**New implementation:**
+
 ```javascript
-onclick="editReliefOverride(${override.id})"
-onclick="deleteReliefOverride(${override.id})"
+// Load both item and group overrides
+async function loadReliefOverridesFromAPI()
+
+// Populate tables with inline editing
+function populateReliefGroupTable()
+function populateReliefItemTable()
+
+// Real-time updates
+function updateGroupEffective(groupId)
+function updateItemEffective(itemKey)
+
+// Filter functionality
+function applyReliefFilter()
+
+// Batch operations
+async function saveReliefOverrides()
+async function clearAllReliefOverrides()
 ```
 
-**After:**
-```javascript
-onclick="editReliefOverride('${override.id}')"
-onclick="deleteReliefOverride('${override.id}')"
-```
+**Key features:**
+- No modal dialogs - all editing is inline in tables
+- Real-time visual feedback with color coding
+- Checkbox indeterminate state for PCB only
+- Input validation (NaN checks, range validation)
+- Batch save to minimize API calls
 
 ### 4. Code Quality Improvements
 
@@ -126,28 +138,33 @@ except Exception as e:
     pass
 ```
 
-## Understanding the Two Types of Relief Overrides
+## Understanding Relief Override Types
 
-### Type 1: Item-Level Overrides (Python GUI)
+### Type 1: Item-Level Overrides (Python GUI & Web Interface)
 **Table:** `relief_item_overrides`  
-**Purpose:** Override default relief item properties globally  
+**Purpose:** Override default relief item properties **globally** for all employees
 **Columns:** `item_key, cap, pcb_only, cycle_years`  
-**Used by:** Python GUI (`gui/relief_overrides_subtab.py`)  
-**Example:** Change the cap for "medical_serious_disease" from 10,000 to 15,000 for ALL employees
+**Used by:** 
+- Python GUI (`gui/relief_overrides_subtab.py`)
+- **Web Interface** (`web/templates/admin_dashboard.html`, `web/static/js/lhdn_config.js`)  
 
-### Type 2: Employee-Specific Overrides (Web Interface)
-**Table:** `lhdn_relief_overrides`  
-**Purpose:** Override relief amounts for individual employees  
-**Columns:** `id, employee_id, employee_name, relief_category, override_amount, effective_from, effective_to, reason`  
-**Used by:** Web Interface (`web/templates/admin_dashboard.html`, `web/static/js/lhdn_config.js`)  
-**Example:** Give John Doe a 5,000 override for "medical_serious_disease" for 2024 only
+**Example:** Change the cap for "medical_serious_disease" from 10,000 to 15,000 for **ALL employees**
 
-### Type 3: Group-Level Overrides (Python GUI)
+### Type 2: Group-Level Overrides (Python GUI & Web Interface)
 **Table:** `relief_group_overrides`  
-**Purpose:** Override group caps (e.g., max total for medical expenses)  
+**Purpose:** Override group caps (e.g., max total for medical expenses) **globally** for all employees
 **Columns:** `group_id, cap`  
-**Used by:** Python GUI (`gui/relief_overrides_subtab.py`)  
-**Example:** Change medical group cap from 10,000 to 12,000 for ALL employees
+**Used by:** 
+- Python GUI (`gui/relief_overrides_subtab.py`)
+- **Web Interface** (`web/templates/admin_dashboard.html`, `web/static/js/lhdn_config.js`)  
+
+**Example:** Change medical group cap (G4_MEDICAL) from 10,000 to 12,000 for **ALL employees**
+
+### Type 3: Employee-Specific Overrides (NOT IMPLEMENTED)
+**Table:** `lhdn_relief_overrides`  
+**Purpose:** Override relief amounts for **individual employees** (not currently used)
+**Status:** Table exists but feature is not implemented in either Python GUI or Web Interface
+**Note:** This was the incorrect direction the original web implementation tried to take
 
 ## Data Flow
 
