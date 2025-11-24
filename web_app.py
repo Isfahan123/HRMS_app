@@ -2781,6 +2781,29 @@ async def update_payroll_settings_api(settings: Dict[str, Any]):
         print(f"Error updating payroll settings: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.get("/api/admin/variable-config/{config_name}")
+async def get_variable_config_api(config_name: str):
+    """Get variable percentage configuration (EPF/SOCSO/EIS rates)"""
+    try:
+        config = get_variable_percentage_config(config_name)
+        
+        if config:
+            return {
+                "success": True,
+                "config": config
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Configuration '{config_name}' not found"
+            }
+    except Exception as e:
+        print(f"Error getting variable config: {str(e)}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
 # ============================================================================
 # TP1 Relief Claims Endpoints (Placeholder for future implementation)
 # ============================================================================
