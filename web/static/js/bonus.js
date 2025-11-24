@@ -327,12 +327,16 @@ class BonusManager {
         const bonus = this.bonuses.find(b => b.id === bonusId);
         if (!bonus) return;
 
-        // Populate form
+        // Populate employee dropdown FIRST before setting values
+        this.populateEmployeeDropdown();
+        document.getElementById('modalTitle').textContent = 'Edit Bonus';
+        
+        // Now populate form values
         document.getElementById('bonusId').value = bonus.id;
         document.getElementById('bonusEmployeeId').value = bonus.employee_id;
         document.getElementById('bonusType').value = bonus.bonus_type;
         document.getElementById('bonusAmount').value = bonus.amount;
-        document.getElementById('bonusDescription').value = bonus.description;
+        document.getElementById('bonusDescription').value = bonus.description || '';
         document.getElementById('bonusEffectiveDate').value = bonus.effective_date;
         document.getElementById('bonusStatus').value = bonus.status || 'Pending';
         document.getElementById('bonusIsRecurring').checked = bonus.is_recurring || false;
@@ -345,6 +349,12 @@ class BonusManager {
                 customTypeGroup.style.display = 'block';
                 document.getElementById('bonusCustomType').value = bonus.custom_type;
             }
+        } else {
+            // Hide custom type field if not "Other"
+            const customTypeGroup = document.getElementById('bonusCustomTypeGroup');
+            if (customTypeGroup) {
+                customTypeGroup.style.display = 'none';
+            }
         }
         
         // Handle recurrence frequency
@@ -353,6 +363,12 @@ class BonusManager {
             if (recurrenceGroup) {
                 recurrenceGroup.style.display = 'block';
                 document.getElementById('bonusRecurrence').value = bonus.recurrence_frequency;
+            }
+        } else {
+            // Hide recurrence group if not recurring
+            const recurrenceGroup = document.getElementById('bonusRecurrenceGroup');
+            if (recurrenceGroup) {
+                recurrenceGroup.style.display = 'none';
             }
         }
         
@@ -366,9 +382,6 @@ class BonusManager {
             document.getElementById('bonusExpiryDateGroup').style.display = 'none';
             document.getElementById('bonusExpiryDate').value = '';
         }
-
-        document.getElementById('modalTitle').textContent = 'Edit Bonus';
-        this.populateEmployeeDropdown();
         
         const modal = document.getElementById('bonusModal');
         if (modal) {

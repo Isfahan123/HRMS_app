@@ -9152,3 +9152,84 @@ def login_user_by_username(username: str, password: str):
         _log_security_event('login_failure', user_email=(username or '').lower(), success=False, error_message=str(e))
         return {"success": False, "role": None}
 
+
+
+# ----------------------------
+# Company Leave Policies
+# ----------------------------
+
+def get_company_leave_policy(policy_name: str, default_value: str = "") -> str:
+    """
+    Get a specific company leave policy value.
+    
+    Args:
+        policy_name: Name of the policy to retrieve
+        default_value: Default value if policy doesn't exist
+        
+    Returns:
+        Policy value as string, or default_value if not found
+    """
+    try:
+        result = supabase.table("company_leave_policies").select("value").eq("policy_name", policy_name).limit(1).execute()
+        if result.data and len(result.data) > 0:
+            return result.data[0].get("value", default_value)
+        return default_value
+    except Exception as e:
+        print(f"DEBUG: Error fetching leave policy '{policy_name}': {str(e)}")
+        return default_value
+
+
+def get_company_leave_policies() -> dict:
+    """
+    Get all company leave policies as a dictionary.
+    
+    Returns:
+        Dictionary with policy_name as keys and value as values
+    """
+    try:
+        result = supabase.table("company_leave_policies").select("*").execute()
+        policies = {}
+        if result.data:
+            for row in result.data:
+                policies[row.get("policy_name")] = row.get("value")
+        return policies
+    except Exception as e:
+        print(f"DEBUG: Error fetching leave policies: {str(e)}")
+        return {}
+
+
+def update_company_leave_policy(policy_name: str, value: str, updated_by: str = "admin") -> bool:
+    """
+    Update or create a company leave policy.
+    
+    Args:
+        policy_name: Name of the policy to update
+        value: New value for the policy
+        updated_by: Email/username of the person updating
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Check if policy exists
+        existing = supabase.table("company_leave_policies").select("id").eq("policy_name", policy_name).limit(1).execute()
+        
+        data = {
+            "policy_name": policy_name,
+            "value": value,
+            "updated_by": updated_by,
+            "updated_at": datetime.now(pytz.UTC).isoformat()
+        }
+        
+        if existing.data and len(existing.data) > 0:
+            # Update existing policy
+            result = supabase.table("company_leave_policies").update(data).eq("policy_name", policy_name).execute()
+        else:
+            # Insert new policy
+            data["created_at"] = datetime.now(pytz.UTC).isoformat()
+            result = supabase.table("company_leave_policies").insert(data).execute()
+        
+        return bool(result.data)
+    except Exception as e:
+        print(f"DEBUG: Error updating leave policy '{policy_name}': {str(e)}")
+        return False
