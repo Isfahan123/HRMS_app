@@ -214,16 +214,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function buildPayrollTable(records) {
         let html = '<table><thead><tr>';
-        html += '<th>Month</th><th>Basic Salary</th><th>Net Pay</th><th>Status</th><th>Actions</th>';
+        html += '<th>Month</th>';
+        html += '<th>Basic Salary</th>';
+        html += '<th>Gross Salary</th>';
+        html += '<th>Deductions</th>';
+        html += '<th>Net Pay</th>';
+        html += '<th>Status</th>';
+        html += '<th>Actions</th>';
         html += '</tr></thead><tbody>';
         
         records.forEach(record => {
             html += '<tr>';
             html += `<td>${record.month_year || '-'}</td>`;
-            html += `<td>${formatCurrency(record.basic_salary)}</td>`;
-            html += `<td>${formatCurrency(record.net_pay)}</td>`;
-            html += `<td>${record.status || '-'}</td>`;
-            html += `<td><button class="btn-primary" onclick="downloadPayslip('${record.id}', '${record.month_year}')">Download PDF</button></td>`;
+            html += `<td>${formatCurrency(record.basic_salary || 0)}</td>`;
+            html += `<td>${formatCurrency(record.gross_salary || 0)}</td>`;
+            html += `<td>${formatCurrency(record.total_deductions || 0)}</td>`;
+            html += `<td><strong>${formatCurrency(record.net_pay || 0)}</strong></td>`;
+            
+            // Status with color badge
+            const status = record.status || 'completed';
+            const statusColor = status === 'completed' ? '#4caf50' : '#ff9800';
+            html += `<td><span style="background: ${statusColor}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${status}</span></td>`;
+            
+            // Actions - Download payslip button
+            html += '<td>';
+            html += `<button class="btn-primary" onclick="downloadPayslip('${record.id}', '${record.month_year}')" style="padding: 6px 12px;">`;
+            html += '📄 Download Payslip</button>';
+            html += '</td>';
             html += '</tr>';
         });
         

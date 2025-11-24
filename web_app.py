@@ -1336,12 +1336,21 @@ async def get_employee_history():
     Get complete employment/re-employment history (previous jobs, companies, positions)
     """
     try:
-        response = supabase.table("employee_history").select("*").order("start_date", desc=True).limit(200).execute()
+        # Join with employees table to get employee names
+        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("start_date", desc=True).limit(200).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        return {"success": True, "data": response.data}
+        # Flatten the employee data for easier access in frontend
+        records = []
+        for record in response.data:
+            if 'employees' in record and record['employees']:
+                record['employee_name'] = record['employees']['full_name']
+                # Keep the nested object for backward compatibility
+            records.append(record)
+        
+        return {"success": True, "data": records}
     except Exception as e:
         print(f"Error getting employee history: {str(e)}")
         return {"success": False, "message": str(e)}
