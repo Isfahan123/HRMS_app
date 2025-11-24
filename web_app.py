@@ -35,7 +35,8 @@ from services.supabase_service import (
     get_payroll_settings,
     update_payroll_settings,
     get_monthly_deductions,
-    upsert_monthly_deductions
+    upsert_monthly_deductions,
+    get_variable_percentage_config
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -1199,17 +1200,30 @@ async def get_skipped_payroll():
     try:
         # Try to query from payroll_run_skips table first (correct table used by GUI)
         try:
-            response = supabase.table("payroll_run_skips").select("*, employees!inner(full_name, email)").order("created_at", desc=True).limit(200).execute()
+            # Query without join to avoid foreign key relationship requirement
+            response = supabase.table("payroll_run_skips").select("*").order("created_at", desc=True).limit(200).execute()
             
             if response.data:
+                # Get unique employee IDs
+                employee_ids = list(set([rec.get("employee_id") for rec in response.data if rec.get("employee_id")]))
+                
+                # Fetch employee data for all relevant employees
+                employee_map = {}
+                if employee_ids:
+                    employees_response = supabase.table("employees").select("id, full_name, email").in_("id", employee_ids).execute()
+                    if employees_response.data:
+                        employee_map = {emp["id"]: emp for emp in employees_response.data}
+                
                 skipped_records = []
                 for record in response.data:
-                    employee = record.get('employees', {})
+                    employee_id = record.get('employee_id', '')
+                    employee = employee_map.get(employee_id, {})
+                    
                     skipped_records.append({
                         "id": record.get('id'),
                         "employee_name": employee.get('full_name', ''),
                         "employee_email": employee.get('email', ''),
-                        "employee_id": record.get('employee_id', ''),
+                        "employee_id": employee_id,
                         "month_year": record.get('payroll_date', ''),
                         "reason": record.get('reason', 'Not specified'),
                         "skipped_date": record.get('created_at', ''),
@@ -1274,31 +1288,38 @@ async def get_salary_history():
     Get salary change history for employees
     """
     try:
-        # Query salary history from employee_history table with employee names
-        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("effective_date", desc=True).limit(100).execute()
+        # Query salary history from employee_history table without join to avoid foreign key relationship requirement
+        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(100).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        # Filter for salary-related changes and flatten employee data
-        salary_changes = []
-        for record in response.data:
-            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']:
-                # Flatten employee data for frontend
-                if 'employees' in record and record['employees']:
-                    record['employee_name'] = record['employees'].get('full_name', '')
-                    record['employee_email'] = record['employees'].get('email', record.get('employee_email', ''))
-                    # Remove nested object safely
-                    del record['employees']
-                else:
-                    # Set defaults if employee data is missing
-                    record['employee_name'] = ''
-                    record['employee_email'] = record.get('employee_email', '')
-                    # Remove nested object if present but empty
-                    if 'employees' in record:
-                        del record['employees']
-                
-                salary_changes.append(record)
+        # Filter for salary-related changes
+        salary_changes = [
+            record for record in response.data 
+            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']
+        ]
+        
+        if not salary_changes:
+            return {"success": True, "data": []}
+        
+        # Get unique employee emails
+        employee_emails = list(set([sc.get("employee_email") for sc in salary_changes if sc.get("employee_email")]))
+        
+        # Fetch employee data for all relevant employees
+        employee_map = {}
+        if employee_emails:
+            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            if employees_response.data:
+                employee_map = {emp["email"]: emp for emp in employees_response.data}
+        
+        # Enrich salary changes with employee names
+        for record in salary_changes:
+            employee_email = record.get("employee_email")
+            if employee_email and employee_email in employee_map:
+                record["employee_name"] = employee_map[employee_email].get("full_name", "")
+            else:
+                record["employee_name"] = ""
         
         return {"success": True, "data": salary_changes}
     except Exception as e:
@@ -1363,20 +1384,31 @@ async def get_employee_history():
     Get complete employment/re-employment history (previous jobs, companies, positions)
     """
     try:
-        # Join with employees table to get employee names
-        response = supabase.table("employee_history").select("*, employees(full_name, email)").order("start_date", desc=True).limit(200).execute()
+        # Query employee_history without join to avoid foreign key relationship requirement
+        response = supabase.table("employee_history").select("*").order("start_date", desc=True).limit(200).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        # Flatten the employee data for easier access in frontend
-        records = []
-        for record in response.data:
-            if 'employees' in record and record['employees']:
-                record['employee_name'] = record['employees']['full_name']
-                # Remove nested object to avoid duplication
-                del record['employees']
-            records.append(record)
+        records = response.data
+        
+        # Get unique employee emails
+        employee_emails = list(set([rec.get("employee_email") for rec in records if rec.get("employee_email")]))
+        
+        # Fetch employee data for all relevant employees
+        employee_map = {}
+        if employee_emails:
+            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            if employees_response.data:
+                employee_map = {emp["email"]: emp for emp in employees_response.data}
+        
+        # Enrich records with employee names
+        for record in records:
+            employee_email = record.get("employee_email")
+            if employee_email and employee_email in employee_map:
+                record["employee_name"] = employee_map[employee_email].get("full_name", "")
+            else:
+                record["employee_name"] = ""
         
         return {"success": True, "data": records}
     except Exception as e:
@@ -2212,8 +2244,15 @@ async def delete_holiday(holiday_id: int):
         return {"success": False, "message": str(e)}
 
 @app.post("/api/holidays/import-malaysia")
-async def import_malaysia_holidays(year: int, state: Optional[str] = None):
-    """Auto-import Malaysia public holidays for a specific year"""
+async def import_malaysia_holidays(year: int, state: Optional[str] = None, replace: bool = False):
+    """
+    Auto-import Malaysia public holidays for a specific year
+    
+    Args:
+        year: Year to import holidays for (1900-2100)
+        state: Optional state filter (e.g., 'Selangor', 'Johor'). None for national holidays.
+        replace: If True, delete existing holidays for this year/state before importing
+    """
     try:
         # Validate year parameter
         if year < 1900 or year > 2100:
@@ -2223,10 +2262,15 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None):
             }
         
         from core.holidays_service import get_holidays_for_year
-        from services.supabase_service import insert_calendar_holiday, find_calendar_holidays_for_year
+        from services.supabase_service import insert_calendar_holiday, find_calendar_holidays_for_year, delete_calendar_holidays_for_year
         
         # Normalize state parameter
         normalized_state = None if (not state or state == 'All Malaysia') else state
+        
+        # If replace=True, delete existing holidays for this year/state
+        deleted_count = 0
+        if replace:
+            deleted_count = delete_calendar_holidays_for_year(year, state=normalized_state)
         
         # Get holidays from python-holidays library
         holidays_set, holiday_details = get_holidays_for_year(
@@ -2237,6 +2281,7 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None):
         )
         
         # Fetch existing holidays for this year upfront (avoid N+1 query pattern)
+        # Note: If replace=True, this will be empty since we just deleted them
         existing_holidays = find_calendar_holidays_for_year(year, state=normalized_state)
         existing_dates = {h.get('date') for h in existing_holidays if h.get('date')}
         
@@ -2288,10 +2333,19 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None):
             except Exception as e:
                 errors.append(f"Failed to import {name} on {date_str}: {str(e)}")
         
+        # Build message based on whether replacement occurred
+        if replace and deleted_count > 0:
+            message = f"Replaced {deleted_count} existing holidays. Imported {imported_count} new holidays, skipped {skipped_count} duplicates"
+        elif replace and deleted_count == 0:
+            message = f"No existing holidays to replace. Imported {imported_count} holidays, skipped {skipped_count} duplicates"
+        else:
+            message = f"Imported {imported_count} holidays, skipped {skipped_count} duplicates"
+        
         return {
             "success": True,
-            "message": f"Imported {imported_count} holidays, skipped {skipped_count} duplicates",
+            "message": message,
             "data": {
+                "deleted": deleted_count if replace else 0,
                 "imported": imported_count,
                 "skipped": skipped_count,
                 "errors": errors
@@ -2328,18 +2382,31 @@ async def export_skipped_payroll_csv():
     try:
         # Try to get data from payroll_run_skips table first
         try:
-            response = supabase.table("payroll_run_skips").select("*, employees!inner(full_name, email)").order("created_at", desc=True).limit(1000).execute()
+            # Query without join to avoid foreign key relationship requirement
+            response = supabase.table("payroll_run_skips").select("*").order("created_at", desc=True).limit(1000).execute()
             
             if response.data:
+                # Get unique employee IDs
+                employee_ids = list(set([rec.get("employee_id") for rec in response.data if rec.get("employee_id")]))
+                
+                # Fetch employee data for all relevant employees
+                employee_map = {}
+                if employee_ids:
+                    employees_response = supabase.table("employees").select("id, full_name, email").in_("id", employee_ids).execute()
+                    if employees_response.data:
+                        employee_map = {emp["id"]: emp for emp in employees_response.data}
+                
                 headers = ["ID", "Employee Name", "Employee Email", "Employee ID", "Payroll Date", "Reason", "Skipped Date"]
                 rows = []
                 for record in response.data:
-                    employee = record.get('employees', {})
+                    employee_id = record.get('employee_id', '')
+                    employee = employee_map.get(employee_id, {})
+                    
                     rows.append([
                         record.get('id', ''),
                         employee.get('full_name', ''),
                         employee.get('email', ''),
-                        record.get('employee_id', ''),
+                        employee_id,
                         record.get('payroll_date', ''),
                         record.get('reason', 'Not specified'),
                         record.get('created_at', '')
