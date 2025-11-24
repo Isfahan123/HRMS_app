@@ -187,7 +187,7 @@ async function loadLeaveTypes() {
         
     } catch (error) {
         console.error('Error loading leave types:', error);
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: red;">Error loading leave types</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading leave types</td></tr>';
     }
 }
 
@@ -199,7 +199,7 @@ function renderLeaveTypesTable() {
     if (!tbody) return;
     
     if (currentLeaveTypes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">No leave types found. Click "Add Leave Type" to create one.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">No leave types found. Click "Add Leave Type" to create one.</td></tr>';
         return;
     }
     
@@ -216,6 +216,10 @@ function renderLeaveTypesTable() {
                 <td style="padding: 8px; text-align: center;">${type.default_duration || 1.0}</td>
                 <td style="padding: 8px; text-align: center;">${type.max_duration || '-'}</td>
                 <td style="padding: 8px; font-size: 0.9em;">${type.description || '-'}</td>
+                <td style="padding: 8px; text-align: center;">
+                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editLeaveType(${type.id})">✏️ Edit</button>
+                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteLeaveType(${type.id})">🗑️ Delete</button>
+                </td>
             </tr>
         `;
     });
