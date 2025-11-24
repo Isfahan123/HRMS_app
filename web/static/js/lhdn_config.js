@@ -452,231 +452,480 @@ function editAllReliefs() {
 }
 
 /**
- * Load relief overrides from API
+ * Relief Item & Group Overrides (matches Python GUI)
+ * Allows overriding item caps, pcb_only flags, cycle_years, and group caps
  */
+
+// Store original data and current overrides
+let reliefItemsData = [];
+let reliefGroupsData = [];
+let itemOverrides = {};
+let groupOverrides = {};
+
+// Load relief overrides (both items and groups)
 async function loadReliefOverridesFromAPI() {
     try {
-        const response = await fetch('/api/admin/lhdn/relief-overrides');
-        const data = await response.json();
+        // Load item overrides
+        const itemResponse = await fetch('/api/admin/lhdn/relief-item-overrides');
+        const itemData = await itemResponse.json();
         
-        if (data.success) {
-            currentOverrides = data.data || [];
-            loadReliefOverrides(data.data || []);
-        } else {
-            currentOverrides = [];
-            loadReliefOverrides([]);
+        if (itemData.success) {
+            itemOverrides = {};
+            (itemData.data || []).forEach(item => {
+                itemOverrides[item.item_key] = item;
+            });
         }
+        
+        // Load group overrides
+        const groupResponse = await fetch('/api/admin/lhdn/relief-group-overrides');
+        const groupData = await groupResponse.json();
+        
+        if (groupData.success) {
+            groupOverrides = {};
+            (groupData.data || []).forEach(grp => {
+                groupOverrides[grp.group_id] = grp;
+            });
+        }
+        
+        // Load relief catalog and populate tables
+        await loadReliefCatalog();
+        populateReliefGroupTable();
+        populateReliefItemTable();
+        
+        document.getElementById('reliefOverrideStatus').textContent = 
+            `Loaded ${Object.keys(itemOverrides).length} item overrides, ${Object.keys(groupOverrides).length} group overrides.`;
     } catch (error) {
-        console.error('Error loading relief overrides from API:', error);
-        currentOverrides = [];
-        loadReliefOverrides([]);
+        console.error('Error loading relief overrides:', error);
+        document.getElementById('reliefOverrideStatus').textContent = '⚠ Unable to load overrides: ' + error.message;
     }
 }
 
-/**
- * Load relief overrides into table
- */
-function loadReliefOverrides(overrides) {
-    const tbody = document.getElementById('reliefOverridesBody');
+// Load relief catalog from the tp1-reliefs.js data
+async function loadReliefCatalog() {
+    // Use the TP1_ITEMS and RELIEF_GROUPS from tp1-reliefs.js if available
+    if (typeof TP1_ITEMS !== 'undefined') {
+        reliefItemsData = TP1_ITEMS;
+    }
+    if (typeof RELIEF_GROUPS !== 'undefined') {
+        reliefGroupsData = Object.values(RELIEF_GROUPS);
+    }
+}
+
+// Populate relief group table
+function populateReliefGroupTable() {
+    const tbody = document.getElementById('reliefGroupBody');
     if (!tbody) return;
     
-    if (overrides.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align: center;">No relief overrides configured</td></tr>';
-        return;
-    }
-    
     let html = '';
-    
-    overrides.forEach(override => {
+    reliefGroupsData.forEach(group => {
+        const defaultCap = group.cap || '';
+        const override = groupOverrides[group.id];
+        const overrideCap = override ? override.cap : '';
+        const effectiveCap = overrideCap || defaultCap;
+        
+        // Color coding
+        let bgColor = '#e0e0e0'; // inherit
+        if (overrideCap) {
+            if (defaultCap && parseFloat(overrideCap) > parseFloat(defaultCap)) {
+                bgColor = '#d0f5d0'; // higher
+            } else if (defaultCap && parseFloat(overrideCap) < parseFloat(defaultCap)) {
+                bgColor = '#ffe9b3'; // lower
+            }
+        }
+        
         html += `
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">
-                    <strong>${override.employee_name || override.employee_id}</strong>
-                    <br>
-                    <small style="color: #666;">${override.employee_id}</small>
+            <tr>
+                <td style="padding: 8px;">${group.id}</td>
+                <td style="padding: 8px;">${group.description}</td>
+                <td style="padding: 8px; text-align: right;">${defaultCap ? formatMoney(defaultCap) : '-'}</td>
+                <td style="padding: 8px;">
+                    <input type="number" 
+                           id="group_${group.id}" 
+                           value="${overrideCap}" 
+                           placeholder="(inherit)"
+                           step="0.01" 
+                           min="0"
+                           style="width: 120px; padding: 4px;"
+                           onchange="updateGroupEffective('${group.id}')">
                 </td>
-                <td style="padding: 10px;">${override.relief_category || override.relief_code}</td>
-                <td style="padding: 10px; text-align: right;">RM ${formatMoney(override.override_amount)}</td>
-                <td style="padding: 10px; text-align: center;">${override.effective_year || override.effective_period || '-'}</td>
-                <td style="padding: 10px; text-align: center;">
-                    <button class="btn-sm btn-secondary" onclick="editReliefOverride(${override.id})">✏️ Edit</button>
-                    <button class="btn-sm btn-danger" onclick="deleteReliefOverride(${override.id})">🗑️</button>
+                <td style="padding: 8px; text-align: right; background: ${bgColor};" id="eff_group_${group.id}">
+                    ${effectiveCap ? formatMoney(effectiveCap) : '-'}
                 </td>
             </tr>
         `;
     });
     
-    tbody.innerHTML = html;
+    tbody.innerHTML = html || '<tr><td colspan="5" style="padding: 15px; text-align: center;">No groups defined</td></tr>';
 }
 
-/**
- * Load employees for override selection
- */
-async function loadEmployeesForOverrides() {
-    try {
-        const response = await fetch('/api/employees');
-        const data = await response.json();
+// Populate relief item table
+function populateReliefItemTable() {
+    const tbody = document.getElementById('reliefItemBody');
+    if (!tbody) return;
+    
+    let html = '';
+    reliefItemsData.forEach(item => {
+        const override = itemOverrides[item.key];
+        const defaultCap = item.cap || '';
+        const overrideCap = override && override.cap !== null ? override.cap : '';
+        const effectiveCap = overrideCap || defaultCap;
         
-        if (data.success && data.data) {
-            employeesList = data.data;
-            populateEmployeeDropdown();
+        const defaultCycle = item.cycleYears || '';
+        const overrideCycle = override && override.cycle_years !== null ? override.cycle_years : '';
+        
+        const pcbOnly = override && override.pcb_only !== null ? override.pcb_only : (item.pcbOnly ? true : null);
+        const pcbChecked = pcbOnly === true ? 'checked' : '';
+        const pcbIndeterminate = pcbOnly === null ? 'indeterminate' : '';
+        
+        // Color coding
+        let bgColor = '#e0e0e0'; // inherit
+        if (overrideCap) {
+            if (defaultCap && parseFloat(overrideCap) > parseFloat(defaultCap)) {
+                bgColor = '#d0f5d0'; // higher
+            } else if (defaultCap && parseFloat(overrideCap) < parseFloat(defaultCap)) {
+                bgColor = '#ffe9b3'; // lower
+            }
         }
-    } catch (error) {
-        console.error('Error loading employees:', error);
-    }
-}
-
-/**
- * Populate employee dropdown in override modal
- */
-function populateEmployeeDropdown() {
-    const select = document.getElementById('overrideEmployeeId');
-    if (!select) return;
-    
-    let html = '<option value="">Select Employee</option>';
-    employeesList.forEach(emp => {
-        html += `<option value="${emp.employee_id || emp.id}">${emp.full_name} (${emp.employee_id || emp.email})</option>`;
+        if (pcbOnly === true) {
+            // Mix with PCB blue
+            bgColor = '#d0e8ff';
+        }
+        
+        html += `
+            <tr class="relief-item-row" data-key="${item.key}" data-code="${item.code}" data-desc="${item.description.toLowerCase()}" onclick="selectReliefRow(this)">
+                <td style="padding: 8px;">${item.code}</td>
+                <td style="padding: 8px;">${item.key}</td>
+                <td style="padding: 8px;">${item.description}</td>
+                <td style="padding: 8px; text-align: right;">${defaultCap ? formatMoney(defaultCap) : '-'}</td>
+                <td style="padding: 8px;">
+                    <input type="number" 
+                           id="cap_${item.key}" 
+                           value="${overrideCap}" 
+                           placeholder="(inherit)"
+                           step="0.01" 
+                           min="0"
+                           style="width: 100px; padding: 4px;"
+                           onchange="updateItemEffective('${item.key}')"
+                           onfocus="selectReliefRow(this.closest('tr'))">
+                </td>
+                <td style="padding: 8px; text-align: right; background: ${bgColor};" id="eff_${item.key}">
+                    ${effectiveCap ? formatMoney(effectiveCap) : '-'}
+                </td>
+                <td style="padding: 8px; text-align: center;">
+                    <input type="checkbox" 
+                           id="pcb_${item.key}" 
+                           ${pcbChecked}
+                           ${pcbIndeterminate}
+                           onchange="updateItemEffective('${item.key}')"
+                           onfocus="selectReliefRow(this.closest('tr'))">
+                </td>
+                <td style="padding: 8px; text-align: right;">${defaultCycle || '-'}</td>
+                <td style="padding: 8px;">
+                    <input type="number" 
+                           id="cycle_${item.key}" 
+                           value="${overrideCycle}" 
+                           placeholder="(inherit)"
+                           step="1" 
+                           min="0"
+                           style="width: 80px; padding: 4px;"
+                           onfocus="selectReliefRow(this.closest('tr'))">
+                </td>
+            </tr>
+        `;
     });
-    select.innerHTML = html;
     
-    // Also populate relief categories
-    const catSelect = document.getElementById('overrideReliefCategory');
-    if (catSelect) {
-        let catHtml = '<option value="">Select Relief Category</option>';
-        TAX_RELIEF_CATEGORIES.forEach(cat => {
-            catHtml += `<option value="${cat.id}">${cat.name}</option>`;
-        });
-        catSelect.innerHTML = catHtml;
+    tbody.innerHTML = html || '<tr><td colspan="9" style="padding: 15px; text-align: center;">No items defined</td></tr>';
+    
+    // Setup filter
+    setupReliefFilter();
+}
+
+// Update group effective cap when override changes
+function updateGroupEffective(groupId) {
+    const input = document.getElementById(`group_${groupId}`);
+    const effCell = document.getElementById(`eff_group_${groupId}`);
+    if (!input || !effCell) return;
+    
+    const group = reliefGroupsData.find(g => g.id === groupId);
+    const defaultCap = group ? group.cap : null;
+    const overrideVal = input.value.trim();
+    const effective = overrideVal || defaultCap;
+    
+    effCell.textContent = effective ? formatMoney(effective) : '-';
+    
+    // Color coding
+    let bgColor = '#e0e0e0';
+    if (overrideVal) {
+        if (defaultCap && parseFloat(overrideVal) > parseFloat(defaultCap)) {
+            bgColor = '#d0f5d0';
+        } else if (defaultCap && parseFloat(overrideVal) < parseFloat(defaultCap)) {
+            bgColor = '#ffe9b3';
+        }
+    }
+    effCell.style.background = bgColor;
+}
+
+// Update item effective cap when override changes
+function updateItemEffective(itemKey) {
+    const capInput = document.getElementById(`cap_${itemKey}`);
+    const pcbInput = document.getElementById(`pcb_${itemKey}`);
+    const effCell = document.getElementById(`eff_${itemKey}`);
+    if (!capInput || !effCell) return;
+    
+    const item = reliefItemsData.find(i => i.key === itemKey);
+    const defaultCap = item ? item.cap : null;
+    const overrideVal = capInput.value.trim();
+    const effective = overrideVal || defaultCap;
+    
+    effCell.textContent = effective ? formatMoney(effective) : '-';
+    
+    // Color coding
+    let bgColor = '#e0e0e0';
+    if (overrideVal) {
+        if (defaultCap && parseFloat(overrideVal) > parseFloat(defaultCap)) {
+            bgColor = '#d0f5d0';
+        } else if (defaultCap && parseFloat(overrideVal) < parseFloat(defaultCap)) {
+            bgColor = '#ffe9b3';
+        }
+    }
+    if (pcbInput && pcbInput.checked) {
+        bgColor = '#d0e8ff';
+    }
+    effCell.style.background = bgColor;
+}
+
+// Setup filter functionality
+function setupReliefFilter() {
+    const filterInput = document.getElementById('reliefOverrideFilter');
+    const onlyOverriddenCheckbox = document.getElementById('reliefOverrideOnlyOverridden');
+    
+    if (filterInput) {
+        filterInput.addEventListener('input', applyReliefFilter);
+    }
+    if (onlyOverriddenCheckbox) {
+        onlyOverriddenCheckbox.addEventListener('change', applyReliefFilter);
     }
 }
 
-/**
- * Add relief override - show modal
- */
-function addReliefOverride() {
-    document.getElementById('reliefOverrideModalTitle').textContent = 'Add Relief Override';
-    document.getElementById('reliefOverrideId').value = '';
-    document.getElementById('reliefOverrideForm').reset();
-    document.getElementById('overrideYear').value = new Date().getFullYear();
-    populateEmployeeDropdown();
-    showModal('reliefOverrideModal');
+// Apply filter to relief items
+function applyReliefFilter() {
+    const filterText = document.getElementById('reliefOverrideFilter')?.value.toLowerCase() || '';
+    const onlyOverridden = document.getElementById('reliefOverrideOnlyOverridden')?.checked || false;
+    
+    document.querySelectorAll('.relief-item-row').forEach(row => {
+        const code = row.dataset.code.toLowerCase();
+        const key = row.dataset.key.toLowerCase();
+        const desc = row.dataset.desc;
+        
+        const matchesFilter = !filterText || code.includes(filterText) || key.includes(filterText) || desc.includes(filterText);
+        
+        let matchesOverridden = true;
+        if (onlyOverridden) {
+            const itemKey = row.dataset.key;
+            const capInput = document.getElementById(`cap_${itemKey}`);
+            const pcbInput = document.getElementById(`pcb_${itemKey}`);
+            const cycleInput = document.getElementById(`cycle_${itemKey}`);
+            
+            matchesOverridden = (capInput && capInput.value.trim()) || 
+                               (pcbInput && (pcbInput.checked || pcbInput.indeterminate === false)) || 
+                               (cycleInput && cycleInput.value.trim());
+        }
+        
+        row.style.display = (matchesFilter && matchesOverridden) ? '' : 'none';
+    });
 }
 
-/**
- * Edit relief override - show modal with data
- */
-async function editReliefOverride(overrideId) {
-    const override = currentOverrides.find(o => o.id === overrideId);
+// Save all relief overrides
+async function saveReliefOverrides() {
+    try {
+        let saved = 0;
+        
+        // Save group overrides
+        for (const group of reliefGroupsData) {
+            const input = document.getElementById(`group_${group.id}`);
+            if (!input) continue;
+            
+            const value = input.value.trim();
+            if (value) {
+                const response = await fetch('/api/admin/lhdn/relief-group-overrides', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        group_id: group.id,
+                        cap: parseFloat(value)
+                    })
+                });
+                if (response.ok) saved++;
+            } else if (groupOverrides[group.id]) {
+                // Delete if cleared
+                await fetch(`/api/admin/lhdn/relief-group-overrides/${group.id}`, {
+                    method: 'DELETE'
+                });
+                saved++;
+            }
+        }
+        
+        // Save item overrides
+        for (const item of reliefItemsData) {
+            const capInput = document.getElementById(`cap_${item.key}`);
+            const pcbInput = document.getElementById(`pcb_${item.key}`);
+            const cycleInput = document.getElementById(`cycle_${item.key}`);
+            
+            const capValue = capInput?.value.trim();
+            const pcbValue = pcbInput ? (pcbInput.checked ? true : (pcbInput.indeterminate === true ? null : false)) : null;
+            const cycleValue = cycleInput?.value.trim();
+            
+            // Check if there are actual overrides to save
+            const hasCapOverride = capValue && !isNaN(parseFloat(capValue));
+            const hasPcbOverride = pcbValue !== null && pcbValue !== false;
+            const hasCycleOverride = cycleValue && !isNaN(parseInt(cycleValue));
+            
+            if (hasCapOverride || hasPcbOverride || hasCycleOverride) {
+                const payload = { item_key: item.key };
+                if (hasCapOverride) {
+                    const parsedCap = parseFloat(capValue);
+                    if (!isNaN(parsedCap) && parsedCap >= 0) {
+                        payload.cap = parsedCap;
+                    }
+                }
+                if (hasPcbOverride) {
+                    payload.pcb_only = pcbValue;
+                }
+                if (hasCycleOverride) {
+                    const parsedCycle = parseInt(cycleValue);
+                    if (!isNaN(parsedCycle) && parsedCycle > 0) {
+                        payload.cycle_years = parsedCycle;
+                    }
+                }
+                
+                const response = await fetch('/api/admin/lhdn/relief-item-overrides', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) saved++;
+            } else if (itemOverrides[item.key]) {
+                // Delete if all cleared
+                await fetch(`/api/admin/lhdn/relief-item-overrides/${item.key}`, {
+                    method: 'DELETE'
+                });
+                saved++;
+            }
+        }
+        
+        showMessage(`Saved ${saved} override(s) successfully`, 'success');
+        await loadReliefOverridesFromAPI();
+    } catch (error) {
+        console.error('Error saving relief overrides:', error);
+        showMessage('Error saving overrides: ' + error.message, 'error');
+    }
+}
+
+// Select a relief row (for visual feedback like Python GUI)
+let selectedReliefRow = null;
+const SELECTED_ROW_BG_COLOR = '#e3f2fd';
+
+function selectReliefRow(row) {
+    // Remove previous selection
+    if (selectedReliefRow) {
+        selectedReliefRow.style.backgroundColor = '';
+    }
+    // Highlight new selection
+    if (row) {
+        row.style.backgroundColor = SELECTED_ROW_BG_COLOR;
+        selectedReliefRow = row;
+    }
+}
+
+// Reload relief overrides
+function reloadReliefOverrides() {
+    loadReliefOverridesFromAPI();
+}
+
+// Clear selected relief override (matches Python GUI)
+async function clearSelectedReliefOverride() {
+    let itemKey = null;
     
-    if (!override) {
-        alert('Override not found');
+    // Try to get item key from selected row
+    if (selectedReliefRow) {
+        itemKey = selectedReliefRow.dataset.key;
+    }
+    
+    // If no selected row, try focused element
+    if (!itemKey) {
+        const focusedElement = document.activeElement;
+        if (focusedElement && focusedElement.id) {
+            const match = focusedElement.id.match(/^(cap|pcb|cycle)_(.+)$/);
+            if (match) {
+                itemKey = match[2];
+            }
+        }
+    }
+    
+    // If still no item key, show error
+    if (!itemKey) {
+        showMessage('Please select a row first by clicking on it', 'warning');
         return;
     }
     
-    document.getElementById('reliefOverrideModalTitle').textContent = 'Edit Relief Override';
-    document.getElementById('reliefOverrideId').value = overrideId;
-    populateEmployeeDropdown();
+    // Check if this item has an override
+    if (!itemOverrides || !itemOverrides[itemKey]) {
+        showMessage(`No override found for item: ${itemKey}`, 'warning');
+        return;
+    }
     
-    // Set form values
-    document.getElementById('overrideEmployeeId').value = override.employee_id;
-    document.getElementById('overrideReliefCategory').value = override.relief_code || override.relief_category;
-    document.getElementById('overrideAmount').value = override.override_amount;
-    document.getElementById('overrideYear').value = override.effective_year || new Date().getFullYear();
-    document.getElementById('overrideReason').value = override.reason || '';
-    
-    showModal('reliefOverrideModal');
-}
-
-/**
- * Delete relief override
- */
-async function deleteReliefOverride(overrideId) {
-    if (!confirm('Are you sure you want to delete this relief override?')) {
+    if (!confirm(`Clear override for item "${itemKey}"?`)) {
         return;
     }
     
     try {
-        const response = await fetch(`/api/admin/lhdn/relief-overrides/${overrideId}`, {
+        const response = await fetch(`/api/admin/lhdn/relief-item-overrides/${itemKey}`, {
             method: 'DELETE'
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            showMessage('Relief override deleted successfully', 'success');
-            loadReliefOverridesFromAPI();
+        if (response.ok) {
+            showMessage(`Cleared override for ${itemKey}`, 'success');
+            await loadReliefOverridesFromAPI();
         } else {
-            showMessage('Error: ' + data.message, 'error');
+            showMessage('Error clearing override', 'error');
         }
     } catch (error) {
-        console.error('Error deleting relief override:', error);
-        showMessage('Error deleting relief override', 'error');
+        console.error('Error clearing override:', error);
+        showMessage('Error clearing override: ' + error.message, 'error');
     }
 }
 
-/**
- * Save relief override (add or update)
- */
-document.getElementById('reliefOverrideForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const overrideId = document.getElementById('reliefOverrideId').value;
-    const employeeId = document.getElementById('overrideEmployeeId').value;
-    const reliefCategory = document.getElementById('overrideReliefCategory').value;
-    const amount = parseFloat(document.getElementById('overrideAmount').value);
-    const year = parseInt(document.getElementById('overrideYear').value);
-    const reason = document.getElementById('overrideReason').value;
-    
-    const overrideData = {
-        employee_id: employeeId,
-        relief_code: reliefCategory,
-        override_amount: amount,
-        effective_year: year,
-        reason: reason
-    };
+// Clear all relief overrides
+async function clearAllReliefOverrides() {
+    if (!confirm('Are you sure you want to delete ALL relief overrides (items and groups)?')) {
+        return;
+    }
     
     try {
-        let response;
-        if (overrideId) {
-            // Update existing
-            response = await fetch(`/api/admin/lhdn/relief-overrides/${overrideId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(overrideData)
+        let deleted = 0;
+        
+        // Delete all item overrides
+        for (const itemKey in itemOverrides) {
+            await fetch(`/api/admin/lhdn/relief-item-overrides/${itemKey}`, {
+                method: 'DELETE'
             });
-        } else {
-            // Create new
-            response = await fetch('/api/admin/lhdn/relief-overrides', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(overrideData)
-            });
+            deleted++;
         }
         
-        const data = await response.json();
-        
-        if (data.success) {
-            showMessageInModal('reliefOverrideMessage', 'Relief override saved successfully!', 'success');
-            setTimeout(() => {
-                closeReliefOverrideModal();
-                loadReliefOverridesFromAPI();
-            }, 1500);
-        } else {
-            showMessageInModal('reliefOverrideMessage', 'Error: ' + data.message, 'error');
+        // Delete all group overrides
+        for (const groupId in groupOverrides) {
+            await fetch(`/api/admin/lhdn/relief-group-overrides/${groupId}`, {
+                method: 'DELETE'
+            });
+            deleted++;
         }
+        
+        showMessage(`Deleted ${deleted} override(s) successfully`, 'success');
+        await loadReliefOverridesFromAPI();
     } catch (error) {
-        console.error('Error saving relief override:', error);
-        showMessageInModal('reliefOverrideMessage', 'Error saving relief override', 'error');
+        console.error('Error clearing relief overrides:', error);
+        showMessage('Error clearing overrides: ' + error.message, 'error');
     }
-});
-
-/**
- * Close relief override modal
- */
-function closeReliefOverrideModal() {
-    hideModal('reliefOverrideModal');
-    document.getElementById('reliefOverrideForm').reset();
-    document.getElementById('reliefOverrideMessage').style.display = 'none';
 }
 
 /**

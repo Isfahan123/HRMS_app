@@ -1879,89 +1879,134 @@ async def update_relief_maximum(data: Dict[str, Any]):
         print(f"Error updating relief maximum: {str(e)}")
         return {"success": False, "message": str(e)}
 
-@app.get("/api/admin/lhdn/relief-overrides")
-async def get_relief_overrides():
-    """Get employee-specific relief overrides"""
+@app.get("/api/admin/lhdn/relief-item-overrides")
+async def get_relief_item_overrides():
+    """Get relief item overrides (cap, pcb_only, cycle_years) - matches Python GUI"""
     try:
-        # Try to query relief_item_overrides table (actual table name)
-        # If it doesn't exist or has different structure, return empty array
         response = supabase.table("relief_item_overrides").select("*").execute()
         
-        # Transform to expected format
+        # Return data in format matching database structure
         overrides = []
         if response.data:
             for item in response.data:
                 overrides.append({
-                    "id": item.get("item_key"),
-                    "relief_code": item.get("item_key"),
+                    "item_key": item.get("item_key"),
                     "cap": item.get("cap"),
                     "pcb_only": item.get("pcb_only"),
-                    "cycle_years": item.get("cycle_years")
+                    "cycle_years": item.get("cycle_years"),
+                    "updated_at": item.get("updated_at"),
+                    "created_at": item.get("created_at")
                 })
         
         return {"success": True, "data": overrides}
     except Exception as e:
-        print(f"Error fetching relief overrides: {str(e)}")
-        # Return empty array instead of error to prevent UI from breaking
+        print(f"Error fetching relief item overrides: {str(e)}")
         return {"success": True, "data": []}
 
-@app.post("/api/admin/lhdn/relief-overrides")
-async def create_relief_override(data: Dict[str, Any]):
-    """Create an employee-specific relief override"""
+@app.get("/api/admin/lhdn/relief-group-overrides")
+async def get_relief_group_overrides():
+    """Get relief group cap overrides - matches Python GUI"""
     try:
-        override = {
-            "employee_id": data["employee_id"],
-            "relief_code": data["relief_code"],
-            "override_amount": data["override_amount"],
-            "effective_period": data.get("effective_period", "2024"),
-            "reason": data.get("reason", ""),
-            "created_at": datetime.utcnow().isoformat(),
-            "created_by": "admin"
-        }
+        response = supabase.table("relief_group_overrides").select("*").execute()
         
-        response = supabase.table("lhdn_relief_overrides").insert(override).execute()
+        overrides = []
+        if response.data:
+            for item in response.data:
+                overrides.append({
+                    "group_id": item.get("group_id"),
+                    "cap": item.get("cap"),
+                    "updated_at": item.get("updated_at"),
+                    "created_at": item.get("created_at")
+                })
+        
+        return {"success": True, "data": overrides}
+    except Exception as e:
+        print(f"Error fetching relief group overrides: {str(e)}")
+        return {"success": True, "data": []}
+
+@app.post("/api/admin/lhdn/relief-item-overrides")
+async def upsert_relief_item_override(data: Dict[str, Any]):
+    """Create or update relief item override (upsert) - matches Python GUI"""
+    try:
+        item_key = data.get("item_key")
+        if not item_key:
+            return {"success": False, "message": "item_key is required"}
+        
+        override = {"item_key": item_key}
+        
+        # Only include fields that are provided (not None)
+        if data.get("cap") is not None:
+            override["cap"] = float(data["cap"])
+        if data.get("pcb_only") is not None:
+            override["pcb_only"] = bool(data["pcb_only"])
+        if data.get("cycle_years") is not None:
+            override["cycle_years"] = int(data["cycle_years"])
+        
+        # Upsert (insert or update if exists)
+        response = supabase.table("relief_item_overrides").upsert(override).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief override created successfully", "data": response.data[0]}
+            return {"success": True, "message": "Relief item override saved", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to create relief override"}
+            return {"success": False, "message": "Failed to save relief item override"}
     except Exception as e:
-        print(f"Error creating relief override: {str(e)}")
+        print(f"Error saving relief item override: {str(e)}")
         return {"success": False, "message": str(e)}
 
-@app.put("/api/admin/lhdn/relief-overrides/{override_id}")
-async def update_relief_override(override_id: int, data: Dict[str, Any]):
-    """Update an employee-specific relief override"""
+@app.post("/api/admin/lhdn/relief-group-overrides")
+async def upsert_relief_group_override(data: Dict[str, Any]):
+    """Create or update relief group override (upsert) - matches Python GUI"""
     try:
+        group_id = data.get("group_id")
+        cap = data.get("cap")
+        
+        if not group_id:
+            return {"success": False, "message": "group_id is required"}
+        if cap is None:
+            return {"success": False, "message": "cap is required"}
+        
         override = {
-            "override_amount": data["override_amount"],
-            "effective_period": data.get("effective_period"),
-            "reason": data.get("reason", ""),
-            "updated_at": datetime.utcnow().isoformat()
+            "group_id": group_id,
+            "cap": float(cap)
         }
         
-        response = supabase.table("lhdn_relief_overrides").update(override).eq("id", override_id).execute()
+        # Upsert (insert or update if exists)
+        response = supabase.table("relief_group_overrides").upsert(override).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief override updated successfully", "data": response.data[0]}
+            return {"success": True, "message": "Relief group override saved", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Relief override not found"}
+            return {"success": False, "message": "Failed to save relief group override"}
     except Exception as e:
-        print(f"Error updating relief override: {str(e)}")
+        print(f"Error saving relief group override: {str(e)}")
         return {"success": False, "message": str(e)}
 
-@app.delete("/api/admin/lhdn/relief-overrides/{override_id}")
-async def delete_relief_override(override_id: int):
-    """Delete an employee-specific relief override"""
+@app.delete("/api/admin/lhdn/relief-item-overrides/{item_key}")
+async def delete_relief_item_override(item_key: str):
+    """Delete relief item override - matches Python GUI"""
     try:
-        response = supabase.table("lhdn_relief_overrides").delete().eq("id", override_id).execute()
+        response = supabase.table("relief_item_overrides").delete().eq("item_key", item_key).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief override deleted successfully"}
+            return {"success": True, "message": "Relief item override deleted"}
         else:
-            return {"success": False, "message": "Relief override not found"}
+            return {"success": False, "message": "Relief item override not found"}
     except Exception as e:
-        print(f"Error deleting relief override: {str(e)}")
+        print(f"Error deleting relief item override: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/lhdn/relief-group-overrides/{group_id}")
+async def delete_relief_group_override(group_id: str):
+    """Delete relief group override - matches Python GUI"""
+    try:
+        response = supabase.table("relief_group_overrides").delete().eq("group_id", group_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Relief group override deleted"}
+        else:
+            return {"success": False, "message": "Relief group override not found"}
+    except Exception as e:
+        print(f"Error deleting relief group override: {str(e)}")
         return {"success": False, "message": str(e)}
 
 # ====================
