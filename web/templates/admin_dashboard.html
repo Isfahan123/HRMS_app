@@ -86,15 +86,15 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="newEmpName">Full Name:*</label>
-                                    <input type="text" id="newEmpName" name="full_name" required>
+                                    <input type="text" id="newEmpName" name="full_name" required autocomplete="name">
                                 </div>
                                 <div class="form-group">
                                     <label for="newEmpEmail">Email:*</label>
-                                    <input type="email" id="newEmpEmail" name="email" required>
+                                    <input type="email" id="newEmpEmail" name="email" required autocomplete="email">
                                 </div>
                                 <div class="form-group">
                                     <label for="newEmpPassword">Password:*</label>
-                                    <input type="password" id="newEmpPassword" name="password" required>
+                                    <input type="password" id="newEmpPassword" name="password" required autocomplete="new-password">
                                 </div>
                             </div>
                             
@@ -215,30 +215,30 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="newEmpUsername">Username:</label>
-                                    <input type="text" id="newEmpUsername" name="username">
+                                    <input type="text" id="newEmpUsername" name="username" autocomplete="username">
                                 </div>
                                 <div class="form-group">
                                     <label for="newEmpPhone">Phone:</label>
-                                    <input type="tel" id="newEmpPhone" name="phone_number">
+                                    <input type="tel" id="newEmpPhone" name="phone_number" autocomplete="tel">
                                 </div>
                                 <div class="form-group">
                                     <label for="newEmpAddress">Address:</label>
-                                    <input type="text" id="newEmpAddress" name="address">
+                                    <input type="text" id="newEmpAddress" name="address" autocomplete="street-address">
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="newEmpCity">City:</label>
-                                    <input type="text" id="newEmpCity" name="city">
+                                    <input type="text" id="newEmpCity" name="city" autocomplete="address-level2">
                                 </div>
                                 <div class="form-group">
                                     <label for="newEmpState">State:</label>
-                                    <input type="text" id="newEmpState" name="state">
+                                    <input type="text" id="newEmpState" name="state" autocomplete="address-level1">
                                 </div>
                                 <div class="form-group">
                                     <label for="newEmpZipcode">Zipcode:</label>
-                                    <input type="text" id="newEmpZipcode" name="zipcode">
+                                    <input type="text" id="newEmpZipcode" name="zipcode" autocomplete="postal-code">
                                 </div>
                             </div>
                             
@@ -567,15 +567,15 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="editEmpName">Full Name:*</label>
-                                        <input type="text" id="editEmpName" name="full_name" required>
+                                        <input type="text" id="editEmpName" name="full_name" required autocomplete="name">
                                     </div>
                                     <div class="form-group">
                                         <label for="editEmpEmail">Email:*</label>
-                                        <input type="email" id="editEmpEmail" name="email" required readonly style="background: #f5f5f5;">
+                                        <input type="email" id="editEmpEmail" name="email" required readonly style="background: #f5f5f5;" autocomplete="email">
                                     </div>
                                     <div class="form-group">
                                         <label for="editEmpEmployeeID">Employee ID:</label>
-                                        <input type="text" id="editEmpEmployeeID" name="employee_id_display" readonly style="background: #f5f5f5;">
+                                        <input type="text" id="editEmpEmployeeID" name="employee_id_display" readonly style="background: #f5f5f5;" autocomplete="off">
                                     </div>
                                 </div>
                                 
@@ -697,30 +697,30 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="editEmpUsername">Username:</label>
-                                        <input type="text" id="editEmpUsername" name="username">
+                                        <input type="text" id="editEmpUsername" name="username" autocomplete="username">
                                     </div>
                                     <div class="form-group">
                                         <label for="editEmpPhone">Phone:</label>
-                                        <input type="tel" id="editEmpPhone" name="phone_number">
+                                        <input type="tel" id="editEmpPhone" name="phone_number" autocomplete="tel">
                                     </div>
                                     <div class="form-group">
                                         <label for="editEmpAddress">Address:</label>
-                                        <input type="text" id="editEmpAddress" name="address">
+                                        <input type="text" id="editEmpAddress" name="address" autocomplete="street-address">
                                     </div>
                                 </div>
                                 
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="editEmpCity">City:</label>
-                                        <input type="text" id="editEmpCity" name="city">
+                                        <input type="text" id="editEmpCity" name="city" autocomplete="address-level2">
                                     </div>
                                     <div class="form-group">
                                         <label for="editEmpState">State:</label>
-                                        <input type="text" id="editEmpState" name="state">
+                                        <input type="text" id="editEmpState" name="state" autocomplete="address-level1">
                                     </div>
                                     <div class="form-group">
                                         <label for="editEmpZipcode">Zipcode:</label>
-                                        <input type="text" id="editEmpZipcode" name="zipcode">
+                                        <input type="text" id="editEmpZipcode" name="zipcode" autocomplete="postal-code">
                                     </div>
                                 </div>
                                 
@@ -2192,18 +2192,15 @@
                                 <table style="width: 100%; border-collapse: collapse;">
                                     <thead>
                                         <tr style="background: #667eea; color: white;">
-                                            <th style="padding: 10px;">Chargeable Income From (RM)</th>
-                                            <th style="padding: 10px;">To (RM)</th>
-                                            <th style="padding: 10px;">On First (RM)</th>
-                                            <th style="padding: 10px;">Next (RM)</th>
+                                            <th style="padding: 10px;">Income From (RM)</th>
+                                            <th style="padding: 10px;">Income To (RM)</th>
                                             <th style="padding: 10px;">Rate (%)</th>
-                                            <th style="padding: 10px;">Tax on First (RM)</th>
-                                            <th style="padding: 10px;">Tax on Next (RM)</th>
+                                            <th style="padding: 10px;">Tax on Band (RM)</th>
                                             <th style="padding: 10px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="residentTaxRatesBody">
-                                        <tr><td colspan="8" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Loading...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -2216,18 +2213,15 @@
                                 <table style="width: 100%; border-collapse: collapse;">
                                     <thead>
                                         <tr style="background: #667eea; color: white;">
-                                            <th style="padding: 10px;">Chargeable Income From (RM)</th>
-                                            <th style="padding: 10px;">To (RM)</th>
-                                            <th style="padding: 10px;">On First (RM)</th>
-                                            <th style="padding: 10px;">Next (RM)</th>
+                                            <th style="padding: 10px;">Income From (RM)</th>
+                                            <th style="padding: 10px;">Income To (RM)</th>
                                             <th style="padding: 10px;">Rate (%)</th>
-                                            <th style="padding: 10px;">Tax on First (RM)</th>
-                                            <th style="padding: 10px;">Tax on Next (RM)</th>
+                                            <th style="padding: 10px;">Tax on Band (RM)</th>
                                             <th style="padding: 10px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="nonResidentTaxRatesBody">
-                                        <tr><td colspan="8" style="padding: 15px; text-align: center;">Flat 30% for non-residents</td></tr>
+                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Flat 30% for non-residents</td></tr>
                                     </tbody>
                                 </table>
                             </div>

@@ -929,6 +929,15 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
         role = employee_data.pop("role", None)
         employee_data["created_at"] = datetime.now(KL_TZ).isoformat()
         employee_data["religion"] = employee_data.get("religion", "Other")
+        
+        # Ensure employee_id is set (generate from email if not provided)
+        if not employee_data.get("employee_id"):
+            # Generate employee_id from email prefix + random suffix
+            import random
+            import string
+            email_prefix = email.split('@')[0][:6].upper()
+            random_suffix = ''.join(random.choices(string.digits, k=4))
+            employee_data["employee_id"] = f"{email_prefix}{random_suffix}"
 
         employee_response = supabase.table("employees").insert(employee_data).execute()
         if not employee_response.data:

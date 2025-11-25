@@ -106,94 +106,99 @@ async function loadLeaveTypes() {
     const tbody = document.getElementById('leaveTypesTableBody');
     if (!tbody) return;
     
+    // Default leave types fallback
+    const defaultLeaveTypes = [
+        {
+            id: 1,
+            name: 'Annual Leave',
+            code: 'annual',
+            color: '#3498db',
+            description: 'Regular annual leave entitlement',
+            requires_approval: true,
+            is_paid: true,
+            requires_document: false,
+            default_duration: 1.0,
+            max_duration: 14.0,
+            deduct_from: 'annual',
+            is_active: true
+        },
+        {
+            id: 2,
+            name: 'Sick Leave',
+            code: 'sick',
+            color: '#e74c3c',
+            description: 'Medical leave with certificate',
+            requires_approval: true,
+            is_paid: true,
+            requires_document: true,
+            default_duration: 1.0,
+            max_duration: 14.0,
+            deduct_from: 'sick',
+            is_active: true
+        },
+        {
+            id: 3,
+            name: 'Emergency Leave',
+            code: 'emergency',
+            color: '#f39c12',
+            description: 'Urgent personal matters',
+            requires_approval: true,
+            is_paid: true,
+            requires_document: false,
+            default_duration: 1.0,
+            max_duration: 3.0,
+            deduct_from: 'annual',
+            is_active: true
+        },
+        {
+            id: 4,
+            name: 'Unpaid Leave',
+            code: 'unpaid',
+            color: '#95a5a6',
+            description: 'Leave without pay',
+            requires_approval: true,
+            is_paid: false,
+            requires_document: false,
+            default_duration: 1.0,
+            max_duration: 30.0,
+            deduct_from: 'unpaid',
+            is_active: true
+        },
+        {
+            id: 5,
+            name: 'Maternity Leave',
+            code: 'maternity',
+            color: '#e91e63',
+            description: 'Maternity leave (as per law)',
+            requires_approval: false,
+            is_paid: true,
+            requires_document: true,
+            default_duration: 60.0,
+            max_duration: 98.0,
+            deduct_from: 'none',
+            is_active: true
+        }
+    ];
+    
     try {
         // Fetch leave types from API
         const response = await fetch('/api/admin/leave-types');
         const data = await response.json();
         
-        if (data.success && data.data.length > 0) {
+        if (data.success && data.data && data.data.length > 0) {
             currentLeaveTypes = data.data;
         } else {
             // Fall back to default leave types
-            currentLeaveTypes = [
-                {
-                    id: 1,
-                    name: 'Annual Leave',
-                    code: 'annual',
-                    color: '#3498db',
-                    description: 'Regular annual leave entitlement',
-                    requires_approval: true,
-                    is_paid: true,
-                    requires_document: false,
-                    default_duration: 1.0,
-                    max_duration: 14.0,
-                    deduct_from: 'annual',
-                    is_active: true
-                },
-                {
-                    id: 2,
-                    name: 'Sick Leave',
-                    code: 'sick',
-                    color: '#e74c3c',
-                    description: 'Medical leave with certificate',
-                    requires_approval: true,
-                    is_paid: true,
-                    requires_document: true,
-                    default_duration: 1.0,
-                    max_duration: 14.0,
-                    deduct_from: 'sick',
-                    is_active: true
-                },
-                {
-                    id: 3,
-                    name: 'Emergency Leave',
-                    code: 'emergency',
-                    color: '#f39c12',
-                    description: 'Urgent personal matters',
-                    requires_approval: true,
-                    is_paid: true,
-                    requires_document: false,
-                    default_duration: 1.0,
-                    max_duration: 3.0,
-                    deduct_from: 'annual',
-                    is_active: true
-                },
-                {
-                    id: 4,
-                    name: 'Unpaid Leave',
-                    code: 'unpaid',
-                    color: '#95a5a6',
-                    description: 'Leave without pay',
-                    requires_approval: true,
-                    is_paid: false,
-                    requires_document: false,
-                    default_duration: 1.0,
-                    max_duration: 30.0,
-                    deduct_from: 'unpaid',
-                    is_active: true
-                },
-                {
-                    id: 5,
-                    name: 'Maternity Leave',
-                    code: 'maternity',
-                    color: '#e91e63',
-                    description: 'Maternity leave (as per law)',
-                    requires_approval: false,
-                    is_paid: true,
-                    requires_document: true,
-                    default_duration: 60.0,
-                    max_duration: 98.0,
-                    deduct_from: 'none',
-                    is_active: true
-                }
-            ];
+            currentLeaveTypes = defaultLeaveTypes;
         }
         
         renderLeaveTypesTable();
         
     } catch (error) {
         console.error('Error loading leave types:', error);
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading leave types</td></tr>';
+        // Use default leave types when API fails
+        currentLeaveTypes = defaultLeaveTypes;
+        renderLeaveTypesTable();
     }
 }
 
