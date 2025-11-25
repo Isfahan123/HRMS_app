@@ -4005,7 +4005,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = {};
             
             for (let [key, value] of formData.entries()) {
-                data[key] = value;
+                // Convert empty date fields to null so database accepts them
+                if (key === 'end_date' && !value) {
+                    data[key] = null;
+                } else {
+                    data[key] = value;
+                }
             }
             
             try {

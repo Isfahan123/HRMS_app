@@ -1557,7 +1557,7 @@ async def create_employment_history(request: Request):
             "work_status": data.get('work_status', ''),
             "payroll_status": data.get('payroll_status', ''),
             "start_date": data['start_date'],
-            "end_date": data.get('end_date', None),  # None means currently employed
+            "end_date": data.get('end_date') or None,  # None means currently employed (convert empty string to None)
             "notes": data.get('notes', ''),
         }
         
@@ -1583,6 +1583,10 @@ async def update_employment_history(record_id: str, request: Request):
         # Remove read-only fields
         data.pop('id', None)
         data.pop('created_at', None)
+        
+        # Convert empty string end_date to None (for optional date field)
+        if 'end_date' in data and data['end_date'] == '':
+            data['end_date'] = None
         
         # Update the record using the service
         response = update_employee_history_record(record_id, data)
