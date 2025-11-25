@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 import os
 import csv
 import io
+import re
 import requests
 import logging
 import sys
@@ -1625,12 +1626,13 @@ def _safe_update_employees(employee_id: str, payload: dict):
     Resilient update for employees table: if PostgREST reports missing columns (PGRST204),
     strip them from payload and retry.
     """
-    import re
     attempt = dict(payload)
     # Known optional fields that may not exist in all schemas
     fallback_fields = ['income_tax_number', 'epf_number', 'socso_number', 'tax_resident_status', 
                        'allowances', 'bank_name', 'bank_account', 'basic_salary']
-    for _ in range(len(fallback_fields) + 2):
+    # Allow extra iterations beyond fallback_fields count for fields not in fallback list
+    max_retries = len(fallback_fields) + 2
+    for _ in range(max_retries):
         if not attempt:
             return None  # Nothing to update
         try:
