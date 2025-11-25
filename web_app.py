@@ -299,6 +299,33 @@ async def get_leave_requests(email: str):
         print(f"Error fetching leave requests: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.get("/api/leave-balance/{email}")
+async def get_leave_balance(email: str):
+    """
+    Get leave balance for a specific employee by email
+    Returns both annual and sick leave balances
+    """
+    try:
+        from services.supabase_service import get_individual_employee_leave_balance, get_individual_employee_sick_leave_balance
+        
+        current_year = datetime.now().year
+        
+        # Get annual leave balance
+        annual_balance = get_individual_employee_leave_balance(email, current_year)
+        # Get sick leave balance
+        sick_balance = get_individual_employee_sick_leave_balance(email, current_year)
+        
+        return {
+            "success": True,
+            "balances": {
+                "annual": annual_balance.get('remaining_days', 0),
+                "sick": sick_balance.get('remaining_sick_days', 0)
+            }
+        }
+    except Exception as e:
+        print(f"Error getting leave balance: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/employees")
 async def list_employees():
     """
