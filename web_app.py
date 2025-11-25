@@ -721,10 +721,23 @@ async def run_payroll_processing(request: Request):
     """
     try:
         data = await request.json()
-        payroll_date = data.get("payroll_date")  # Format: YYYY-MM
+        payroll_date = data.get("payroll_date")  # Format: YYYY-MM from month input
         
         if not payroll_date:
             return {"success": False, "message": "Payroll date is required"}
+        
+        # Convert YYYY-MM to YYYY-MM-DD format (first day of month)
+        # The run_payroll function expects YYYY-MM-DD format
+        # Validate by parsing the date to ensure it's a valid month
+        try:
+            parsed_date = datetime.strptime(payroll_date, "%Y-%m")
+            payroll_date = parsed_date.strftime("%Y-%m-%d")
+        except ValueError:
+            # If already in YYYY-MM-DD format, validate it
+            try:
+                datetime.strptime(payroll_date, "%Y-%m-%d")
+            except ValueError:
+                return {"success": False, "message": "Invalid date format. Use YYYY-MM or YYYY-MM-DD"}
         
         success = run_payroll(payroll_date)
         
