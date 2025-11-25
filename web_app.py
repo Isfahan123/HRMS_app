@@ -1423,21 +1423,39 @@ async def get_employee_history():
         
         records = response.data
         
-        # Get unique employee emails
+        # Get unique employee emails and IDs
         employee_emails = list(set([rec.get("employee_email") for rec in records if rec.get("employee_email")]))
+        employee_ids = list(set([rec.get("employee_id") for rec in records if rec.get("employee_id")]))
         
-        # Fetch employee data for all relevant employees
-        employee_map = {}
+        # Fetch employee data for all relevant employees by email
+        employee_map_by_email = {}
         if employee_emails:
-            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+            employees_response = supabase.table("employees").select("id, email, full_name").in_("email", employee_emails).execute()
             if employees_response.data:
-                employee_map = {emp["email"]: emp for emp in employees_response.data}
+                employee_map_by_email = {emp["email"]: emp for emp in employees_response.data}
+        
+        # Fetch employee data for all relevant employees by ID (for records that don't have email)
+        employee_map_by_id = {}
+        if employee_ids:
+            employees_response = supabase.table("employees").select("id, email, full_name").in_("id", employee_ids).execute()
+            if employees_response.data:
+                employee_map_by_id = {emp["id"]: emp for emp in employees_response.data}
         
         # Enrich records with employee names
         for record in records:
             employee_email = record.get("employee_email")
-            if employee_email and employee_email in employee_map:
-                record["employee_name"] = employee_map[employee_email].get("full_name", "")
+            employee_id = record.get("employee_id")
+            
+            # First try to look up by email
+            if employee_email and employee_email in employee_map_by_email:
+                record["employee_name"] = employee_map_by_email[employee_email].get("full_name", "")
+            # Then try to look up by ID
+            elif employee_id and employee_id in employee_map_by_id:
+                emp = employee_map_by_id[employee_id]
+                record["employee_name"] = emp.get("full_name", "")
+                # Also fill in the email if missing
+                if not employee_email and emp.get("email"):
+                    record["employee_email"] = emp.get("email")
             else:
                 record["employee_name"] = ""
         
