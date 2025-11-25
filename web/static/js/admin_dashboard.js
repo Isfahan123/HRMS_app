@@ -3940,7 +3940,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const halfDayCheckbox = document.getElementById('adminLeaveHalfDay');
         const halfDayPeriod = document.getElementById('adminHalfDayPeriod');
         const durationInput = document.getElementById('adminLeaveDuration');
-        const endDateInput = document.getElementById('adminLeaveEndDate');
+        const halfDayHint = document.getElementById('halfDayHint');
         
         if (halfDayCheckbox && halfDayPeriod && durationInput) {
             halfDayCheckbox.addEventListener('change', function() {
@@ -3948,7 +3948,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Half-day selected: enable 0.5 step for fractional days (e.g., 0.5, 1.5, 2.5)
                     durationInput.min = 0.5;
                     durationInput.step = 0.5;
-                    // If current value is whole number, keep it; otherwise allow fractional
+                    if (halfDayHint) {
+                        halfDayHint.textContent = '(half-day enabled: 0.5, 1.5, 2.5... allowed)';
+                        halfDayHint.style.color = '#2196F3';
+                    }
                     updateWorkingDaysDisplay();
                 } else {
                     // Full day selected: only allow whole days
@@ -3961,6 +3964,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     if (parseFloat(durationInput.value) < 1) {
                         durationInput.value = 1;
+                    }
+                    if (halfDayHint) {
+                        halfDayHint.textContent = '(excludes weekends & holidays)';
+                        halfDayHint.style.color = '#666';
                     }
                     updateWorkingDaysDisplay();
                 }
