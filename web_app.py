@@ -58,6 +58,7 @@ from services.supabase_training_overseas import (
     fetch_overseas_work_trip_records
 )
 from services.supabase_employee_history import (
+    insert_employee_history_record,
     update_employee_history_record,
     delete_employee_history_record
 )
@@ -1043,6 +1044,39 @@ async def set_carry_forward_all(request: Request):
         print(f"Error setting carry forward for all: {str(e)}")
         return {"success": False, "message": str(e)}
 
+@app.get("/api/leave-balance/{employee_email}")
+async def get_employee_leave_balance(employee_email: str):
+    """
+    Get leave balance for a specific employee (used by submit leave request form)
+    """
+    try:
+        from services.supabase_service import get_individual_employee_leave_balance, get_individual_employee_sick_leave_balance
+        
+        # Decode URL-encoded email
+        employee_email_decoded = employee_email.replace('%40', '@')
+        current_year = datetime.now().year
+        
+        # Get annual leave balance
+        annual_balance = get_individual_employee_leave_balance(employee_email_decoded, current_year)
+        annual_remaining = annual_balance.get('remaining_days', 0) if annual_balance else 0
+        
+        # Get sick leave balance
+        sick_balance = get_individual_employee_sick_leave_balance(employee_email_decoded, current_year)
+        sick_remaining = sick_balance.get('remaining_sick_days', 14) if sick_balance else 14
+        
+        return {
+            "success": True,
+            "balances": {
+                "annual": annual_remaining,
+                "sick": sick_remaining,
+                "annual_details": annual_balance,
+                "sick_details": sick_balance
+            }
+        }
+    except Exception as e:
+        print(f"Error getting leave balance for {employee_email}: {str(e)}")
+        return {"success": False, "message": str(e)}
+
 @app.get("/api/admin/unpaid-leave-summary")
 async def get_unpaid_leave_summary():
     """
@@ -1533,9 +1567,10 @@ async def create_employment_history(request: Request):
             "created_at": datetime.utcnow().isoformat(),
         }
         
-        response = supabase.table("employee_history").insert(history_record).execute()
+        # Use resilient insert that strips unknown columns (handles missing employee_email column)
+        response = insert_employee_history_record(history_record)
         
-        if response.data:
+        if response and response.data:
             return {"success": True, "message": "Employment history recorded successfully", "data": response.data[0]}
         else:
             return {"success": False, "message": "Failed to record employment history"}
