@@ -943,7 +943,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpFunctionalGroup').value = employee.functional_group || '';
                 document.getElementById('editEmpEmploymentType').value = employee.employment_type || 'Full-time';
                 document.getElementById('editEmpRole').value = employee.role || 'employee';
-                document.getElementById('editEmpStatus').value = employee.employment_status || 'Active';
+                document.getElementById('editEmpStatus').value = employee.status || 'Active';
                 document.getElementById('editEmpWorkStatus').value = employee.work_status || 'On Duty';
                 document.getElementById('editEmpPayrollStatus').value = employee.payroll_status || 'Active Payroll';
                 document.getElementById('editEmpJoinDate').value = employee.join_date || '';
@@ -1526,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 functional_group: document.getElementById('newEmpFunctionalGroup').value,
                 employment_type: document.getElementById('newEmpEmploymentType').value,
                 role: document.getElementById('newEmpRole').value,
-                employment_status: document.getElementById('newEmpStatus').value,
+                status: document.getElementById('newEmpStatus').value,
                 work_status: document.getElementById('newEmpWorkStatus').value,
                 payroll_status: document.getElementById('newEmpPayrollStatus').value,
                 join_date: document.getElementById('newEmpJoinDate').value,
