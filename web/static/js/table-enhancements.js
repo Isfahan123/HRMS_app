@@ -235,6 +235,7 @@ tableStyles.textContent = `
     }
 
     .sortable-header {
+        -webkit-user-select: none;
         user-select: none;
         transition: background-color 0.2s;
     }
