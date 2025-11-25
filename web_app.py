@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 import os
 import csv
 import io
+import re
 import requests
 import logging
 import sys
@@ -296,6 +297,33 @@ async def get_leave_requests(email: str):
         return {"success": True, "data": leave_requests}
     except Exception as e:
         print(f"Error fetching leave requests: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/leave-balance/{email}")
+async def get_leave_balance(email: str):
+    """
+    Get leave balance for a specific employee by email
+    Returns both annual and sick leave balances
+    """
+    try:
+        from services.supabase_service import get_individual_employee_leave_balance, get_individual_employee_sick_leave_balance
+        
+        current_year = datetime.now().year
+        
+        # Get annual leave balance
+        annual_balance = get_individual_employee_leave_balance(email, current_year)
+        # Get sick leave balance
+        sick_balance = get_individual_employee_sick_leave_balance(email, current_year)
+        
+        return {
+            "success": True,
+            "balances": {
+                "annual": annual_balance.get('remaining_days', 0),
+                "sick": sick_balance.get('remaining_sick_days', 0)
+            }
+        }
+    except Exception as e:
+        print(f"Error getting leave balance: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.get("/api/employees")
@@ -1620,6 +1648,44 @@ async def get_payroll_info(employee_id: str):
         print(f"Error getting payroll info: {str(e)}")
         return {"success": False, "message": str(e)}
 
+def _safe_update_employees(employee_id: str, payload: dict):
+    """
+    Resilient update for employees table: if PostgREST reports missing columns (PGRST204),
+    strip them from payload and retry.
+    """
+    attempt = dict(payload)
+    # Known optional fields that may not exist in all schemas
+    fallback_fields = ['income_tax_number', 'epf_number', 'socso_number', 'tax_resident_status', 
+                       'allowances', 'bank_name', 'bank_account', 'basic_salary']
+    # Allow extra iterations beyond fallback_fields count for fields not in fallback list
+    max_retries = len(fallback_fields) + 2
+    for _ in range(max_retries):
+        if not attempt:
+            return None  # Nothing to update
+        try:
+            return supabase.table("employees").update(attempt).eq("id", employee_id).execute()
+        except Exception as e:
+            msg = str(e)
+            if 'PGRST204' not in msg:
+                raise
+            # Try to extract missing column name
+            m = re.search(r"Could not find the '([^']+)' column of 'employees'", msg)
+            missing = m.group(1) if m else None
+            if missing and missing in attempt:
+                attempt.pop(missing, None)
+                continue
+            # Fallback: remove one optional field at a time
+            removed = False
+            for k in list(attempt.keys()):
+                if k in fallback_fields:
+                    attempt.pop(k, None)
+                    removed = True
+                    break
+            if removed:
+                continue
+            raise
+    return None
+
 @app.post("/api/admin/payroll-info")
 async def save_payroll_info(request: Request):
     """
@@ -1656,7 +1722,7 @@ async def save_payroll_info(request: Request):
             employee_updates["basic_salary"] = data["basic_salary"]
         
         if employee_updates:
-            supabase.table("employees").update(employee_updates).eq("id", employee_id).execute()
+            _safe_update_employees(employee_id, employee_updates)
         
         # Save monthly deductions data (excluding employee table fields)
         deductions_data = {k: v for k, v in data.items() if k not in EXCLUDED_FROM_DEDUCTIONS}
