@@ -59,6 +59,62 @@ class TestNormalizeEmployeeFieldsInteger:
         data = {"days_in_malaysia_current_year": ""}
         result = _normalize_employee_fields(data)
         assert result["days_in_malaysia_current_year"] is None
+    
+    def test_primary_year_started_empty_string_becomes_none(self):
+        """Empty string for primary_year_started should become None."""
+        data = {"primary_year_started": ""}
+        result = _normalize_employee_fields(data)
+        assert result["primary_year_started"] is None
+    
+    def test_primary_year_completed_empty_string_becomes_none(self):
+        """Empty string for primary_year_completed should become None."""
+        data = {"primary_year_completed": ""}
+        result = _normalize_employee_fields(data)
+        assert result["primary_year_completed"] is None
+    
+    def test_secondary_year_started_empty_string_becomes_none(self):
+        """Empty string for secondary_year_started should become None."""
+        data = {"secondary_year_started": ""}
+        result = _normalize_employee_fields(data)
+        assert result["secondary_year_started"] is None
+    
+    def test_secondary_year_completed_empty_string_becomes_none(self):
+        """Empty string for secondary_year_completed should become None."""
+        data = {"secondary_year_completed": ""}
+        result = _normalize_employee_fields(data)
+        assert result["secondary_year_completed"] is None
+    
+    def test_tertiary_year_started_empty_string_becomes_none(self):
+        """Empty string for tertiary_year_started should become None."""
+        data = {"tertiary_year_started": ""}
+        result = _normalize_employee_fields(data)
+        assert result["tertiary_year_started"] is None
+    
+    def test_tertiary_year_completed_empty_string_becomes_none(self):
+        """Empty string for tertiary_year_completed should become None."""
+        data = {"tertiary_year_completed": ""}
+        result = _normalize_employee_fields(data)
+        assert result["tertiary_year_completed"] is None
+    
+    def test_education_year_string_converts_to_int(self):
+        """String year for education fields should convert to int."""
+        data = {
+            "primary_year_started": "2000",
+            "primary_year_completed": "2006",
+            "secondary_year_started": "2006",
+            "secondary_year_completed": "2011",
+            "tertiary_year_started": "2011",
+            "tertiary_year_completed": "2015",
+        }
+        result = _normalize_employee_fields(data)
+        assert result["primary_year_started"] == 2000
+        assert result["primary_year_completed"] == 2006
+        assert result["secondary_year_started"] == 2006
+        assert result["secondary_year_completed"] == 2011
+        assert result["tertiary_year_started"] == 2011
+        assert result["tertiary_year_completed"] == 2015
+        for field in data.keys():
+            assert isinstance(result[field], int)
 
 
 class TestNormalizeEmployeeFieldsBoolean:
