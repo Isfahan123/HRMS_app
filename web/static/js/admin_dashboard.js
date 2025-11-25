@@ -911,10 +911,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newEffectiveDate = prompt('Effective Date (YYYY-MM-DD):', record.effective_date || '');
                 if (newEffectiveDate === null) return; // User cancelled
                 
-                const newPrevSalary = prompt('Previous Salary:', parseFloat(record.previous_value) || 0);
+                const newPrevSalary = prompt('Previous Salary:', parseFloat(record.previous_salary) || 0);
                 if (newPrevSalary === null) return;
                 
-                const newNewSalary = prompt('New Salary:', parseFloat(record.new_value) || 0);
+                const newNewSalary = prompt('New Salary:', parseFloat(record.new_salary) || 0);
                 if (newNewSalary === null) return;
                 
                 const newReason = prompt('Reason:', record.reason || '');
@@ -2546,8 +2546,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 filteredData.forEach(record => {
                     // Parse salary values, defaulting to 0 for calculation purposes
-                    const prevSalary = parseFloat(record.previous_value) || 0;
-                    const newSalary = parseFloat(record.new_value) || 0;
+                    // Database stores: previous_salary, new_salary (not previous_value, new_value)
+                    const prevSalary = parseFloat(record.previous_salary) || 0;
+                    const newSalary = parseFloat(record.new_salary) || 0;
                     const change = newSalary - prevSalary;
                     const changePercent = prevSalary > 0 ? (change / prevSalary * 100) : 0;
                     const changeColor = change >= 0 ? '#2e7d32' : '#c62828';
@@ -2557,16 +2558,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Prefer showing name over email for better readability, with consistent fallback chain
                     const employeeName = record.employee_name || record.employee_email || record.employee?.full_name || '-';
                     html += `<td style="padding: 10px;">${employeeName}</td>`;
-                    html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; color: #1976d2; font-size: 12px;">${record.change_type || '-'}</span></td>`;
-                    html += `<td style="padding: 10px;">${formatCurrency(record.previous_value)}</td>`;
-                    html += `<td style="padding: 10px;"><strong>${formatCurrency(record.new_value)}</strong></td>`;
+                    // Database stores change type in 'reason' field
+                    html += `<td style="padding: 10px;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; color: #1976d2; font-size: 12px;">${record.reason || record.change_type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;">${formatCurrency(record.previous_salary)}</td>`;
+                    html += `<td style="padding: 10px;"><strong>${formatCurrency(record.new_salary)}</strong></td>`;
                     // Only show change if both values exist
-                    if (record.previous_value && record.new_value) {
+                    if (record.previous_salary && record.new_salary) {
                         html += `<td style="padding: 10px; color: ${changeColor};"><strong>${change >= 0 ? '+' : ''}RM ${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)</strong></td>`;
                     } else {
                         html += `<td style="padding: 10px;">-</td>`;
                     }
-                    html += `<td style="padding: 10px;"><small>${record.reason || '-'}</small></td>`;
+                    html += `<td style="padding: 10px;"><small>${record.notes || record.reason || '-'}</small></td>`;
                     html += '<td style="padding: 10px;">';
                     html += `<button class="btn-secondary btn-sm" onclick="editSalaryHistory('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
                     html += `<button class="btn-reject btn-sm" onclick="deleteSalaryHistory('${record.id}')">🗑️ Delete</button>`;
