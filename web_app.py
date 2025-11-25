@@ -1620,6 +1620,43 @@ async def get_payroll_info(employee_id: str):
         print(f"Error getting payroll info: {str(e)}")
         return {"success": False, "message": str(e)}
 
+def _safe_update_employees(employee_id: str, payload: dict):
+    """
+    Resilient update for employees table: if PostgREST reports missing columns (PGRST204),
+    strip them from payload and retry.
+    """
+    import re
+    attempt = dict(payload)
+    # Known optional fields that may not exist in all schemas
+    fallback_fields = ['income_tax_number', 'epf_number', 'socso_number', 'tax_resident_status', 
+                       'allowances', 'bank_name', 'bank_account', 'basic_salary']
+    for _ in range(len(fallback_fields) + 2):
+        if not attempt:
+            return None  # Nothing to update
+        try:
+            return supabase.table("employees").update(attempt).eq("id", employee_id).execute()
+        except Exception as e:
+            msg = str(e)
+            if 'PGRST204' not in msg:
+                raise
+            # Try to extract missing column name
+            m = re.search(r"Could not find the '([^']+)' column of 'employees'", msg)
+            missing = m.group(1) if m else None
+            if missing and missing in attempt:
+                attempt.pop(missing, None)
+                continue
+            # Fallback: remove one optional field at a time
+            removed = False
+            for k in list(attempt.keys()):
+                if k in fallback_fields:
+                    attempt.pop(k, None)
+                    removed = True
+                    break
+            if removed:
+                continue
+            raise
+    return None
+
 @app.post("/api/admin/payroll-info")
 async def save_payroll_info(request: Request):
     """
@@ -1656,7 +1693,7 @@ async def save_payroll_info(request: Request):
             employee_updates["basic_salary"] = data["basic_salary"]
         
         if employee_updates:
-            supabase.table("employees").update(employee_updates).eq("id", employee_id).execute()
+            _safe_update_employees(employee_id, employee_updates)
         
         # Save monthly deductions data (excluding employee table fields)
         deductions_data = {k: v for k, v in data.items() if k not in EXCLUDED_FROM_DEDUCTIONS}
