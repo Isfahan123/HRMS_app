@@ -1467,13 +1467,13 @@ async def get_employee_history():
 @app.post("/api/admin/employee-history")
 async def create_employment_history(request: Request):
     """
-    Record employment / re-employment history (previous jobs, companies, positions)
+    Record employment / re-employment history (internal job changes and previous employment)
     """
     try:
         data = await request.json()
         
-        # Validate required fields
-        required_fields = ['employee_email', 'company', 'job_title', 'start_date']
+        # Validate required fields - company is now optional for internal history
+        required_fields = ['employee_email', 'job_title', 'start_date']
         for field in required_fields:
             if field not in data or data[field] == '':
                 return {"success": False, "message": f"Missing required field: {field}"}
@@ -1485,15 +1485,19 @@ async def create_employment_history(request: Request):
         
         employee_id = employee_response.data[0]['id']
         
-        # Create employment history record
+        # Create employment history record with all fields from Python GUI
         history_record = {
             "employee_id": employee_id,
             "employee_email": data['employee_email'],
-            "company": data['company'],
+            "company": data.get('company', ''),  # Optional: empty for internal history
             "job_title": data['job_title'],
             "position": data.get('position', ''),
             "department": data.get('department', ''),
+            "status": data.get('status', ''),
+            "functional_group": data.get('functional_group', ''),
             "employment_type": data.get('employment_type', ''),
+            "work_status": data.get('work_status', ''),
+            "payroll_status": data.get('payroll_status', ''),
             "start_date": data['start_date'],
             "end_date": data.get('end_date', None),  # None means currently employed
             "notes": data.get('notes', ''),

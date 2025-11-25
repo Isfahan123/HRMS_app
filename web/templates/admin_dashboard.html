@@ -2607,7 +2607,7 @@
                 <!-- Employee History Tab -->
                 <div id="employeeHistoryTab" class="tab-pane">
                     <h2>🧾 Employment / Re-Employment History</h2>
-                    <p style="color: #666; margin-bottom: 20px;">Track employee work history including previous companies, positions, and employment periods.</p>
+                    <p style="color: #666; margin-bottom: 20px;">Track employee work history including internal job changes (promotions, transfers, status changes) and previous employment at other companies.</p>
                     
                     <!-- Add Employment History Button -->
                     <button class="btn-primary" onclick="showAddEmploymentHistoryForm()" style="margin-bottom: 20px;">
@@ -2626,8 +2626,9 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="empHistoryCompany">Company:*</label>
-                                    <input type="text" id="empHistoryCompany" name="company" required placeholder="e.g., ABC Corporation">
+                                    <label for="empHistoryCompany">Company:</label>
+                                    <input type="text" id="empHistoryCompany" name="company" placeholder="Leave empty for internal history, or enter previous employer">
+                                    <small style="color: #666;">For internal job changes, leave empty. For previous employment, enter the company name.</small>
                                 </div>
                             </div>
                             

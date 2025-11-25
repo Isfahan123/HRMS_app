@@ -3102,8 +3102,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<th style="padding: 10px;">Job Title</th>';
                 html += '<th style="padding: 10px;">Position</th>';
                 html += '<th style="padding: 10px;">Department</th>';
+                html += '<th style="padding: 10px;">Status</th>';
+                html += '<th style="padding: 10px;">Functional Group</th>';
                 html += '<th style="padding: 10px;">Type</th>';
+                html += '<th style="padding: 10px;">Work Status</th>';
+                html += '<th style="padding: 10px;">Payroll Status</th>';
                 html += '<th style="padding: 10px;">Period</th>';
+                html += '<th style="padding: 10px;">Notes</th>';
                 html += '<th style="padding: 10px;">Actions</th>';
                 html += '</tr></thead><tbody>';
                 
@@ -3111,15 +3116,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '<tr style="border-bottom: 1px solid #eee;">';
                     // Show employee name first, fall back to email if name not available
                     html += `<td style="padding: 10px;">${record.employee_name || record.employees?.full_name || record.employee_email || '-'}</td>`;
-                    html += `<td style="padding: 10px;"><strong>${record.company || '-'}</strong></td>`;
+                    // Company: show 'Internal' badge if empty, otherwise show company name
+                    const companyDisplay = record.company ? `<strong>${record.company}</strong>` : '<span style="background: #4caf5020; padding: 4px 8px; border-radius: 4px; color: #4caf50; font-size: 12px;">Internal</span>';
+                    html += `<td style="padding: 10px;">${companyDisplay}</td>`;
                     html += `<td style="padding: 10px;">${record.job_title || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.position || '-'}</td>`;
                     html += `<td style="padding: 10px;">${record.department || '-'}</td>`;
+                    // Status with color coding
+                    const status = record.status || '-';
+                    let statusColor = '#667eea';
+                    if (status.toLowerCase() === 'active') statusColor = '#4caf50';
+                    else if (status.toLowerCase() === 'inactive') statusColor = '#ff9800';
+                    else if (status.toLowerCase() === 'resigned' || status.toLowerCase() === 'terminated') statusColor = '#f44336';
+                    html += `<td style="padding: 10px;"><span style="background: ${statusColor}20; padding: 4px 8px; border-radius: 4px; color: ${statusColor}; font-size: 12px;">${status}</span></td>`;
+                    html += `<td style="padding: 10px;">${record.functional_group || '-'}</td>`;
                     html += `<td style="padding: 10px;"><span style="background: #667eea20; padding: 4px 8px; border-radius: 4px; color: #667eea; font-size: 12px;">${record.employment_type || '-'}</span></td>`;
+                    html += `<td style="padding: 10px;">${record.work_status || '-'}</td>`;
+                    html += `<td style="padding: 10px;">${record.payroll_status || '-'}</td>`;
                     
                     const startDate = record.start_date || '-';
                     const endDate = record.end_date || 'Present';
                     html += `<td style="padding: 10px;"><small>${startDate} to ${endDate}</small></td>`;
+                    html += `<td style="padding: 10px;"><small>${record.notes || '-'}</small></td>`;
                     
                     html += '<td style="padding: 10px;">';
                     html += `<button class="btn-secondary btn-sm" onclick="editEmployeeHistory('${record.id}')" style="margin-right: 5px;">✏️ Edit</button>`;
