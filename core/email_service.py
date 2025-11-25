@@ -29,7 +29,7 @@ class HRMSEmailService:
         self.smtp_server = os.environ.get("SMTP_SERVER", "sc162.mschosting.cloud")
         self.smtp_port = int(os.environ.get("SMTP_PORT", "465"))
         self.sender_email = os.environ.get("SMTP_EMAIL", "admin@form.enigmagroup.com.my")
-        self.sender_password = os.environ.get("SMTP_PASSWORD", "")
+        self.sender_password = os.environ.get("SMTP_PASSWORD", "A[JVqJVE&t5Z?*t;")
         self.sender_name = os.environ.get("SMTP_SENDER_NAME", "HRMS System")
         
         # Company information
@@ -629,4 +629,5 @@ class HRMSEmailService:
 
 # Create a global instance for easy import
 email_service = HRMSEmailService()
+
 
