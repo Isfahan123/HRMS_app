@@ -957,7 +957,9 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
         
         # Create temp directory for output
         temp_dir = tempfile.gettempdir()
-        output_filename = f"payslip_{employee.get('employee_id', employee_id)}_{payroll.get('month_year', 'unknown').replace('/', '_')}.pdf"
+        month_year = payroll.get('month_year') or 'unknown'
+        employee_display_id = employee.get('employee_id') or employee_id
+        output_filename = f"payslip_{employee_display_id}_{month_year.replace('/', '_')}.pdf"
         output_path = os.path.join(temp_dir, output_filename)
         
         # Generate payslip using Python-based generator (same as desktop GUI)

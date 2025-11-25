@@ -126,8 +126,8 @@ class BonusManager {
                     <td>${recurringText}</td>
                     <td>${bonus.description || '-'}</td>
                     <td>
-                        <button onclick="bonusManager.editBonus('${bonus.id}')" class="btn-sm btn-secondary">Edit</button>
-                        <button onclick="bonusManager.deleteBonus('${bonus.id}')" class="btn-sm btn-danger">Delete</button>
+                        <button onclick="editBonus('${bonus.id}')" class="btn-sm btn-secondary">Edit</button>
+                        <button onclick="deleteBonus('${bonus.id}')" class="btn-sm btn-danger">Delete</button>
                     </td>
                 </tr>
             `;
@@ -498,6 +498,25 @@ function initBonusManager() {
         setTimeout(initBonusManager, 100);
     }
 }
+
+// Global function wrappers to handle cases where bonusManager might not be ready
+window.editBonus = function(bonusId) {
+    if (bonusManager) {
+        bonusManager.editBonus(bonusId);
+    } else {
+        console.error('Bonus Manager not initialized');
+        alert('Bonus manager not ready. Please try again in a moment.');
+    }
+};
+
+window.deleteBonus = function(bonusId) {
+    if (bonusManager) {
+        bonusManager.deleteBonus(bonusId);
+    } else {
+        console.error('Bonus Manager not initialized');
+        alert('Bonus manager not ready. Please try again in a moment.');
+    }
+};
 
 // Initialize immediately since script loads at bottom of page
 if (document.readyState === 'loading') {
