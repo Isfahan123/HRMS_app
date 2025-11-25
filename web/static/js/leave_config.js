@@ -16,6 +16,11 @@ function showAddLeaveTypeModal() {
     document.getElementById('leaveTypeId').value = '';
     currentLeaveTypeId = null;
     
+    // Set defaults
+    document.getElementById('leaveTypeIsActive').checked = true;
+    document.getElementById('leaveTypeDefaultDuration').value = '1.0';
+    document.getElementById('leaveTypeMaxDuration').value = '14.0';
+    
     document.getElementById('leaveTypeModal').style.display = 'block';
 }
 
@@ -29,8 +34,9 @@ function showAddEntitlementModal() {
     document.getElementById('entitlementId').value = '';
     currentEntitlementId = null;
     
-    // Populate leave type dropdown
+    // Populate leave type dropdown and tier dropdown
     populateLeaveTypeDropdown();
+    populateTierDropdown();
     
     document.getElementById('entitlementModal').style.display = 'block';
 }
@@ -309,7 +315,8 @@ function renderEntitlementsTable() {
     
     let html = '';
     currentEntitlements.forEach(ent => {
-        const tierLabel = getTierLabel(ent.employee_tier);
+        // Use tier_label from API response, fallback to getTierLabel
+        const tierLabel = ent.tier_label || getTierLabel(ent.employee_tier);
         html += `
             <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 8px;"><strong>${ent.leave_type_name || ent.leave_type_code || '-'}</strong></td>
@@ -317,8 +324,8 @@ function renderEntitlementsTable() {
                 <td style="padding: 8px; text-align: center;">${ent.days_entitlement || 0} days</td>
                 <td style="padding: 8px; text-align: center;">${ent.max_accumulation || '-'} days</td>
                 <td style="padding: 8px; text-align: center;">
-                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editEntitlement(${ent.id})">✏️ Edit</button>
-                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteEntitlement(${ent.id})">🗑️ Delete</button>
+                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editEntitlement('${ent.leave_type_code}', '${ent.employee_tier}')">✏️ Edit</button>
+                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteEntitlement('${ent.leave_type_code}', '${ent.employee_tier}')">🗑️ Delete</button>
                 </td>
             </tr>
         `;
@@ -328,17 +335,22 @@ function renderEntitlementsTable() {
 }
 
 /**
- * Get tier label
+ * Get tier label - includes both legacy and new tier IDs
  */
 function getTierLabel(tier) {
     const labels = {
+        // Legacy tier labels
         'junior': 'Junior Staff / Entry Level',
         'mid': 'Mid-Level Staff',
         'senior': 'Senior Staff',
         'manager': 'Manager / Team Lead',
-        'director': 'Director / C-Level'
+        'director': 'Director / C-Level',
+        // Years of service tier labels
+        'lt2': '< 2 years',
+        '2to5': '2 - 5 years',
+        'gt5': '> 5 years'
     };
-    return labels[tier] || tier;
+    return labels[tier] || tier || '-';
 }
 
 /**
@@ -353,7 +365,7 @@ async function saveLeaveType() {
         requires_document: document.getElementById('leaveTypeRequiresDocument').checked,
         default_duration: parseFloat(document.getElementById('leaveTypeDefaultDuration').value),
         max_duration: parseFloat(document.getElementById('leaveTypeMaxDuration').value),
-        is_active: true
+        is_active: document.getElementById('leaveTypeIsActive').checked
     };
     
     // Validation
@@ -417,6 +429,7 @@ function editLeaveType(leaveTypeId) {
     document.getElementById('leaveTypeRequiresDocument').checked = leaveType.requires_document === true;
     document.getElementById('leaveTypeDefaultDuration').value = leaveType.default_duration || 1.0;
     document.getElementById('leaveTypeMaxDuration').value = leaveType.max_duration || 14.0;
+    document.getElementById('leaveTypeIsActive').checked = leaveType.is_active !== false;
     
     document.getElementById('leaveTypeModalTitle').textContent = 'Edit Leave Type';
     document.getElementById('leaveTypeModal').style.display = 'block';
@@ -461,10 +474,59 @@ function populateLeaveTypeDropdown() {
     
     let html = '<option value="">Select Leave Type</option>';
     currentLeaveTypes.forEach(type => {
-        if (type.is_active) {
+        if (type.is_active !== false) {  // Include if active or not specified
             html += `<option value="${type.code}">${type.name}</option>`;
         }
     });
+    
+    select.innerHTML = html;
+}
+
+/**
+ * Populate tier dropdown for entitlements - fetches from API or uses defaults
+ */
+async function populateTierDropdown() {
+    const select = document.getElementById('entitlementTier');
+    if (!select) return;
+    
+    let html = '<option value="">Select Tier</option>';
+    
+    try {
+        // Try to fetch tiers from API
+        const response = await fetch('/api/admin/leave-tiers');
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.length > 0) {
+            data.data.forEach(tier => {
+                html += `<option value="${tier.id}">${tier.label}</option>`;
+            });
+        } else {
+            // Fallback: use tiers from current entitlements
+            const existingTiers = new Map();
+            currentEntitlements.forEach(ent => {
+                if (ent.employee_tier && !existingTiers.has(ent.employee_tier)) {
+                    existingTiers.set(ent.employee_tier, ent.tier_label || getTierLabel(ent.employee_tier));
+                }
+            });
+            
+            if (existingTiers.size > 0) {
+                existingTiers.forEach((label, id) => {
+                    html += `<option value="${id}">${label}</option>`;
+                });
+            } else {
+                // Default years-of-service tiers matching Python GUI
+                html += `<option value="lt2">< 2 years</option>`;
+                html += `<option value="2to5">2 - 5 years</option>`;
+                html += `<option value="gt5">> 5 years</option>`;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching tiers:', error);
+        // Default fallback
+        html += `<option value="lt2">< 2 years</option>`;
+        html += `<option value="2to5">2 - 5 years</option>`;
+        html += `<option value="gt5">> 5 years</option>`;
+    }
     
     select.innerHTML = html;
 }
@@ -522,16 +584,22 @@ async function saveEntitlement() {
 /**
  * Edit entitlement
  */
-function editEntitlement(entitlementId) {
-    const entitlement = currentEntitlements.find(e => e.id === entitlementId);
-    if (!entitlement) return;
+function editEntitlement(leaveTypeCode, employeeTier) {
+    const entitlement = currentEntitlements.find(e => 
+        e.leave_type_code === leaveTypeCode && e.employee_tier === employeeTier
+    );
+    if (!entitlement) {
+        console.error('Entitlement not found:', leaveTypeCode, employeeTier);
+        return;
+    }
     
-    // Populate form
+    // Store current identifiers for update
     currentEntitlementId = entitlement.id;
-    document.getElementById('entitlementId').value = entitlement.id;
+    document.getElementById('entitlementId').value = `${leaveTypeCode}:${employeeTier}`;
     
-    // Populate dropdown first
+    // Populate dropdowns first
     populateLeaveTypeDropdown();
+    populateTierDropdown();
     
     document.getElementById('entitlementLeaveType').value = entitlement.leave_type_code || '';
     document.getElementById('entitlementTier').value = entitlement.employee_tier || '';
@@ -545,16 +613,21 @@ function editEntitlement(entitlementId) {
 /**
  * Delete entitlement
  */
-async function deleteEntitlement(entitlementId) {
-    const entitlement = currentEntitlements.find(e => e.id === entitlementId);
-    if (!entitlement) return;
+async function deleteEntitlement(leaveTypeCode, employeeTier) {
+    const entitlement = currentEntitlements.find(e => 
+        e.leave_type_code === leaveTypeCode && e.employee_tier === employeeTier
+    );
+    if (!entitlement) {
+        console.error('Entitlement not found for delete:', leaveTypeCode, employeeTier);
+        return;
+    }
     
-    if (!confirm(`⚠️ Are you sure you want to delete this entitlement?\n\nThis action cannot be undone.`)) {
+    if (!confirm(`⚠️ Are you sure you want to delete this entitlement?\n\nLeave Type: ${entitlement.leave_type_name}\nTier: ${entitlement.tier_label || employeeTier}\n\nThis action cannot be undone.`)) {
         return;
     }
     
     try {
-        const response = await fetch(`/api/admin/leave-entitlements/${entitlementId}`, {
+        const response = await fetch(`/api/admin/leave-entitlements/${entitlement.id}?leave_type_code=${encodeURIComponent(leaveTypeCode)}&employee_tier=${encodeURIComponent(employeeTier)}`, {
             method: 'DELETE'
         });
         
