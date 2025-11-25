@@ -12,6 +12,7 @@ import os
 import csv
 import io
 import re
+import json
 import requests
 import logging
 import sys
@@ -1656,8 +1657,6 @@ async def get_payroll_info(employee_id: str):
     Get payroll information (monthly deductions, tax info, etc.) for an employee
     """
     try:
-        import json
-        
         # Get current year and month
         now = datetime.now()
         year = now.year
@@ -1828,7 +1827,6 @@ async def save_payroll_info(request: Request):
         if "other_allowance" in data:
             allowances["other"] = data["other_allowance"]
         if allowances:
-            import json
             employee_updates["allowances"] = json.dumps(allowances)
         
         # Save benefits as JSON string
@@ -1848,12 +1846,10 @@ async def save_payroll_info(request: Request):
         if "prs_amount" in data:
             benefits["prs_amount"] = data["prs_amount"]
         if benefits:
-            import json
             employee_updates["benefits"] = json.dumps(benefits)
         
         # Save children data as JSON string
         if "children" in data:
-            import json
             employee_updates["children_tax_relief"] = json.dumps(data["children"])
         
         if employee_updates:
