@@ -3,7 +3,8 @@
  * Matching Python GUI functionality with full CRUD operations
  */
 
-// Malaysian Tax Rates for Residents (LHDN 2025 rates - matching Python GUI)
+// Malaysian Tax Rates for Residents (LHDN Assessment Year 2025 - matching Python GUI)
+// Reference: https://www.hasil.gov.my/en/individual/individual-life-cycle/how-to-declare-income/tax-rate/
 const RESIDENT_TAX_RATES = [
     { from: 0, to: 5000, rate: 0, taxOnBand: 0, onFirst: 0, next: 0, taxFirst: 0, taxNext: 0 },
     { from: 5001, to: 20000, rate: 1, taxOnBand: 150, onFirst: 5000, next: 15000, taxFirst: 0, taxNext: 150 },
