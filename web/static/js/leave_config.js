@@ -593,9 +593,12 @@ function editEntitlement(leaveTypeCode, employeeTier) {
         return;
     }
     
-    // Store current identifiers for update
+    // Store current identifiers for update - using JSON for safe composite key storage
     currentEntitlementId = entitlement.id;
-    document.getElementById('entitlementId').value = `${leaveTypeCode}:${employeeTier}`;
+    document.getElementById('entitlementId').value = JSON.stringify({
+        leave_type_code: leaveTypeCode,
+        employee_tier: employeeTier
+    });
     
     // Populate dropdowns first
     populateLeaveTypeDropdown();
@@ -627,7 +630,12 @@ async function deleteEntitlement(leaveTypeCode, employeeTier) {
     }
     
     try {
-        const response = await fetch(`/api/admin/leave-entitlements/${entitlement.id}?leave_type_code=${encodeURIComponent(leaveTypeCode)}&employee_tier=${encodeURIComponent(employeeTier)}`, {
+        // Build URL with query parameters using URLSearchParams for proper encoding
+        const params = new URLSearchParams();
+        params.append('leave_type_code', leaveTypeCode);
+        params.append('employee_tier', employeeTier);
+        
+        const response = await fetch(`/api/admin/leave-entitlements/${entitlement.id}?${params.toString()}`, {
             method: 'DELETE'
         });
         

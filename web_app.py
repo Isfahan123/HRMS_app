@@ -2,7 +2,7 @@
 Web application entry point for HRMS
 This provides a web-based interface using HTML/JavaScript with Python backend
 """
-from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File, Query
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -2132,6 +2132,9 @@ async def delete_leave_type(type_id: int):
         print(f"Error deleting leave type: {str(e)}")
         return {"success": False, "message": str(e)}
 
+# Default multiplier for max accumulation calculation (3x the entitlement days)
+DEFAULT_MAX_ACCUMULATION_MULTIPLIER = 3
+
 @app.get("/api/admin/leave-entitlements")
 async def get_leave_entitlements():
     """Get leave entitlements/caps - returns per leave-type per tier format"""
@@ -2179,7 +2182,7 @@ async def get_leave_entitlements():
                     "employee_tier": tier_id,
                     "tier_label": tier_label,
                     "days_entitlement": cap_value,
-                    "max_accumulation": cap_value * 3  # Default max accumulation as 3x entitlement
+                    "max_accumulation": cap.get("max_accumulation") or cap_value * DEFAULT_MAX_ACCUMULATION_MULTIPLIER
                 })
                 entry_id += 1
         
@@ -2251,7 +2254,11 @@ async def update_leave_entitlement(entitlement_id: int, data: Dict[str, Any]):
         return {"success": False, "message": str(e)}
 
 @app.delete("/api/admin/leave-entitlements/{entitlement_id}")
-async def delete_leave_entitlement(entitlement_id: int, leave_type_code: str = None, employee_tier: str = None):
+async def delete_leave_entitlement(
+    entitlement_id: int, 
+    leave_type_code: Optional[str] = Query(None, description="Leave type code for identifying the entitlement"),
+    employee_tier: Optional[str] = Query(None, description="Employee tier ID for identifying the entitlement")
+):
     """Delete a leave entitlement rule from leave_caps table"""
     try:
         if leave_type_code and employee_tier:
