@@ -1499,6 +1499,7 @@ textarea:disabled {
 
 .employee-table th.sortable {
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
     position: relative;
 }
