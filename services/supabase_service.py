@@ -4759,6 +4759,76 @@ def run_payroll(payroll_date: str) -> bool:
         except Exception as _yerr:
             print(f"DEBUG: Error while upserting YTD after payroll: {_yerr}")
 
+        # Send payslip emails to all employees with active payroll status
+        try:
+            from services.email_service import email_service
+            
+            # Parse payroll date for month/year display
+            payroll_dt = _parse_any_date(payroll_date)
+            if payroll_dt:
+                month_names = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December']
+                month_name = month_names[payroll_dt.month - 1]
+                year_str = str(payroll_dt.year)
+            else:
+                month_name = "Unknown"
+                year_str = "Unknown"
+            
+            email_count = 0
+            for pr in payroll_runs:
+                try:
+                    # Get employee details
+                    emp_id = pr.get('employee_id')
+                    emp_response = supabase.table('employees').select('*').eq('id', emp_id).limit(1).execute()
+                    
+                    if not emp_response.data:
+                        continue
+                    
+                    emp = emp_response.data[0]
+                    emp_email = (emp.get('email') or '').strip().lower()
+                    emp_name = emp.get('full_name', 'Employee')
+                    emp_text_id = emp.get('employee_id', 'Unknown')
+                    
+                    if not emp_email:
+                        print(f"DEBUG: No email for employee {emp_text_id}, skipping payslip email")
+                        continue
+                    
+                    # Generate PDF
+                    pdf_data = generate_payslip_pdf(emp, pr, payroll_date)
+                    
+                    if not pdf_data:
+                        print(f"DEBUG: Failed to generate PDF for {emp_text_id}, skipping email")
+                        continue
+                    
+                    # Prepare payslip summary data
+                    payslip_data = {
+                        'basic_salary': f"{float(pr.get('basic_salary', 0)):.2f}",
+                        'total_deductions': f"{float(pr.get('epf_employee', 0)) + float(pr.get('socso_employee', 0)) + float(pr.get('eis_employee', 0)) + float(pr.get('pcb', 0)):.2f}",
+                        'net_pay': f"{float(pr.get('net_salary', 0)):.2f}"
+                    }
+                    
+                    # Send email with PDF attachment
+                    email_service.send_payslip_with_pdf(
+                        employee_email=emp_email,
+                        employee_name=emp_name,
+                        payslip_data=payslip_data,
+                        month=month_name,
+                        year=year_str,
+                        pdf_data=pdf_data,
+                        employee_id=emp_text_id
+                    )
+                    email_count += 1
+                    
+                except Exception as _emp_email_err:
+                    print(f"DEBUG: Error sending payslip email for employee: {_emp_email_err}")
+                    continue
+            
+            print(f"DEBUG: Queued {email_count} payslip emails for {month_name} {year_str}")
+            
+        except Exception as _email_err:
+            print(f"DEBUG: Error sending payslip emails: {_email_err}")
+            # Don't fail payroll if email sending fails
+
         return True
     except Exception as e:
         print(f"DEBUG: Error running payroll: {str(e)}")

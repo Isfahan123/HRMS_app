@@ -12,16 +12,25 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
 import os
+import threading
 from typing import Dict, List, Optional
 
 class HRMSEmailService:
     def __init__(self):
-        # Email configuration - same as your working test setup
-        self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
-        self.sender_email = "luminascea123@gmail.com"
-        self.sender_password = "mjvp zvud haab krmu"
-        self.sender_name = "HRMS System"
+        # Email configuration - uses environment variables for flexibility
+        # To use your own email (e.g., admin@form.enigmagroup.com.my):
+        # 1. Set these environment variables in your .env file:
+        #    SMTP_SERVER=mail.enigmagroup.com.my  (your mail server)
+        #    SMTP_PORT=587  (or 465 for SSL)
+        #    SMTP_EMAIL=admin@form.enigmagroup.com.my
+        #    SMTP_PASSWORD=your_password_here
+        #    SMTP_SENDER_NAME=HRMS System
+        # 2. Restart the application
+        self.smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+        self.smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+        self.sender_email = os.environ.get("SMTP_EMAIL", "luminascea123@gmail.com")
+        self.sender_password = os.environ.get("SMTP_PASSWORD", "mjvp zvud haab krmu")
+        self.sender_name = os.environ.get("SMTP_SENDER_NAME", "HRMS System")
         
         # Company information
         self.company_name = "Enigma Technical Solutions Sdn Bhd"
@@ -37,7 +46,7 @@ class HRMSEmailService:
         return message
     
     def _send_email(self, message: MIMEMultipart, to_email: str) -> bool:
-        """Send email using SMTP"""
+        """Send email using SMTP (internal synchronous method)"""
         try:
             context = ssl.create_default_context()
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
@@ -45,13 +54,27 @@ class HRMSEmailService:
                 server.login(self.sender_email, self.sender_password)
                 text = message.as_string()
                 server.sendmail(self.sender_email, to_email, text)
+            print(f"DEBUG: Email sent successfully to {to_email}")
             return True
         except Exception as e:
             print(f"DEBUG: Error sending email to {to_email}: {str(e)}")
             return False
     
+    def _send_email_async(self, message: MIMEMultipart, to_email: str) -> None:
+        """Send email in a background thread to avoid blocking the main thread"""
+        thread = threading.Thread(
+            target=self._send_email,
+            args=(message, to_email),
+            daemon=True
+        )
+        thread.start()
+    
     def send_leave_request_notification(self, manager_email: str, employee_data: Dict, leave_data: Dict) -> bool:
-        """Send leave request notification to manager"""
+        """Send leave request notification to manager.
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             subject = f"Leave Request from {employee_data.get('full_name', 'Employee')} - {leave_data.get('leave_type', 'Leave')}"
             message = self._create_base_message(manager_email, subject)
@@ -146,18 +169,20 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, manager_email)
-            
-            if success:
-                print(f"DEBUG: Leave request notification sent to manager: {manager_email}")
-            return success
+            self._send_email_async(message, manager_email)
+            print(f"DEBUG: Leave request notification queued for manager: {manager_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending leave request notification: {str(e)}")
             return False
     
     def send_leave_status_notification(self, employee_email: str, employee_name: str, leave_data: Dict, status: str, reviewed_by: str) -> bool:
-        """Send leave status notification to employee (approved, rejected, or submitted)."""
+        """Send leave status notification to employee (approved, rejected, or submitted).
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             s = (status or "").lower()
             if s == "approved":
@@ -258,18 +283,20 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, employee_email)
-            
-            if success:
-                print(f"DEBUG: Leave status notification sent to employee: {employee_email}")
-            return success
+            self._send_email_async(message, employee_email)
+            print(f"DEBUG: Leave status notification queued for employee: {employee_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending leave status notification: {str(e)}")
             return False
     
     def send_payslip_notification(self, employee_email: str, employee_name: str, payslip_data: Dict, month: str, year: str) -> bool:
-        """Send payslip notification to employee"""
+        """Send payslip notification to employee.
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             subject = f"Payslip Available - {month} {year}"
             message = self._create_base_message(employee_email, subject)
@@ -331,18 +358,115 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, employee_email)
-            
-            if success:
-                print(f"DEBUG: Payslip notification sent to employee: {employee_email}")
-            return success
+            self._send_email_async(message, employee_email)
+            print(f"DEBUG: Payslip notification queued for employee: {employee_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending payslip notification: {str(e)}")
             return False
     
+    def send_payslip_with_pdf(self, employee_email: str, employee_name: str, payslip_data: Dict, 
+                               month: str, year: str, pdf_data: bytes, employee_id: str = "employee") -> bool:
+        """Send payslip notification with PDF attachment to employee.
+        
+        Args:
+            employee_email: Employee's email address
+            employee_name: Employee's full name
+            payslip_data: Dictionary containing basic_salary, total_deductions, net_pay
+            month: Month name (e.g., "January")
+            year: Year (e.g., "2025")
+            pdf_data: PDF file content as bytes
+            employee_id: Employee ID for filename (default: "employee")
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
+        try:
+            subject = f"Your Payslip for {month} {year}"
+            message = self._create_base_message(employee_email, subject)
+            
+            html = f"""
+            <html>
+              <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                  
+                  <div style="text-align: center; border-bottom: 3px solid #2E86AB; padding-bottom: 20px; margin-bottom: 30px;">
+                    <h1 style="color: #2E86AB; margin: 0; font-size: 28px;">💰 Your Payslip is Here!</h1>
+                    <p style="color: #666; margin: 10px 0 0 0; font-size: 16px;">{month} {year}</p>
+                  </div>
+                  
+                  <p>Dear {employee_name},</p>
+                  
+                  <p>Please find attached your payslip for <strong>{month} {year}</strong>.</p>
+                  
+                  <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 20px; margin: 20px 0;">
+                    <h3 style="color: #155724; margin-top: 0;">📊 Payslip Summary</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                        <td style="padding: 8px 0; color: #155724;"><strong>Basic Salary:</strong></td>
+                        <td style="padding: 8px 0; color: #155724; text-align: right;"><strong>RM {payslip_data.get('basic_salary', '0.00')}</strong></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #155724;">Total Deductions:</td>
+                        <td style="padding: 8px 0; color: #155724; text-align: right;">RM {payslip_data.get('total_deductions', '0.00')}</td>
+                      </tr>
+                      <tr style="border-top: 2px solid #c3e6cb;">
+                        <td style="padding: 8px 0; color: #155724; font-size: 18px;"><strong>Net Pay:</strong></td>
+                        <td style="padding: 8px 0; color: #155724; text-align: right; font-size: 18px;"><strong>RM {payslip_data.get('net_pay', '0.00')}</strong></td>
+                      </tr>
+                    </table>
+                  </div>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 15px;">
+                      <p style="margin: 0; color: #0c5460;">
+                        <strong>📎 Attachment:</strong> Your detailed payslip PDF is attached to this email.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <hr style="border: 0; border-top: 2px solid #eee; margin: 30px 0;">
+                  
+                  <div style="text-align: center;">
+                    <p style="color: #666; font-size: 14px; margin-bottom: 5px;">
+                      This email was sent automatically by the HRMS Payroll System
+                    </p>
+                    <p style="color: #999; font-size: 12px; margin: 0;">
+                      {self.company_name} • Human Resources Management System
+                    </p>
+                  </div>
+                  
+                </div>
+              </body>
+            </html>
+            """
+            
+            message.attach(MIMEText(html, "html"))
+            
+            # Attach PDF
+            if pdf_data:
+                pdf_attachment = MIMEBase('application', 'pdf')
+                pdf_attachment.set_payload(pdf_data)
+                encoders.encode_base64(pdf_attachment)
+                filename = f"Payslip_{employee_id}_{month}_{year}.pdf"
+                pdf_attachment.add_header('Content-Disposition', 'attachment', filename=filename)
+                message.attach(pdf_attachment)
+            
+            self._send_email_async(message, employee_email)
+            print(f"DEBUG: Payslip with PDF queued for employee: {employee_email}")
+            return True
+            
+        except Exception as e:
+            print(f"DEBUG: Error sending payslip with PDF: {str(e)}")
+            return False
+    
     def send_admin_leave_request_notification(self, admin_email: str, employee_data: Dict, leave_data: Dict, submitted_by: str) -> bool:
-        """Send leave request notification when admin submits on behalf of employee"""
+        """Send leave request notification when admin submits on behalf of employee.
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             subject = f"Leave Request Submitted by Admin for {employee_data.get('full_name', 'Employee')} - {leave_data.get('leave_type', 'Leave')}"
             message = self._create_base_message(admin_email, subject)
@@ -447,11 +571,9 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, admin_email)
-            
-            if success:
-                print(f"DEBUG: Admin leave submission notification sent to: {admin_email}")
-            return success
+            self._send_email_async(message, admin_email)
+            print(f"DEBUG: Admin leave submission notification queued for: {admin_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending admin leave submission notification: {str(e)}")
