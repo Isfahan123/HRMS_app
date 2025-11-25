@@ -4034,12 +4034,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return days;
         }
         
-        // Update working days display
-        function updateWorkingDaysDisplay() {
+        // Update working days display with API call for accurate calculation
+        async function updateWorkingDaysDisplay() {
             const startDate = document.getElementById('adminLeaveStartDate').value;
             const endDate = document.getElementById('adminLeaveEndDate').value;
             const display = document.getElementById('adminWorkingDaysDisplay');
             const halfDay = document.getElementById('adminLeaveHalfDay');
+            const stateSelect = document.getElementById('adminLeaveState');
             
             if (!startDate || !endDate) {
                 display.textContent = 'Working days: - (excludes weekends & holidays)';
@@ -4059,8 +4060,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             display.style.color = '#555';
-            const days = calculateWorkingDays(startDate, endDate);
-            display.textContent = `Working days: ${days} (excludes weekends & holidays)`;
+            display.textContent = 'Calculating working days...';
+            
+            // Call API to get accurate working days calculation (includes holidays)
+            try {
+                const state = stateSelect ? stateSelect.value : '';
+                const params = new URLSearchParams({
+                    start_date: startDate,
+                    end_date: endDate
+                });
+                if (state && state !== 'All Malaysia') {
+                    params.append('state', state);
+                }
+                
+                const response = await fetch(`/api/working-days?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    display.textContent = `Working days: ${data.working_days} (excludes weekends & holidays)`;
+                } else {
+                    // Fallback to local calculation
+                    const days = calculateWorkingDays(startDate, endDate);
+                    display.textContent = `Working days: ${days} (estimate, weekends excluded)`;
+                }
+            } catch (error) {
+                console.error('Error fetching working days:', error);
+                // Fallback to local calculation
+                const days = calculateWorkingDays(startDate, endDate);
+                display.textContent = `Working days: ${days} (estimate, weekends excluded)`;
+            }
         }
         
         // Update dates when duration changes
@@ -4121,6 +4149,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update working days when dates change
         const startDateField = document.getElementById('adminLeaveStartDate');
         const endDateField = document.getElementById('adminLeaveEndDate');
+        const stateField = document.getElementById('adminLeaveState');
         
         if (startDateField) {
             startDateField.addEventListener('change', updateWorkingDaysDisplay);
@@ -4128,6 +4157,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (endDateField) {
             endDateField.addEventListener('change', updateWorkingDaysDisplay);
+        }
+        
+        // Also update when state changes (affects holiday calculation)
+        if (stateField) {
+            stateField.addEventListener('change', updateWorkingDaysDisplay);
         }
         
         // Initialize with current dates

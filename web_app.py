@@ -50,7 +50,8 @@ from services.supabase_service import (
     upsert_monthly_deductions,
     get_variable_percentage_config,
     get_attendance_settings,
-    update_attendance_settings
+    update_attendance_settings,
+    calculate_working_days
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -709,6 +710,35 @@ async def submit_new_leave_request(request: Request):
     except Exception as e:
         print(f"Error submitting leave request: {str(e)}")
         return {"success": False, "message": str(e)}
+
+@app.get("/api/working-days")
+async def get_working_days(start_date: str, end_date: str, state: str = None):
+    """
+    Calculate working days between two dates, excluding weekends and holidays.
+    Uses the same calculation logic as the leave request approval.
+    
+    Query Parameters:
+        start_date: Start date in YYYY-MM-DD format
+        end_date: End date in YYYY-MM-DD format
+        state: Optional Malaysian state for state-specific holidays
+    """
+    try:
+        if not start_date or not end_date:
+            return {"success": False, "message": "start_date and end_date are required"}
+        
+        # Use the centralized calculate_working_days function
+        working_days = calculate_working_days(start_date, end_date, state=state)
+        
+        return {
+            "success": True,
+            "working_days": working_days,
+            "start_date": start_date,
+            "end_date": end_date,
+            "state": state
+        }
+    except Exception as e:
+        print(f"Error calculating working days: {str(e)}")
+        return {"success": False, "message": str(e), "working_days": 1}
 
 @app.put("/api/employee/{email}")
 async def update_employee_profile(email: str, request: Request):
