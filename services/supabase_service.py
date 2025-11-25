@@ -930,6 +930,14 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
         employee_data["created_at"] = datetime.now(KL_TZ).isoformat()
         employee_data["religion"] = employee_data.get("religion", "Other")
         
+        # Map frontend field names to database column names
+        # Frontend sends 'join_date' but database expects 'date_joined'
+        if "join_date" in employee_data:
+            if not employee_data.get("date_joined"):
+                employee_data["date_joined"] = employee_data.pop("join_date")
+            else:
+                employee_data.pop("join_date", None)
+        
         # Ensure employee_id is set (generate from email if not provided)
         if not employee_data.get("employee_id"):
             # Generate employee_id from email prefix + random suffix
@@ -939,8 +947,32 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
             random_suffix = ''.join(random.choices(string.digits, k=4))
             employee_data["employee_id"] = f"{email_prefix}{random_suffix}"
 
-        employee_response = supabase.table("employees").insert(employee_data).execute()
-        if not employee_response.data:
+        # Resilient insert: remove unknown columns mentioned in PostgREST error and retry
+        import re as _re
+        attempts = 0
+        max_attempts = max(3, len(employee_data) + 1)
+        payload = dict(employee_data)
+        employee_response = None
+        while attempts < max_attempts:
+            attempts += 1
+            try:
+                employee_response = supabase.table("employees").insert(payload).execute()
+                break
+            except Exception as ie:
+                msg = str(ie)
+                m = _re.search(r"Could find the '([^']+)' column|Could not find the '([^']+)' column", msg)
+                if not m:
+                    m2 = _re.search(r"'([^']+)' column of 'employees' in the schema cache", msg)
+                    missing = m2.group(1) if m2 else None
+                else:
+                    missing = m.group(1) or m.group(2)
+                if missing and missing in payload:
+                    print(f"DEBUG: Stripping unknown employees column during insert: {missing}")
+                    payload.pop(missing, None)
+                    continue
+                raise ie
+        
+        if not employee_response or not employee_response.data:
             print(f"DEBUG: Failed to insert employee: {employee_response}")
             return {"success": False, "error": "Failed to create employee record"}
 
