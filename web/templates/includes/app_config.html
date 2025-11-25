@@ -9,9 +9,7 @@
         version: "{{ app_version }}",
         environment: "{{ environment }}",
         apiPrefix: "{{ api_prefix }}",
-        {% if is_development %}
-        debug: {{ debug|lower }},
-        {% endif %}
+        debug: {{ debug|lower if debug is defined else 'false' }},
         features: {
             calendar: {{ features.calendar|lower }},
             bonus: {{ features.bonus|lower }},

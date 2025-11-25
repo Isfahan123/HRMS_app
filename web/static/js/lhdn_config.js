@@ -3,21 +3,27 @@
  * Matching Python GUI functionality with full CRUD operations
  */
 
-// Malaysian Tax Rates for Residents (2024 rates - fallback)
+// Malaysian Tax Rates for Residents (LHDN Assessment Year 2025 - matching Python GUI)
+// Reference: https://www.hasil.gov.my/en/individual/individual-life-cycle/how-to-declare-income/tax-rate/
 const RESIDENT_TAX_RATES = [
-    { from: 0, to: 5000, rate: 0, taxOnBand: 0 },
-    { from: 5001, to: 20000, rate: 1, taxOnBand: 150 },
-    { from: 20001, to: 35000, rate: 3, taxOnBand: 450 },
-    { from: 35001, to: 50000, rate: 8, taxOnBand: 1200 },
-    { from: 50001, to: 70000, rate: 13, taxOnBand: 2600 },
-    { from: 70001, to: 100000, rate: 21, taxOnBand: 6300 },
-    { from: 100001, to: 250000, rate: 24, taxOnBand: 36000 },
-    { from: 250001, to: 400000, rate: 24.5, taxOnBand: 36750 },
-    { from: 400001, to: 600000, rate: 25, taxOnBand: 50000 },
-    { from: 600001, to: 1000000, rate: 26, taxOnBand: 104000 },
-    { from: 1000001, to: 2000000, rate: 28, taxOnBand: 280000 },
-    { from: 2000001, to: 999999999, rate: 30, taxOnBand: 0 }
+    { from: 0, to: 5000, rate: 0, taxOnBand: 0, onFirst: 0, next: 0, taxFirst: 0, taxNext: 0 },
+    { from: 5001, to: 20000, rate: 1, taxOnBand: 150, onFirst: 5000, next: 15000, taxFirst: 0, taxNext: 150 },
+    { from: 20001, to: 35000, rate: 3, taxOnBand: 450, onFirst: 20000, next: 15000, taxFirst: 150, taxNext: 450 },
+    { from: 35001, to: 50000, rate: 6, taxOnBand: 900, onFirst: 35000, next: 15000, taxFirst: 600, taxNext: 900 },
+    { from: 50001, to: 70000, rate: 11, taxOnBand: 2200, onFirst: 50000, next: 20000, taxFirst: 1500, taxNext: 2200 },
+    { from: 70001, to: 100000, rate: 19, taxOnBand: 5700, onFirst: 70000, next: 30000, taxFirst: 3700, taxNext: 5700 },
+    { from: 100001, to: 400000, rate: 25, taxOnBand: 75000, onFirst: 100000, next: 300000, taxFirst: 9400, taxNext: 75000 },
+    { from: 400001, to: 600000, rate: 26, taxOnBand: 52000, onFirst: 400000, next: 200000, taxFirst: 84400, taxNext: 52000 },
+    { from: 600001, to: 2000000, rate: 28, taxOnBand: 392000, onFirst: 600000, next: 1400000, taxFirst: 136400, taxNext: 392000 },
+    { from: 2000001, to: 999999999, rate: 30, taxOnBand: 0, onFirst: 2000000, next: 0, taxFirst: 528400, taxNext: 0 }
 ];
+
+// Special tax provisions (matching Python GUI)
+const TAX_PROVISIONS = {
+    individualTaxRebate: 400.0,       // LHDN 2025: RM 400
+    rebateThreshold: 35000,           // Annual chargeable income threshold
+    nonResidentRate: 30.0             // Flat 30% for non-residents
+};
 
 // Tax Relief Categories and Maximum Amounts (2024)
 const TAX_RELIEF_CATEGORIES = [
@@ -99,7 +105,7 @@ async function loadTaxRatesFromAPI() {
 }
 
 /**
- * Load resident tax rates into table
+ * Load resident tax rates into table (matching Python GUI 1:1)
  */
 function loadResidentTaxRates(rates) {
     const tbody = document.getElementById('residentTaxRatesBody');
@@ -110,24 +116,38 @@ function loadResidentTaxRates(rates) {
     rates.forEach((bracket, index) => {
         const from = bracket.income_from || bracket.from;
         const to = bracket.income_to || bracket.to;
+        const onFirst = bracket.on_first || bracket.onFirst || 0;
+        const next = bracket.next || 0;
         const rate = bracket.rate_percent || bracket.rate;
-        const taxOnBand = bracket.tax_on_band || bracket.taxOnBand || 0;
+        const taxFirst = bracket.tax_first || bracket.taxFirst || 0;
+        const taxNext = bracket.tax_next || bracket.taxNext || 0;
         
         html += `
             <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">${formatMoney(from)}</td>
-                <td style="padding: 10px;">${to > 900000000 ? 'Above' : formatMoney(to)}</td>
+                <td style="padding: 10px; text-align: center;">${index + 1}</td>
+                <td style="padding: 10px; text-align: right;">${formatMoney(from)}</td>
+                <td style="padding: 10px; text-align: right;">${to > 900000000 ? 'Above' : formatMoney(to)}</td>
+                <td style="padding: 10px; text-align: right;">${formatMoney(onFirst)}</td>
+                <td style="padding: 10px; text-align: right;">${next > 0 ? formatMoney(next) : '-'}</td>
                 <td style="padding: 10px; text-align: center;"><strong>${rate}%</strong></td>
-                <td style="padding: 10px; text-align: right;">${formatMoney(parseFloat(taxOnBand))}</td>
+                <td style="padding: 10px; text-align: right;">${formatMoney(taxFirst)}</td>
+                <td style="padding: 10px; text-align: right;">${next > 0 ? formatMoney(taxNext) : '-'}</td>
                 <td style="padding: 10px; text-align: center;">
-                    <button class="btn-sm btn-secondary" onclick="editTaxBracket('resident', ${index})">✏️ Edit</button>
+                    <button class="btn-sm btn-secondary" onclick="editTaxBracket('resident', ${index})">✏️</button>
                     <button class="btn-sm btn-danger" onclick="deleteTaxBracket('resident', ${index})">🗑️</button>
                 </td>
             </tr>
         `;
     });
     
-    tbody.innerHTML = html || '<tr><td colspan="5" style="padding: 15px; text-align: center;">No tax rates configured</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="9" style="padding: 15px; text-align: center;">No tax rates configured</td></tr>';
+    
+    // Update non-resident rate display
+    const nonResidentRateDisplay = document.getElementById('nonResidentRateDisplay');
+    const nonResidentRateInput = document.getElementById('nonResidentRate');
+    if (nonResidentRateDisplay && nonResidentRateInput) {
+        nonResidentRateDisplay.textContent = nonResidentRateInput.value + '%';
+    }
 }
 
 /**
@@ -968,6 +988,146 @@ function showMessageInModal(messageId, message, type) {
     }
 }
 
+/**
+ * Toggle tax rates editing mode (matching Python GUI)
+ */
+let taxRatesEditingEnabled = false;
+function toggleTaxRatesEditing() {
+    taxRatesEditingEnabled = !taxRatesEditingEnabled;
+    const inputs = document.querySelectorAll('#residentTaxRatesBody input, #individualTaxRebate, #rebateThreshold, #nonResidentRate');
+    inputs.forEach(input => {
+        input.disabled = !taxRatesEditingEnabled;
+    });
+    showMessage(taxRatesEditingEnabled ? '✏️ Editing enabled - you can now modify tax bracket values' : '🔒 Editing disabled', 'success');
+}
+
+/**
+ * Reset tax rates to LHDN default (matching Python GUI)
+ */
+function resetTaxRatesToDefault() {
+    if (!confirm('Reset all tax brackets to LHDN 2025 default values? This will overwrite any custom changes.')) {
+        return;
+    }
+    
+    currentTaxRates = [...RESIDENT_TAX_RATES];
+    loadResidentTaxRates(currentTaxRates);
+    
+    // Reset special provisions
+    document.getElementById('individualTaxRebate').value = 400;
+    document.getElementById('rebateThreshold').value = 35000;
+    document.getElementById('nonResidentRate').value = 30;
+    
+    // Update display
+    const nonResidentRateDisplay = document.getElementById('nonResidentRateDisplay');
+    if (nonResidentRateDisplay) {
+        nonResidentRateDisplay.textContent = '30%';
+    }
+    
+    showMessage('✅ Tax rates reset to LHDN 2025 default values', 'success');
+}
+
+/**
+ * Save tax brackets configuration (matching Python GUI)
+ */
+async function saveTaxBracketsConfiguration() {
+    try {
+        const taxBrackets = currentTaxRates.map(bracket => ({
+            resident_type: 'resident',
+            income_from: bracket.from || bracket.income_from,
+            income_to: bracket.to || bracket.income_to,
+            on_first: bracket.onFirst || bracket.on_first || 0,
+            next: bracket.next || 0,
+            rate_percent: bracket.rate || bracket.rate_percent,
+            tax_first: bracket.taxFirst || bracket.tax_first || 0,
+            tax_next: bracket.taxNext || bracket.tax_next || 0
+        }));
+        
+        const provisions = {
+            individual_tax_rebate: parseFloat(document.getElementById('individualTaxRebate').value) || 400,
+            rebate_threshold: parseInt(document.getElementById('rebateThreshold').value) || 35000,
+            non_resident_rate: parseFloat(document.getElementById('nonResidentRate').value) || 30
+        };
+        
+        const response = await fetch('/api/admin/lhdn/tax-rates/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brackets: taxBrackets, provisions: provisions })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage('💾 Tax brackets configuration saved successfully!', 'success');
+        } else {
+            showMessage('Error: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error saving tax brackets:', error);
+        showMessage('Error saving tax brackets configuration', 'error');
+    }
+}
+
+/**
+ * Test tax calculation (matching Python GUI)
+ */
+function testTaxRatesCalculation() {
+    const annualIncome = prompt('Enter annual chargeable income (RM) to test:', '50000');
+    if (!annualIncome) return;
+    
+    const income = parseFloat(annualIncome);
+    if (isNaN(income) || income < 0) {
+        alert('Please enter a valid positive number');
+        return;
+    }
+    
+    // Calculate tax using current brackets (following LHDN progressive tax logic)
+    let totalTax = 0;
+    let breakdown = [];
+    
+    for (const bracket of currentTaxRates) {
+        const from = bracket.from || bracket.income_from;
+        const to = bracket.to || bracket.income_to;
+        const rate = bracket.rate || bracket.rate_percent;
+        
+        if (income > from) {
+            // Calculate taxable amount in this bracket
+            const bracketStart = from === 0 ? 0 : from;
+            const bracketEnd = Math.min(income, to);
+            const taxableAmount = bracketEnd - bracketStart;
+            
+            if (taxableAmount > 0 && rate > 0) {
+                const tax = (taxableAmount * rate) / 100;
+                totalTax += tax;
+                
+                const formattedFrom = formatMoney(bracketStart);
+                const formattedTo = formatMoney(bracketEnd);
+                const formattedTax = formatMoney(tax);
+                breakdown.push(`RM ${formattedFrom} - RM ${formattedTo}: ${rate}% = RM ${formattedTax}`);
+            }
+        }
+    }
+    
+    // Check for rebate
+    const rebateThreshold = parseFloat(document.getElementById('rebateThreshold').value) || 35000;
+    const rebateAmount = parseFloat(document.getElementById('individualTaxRebate').value) || 400;
+    let finalTax = totalTax;
+    let rebateApplied = '';
+    
+    if (income <= rebateThreshold) {
+        finalTax = Math.max(0, totalTax - rebateAmount);
+        const formattedRebate = formatMoney(rebateAmount);
+        const formattedThreshold = formatMoney(rebateThreshold);
+        rebateApplied = `\n\nIndividual Rebate Applied: -RM ${formattedRebate} (income ≤ RM ${formattedThreshold})`;
+    }
+    
+    const formattedIncome = formatMoney(income);
+    const formattedGross = formatMoney(totalTax);
+    const formattedFinal = formatMoney(finalTax);
+    const result = `🧮 Tax Calculation Test\n\nAnnual Chargeable Income: RM ${formattedIncome}\n\nBreakdown:\n${breakdown.join('\n')}\n\nGross Tax: RM ${formattedGross}${rebateApplied}\n\nNet Tax Payable: RM ${formattedFinal}`;
+    
+    alert(result);
+}
+
 // Close modals when clicking outside
 window.addEventListener('click', function(event) {
     if (event.target.classList.contains('modal')) {
@@ -991,3 +1151,8 @@ window.reloadReliefOverrides = reloadReliefOverrides;
 window.clearSelectedReliefOverride = clearSelectedReliefOverride;
 window.clearAllReliefOverrides = clearAllReliefOverrides;
 window.formatMoney = formatMoney;
+// New functions matching Python GUI
+window.toggleTaxRatesEditing = toggleTaxRatesEditing;
+window.resetTaxRatesToDefault = resetTaxRatesToDefault;
+window.saveTaxBracketsConfiguration = saveTaxBracketsConfiguration;
+window.testTaxRatesCalculation = testTaxRatesCalculation;
