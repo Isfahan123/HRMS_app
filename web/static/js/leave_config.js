@@ -610,7 +610,6 @@ async function editEntitlement(leaveTypeCode, employeeTier) {
     );
     if (!entitlement) {
         console.error('Entitlement not found:', leaveTypeCode, employeeTier);
-        alert('❌ Entitlement not found');
         return;
     }
     
@@ -621,7 +620,8 @@ async function editEntitlement(leaveTypeCode, employeeTier) {
         employee_tier: employeeTier
     });
     
-    // Populate dropdowns first and wait for async tier dropdown to complete
+    // Populate dropdowns first - leave type uses in-memory data (sync),
+    // tier dropdown fetches from API (async) so we must await it
     populateLeaveTypeDropdown();
     await populateTierDropdown();
     
