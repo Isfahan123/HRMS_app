@@ -13,7 +13,13 @@ import csv
 import io
 import requests
 import logging
+import sys
 from datetime import datetime
+
+# Add gui directory to path for payslip_generator import (done at module level for efficiency)
+_gui_path = os.path.join(os.path.dirname(__file__), 'gui')
+if _gui_path not in sys.path:
+    sys.path.insert(0, _gui_path)
 
 # Import configuration
 from config import config
@@ -838,27 +844,20 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
     """
     try:
         import tempfile
-        import sys
-        import os
-        
-        # Add gui directory to path for payslip_generator import
-        gui_path = os.path.join(os.path.dirname(__file__), 'gui')
-        if gui_path not in sys.path:
-            sys.path.insert(0, gui_path)
         
         from gui.payslip_generator import generate_payslip_for_employee as generate_pdf
         
         # Get employee data for filename
         employee_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()
         if not employee_response.data:
-            raise HTTPException(status_code=404, detail="Employee not found")
+            raise HTTPException(status_code=404, detail=f"Employee with ID '{employee_id}' not found in database")
         
         employee = employee_response.data[0]
         
         # Get payroll run data for filename
         payroll_response = supabase.table("payroll_runs").select("month_year").eq("id", payroll_run_id).execute()
         if not payroll_response.data:
-            raise HTTPException(status_code=404, detail="Payroll run not found")
+            raise HTTPException(status_code=404, detail=f"Payroll run with ID '{payroll_run_id}' not found in database")
         
         payroll = payroll_response.data[0]
         
@@ -871,7 +870,10 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
         result_path = generate_pdf(employee_id, payroll_run_id, output_path)
         
         if not result_path or not os.path.exists(result_path):
-            raise HTTPException(status_code=500, detail="Payslip PDF could not be generated. Check if payroll data exists.")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Payslip PDF generation failed for employee '{employee.get('full_name', employee_id)}' and payroll period '{payroll.get('month_year', 'unknown')}'. Ensure the employee has payroll data for this period."
+            )
         
         # Return the PDF file
         return FileResponse(
@@ -885,7 +887,7 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
         raise
     except Exception as e:
         print(f"Error generating payslip: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Unexpected error generating payslip: {str(e)}")
 
 @app.get("/api/admin/leave-balances")
 async def get_leave_balances():
@@ -1374,7 +1376,13 @@ async def create_salary_change(request: Request):
         
         # Calculate change amount and percentage
         change_amount = new_salary - prev_salary
-        change_percentage = (change_amount / prev_salary * 100) if prev_salary > 0 else 0
+        # Handle edge case: if previous salary is 0, use None to indicate undefined percentage
+        if prev_salary > 0:
+            change_percentage = (change_amount / prev_salary * 100)
+        elif new_salary > 0:
+            change_percentage = None  # Represents infinite/undefined percentage (new hire with no previous salary)
+        else:
+            change_percentage = 0  # Both zero, no change
         
         # Create salary history record matching Python GUI structure
         history_record = {
@@ -1699,7 +1707,13 @@ async def update_salary_history(record_id: str, request: Request):
             new_salary = update_data['new_salary']
             
             update_data['change_amount'] = new_salary - prev_salary
-            update_data['change_percentage'] = ((new_salary - prev_salary) / prev_salary * 100) if prev_salary > 0 else 0
+            # Handle edge case: if previous salary is 0, use None to indicate undefined percentage
+            if prev_salary > 0:
+                update_data['change_percentage'] = ((new_salary - prev_salary) / prev_salary * 100)
+            elif new_salary > 0:
+                update_data['change_percentage'] = None  # Represents infinite/undefined percentage
+            else:
+                update_data['change_percentage'] = 0  # Both zero, no change
         
         # Update the record in salary_history table
         response = supabase.table("salary_history").update(update_data).eq("id", record_id).execute()
