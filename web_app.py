@@ -2087,8 +2087,8 @@ async def create_leave_type(data: Dict[str, Any]):
         return {"success": False, "message": str(e)}
 
 @app.put("/api/admin/leave-types/{type_id}")
-async def update_leave_type(type_id: int, data: Dict[str, Any]):
-    """Update a leave type"""
+async def update_leave_type(type_id: str, data: Dict[str, Any]):
+    """Update a leave type by ID (numeric) or code (string)"""
     try:
         leave_type = {
             "name": data.get("name"),
@@ -2108,9 +2108,16 @@ async def update_leave_type(type_id: int, data: Dict[str, Any]):
         # Remove None values
         leave_type = {k: v for k, v in leave_type.items() if v is not None}
         
-        response = supabase.table("leave_types").update(leave_type).eq("id", type_id).execute()
+        # Try to update by ID first (if type_id is numeric), then by code
+        response = None
+        if type_id.isdigit():
+            response = supabase.table("leave_types").update(leave_type).eq("id", int(type_id)).execute()
         
-        if response.data:
+        # If no result by ID or type_id is not numeric, try by code
+        if not response or not response.data:
+            response = supabase.table("leave_types").update(leave_type).eq("code", type_id).execute()
+        
+        if response and response.data:
             return {"success": True, "message": "Leave type updated successfully", "data": response.data[0]}
         else:
             return {"success": False, "message": "Leave type not found"}
@@ -2119,12 +2126,19 @@ async def update_leave_type(type_id: int, data: Dict[str, Any]):
         return {"success": False, "message": str(e)}
 
 @app.delete("/api/admin/leave-types/{type_id}")
-async def delete_leave_type(type_id: int):
-    """Delete a leave type"""
+async def delete_leave_type(type_id: str):
+    """Delete a leave type by ID (numeric) or code (string)"""
     try:
-        response = supabase.table("leave_types").delete().eq("id", type_id).execute()
+        # Try to delete by ID first (if type_id is numeric), then by code
+        response = None
+        if type_id.isdigit():
+            response = supabase.table("leave_types").delete().eq("id", int(type_id)).execute()
         
-        if response.data:
+        # If no result by ID or type_id is not numeric, try by code
+        if not response or not response.data:
+            response = supabase.table("leave_types").delete().eq("code", type_id).execute()
+        
+        if response and response.data:
             return {"success": True, "message": "Leave type deleted successfully"}
         else:
             return {"success": False, "message": "Leave type not found"}
