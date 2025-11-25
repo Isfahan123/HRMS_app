@@ -936,6 +936,40 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
             if date_field in employee_data and employee_data[date_field] == "":
                 employee_data[date_field] = None
         
+        # Normalize empty-string boolean fields to None to avoid database errors
+        # Error code 22P02: invalid input syntax for type boolean: ""
+        if "spouse_working" in employee_data:
+            sw = employee_data["spouse_working"]
+            if sw == "" or sw is None:
+                employee_data["spouse_working"] = None
+            elif isinstance(sw, str):
+                # Convert "Yes"/"No" strings to boolean
+                employee_data["spouse_working"] = sw.lower() in ("yes", "true", "1")
+            elif not isinstance(sw, bool):
+                employee_data["spouse_working"] = bool(sw)
+        
+        # Normalize empty-string integer fields to proper defaults to avoid database errors
+        # Error code 22P02: invalid input syntax for type integer: ""
+        if "number_of_children" in employee_data:
+            noc = employee_data["number_of_children"]
+            if noc == "" or noc is None:
+                employee_data["number_of_children"] = 0
+            elif isinstance(noc, str):
+                try:
+                    employee_data["number_of_children"] = int(noc)
+                except ValueError:
+                    employee_data["number_of_children"] = 0
+        
+        if "graduation_year" in employee_data:
+            gy = employee_data["graduation_year"]
+            if gy == "" or gy is None:
+                employee_data["graduation_year"] = None
+            elif isinstance(gy, str):
+                try:
+                    employee_data["graduation_year"] = int(gy)
+                except ValueError:
+                    employee_data["graduation_year"] = None
+        
         # Map frontend field names to database column names
         # Frontend sends 'join_date' but database expects 'date_joined'
         if "join_date" in employee_data:
@@ -1016,6 +1050,40 @@ def update_employee(employee_id: str, data: dict) -> dict:
                    "date_of_birth", "join_date", "date_joined"):
             if _k in employee_data and employee_data[_k] == "":
                 employee_data[_k] = None
+        
+        # Normalize empty-string boolean fields to proper values to avoid database errors
+        # Error code 22P02: invalid input syntax for type boolean: ""
+        if "spouse_working" in employee_data:
+            sw = employee_data["spouse_working"]
+            if sw == "" or sw is None:
+                employee_data["spouse_working"] = None
+            elif isinstance(sw, str):
+                # Convert "Yes"/"No" strings to boolean
+                employee_data["spouse_working"] = sw.lower() in ("yes", "true", "1")
+            elif not isinstance(sw, bool):
+                employee_data["spouse_working"] = bool(sw)
+        
+        # Normalize empty-string integer fields to proper values to avoid database errors
+        # Error code 22P02: invalid input syntax for type integer: ""
+        if "number_of_children" in employee_data:
+            noc = employee_data["number_of_children"]
+            if noc == "" or noc is None:
+                employee_data["number_of_children"] = 0
+            elif isinstance(noc, str):
+                try:
+                    employee_data["number_of_children"] = int(noc)
+                except ValueError:
+                    employee_data["number_of_children"] = 0
+        
+        if "graduation_year" in employee_data:
+            gy = employee_data["graduation_year"]
+            if gy == "" or gy is None:
+                employee_data["graduation_year"] = None
+            elif isinstance(gy, str):
+                try:
+                    employee_data["graduation_year"] = int(gy)
+                except ValueError:
+                    employee_data["graduation_year"] = None
         
         # Map frontend field name to database column name
         # Frontend sends 'join_date' but database expects 'date_joined'
