@@ -88,9 +88,6 @@ def normalize_location_label(raw: str | None) -> str:
         return mapped
     # fallback: return title-cased single token
     return s.title()
-from typing import List, Set, Dict, Tuple
-
-from services.supabase_service import _probe_table_exists, supabase
 
 
 def get_holidays_for_year(year: int, state: str = None, include_national: bool = True, include_observances: bool = True) -> Tuple[Set[date], Dict[str, List[str]]]:
