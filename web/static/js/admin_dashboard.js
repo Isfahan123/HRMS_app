@@ -3146,6 +3146,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
             
             if (data.success && data.data && data.data.length > 0) {
+                // Store employees data for pre-fill functionality
+                window.employeeHistoryData = data.data;
+                
                 selectors.forEach(selector => {
                     if (!selector) return;
                     // Different default text for the quick select
@@ -3165,6 +3168,40 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error loading employees for employment history:', error);
         }
+    }
+    
+    // Pre-fill employment history form when an employee is selected
+    const empHistoryEmployeeSelect = document.getElementById('empHistoryEmployeeSelect');
+    if (empHistoryEmployeeSelect) {
+        empHistoryEmployeeSelect.addEventListener('change', async function() {
+            const selectedEmail = this.value;
+            if (!selectedEmail) {
+                // Clear pre-filled fields when no employee is selected
+                document.getElementById('empHistoryDepartment').value = '';
+                document.getElementById('empHistoryPosition').value = '';
+                document.getElementById('empHistoryJobTitle').value = '';
+                return;
+            }
+            
+            // Find the employee in the cached data
+            const employee = (window.employeeHistoryData || []).find(emp => emp.email === selectedEmail);
+            if (employee) {
+                // Pre-fill fields with employee's current data
+                const departmentField = document.getElementById('empHistoryDepartment');
+                const positionField = document.getElementById('empHistoryPosition');
+                const jobTitleField = document.getElementById('empHistoryJobTitle');
+                
+                if (departmentField && employee.department) {
+                    departmentField.value = employee.department;
+                }
+                if (positionField && employee.position) {
+                    positionField.value = employee.position;
+                }
+                if (jobTitleField && employee.position) {
+                    jobTitleField.value = employee.position; // Often same as position
+                }
+            }
+        });
     }
     
     // Add event listener for quick employee selection in employment history
@@ -3796,14 +3833,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 // Build leave request data
+                const isHalfDay = formData.get('is_half_day') === 'on';
                 const leaveData = {
                     employee_email: employeeEmail,
                     leave_type: formData.get('leave_type'),
                     start_date: formData.get('start_date'),
                     end_date: formData.get('end_date'),
                     title: formData.get('title') || 'Admin submitted leave',
-                    is_half_day: formData.get('is_half_day') === 'on',
-                    half_day_period: formData.get('is_half_day') === 'on' ? 'morning' : null
+                    is_half_day: isHalfDay,
+                    half_day_period: isHalfDay ? formData.get('half_day_period') : null
                 };
                 
                 // Submit leave request
@@ -3898,25 +3936,38 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Handle half-day period visibility
+        // Handle half-day period visibility and duration input
         const halfDayCheckbox = document.getElementById('adminLeaveHalfDay');
         const halfDayPeriod = document.getElementById('adminHalfDayPeriod');
         const durationInput = document.getElementById('adminLeaveDuration');
+        const halfDayHint = document.getElementById('halfDayHint');
         
         if (halfDayCheckbox && halfDayPeriod && durationInput) {
             halfDayCheckbox.addEventListener('change', function() {
                 if (this.checked) {
-                    durationInput.value = 0.5;
-                    // For half-day, set end date same as start date
-                    const startDate = document.getElementById('adminLeaveStartDate');
-                    const endDate = document.getElementById('adminLeaveEndDate');
-                    if (startDate && endDate && startDate.value) {
-                        endDate.value = startDate.value;
+                    // Half-day selected: enable 0.5 step for fractional days (e.g., 0.5, 1.5, 2.5)
+                    durationInput.min = 0.5;
+                    durationInput.step = 0.5;
+                    if (halfDayHint) {
+                        halfDayHint.textContent = '(half-day enabled: 0.5, 1.5, 2.5... allowed)';
+                        halfDayHint.style.color = '#2196F3';
                     }
                     updateWorkingDaysDisplay();
                 } else {
-                    if (durationInput.value == 0.5) {
+                    // Full day selected: only allow whole days
+                    durationInput.min = 1;
+                    durationInput.step = 1;
+                    // Round up to nearest whole day if currently fractional
+                    const currentVal = parseFloat(durationInput.value);
+                    if (currentVal % 1 !== 0) {
+                        durationInput.value = Math.ceil(currentVal);
+                    }
+                    if (parseFloat(durationInput.value) < 1) {
                         durationInput.value = 1;
+                    }
+                    if (halfDayHint) {
+                        halfDayHint.textContent = '(excludes weekends & holidays)';
+                        halfDayHint.style.color = '#666';
                     }
                     updateWorkingDaysDisplay();
                 }
@@ -3973,33 +4024,58 @@ document.addEventListener('DOMContentLoaded', function() {
             return days;
         }
         
-        // Update working days display
-        function updateWorkingDaysDisplay() {
+        // Update working days display with API call for accurate calculation
+        async function updateWorkingDaysDisplay() {
             const startDate = document.getElementById('adminLeaveStartDate').value;
             const endDate = document.getElementById('adminLeaveEndDate').value;
             const display = document.getElementById('adminWorkingDaysDisplay');
             const halfDay = document.getElementById('adminLeaveHalfDay');
+            const stateSelect = document.getElementById('adminLeaveState');
+            const durationInput = document.getElementById('adminLeaveDuration');
             
             if (!startDate || !endDate) {
                 display.textContent = 'Working days: - (excludes weekends & holidays)';
                 return;
             }
             
-            // For half-day leave, validate that start and end dates are the same
-            if (halfDay && halfDay.checked) {
-                if (startDate !== endDate) {
-                    display.textContent = 'Half-day leave must have same start and end date';
-                    display.style.color = '#d32f2f';
-                } else {
-                    display.textContent = 'Working days: 0.5 (half-day)';
-                    display.style.color = '#555';
-                }
-                return;
-            }
-            
             display.style.color = '#555';
-            const days = calculateWorkingDays(startDate, endDate);
-            display.textContent = `Working days: ${days} (excludes weekends & holidays)`;
+            display.textContent = 'Calculating working days...';
+            
+            // Call API to get accurate working days calculation (includes holidays)
+            try {
+                const state = stateSelect ? stateSelect.value : '';
+                const params = new URLSearchParams({
+                    start_date: startDate,
+                    end_date: endDate
+                });
+                if (state && state !== 'All Malaysia') {
+                    params.append('state', state);
+                }
+                
+                const response = await fetch(`/api/working-days?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Check if half-day is selected and show duration input value for fractional days
+                    const currentDuration = durationInput ? parseFloat(durationInput.value) : data.working_days;
+                    const isHalfDayEnabled = halfDay && halfDay.checked;
+                    
+                    if (isHalfDayEnabled && currentDuration % 1 !== 0) {
+                        display.textContent = `Working days: ${currentDuration} (includes half-day, excludes weekends & holidays)`;
+                    } else {
+                        display.textContent = `Working days: ${data.working_days} (excludes weekends & holidays)`;
+                    }
+                } else {
+                    // Fallback to local calculation
+                    const days = calculateWorkingDays(startDate, endDate);
+                    display.textContent = `Working days: ${days} (estimate, weekends excluded)`;
+                }
+            } catch (error) {
+                console.error('Error fetching working days:', error);
+                // Fallback to local calculation
+                const days = calculateWorkingDays(startDate, endDate);
+                display.textContent = `Working days: ${days} (estimate, weekends excluded)`;
+            }
         }
         
         // Update dates when duration changes
@@ -4060,6 +4136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update working days when dates change
         const startDateField = document.getElementById('adminLeaveStartDate');
         const endDateField = document.getElementById('adminLeaveEndDate');
+        const stateField = document.getElementById('adminLeaveState');
         
         if (startDateField) {
             startDateField.addEventListener('change', updateWorkingDaysDisplay);
@@ -4067,6 +4144,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (endDateField) {
             endDateField.addEventListener('change', updateWorkingDaysDisplay);
+        }
+        
+        // Also update when state changes (affects holiday calculation)
+        if (stateField) {
+            stateField.addEventListener('change', updateWorkingDaysDisplay);
         }
         
         // Initialize with current dates

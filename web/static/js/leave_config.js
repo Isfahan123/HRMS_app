@@ -392,10 +392,10 @@ async function saveLeaveType() {
     }
     
     try {
-        const url = currentLeaveTypeId ? `/api/admin/leave-types/${currentLeaveTypeId}` : '/api/admin/leave-types';
-        const method = currentLeaveTypeId ? 'PUT' : 'POST';
+        let url = currentLeaveTypeId ? `/api/admin/leave-types/${currentLeaveTypeId}` : '/api/admin/leave-types';
+        let method = currentLeaveTypeId ? 'PUT' : 'POST';
         
-        const response = await fetch(url, {
+        let response = await fetch(url, {
             method: method,
             headers: {
                 'Content-Type': 'application/json'
@@ -403,7 +403,20 @@ async function saveLeaveType() {
             body: JSON.stringify(formData)
         });
         
-        const data = await response.json();
+        let data = await response.json();
+        
+        // If update failed because record doesn't exist (fallback data), try creating instead
+        if (!data.success && currentLeaveTypeId && data.message && data.message.includes('not found')) {
+            console.log('Leave type not found in database, creating new record...');
+            response = await fetch('/api/admin/leave-types', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            data = await response.json();
+        }
         
         if (data.success) {
             alert(`✅ Leave type "${formData.name}" saved successfully!`);
