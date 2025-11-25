@@ -63,9 +63,6 @@ function initLHDNConfig() {
     
     // Load relief overrides from API
     loadReliefOverridesFromAPI();
-    
-    // Load employees list for override selection
-    loadEmployeesForOverrides();
 }
 
 // Initialize immediately since script loads at bottom of page
@@ -989,8 +986,8 @@ window.closeTaxBracketModal = closeTaxBracketModal;
 window.editRelief = editRelief;
 window.editAllReliefs = editAllReliefs;
 window.closeReliefEditModal = closeReliefEditModal;
-window.addReliefOverride = addReliefOverride;
-window.editReliefOverride = editReliefOverride;
-window.deleteReliefOverride = deleteReliefOverride;
-window.closeReliefOverrideModal = closeReliefOverrideModal;
+window.saveReliefOverrides = saveReliefOverrides;
+window.reloadReliefOverrides = reloadReliefOverrides;
+window.clearSelectedReliefOverride = clearSelectedReliefOverride;
+window.clearAllReliefOverrides = clearAllReliefOverrides;
 window.formatMoney = formatMoney;

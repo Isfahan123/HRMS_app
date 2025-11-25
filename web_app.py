@@ -1557,7 +1557,7 @@ async def create_employment_history(request: Request):
             "work_status": data.get('work_status', ''),
             "payroll_status": data.get('payroll_status', ''),
             "start_date": data['start_date'],
-            "end_date": data.get('end_date', None),  # None means currently employed
+            "end_date": data.get('end_date') or None,  # None means currently employed (convert empty string to None)
             "notes": data.get('notes', ''),
         }
         
