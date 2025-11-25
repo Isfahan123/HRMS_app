@@ -956,6 +956,16 @@ def _normalize_employee_fields(employee_data: dict) -> dict:
             except ValueError:
                 employee_data["graduation_year"] = None
     
+    if "days_in_malaysia_current_year" in employee_data:
+        dim = employee_data["days_in_malaysia_current_year"]
+        if dim == "" or dim is None:
+            employee_data["days_in_malaysia_current_year"] = None
+        elif isinstance(dim, str):
+            try:
+                employee_data["days_in_malaysia_current_year"] = int(dim)
+            except ValueError:
+                employee_data["days_in_malaysia_current_year"] = None
+    
     return employee_data
 
 def insert_employee(data: dict, password: Optional[str] = None) -> dict:
