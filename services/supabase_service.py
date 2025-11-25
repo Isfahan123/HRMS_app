@@ -918,7 +918,7 @@ def _normalize_employee_fields(employee_data: dict) -> dict:
     """
     # Normalize empty-string date fields to None to avoid database errors
     # Error code 22007: invalid input syntax for type date: ""
-    for date_field in ("date_of_birth", "join_date", "date_joined"):
+    for date_field in ("date_of_birth", "join_date", "date_joined", "date_leave"):
         if date_field in employee_data and employee_data[date_field] == "":
             employee_data[date_field] = None
     
@@ -936,35 +936,59 @@ def _normalize_employee_fields(employee_data: dict) -> dict:
     
     # Normalize empty-string integer fields to proper values to avoid database errors
     # Error code 22P02: invalid input syntax for type integer: ""
-    if "number_of_children" in employee_data:
-        noc = employee_data["number_of_children"]
-        if noc == "" or noc is None:
-            employee_data["number_of_children"] = 0
-        elif isinstance(noc, str):
-            try:
-                employee_data["number_of_children"] = int(noc)
-            except ValueError:
-                employee_data["number_of_children"] = 0
+    # List of integer fields that should default to 0 when empty
+    integer_fields_default_zero = ("number_of_children",)
+    for field in integer_fields_default_zero:
+        if field in employee_data:
+            val = employee_data[field]
+            if val == "" or val is None:
+                employee_data[field] = 0
+            elif isinstance(val, str):
+                try:
+                    employee_data[field] = int(val)
+                except ValueError:
+                    employee_data[field] = 0
     
-    if "graduation_year" in employee_data:
-        gy = employee_data["graduation_year"]
-        if gy == "" or gy is None:
-            employee_data["graduation_year"] = None
-        elif isinstance(gy, str):
-            try:
-                employee_data["graduation_year"] = int(gy)
-            except ValueError:
-                employee_data["graduation_year"] = None
+    # List of integer fields that should become None when empty
+    integer_fields_default_none = (
+        "graduation_year",
+        "days_in_malaysia_current_year",
+    )
+    for field in integer_fields_default_none:
+        if field in employee_data:
+            val = employee_data[field]
+            if val == "" or val is None:
+                employee_data[field] = None
+            elif isinstance(val, str):
+                try:
+                    employee_data[field] = int(val)
+                except ValueError:
+                    employee_data[field] = None
     
-    if "days_in_malaysia_current_year" in employee_data:
-        dim = employee_data["days_in_malaysia_current_year"]
-        if dim == "" or dim is None:
-            employee_data["days_in_malaysia_current_year"] = None
-        elif isinstance(dim, str):
-            try:
-                employee_data["days_in_malaysia_current_year"] = int(dim)
-            except ValueError:
-                employee_data["days_in_malaysia_current_year"] = None
+    # Normalize empty-string numeric fields to proper values to avoid database errors
+    # Error code 22P02: invalid input syntax for type numeric: ""
+    numeric_fields = (
+        "basic_salary",
+        "sip_amount_rate",
+        "additional_epf_amount",
+        "prs_amount",
+        "insurance_premium",
+        "medical_premium",
+        "other_deductions_amount",
+        "sip_amount",
+        "life_insurance_premium",
+        "medical_insurance_premium",
+    )
+    for field in numeric_fields:
+        if field in employee_data:
+            val = employee_data[field]
+            if val == "" or val is None:
+                employee_data[field] = None
+            elif isinstance(val, str):
+                try:
+                    employee_data[field] = float(val)
+                except ValueError:
+                    employee_data[field] = None
     
     return employee_data
 
