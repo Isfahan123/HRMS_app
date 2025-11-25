@@ -212,6 +212,8 @@ function renderLeaveTypesTable() {
     let html = '';
     currentLeaveTypes.forEach(type => {
         const statusBadge = type.is_active ? '<span style="color: green;">✓ Active</span>' : '<span style="color: gray;">○ Inactive</span>';
+        // Use id if available, otherwise use code as identifier (for fallback data)
+        const typeIdentifier = type.id !== undefined && type.id !== null ? type.id : `'${type.code}'`;
         html += `
             <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 8px;">${statusBadge}</td>
@@ -223,8 +225,8 @@ function renderLeaveTypesTable() {
                 <td style="padding: 8px; text-align: center;">${type.max_duration || '-'}</td>
                 <td style="padding: 8px; font-size: 0.9em;">${type.description || '-'}</td>
                 <td style="padding: 8px; text-align: center;">
-                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editLeaveType(${type.id})">✏️ Edit</button>
-                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteLeaveType(${type.id})">🗑️ Delete</button>
+                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editLeaveType(${typeIdentifier})">✏️ Edit</button>
+                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteLeaveType(${typeIdentifier})">🗑️ Delete</button>
                 </td>
             </tr>
         `;
@@ -414,14 +416,22 @@ async function saveLeaveType() {
 
 /**
  * Edit leave type
+ * @param {number|string} leaveTypeIdOrCode - The leave type ID (number) or code (string)
  */
-function editLeaveType(leaveTypeId) {
-    const leaveType = currentLeaveTypes.find(t => t.id === leaveTypeId);
-    if (!leaveType) return;
+function editLeaveType(leaveTypeIdOrCode) {
+    // Find leave type by ID or code
+    const leaveType = currentLeaveTypes.find(t => 
+        t.id === leaveTypeIdOrCode || t.code === leaveTypeIdOrCode
+    );
+    if (!leaveType) {
+        console.error('Leave type not found:', leaveTypeIdOrCode);
+        alert('❌ Leave type not found');
+        return;
+    }
     
-    // Populate form
-    currentLeaveTypeId = leaveType.id;
-    document.getElementById('leaveTypeId').value = leaveType.id;
+    // Store the identifier for update (prefer id if available)
+    currentLeaveTypeId = leaveType.id || leaveType.code;
+    document.getElementById('leaveTypeId').value = currentLeaveTypeId;
     document.getElementById('leaveTypeCode').value = leaveType.code || '';
     document.getElementById('leaveTypeName').value = leaveType.name || '';
     document.getElementById('leaveTypeDescription').value = leaveType.description || '';
@@ -437,17 +447,27 @@ function editLeaveType(leaveTypeId) {
 
 /**
  * Delete leave type
+ * @param {number|string} leaveTypeIdOrCode - The leave type ID (number) or code (string)
  */
-async function deleteLeaveType(leaveTypeId) {
-    const leaveType = currentLeaveTypes.find(t => t.id === leaveTypeId);
-    if (!leaveType) return;
+async function deleteLeaveType(leaveTypeIdOrCode) {
+    // Find leave type by ID or code
+    const leaveType = currentLeaveTypes.find(t => 
+        t.id === leaveTypeIdOrCode || t.code === leaveTypeIdOrCode
+    );
+    if (!leaveType) {
+        console.error('Leave type not found for delete:', leaveTypeIdOrCode);
+        alert('❌ Leave type not found');
+        return;
+    }
     
     if (!confirm(`⚠️ Are you sure you want to delete leave type "${leaveType.name}"?\n\nThis action cannot be undone.`)) {
         return;
     }
     
     try {
-        const response = await fetch(`/api/admin/leave-types/${leaveTypeId}`, {
+        // Use ID if available, otherwise use code
+        const identifier = leaveType.id || leaveType.code;
+        const response = await fetch(`/api/admin/leave-types/${identifier}`, {
             method: 'DELETE'
         });
         
