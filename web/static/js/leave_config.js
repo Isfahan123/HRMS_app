@@ -604,7 +604,7 @@ async function saveEntitlement() {
 /**
  * Edit entitlement
  */
-function editEntitlement(leaveTypeCode, employeeTier) {
+async function editEntitlement(leaveTypeCode, employeeTier) {
     const entitlement = currentEntitlements.find(e => 
         e.leave_type_code === leaveTypeCode && e.employee_tier === employeeTier
     );
@@ -620,10 +620,12 @@ function editEntitlement(leaveTypeCode, employeeTier) {
         employee_tier: employeeTier
     });
     
-    // Populate dropdowns first
+    // Populate dropdowns first - leave type uses in-memory data (sync),
+    // tier dropdown fetches from API (async) so we must await it
     populateLeaveTypeDropdown();
-    populateTierDropdown();
+    await populateTierDropdown();
     
+    // Now set the values after dropdowns are populated
     document.getElementById('entitlementLeaveType').value = entitlement.leave_type_code || '';
     document.getElementById('entitlementTier').value = entitlement.employee_tier || '';
     document.getElementById('entitlementDays').value = entitlement.days_entitlement || 0;
