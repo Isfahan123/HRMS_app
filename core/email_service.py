@@ -12,6 +12,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
 import os
+import threading
 from typing import Dict, List, Optional
 
 class HRMSEmailService:
@@ -37,7 +38,7 @@ class HRMSEmailService:
         return message
     
     def _send_email(self, message: MIMEMultipart, to_email: str) -> bool:
-        """Send email using SMTP"""
+        """Send email using SMTP (internal synchronous method)"""
         try:
             context = ssl.create_default_context()
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
@@ -45,10 +46,20 @@ class HRMSEmailService:
                 server.login(self.sender_email, self.sender_password)
                 text = message.as_string()
                 server.sendmail(self.sender_email, to_email, text)
+            print(f"DEBUG: Email sent successfully to {to_email}")
             return True
         except Exception as e:
             print(f"DEBUG: Error sending email to {to_email}: {str(e)}")
             return False
+    
+    def _send_email_async(self, message: MIMEMultipart, to_email: str) -> None:
+        """Send email in a background thread to avoid blocking the main thread"""
+        thread = threading.Thread(
+            target=self._send_email,
+            args=(message, to_email),
+            daemon=True
+        )
+        thread.start()
     
     def send_leave_request_notification(self, manager_email: str, employee_data: Dict, leave_data: Dict) -> bool:
         """Send leave request notification to manager"""
@@ -146,11 +157,9 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, manager_email)
-            
-            if success:
-                print(f"DEBUG: Leave request notification sent to manager: {manager_email}")
-            return success
+            self._send_email_async(message, manager_email)
+            print(f"DEBUG: Leave request notification queued for manager: {manager_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending leave request notification: {str(e)}")
@@ -258,11 +267,9 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, employee_email)
-            
-            if success:
-                print(f"DEBUG: Leave status notification sent to employee: {employee_email}")
-            return success
+            self._send_email_async(message, employee_email)
+            print(f"DEBUG: Leave status notification queued for employee: {employee_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending leave status notification: {str(e)}")
@@ -331,11 +338,9 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, employee_email)
-            
-            if success:
-                print(f"DEBUG: Payslip notification sent to employee: {employee_email}")
-            return success
+            self._send_email_async(message, employee_email)
+            print(f"DEBUG: Payslip notification queued for employee: {employee_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending payslip notification: {str(e)}")
@@ -447,11 +452,9 @@ class HRMSEmailService:
             """
             
             message.attach(MIMEText(html, "html"))
-            success = self._send_email(message, admin_email)
-            
-            if success:
-                print(f"DEBUG: Admin leave submission notification sent to: {admin_email}")
-            return success
+            self._send_email_async(message, admin_email)
+            print(f"DEBUG: Admin leave submission notification queued for: {admin_email}")
+            return True
             
         except Exception as e:
             print(f"DEBUG: Error sending admin leave submission notification: {str(e)}")
