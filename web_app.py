@@ -3188,12 +3188,20 @@ async def location_autocomplete(query: str, country: Optional[str] = None):
         if not query or len(query.strip()) < 3:
             return {"success": True, "data": []}
         
-        # Geoapify API configuration
+        # Geoapify API configuration - use same key as Python GUI
         GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_KEY')
+        if not GEOAPIFY_API_KEY:
+            # Fallback to the key from places_autocomplete.py (same as Python GUI)
+            try:
+                from gui.places_autocomplete import GEOAPIFY_API_KEY as GUI_KEY
+                GEOAPIFY_API_KEY = GUI_KEY
+            except ImportError:
+                GEOAPIFY_API_KEY = None
+        
         if not GEOAPIFY_API_KEY:
             return {
                 "success": False,
-                "message": "Location service not configured. Please set GEOAPIFY_KEY environment variable.",
+                "message": "Location service not configured.",
                 "data": []
             }
         
