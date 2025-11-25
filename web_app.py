@@ -13,7 +13,13 @@ import csv
 import io
 import requests
 import logging
+import sys
 from datetime import datetime
+
+# Add gui directory to path for payslip_generator import (done at module level for efficiency)
+_gui_path = os.path.join(os.path.dirname(__file__), 'gui')
+if _gui_path not in sys.path:
+    sys.path.insert(0, _gui_path)
 
 # Import configuration
 from config import config
@@ -342,9 +348,9 @@ async def create_engagement(request: Request):
         
         # Determine which table to insert into based on type
         if data['type'] in ['training', 'course']:
-            table_name = "training_courses"
+            table_name = "training_course_records"
         elif data['type'] == 'overseas_trip':
-            table_name = "overseas_trips"
+            table_name = "overseas_work_trip_records"
         else:
             table_name = "engagements"
         
@@ -368,7 +374,7 @@ async def get_all_engagements():
         
         # Fetch from all engagement tables
         try:
-            training_response = supabase.table("training_courses").select("*").order("created_at", desc=True).limit(100).execute()
+            training_response = supabase.table("training_course_records").select("*").order("created_at", desc=True).limit(100).execute()
             if training_response.data:
                 for record in training_response.data:
                     record['type'] = 'training'
@@ -377,7 +383,7 @@ async def get_all_engagements():
             pass
         
         try:
-            trips_response = supabase.table("overseas_trips").select("*").order("created_at", desc=True).limit(100).execute()
+            trips_response = supabase.table("overseas_work_trip_records").select("*").order("created_at", desc=True).limit(100).execute()
             if trips_response.data:
                 for record in trips_response.data:
                     record['type'] = 'overseas_trip'
@@ -427,7 +433,7 @@ async def update_engagement_record(engagement_id: str, request: Request):
         
         # Try training_courses table
         try:
-            response = supabase.table("training_courses").update(data).eq("id", engagement_id).execute()
+            response = supabase.table("training_course_records").update(data).eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Training course updated successfully", "data": response.data[0]}
             success = True
@@ -436,7 +442,7 @@ async def update_engagement_record(engagement_id: str, request: Request):
         
         # Try overseas_trips table
         try:
-            response = supabase.table("overseas_trips").update(data).eq("id", engagement_id).execute()
+            response = supabase.table("overseas_work_trip_records").update(data).eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Overseas trip updated successfully", "data": response.data[0]}
             success = True
@@ -472,7 +478,7 @@ async def delete_engagement_record(engagement_id: str):
         
         # Try training_courses table
         try:
-            response = supabase.table("training_courses").delete().eq("id", engagement_id).execute()
+            response = supabase.table("training_course_records").delete().eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Training course deleted successfully"}
             deleted = True
@@ -481,7 +487,7 @@ async def delete_engagement_record(engagement_id: str):
         
         # Try overseas_trips table
         try:
-            response = supabase.table("overseas_trips").delete().eq("id", engagement_id).execute()
+            response = supabase.table("overseas_work_trip_records").delete().eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Overseas trip deleted successfully"}
             deleted = True
@@ -834,102 +840,54 @@ def _safe_to_float(value):
 async def generate_payslip(employee_id: str, payroll_run_id: str):
     """
     Generate and download payslip PDF for an employee
-    Uses Node.js payslip generator module
+    Uses Python-based reportlab payslip generator (same as desktop GUI)
     """
     try:
-        import subprocess
-        import json
         import tempfile
-        from fastapi.responses import FileResponse
         
-        # Get employee data
-        employee_response = supabase.table("employees").select("*").eq("id", employee_id).execute()
+        from gui.payslip_generator import generate_payslip_for_employee as generate_pdf
+        
+        # Get employee data for filename
+        employee_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()
         if not employee_response.data:
-            raise HTTPException(status_code=404, detail="Employee not found")
+            raise HTTPException(status_code=404, detail=f"Employee with ID '{employee_id}' not found in database")
         
         employee = employee_response.data[0]
         
-        # Get payroll run data
-        payroll_response = supabase.table("payroll_runs").select("*").eq("id", payroll_run_id).execute()
+        # Get payroll run data for filename
+        payroll_response = supabase.table("payroll_runs").select("month_year").eq("id", payroll_run_id).execute()
         if not payroll_response.data:
-            raise HTTPException(status_code=404, detail="Payroll run not found")
+            raise HTTPException(status_code=404, detail=f"Payroll run with ID '{payroll_run_id}' not found in database")
         
         payroll = payroll_response.data[0]
-        
-        # Prepare payslip data
-        payslip_data = {
-            "employee_name": employee.get("full_name", ""),
-            "employee_id": employee.get("employee_id", ""),
-            "department": employee.get("department", ""),
-            "position": employee.get("position", ""),
-            "pay_period": payroll.get("month_year", ""),
-            "pay_date": payroll.get("created_at", "")[:10] if payroll.get("created_at") else "",
-            "basic_salary": _safe_to_float(payroll.get("basic_salary", 0)),
-            "allowances": _safe_to_float(payroll.get("allowances", 0)),
-            "bonuses": _safe_to_float(payroll.get("bonuses", 0)),
-            "epf_employee": _safe_to_float(payroll.get("epf_employee", 0)),
-            "socso_employee": _safe_to_float(payroll.get("socso_employee", 0)),
-            "eis": _safe_to_float(payroll.get("eis", 0)),
-            "pcb": _safe_to_float(payroll.get("pcb", 0)),
-            "unpaid_leave_deduction": _safe_to_float(payroll.get("unpaid_leave_deduction", 0))
-        }
         
         # Create temp directory for output
         temp_dir = tempfile.gettempdir()
         output_filename = f"payslip_{employee.get('employee_id', employee_id)}_{payroll.get('month_year', 'unknown').replace('/', '_')}.pdf"
         output_path = os.path.join(temp_dir, output_filename)
         
-        # Write data to temp JSON file
-        data_file = os.path.join(temp_dir, f"payslip_data_{employee_id}.json")
-        with open(data_file, 'w') as f:
-            json.dump(payslip_data, f)
+        # Generate payslip using Python-based generator (same as desktop GUI)
+        result_path = generate_pdf(employee_id, payroll_run_id, output_path)
         
-        # Call Node.js to generate PDF
-        node_script = f"""
-const {{ generatePayslip }} = require('./web/nodejs_modules/payslip_generator');
-const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('{data_file}', 'utf8'));
-generatePayslip(data, '{output_path}')
-    .then(() => {{ console.log('PDF generated'); process.exit(0); }})
-    .catch(err => {{ console.error('Error:', err); process.exit(1); }});
-"""
-        
-        # Run the Node.js script
-        result = subprocess.run(
-            ['node', '-e', node_script],
-            cwd=os.path.dirname(__file__),
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        
-        # Clean up temp data file
-        try:
-            os.remove(data_file)
-        except:
-            pass
-        
-        if result.returncode != 0:
-            print(f"Node.js error: {result.stderr}")
-            raise HTTPException(status_code=500, detail=f"Failed to generate payslip: {result.stderr}")
-        
-        # Check if PDF was created
-        if not os.path.exists(output_path):
-            raise HTTPException(status_code=500, detail="Payslip PDF was not generated")
+        if not result_path or not os.path.exists(result_path):
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Payslip PDF generation failed for employee '{employee.get('full_name', employee_id)}' and payroll period '{payroll.get('month_year', 'unknown')}'. Ensure the employee has payroll data for this period."
+            )
         
         # Return the PDF file
         return FileResponse(
-            output_path,
+            result_path,
             media_type="application/pdf",
             filename=output_filename,
             headers={"Content-Disposition": f"attachment; filename={output_filename}"}
         )
         
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=500, detail="Payslip generation timed out")
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error generating payslip: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Unexpected error generating payslip: {str(e)}")
 
 @app.get("/api/admin/leave-balances")
 async def get_leave_balances():
@@ -1177,19 +1135,19 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
 @app.get("/api/admin/variable-percentage")
 async def get_variable_percentage_rules():
     """
-    Get all variable percentage rules
+    Get all variable percentage configurations (same table as Python GUI)
     """
     try:
-        response = supabase.table("variable_percentage_rules").select("*").order("created_at", desc=True).execute()
+        response = supabase.table("variable_percentage_configs").select("*").order("created_at", desc=True).execute()
         return {"success": True, "data": response.data or []}
     except Exception as e:
-        print(f"Error getting variable percentage rules: {str(e)}")
+        print(f"Error getting variable percentage configs: {str(e)}")
         return {"success": False, "message": str(e), "data": []}
 
 @app.post("/api/admin/variable-percentage")
 async def create_variable_percentage_rule(request: Request):
     """
-    Create a new variable percentage rule
+    Create a new variable percentage configuration
     """
     try:
         data = await request.json()
@@ -1211,20 +1169,20 @@ async def create_variable_percentage_rule(request: Request):
         # Add timestamp
         data['created_at'] = datetime.utcnow().isoformat()
         
-        response = supabase.table("variable_percentage_rules").insert(data).execute()
+        response = supabase.table("variable_percentage_configs").insert(data).execute()
         
         if response.data:
-            return {"success": True, "message": "Variable percentage rule created successfully", "data": response.data[0]}
+            return {"success": True, "message": "Variable percentage config created successfully", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to create rule"}
+            return {"success": False, "message": "Failed to create config"}
     except Exception as e:
-        print(f"Error creating variable percentage rule: {str(e)}")
+        print(f"Error creating variable percentage config: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.put("/api/admin/variable-percentage/{rule_id}")
 async def update_variable_percentage_rule(rule_id: str, request: Request):
     """
-    Update an existing variable percentage rule
+    Update an existing variable percentage configuration
     """
     try:
         data = await request.json()
@@ -1236,30 +1194,30 @@ async def update_variable_percentage_rule(rule_id: str, request: Request):
         # Add updated timestamp
         data['updated_at'] = datetime.utcnow().isoformat()
         
-        response = supabase.table("variable_percentage_rules").update(data).eq("id", rule_id).execute()
+        response = supabase.table("variable_percentage_configs").update(data).eq("id", rule_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Rule updated successfully", "data": response.data[0]}
+            return {"success": True, "message": "Config updated successfully", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to update rule"}
+            return {"success": False, "message": "Failed to update config"}
     except Exception as e:
-        print(f"Error updating variable percentage rule: {str(e)}")
+        print(f"Error updating variable percentage config: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.delete("/api/admin/variable-percentage/{rule_id}")
 async def delete_variable_percentage_rule(rule_id: str):
     """
-    Delete a variable percentage rule
+    Delete a variable percentage configuration
     """
     try:
-        response = supabase.table("variable_percentage_rules").delete().eq("id", rule_id).execute()
+        response = supabase.table("variable_percentage_configs").delete().eq("id", rule_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Rule deleted successfully"}
+            return {"success": True, "message": "Config deleted successfully"}
         else:
-            return {"success": False, "message": "Failed to delete rule"}
+            return {"success": False, "message": "Failed to delete config"}
     except Exception as e:
-        print(f"Error deleting variable percentage rule: {str(e)}")
+        print(f"Error deleting variable percentage config: {str(e)}")
         return {"success": False, "message": str(e)}
 
 # Skipped Payroll API Endpoint
@@ -1357,40 +1315,36 @@ async def include_skipped_in_next_payroll(record_id: str):
 async def get_salary_history():
     """
     Get salary change history for employees
+    Uses salary_history table (same as Python GUI) with effective_date column
     """
     try:
-        # Query salary history from employee_history table without join to avoid foreign key relationship requirement
-        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(100).execute()
+        # Query salary history from salary_history table (same table as Python GUI uses)
+        response = supabase.table("salary_history").select("*").order("effective_date", desc=True).limit(100).execute()
         
         if not response.data:
             return {"success": True, "data": []}
         
-        # Filter for salary-related changes
-        salary_changes = [
-            record for record in response.data 
-            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']
-        ]
+        salary_changes = response.data
         
-        if not salary_changes:
-            return {"success": True, "data": []}
-        
-        # Get unique employee emails
-        employee_emails = list(set([sc.get("employee_email") for sc in salary_changes if sc.get("employee_email")]))
+        # Get unique employee IDs
+        employee_ids = list(set([sc.get("employee_id") for sc in salary_changes if sc.get("employee_id")]))
         
         # Fetch employee data for all relevant employees
         employee_map = {}
-        if employee_emails:
-            employees_response = supabase.table("employees").select("email, full_name").in_("email", employee_emails).execute()
+        if employee_ids:
+            employees_response = supabase.table("employees").select("id, email, full_name").in_("id", employee_ids).execute()
             if employees_response.data:
-                employee_map = {emp["email"]: emp for emp in employees_response.data}
+                employee_map = {emp["id"]: emp for emp in employees_response.data}
         
-        # Enrich salary changes with employee names
+        # Enrich salary changes with employee names and emails
         for record in salary_changes:
-            employee_email = record.get("employee_email")
-            if employee_email and employee_email in employee_map:
-                record["employee_name"] = employee_map[employee_email].get("full_name", "")
+            employee_id = record.get("employee_id")
+            if employee_id and employee_id in employee_map:
+                record["employee_name"] = employee_map[employee_id].get("full_name", "")
+                record["employee_email"] = employee_map[employee_id].get("email", "")
             else:
                 record["employee_name"] = ""
+                record["employee_email"] = ""
         
         return {"success": True, "data": salary_changes}
     except Exception as e:
@@ -1405,8 +1359,8 @@ async def create_salary_change(request: Request):
     try:
         data = await request.json()
         
-        # Validate required fields
-        required_fields = ['employee_email', 'previous_salary', 'new_salary', 'effective_date', 'change_type']
+        # Validate required fields - using fields that match Python GUI's salary_history table
+        required_fields = ['employee_id', 'previous_salary', 'new_salary', 'effective_date']
         for field in required_fields:
             if field not in data or data[field] == '':
                 return {"success": False, "message": f"Missing required field: {field}"}
@@ -1422,24 +1376,30 @@ async def create_salary_change(request: Request):
         
         # Calculate change amount and percentage
         change_amount = new_salary - prev_salary
-        change_percentage = (change_amount / prev_salary * 100) if prev_salary > 0 else 0
+        # Handle edge case: if previous salary is 0, use None to indicate undefined percentage
+        if prev_salary > 0:
+            change_percentage = (change_amount / prev_salary * 100)
+        elif new_salary > 0:
+            change_percentage = None  # Represents infinite/undefined percentage (new hire with no previous salary)
+        else:
+            change_percentage = 0  # Both zero, no change
         
-        # Create salary history record
+        # Create salary history record matching Python GUI structure
         history_record = {
-            "employee_email": data['employee_email'],
-            "change_type": data['change_type'],
-            "field_changed": "salary",
-            "previous_value": str(prev_salary),
-            "new_value": str(new_salary),
+            "employee_id": data['employee_id'],
             "effective_date": data['effective_date'],
-            "reason": data.get('reason', f"Salary changed from RM {prev_salary:.2f} to RM {new_salary:.2f} ({change_percentage:+.1f}%)"),
+            "previous_salary": prev_salary,
+            "new_salary": new_salary,
             "change_amount": change_amount,
             "change_percentage": change_percentage,
-            "created_at": datetime.utcnow().isoformat(),
-            "created_by": "admin"
+            "reason": data.get('reason', data.get('change_type', '')),
+            "notes": data.get('notes', ''),
+            "created_by": "admin",
+            "created_at": datetime.utcnow().isoformat()
         }
         
-        response = supabase.table("employee_history").insert(history_record).execute()
+        # Insert into salary_history table (same as Python GUI)
+        response = supabase.table("salary_history").insert(history_record).execute()
         
         if response.data:
             return {"success": True, "message": "Salary change recorded successfully", "data": response.data[0]}
@@ -1718,7 +1678,7 @@ async def save_tp1_reliefs(request: Request):
 async def update_salary_history(record_id: str, request: Request):
     """
     Update a salary history record (admin only)
-    Salary history is stored in employee_history table
+    Uses salary_history table (same as Python GUI)
     """
     try:
         data = await request.json()
@@ -1727,24 +1687,36 @@ async def update_salary_history(record_id: str, request: Request):
         data.pop('id', None)
         data.pop('created_at', None)
         
-        # If updating salary values, recalculate change amount and percentage
-        if 'previous_salary' in data and 'new_salary' in data:
-            try:
-                prev_salary = float(data.get('previous_salary', data.get('previous_value', 0)))
-                new_salary = float(data.get('new_salary', data.get('new_value', 0)))
-                
-                change_amount = new_salary - prev_salary
-                change_percentage = (change_amount / prev_salary * 100) if prev_salary > 0 else 0
-                
-                data['previous_value'] = str(prev_salary)
-                data['new_value'] = str(new_salary)
-                data['change_amount'] = change_amount
-                data['change_percentage'] = change_percentage
-            except (ValueError, TypeError):
-                pass
+        # Build update data with proper field names for salary_history table
+        update_data = {}
         
-        # Update the record using the service
-        response = update_employee_history_record(record_id, data)
+        if 'previous_salary' in data:
+            update_data['previous_salary'] = float(data['previous_salary'])
+        if 'new_salary' in data:
+            update_data['new_salary'] = float(data['new_salary'])
+        if 'effective_date' in data:
+            update_data['effective_date'] = data['effective_date']
+        if 'reason' in data:
+            update_data['reason'] = data['reason']
+        if 'notes' in data:
+            update_data['notes'] = data['notes']
+        
+        # Recalculate change amount and percentage if salary values are present
+        if 'previous_salary' in update_data and 'new_salary' in update_data:
+            prev_salary = update_data['previous_salary']
+            new_salary = update_data['new_salary']
+            
+            update_data['change_amount'] = new_salary - prev_salary
+            # Handle edge case: if previous salary is 0, use None to indicate undefined percentage
+            if prev_salary > 0:
+                update_data['change_percentage'] = ((new_salary - prev_salary) / prev_salary * 100)
+            elif new_salary > 0:
+                update_data['change_percentage'] = None  # Represents infinite/undefined percentage
+            else:
+                update_data['change_percentage'] = 0  # Both zero, no change
+        
+        # Update the record in salary_history table
+        response = supabase.table("salary_history").update(update_data).eq("id", record_id).execute()
         
         if response and response.data:
             return {"success": True, "message": "Salary history record updated successfully", "data": response.data[0] if response.data else None}
@@ -1758,10 +1730,10 @@ async def update_salary_history(record_id: str, request: Request):
 async def delete_salary_history(record_id: str):
     """
     Delete a salary history record (admin only)
-    Salary history is stored in employee_history table
+    Uses salary_history table (same as Python GUI)
     """
     try:
-        response = delete_employee_history_record(record_id)
+        response = supabase.table("salary_history").delete().eq("id", record_id).execute()
         
         if response:
             return {"success": True, "message": "Salary history record deleted successfully"}
@@ -2599,37 +2571,43 @@ async def export_contributions_csv():
 async def export_salary_history_csv():
     """Export salary history to CSV"""
     try:
-        # Get salary history data
-        response = supabase.table("employee_history").select("*").order("effective_date", desc=True).limit(1000).execute()
+        # Get salary history data from salary_history table (same as Python GUI)
+        response = supabase.table("salary_history").select("*").order("effective_date", desc=True).limit(1000).execute()
         
         if not response.data:
-            headers = ["Effective Date", "Employee Email", "Employee Name", "Change Type", "Previous Salary", "New Salary", "Change Amount", "Change Percentage", "Reason"]
+            headers = ["Effective Date", "Employee ID", "Employee Name", "Previous Salary", "New Salary", "Change Amount", "Change Percentage", "Reason", "Notes"]
             return generate_csv(headers, [])
         
-        # Filter for salary-related changes
-        salary_changes = [
-            record for record in response.data 
-            if record.get('change_type') in ['salary_adjustment', 'promotion', 'increment']
-        ]
+        salary_changes = response.data
         
-        headers = ["Effective Date", "Employee Email", "Employee Name", "Change Type", "Previous Salary", "New Salary", "Change Amount", "Change Percentage", "Reason"]
+        # Get unique employee IDs for name lookup
+        employee_ids = list(set([sc.get("employee_id") for sc in salary_changes if sc.get("employee_id")]))
+        employee_map = {}
+        if employee_ids:
+            employees_response = supabase.table("employees").select("id, full_name").in_("id", employee_ids).execute()
+            if employees_response.data:
+                employee_map = {emp["id"]: emp.get("full_name", "") for emp in employees_response.data}
+        
+        headers = ["Effective Date", "Employee ID", "Employee Name", "Previous Salary", "New Salary", "Change Amount", "Change Percentage", "Reason", "Notes"]
         rows = []
         for record in salary_changes:
-            prev_salary = float(record.get('previous_value', 0))
-            new_salary = float(record.get('new_value', 0))
-            change = new_salary - prev_salary
-            change_percent = (change / prev_salary * 100) if prev_salary > 0 else 0
+            prev_salary = float(record.get('previous_salary', 0) or 0)
+            new_salary = float(record.get('new_salary', 0) or 0)
+            change_amount = float(record.get('change_amount', 0) or 0)
+            change_percent = float(record.get('change_percentage', 0) or 0)
+            employee_id = record.get('employee_id', '')
+            employee_name = employee_map.get(employee_id, '')
             
             rows.append([
                 record.get('effective_date', ''),
-                record.get('employee_email', ''),
-                record.get('employee_name', ''),
-                record.get('change_type', ''),
+                employee_id,
+                employee_name,
                 f"{prev_salary:.2f}",
                 f"{new_salary:.2f}",
-                f"{change:.2f}",
+                f"{change_amount:.2f}",
                 f"{change_percent:.2f}%",
-                record.get('reason', '')
+                record.get('reason', ''),
+                record.get('notes', '')
             ])
         
         return generate_csv(headers, rows)
@@ -2645,7 +2623,7 @@ async def export_engagements_csv():
         
         # Fetch from all engagement tables
         try:
-            training_response = supabase.table("training_courses").select("*").order("created_at", desc=True).limit(1000).execute()
+            training_response = supabase.table("training_course_records").select("*").order("created_at", desc=True).limit(1000).execute()
             if training_response.data:
                 for record in training_response.data:
                     record['type'] = 'training'
@@ -2654,7 +2632,7 @@ async def export_engagements_csv():
             pass
         
         try:
-            trips_response = supabase.table("overseas_trips").select("*").order("created_at", desc=True).limit(1000).execute()
+            trips_response = supabase.table("overseas_work_trip_records").select("*").order("created_at", desc=True).limit(1000).execute()
             if trips_response.data:
                 for record in trips_response.data:
                     record['type'] = 'overseas_trip'
