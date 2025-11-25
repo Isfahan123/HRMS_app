@@ -80,6 +80,7 @@
                     <!-- Add Employee Form (hidden by default) -->
                     <div id="addEmployeeForm" class="form-section" style="display: none; margin-bottom: 30px;">
                         <h3>Add New Employee - Comprehensive Profile</h3>
+                        <p style="color: #666; margin-bottom: 15px;"><span style="color: #c0392b;">*</span> indicates required fields (Full Name, Email, and Password are the minimum required for employee registration)</p>
                         <form id="newEmployeeForm">
                             <!-- Basic Information -->
                             <h4 style="margin-top: 20px; color: #667eea;">Basic Information</h4>
@@ -305,8 +306,8 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="newEmpStatus">Employment Status:</label>
-                                    <select id="newEmpStatus" name="employment_status">
+                                    <label for="newEmpStatus">Employment Status:*</label>
+                                    <select id="newEmpStatus" name="status">
                                         <option value="Active" selected>Active</option>
                                         <option value="Inactive">Inactive</option>
                                         <option value="Terminated">Terminated</option>
@@ -559,6 +560,7 @@
                                 <h3>Edit Employee</h3>
                                 <span class="modal-close" onclick="closeEditEmployeeModal()">&times;</span>
                             </div>
+                            <p style="color: #666; margin: 10px 0;"><span style="color: #c0392b;">*</span> indicates required fields</p>
                             <form id="editEmployeeForm">
                                 <input type="hidden" id="editEmpId" name="employee_id">
                                 
@@ -783,8 +785,8 @@
                                 
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="editEmpStatus">Employment Status:</label>
-                                        <select id="editEmpStatus" name="employment_status">
+                                        <label for="editEmpStatus">Employment Status:*</label>
+                                        <select id="editEmpStatus" name="status">
                                             <option value="Active">Active</option>
                                             <option value="Inactive">Inactive</option>
                                             <option value="Terminated">Terminated</option>

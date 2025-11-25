@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Employment Information
                 document.getElementById('profileDepartment').textContent = employee.department || '-';
                 document.getElementById('profilePosition').textContent = employee.position || '-';
-                document.getElementById('profileStatus').textContent = employee.employment_status || '-';
+                document.getElementById('profileStatus').textContent = employee.status || '-';
                 document.getElementById('profileJoinDate').textContent = employee.join_date || '-';
                 
                 // EPF/SOCSO Information
