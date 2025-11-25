@@ -1656,6 +1656,8 @@ async def get_payroll_info(employee_id: str):
     Get payroll information (monthly deductions, tax info, etc.) for an employee
     """
     try:
+        import json
+        
         # Get current year and month
         now = datetime.now()
         year = now.year
@@ -1668,6 +1670,28 @@ async def get_payroll_info(employee_id: str):
         employee_response = supabase.table("employees").select("*").eq("id", employee_id).execute()
         employee_data = employee_response.data[0] if employee_response.data and len(employee_response.data) > 0 else {}
         
+        # Parse JSON fields
+        allowances = {}
+        if employee_data.get("allowances"):
+            try:
+                allowances = json.loads(employee_data["allowances"]) if isinstance(employee_data["allowances"], str) else employee_data["allowances"]
+            except:
+                pass
+        
+        benefits = {}
+        if employee_data.get("benefits"):
+            try:
+                benefits = json.loads(employee_data["benefits"]) if isinstance(employee_data["benefits"], str) else employee_data["benefits"]
+            except:
+                pass
+        
+        children = []
+        if employee_data.get("children_tax_relief"):
+            try:
+                children = json.loads(employee_data["children_tax_relief"]) if isinstance(employee_data["children_tax_relief"], str) else employee_data["children_tax_relief"]
+            except:
+                pass
+        
         # Merge employee data with deductions data
         result = {
             "employee_id": employee_id,
@@ -1679,6 +1703,25 @@ async def get_payroll_info(employee_id: str):
             "bank_name": employee_data.get("bank_name", ""),
             "bank_account": employee_data.get("bank_account", ""),
             "basic_salary": employee_data.get("basic_salary", 0.0),
+            "tax_resident_status": employee_data.get("tax_resident_status", "Resident"),
+            "is_individual_disabled": employee_data.get("is_individual_disabled", False),
+            "is_spouse_disabled": employee_data.get("is_spouse_disabled", False),
+            # Allowances
+            "meal_allowance": allowances.get("meal", 0),
+            "transport_allowance": allowances.get("transport", 0),
+            "medical_allowance": allowances.get("medical", 0),
+            "phone_allowance": allowances.get("phone", 0),
+            "other_allowance": allowances.get("other", 0),
+            # Benefits
+            "sip_participation": benefits.get("sip_participation", "No"),
+            "sip_type": benefits.get("sip_type", "None"),
+            "sip_amount_rate": benefits.get("sip_amount_rate", 0),
+            "additional_epf_enabled": benefits.get("additional_epf_enabled", "No"),
+            "additional_epf_amount": benefits.get("additional_epf_amount", 0),
+            "prs_participation": benefits.get("prs_participation", "No"),
+            "prs_amount": benefits.get("prs_amount", 0),
+            # Children
+            "children": children,
             **deductions_data  # Include all deductions data
         }
         
@@ -1695,7 +1738,8 @@ def _safe_update_employees(employee_id: str, payload: dict):
     attempt = dict(payload)
     # Known optional fields that may not exist in all schemas
     fallback_fields = ['income_tax_number', 'epf_number', 'socso_number', 'tax_resident_status', 
-                       'allowances', 'bank_name', 'bank_account', 'basic_salary']
+                       'allowances', 'bank_name', 'bank_account', 'basic_salary',
+                       'is_individual_disabled', 'is_spouse_disabled', 'benefits', 'children_tax_relief']
     # Allow extra iterations beyond fallback_fields count for fields not in fallback list
     max_retries = len(fallback_fields) + 2
     for _ in range(max_retries):
@@ -1731,7 +1775,12 @@ async def save_payroll_info(request: Request):
     Save payroll information (monthly deductions, tax info, etc.) for an employee
     """
     # Fields that should be saved to the employees table (not monthly deductions)
-    EMPLOYEE_TABLE_FIELDS = ["tax_number", "epf_number", "socso_number", "bank_name", "bank_account", "basic_salary"]
+    EMPLOYEE_TABLE_FIELDS = ["tax_number", "epf_number", "socso_number", "bank_name", "bank_account", "basic_salary",
+                             "tax_resident_status", "is_individual_disabled", "is_spouse_disabled",
+                             "meal_allowance", "transport_allowance", "medical_allowance", "phone_allowance", "other_allowance",
+                             "sip_participation", "sip_type", "sip_amount_rate",
+                             "additional_epf_enabled", "additional_epf_amount",
+                             "prs_participation", "prs_amount", "children"]
     # Fields that should not be saved to monthly deductions
     EXCLUDED_FROM_DEDUCTIONS = ["employee_id", "year", "month"] + EMPLOYEE_TABLE_FIELDS
     
@@ -1745,7 +1794,7 @@ async def save_payroll_info(request: Request):
         year = data.get("year", datetime.now().year)
         month = data.get("month", datetime.now().month)
         
-        # Update employee basic info (bank, tax numbers)
+        # Update employee basic info (bank, tax numbers, allowances, etc.)
         employee_updates = {}
         if "tax_number" in data:
             employee_updates["income_tax_number"] = data["tax_number"]
@@ -1759,6 +1808,53 @@ async def save_payroll_info(request: Request):
             employee_updates["bank_account"] = data["bank_account"]
         if "basic_salary" in data:
             employee_updates["basic_salary"] = data["basic_salary"]
+        if "tax_resident_status" in data:
+            employee_updates["tax_resident_status"] = data["tax_resident_status"]
+        if "is_individual_disabled" in data:
+            employee_updates["is_individual_disabled"] = data["is_individual_disabled"]
+        if "is_spouse_disabled" in data:
+            employee_updates["is_spouse_disabled"] = data["is_spouse_disabled"]
+        
+        # Save allowances as JSON string
+        allowances = {}
+        if "meal_allowance" in data:
+            allowances["meal"] = data["meal_allowance"]
+        if "transport_allowance" in data:
+            allowances["transport"] = data["transport_allowance"]
+        if "medical_allowance" in data:
+            allowances["medical"] = data["medical_allowance"]
+        if "phone_allowance" in data:
+            allowances["phone"] = data["phone_allowance"]
+        if "other_allowance" in data:
+            allowances["other"] = data["other_allowance"]
+        if allowances:
+            import json
+            employee_updates["allowances"] = json.dumps(allowances)
+        
+        # Save benefits as JSON string
+        benefits = {}
+        if "sip_participation" in data:
+            benefits["sip_participation"] = data["sip_participation"]
+        if "sip_type" in data:
+            benefits["sip_type"] = data["sip_type"]
+        if "sip_amount_rate" in data:
+            benefits["sip_amount_rate"] = data["sip_amount_rate"]
+        if "additional_epf_enabled" in data:
+            benefits["additional_epf_enabled"] = data["additional_epf_enabled"]
+        if "additional_epf_amount" in data:
+            benefits["additional_epf_amount"] = data["additional_epf_amount"]
+        if "prs_participation" in data:
+            benefits["prs_participation"] = data["prs_participation"]
+        if "prs_amount" in data:
+            benefits["prs_amount"] = data["prs_amount"]
+        if benefits:
+            import json
+            employee_updates["benefits"] = json.dumps(benefits)
+        
+        # Save children data as JSON string
+        if "children" in data:
+            import json
+            employee_updates["children_tax_relief"] = json.dumps(data["children"])
         
         if employee_updates:
             _safe_update_employees(employee_id, employee_updates)
