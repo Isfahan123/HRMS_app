@@ -2108,13 +2108,12 @@ async def update_leave_type(type_id: str, data: Dict[str, Any]):
         # Remove None values
         leave_type = {k: v for k, v in leave_type.items() if v is not None}
         
-        # Try to update by ID first (if type_id is numeric), then by code
-        response = None
+        # Determine lookup method: if type_id is numeric, use ID; otherwise use code
         if type_id.isdigit():
+            # Numeric ID - update by ID only
             response = supabase.table("leave_types").update(leave_type).eq("id", int(type_id)).execute()
-        
-        # If no result by ID or type_id is not numeric, try by code
-        if not response or not response.data:
+        else:
+            # String code - update by code only
             response = supabase.table("leave_types").update(leave_type).eq("code", type_id).execute()
         
         if response and response.data:
@@ -2129,13 +2128,12 @@ async def update_leave_type(type_id: str, data: Dict[str, Any]):
 async def delete_leave_type(type_id: str):
     """Delete a leave type by ID (numeric) or code (string)"""
     try:
-        # Try to delete by ID first (if type_id is numeric), then by code
-        response = None
+        # Determine lookup method: if type_id is numeric, use ID; otherwise use code
         if type_id.isdigit():
+            # Numeric ID - delete by ID only
             response = supabase.table("leave_types").delete().eq("id", int(type_id)).execute()
-        
-        # If no result by ID or type_id is not numeric, try by code
-        if not response or not response.data:
+        else:
+            # String code - delete by code only
             response = supabase.table("leave_types").delete().eq("code", type_id).execute()
         
         if response and response.data:
