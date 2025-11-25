@@ -96,6 +96,28 @@ class EmployeeData(BaseModel):
     department: Optional[str] = None
     position: Optional[str] = None
 
+# Helper functions
+def normalize_payroll_date(payroll_date: str) -> Optional[str]:
+    """
+    Normalize payroll date to YYYY-MM-DD format.
+    Accepts YYYY-MM (month input) or YYYY-MM-DD formats.
+    Returns the first day of the month (day 01) for YYYY-MM format.
+    Returns None if the date is invalid.
+    """
+    # Try YYYY-MM format first (from HTML month input)
+    try:
+        parsed = datetime.strptime(payroll_date, "%Y-%m")
+        return parsed.strftime("%Y-%m-%d")
+    except ValueError:
+        pass
+    
+    # Try YYYY-MM-DD format
+    try:
+        datetime.strptime(payroll_date, "%Y-%m-%d")
+        return payroll_date
+    except ValueError:
+        return None
+
 # Routes
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -726,18 +748,12 @@ async def run_payroll_processing(request: Request):
         if not payroll_date:
             return {"success": False, "message": "Payroll date is required"}
         
-        # Convert YYYY-MM to YYYY-MM-DD format (first day of month)
+        # Convert YYYY-MM to YYYY-MM-DD format
         # The run_payroll function expects YYYY-MM-DD format
-        # Validate by parsing the date to ensure it's a valid month
-        try:
-            parsed_date = datetime.strptime(payroll_date, "%Y-%m")
-            payroll_date = parsed_date.strftime("%Y-%m-%d")
-        except ValueError:
-            # If already in YYYY-MM-DD format, validate it
-            try:
-                datetime.strptime(payroll_date, "%Y-%m-%d")
-            except ValueError:
-                return {"success": False, "message": "Invalid date format. Use YYYY-MM or YYYY-MM-DD"}
+        # Payroll is run on the first day of the month (day 01) for the given month
+        payroll_date = normalize_payroll_date(payroll_date)
+        if payroll_date is None:
+            return {"success": False, "message": "Invalid date format. Use YYYY-MM or YYYY-MM-DD"}
         
         success = run_payroll(payroll_date)
         
