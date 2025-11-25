@@ -18,18 +18,18 @@ from typing import Dict, List, Optional
 class HRMSEmailService:
     def __init__(self):
         # Email configuration - uses environment variables for flexibility
-        # To use your own email (e.g., admin@form.enigmagroup.com.my):
-        # 1. Set these environment variables in your .env file:
-        #    SMTP_SERVER=mail.enigmagroup.com.my  (your mail server)
-        #    SMTP_PORT=587  (or 465 for SSL)
+        # Default configuration uses admin@form.enigmagroup.com.my
+        # To override, set these environment variables in your .env file:
+        #    SMTP_SERVER=sc162.mschosting.cloud
+        #    SMTP_PORT=465  (SSL port)
         #    SMTP_EMAIL=admin@form.enigmagroup.com.my
         #    SMTP_PASSWORD=your_password_here
         #    SMTP_SENDER_NAME=HRMS System
-        # 2. Restart the application
-        self.smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
-        self.smtp_port = int(os.environ.get("SMTP_PORT", "587"))
-        self.sender_email = os.environ.get("SMTP_EMAIL", "luminascea123@gmail.com")
-        self.sender_password = os.environ.get("SMTP_PASSWORD", "oyvw cvxo mbbh onac")
+        # Restart the application after changes
+        self.smtp_server = os.environ.get("SMTP_SERVER", "sc162.mschosting.cloud")
+        self.smtp_port = int(os.environ.get("SMTP_PORT", "465"))
+        self.sender_email = os.environ.get("SMTP_EMAIL", "admin@form.enigmagroup.com.my")
+        self.sender_password = os.environ.get("SMTP_PASSWORD", "")
         self.sender_name = os.environ.get("SMTP_SENDER_NAME", "HRMS System")
         
         # Company information
@@ -46,14 +46,27 @@ class HRMSEmailService:
         return message
     
     def _send_email(self, message: MIMEMultipart, to_email: str) -> bool:
-        """Send email using SMTP (internal synchronous method)"""
+        """Send email using SMTP (internal synchronous method)
+        
+        Supports both SSL (port 465) and STARTTLS (port 587) connections.
+        """
         try:
             context = ssl.create_default_context()
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls(context=context)
-                server.login(self.sender_email, self.sender_password)
-                text = message.as_string()
-                server.sendmail(self.sender_email, to_email, text)
+            
+            if self.smtp_port == 465:
+                # Use SSL connection for port 465
+                with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port, context=context) as server:
+                    server.login(self.sender_email, self.sender_password)
+                    text = message.as_string()
+                    server.sendmail(self.sender_email, to_email, text)
+            else:
+                # Use STARTTLS for other ports (typically 587)
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                    server.starttls(context=context)
+                    server.login(self.sender_email, self.sender_password)
+                    text = message.as_string()
+                    server.sendmail(self.sender_email, to_email, text)
+            
             print(f"DEBUG: Email sent successfully to {to_email}")
             return True
         except Exception as e:
@@ -580,12 +593,22 @@ class HRMSEmailService:
             return False
     
     def test_email_connection(self) -> bool:
-        """Test email connection without sending an email"""
+        """Test email connection without sending an email
+        
+        Supports both SSL (port 465) and STARTTLS (port 587) connections.
+        """
         try:
             context = ssl.create_default_context()
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls(context=context)
-                server.login(self.sender_email, self.sender_password)
+            
+            if self.smtp_port == 465:
+                # Use SSL connection for port 465
+                with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port, context=context) as server:
+                    server.login(self.sender_email, self.sender_password)
+            else:
+                # Use STARTTLS for other ports (typically 587)
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                    server.starttls(context=context)
+                    server.login(self.sender_email, self.sender_password)
             return True
         except Exception as e:
             print(f"DEBUG: Email connection test failed: {str(e)}")
