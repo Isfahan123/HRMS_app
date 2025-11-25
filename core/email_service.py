@@ -17,12 +17,20 @@ from typing import Dict, List, Optional
 
 class HRMSEmailService:
     def __init__(self):
-        # Email configuration - same as your working test setup
-        self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
-        self.sender_email = "luminascea123@gmail.com"
-        self.sender_password = "mjvp zvud haab krmu"
-        self.sender_name = "HRMS System"
+        # Email configuration - uses environment variables for flexibility
+        # To use your own email (e.g., admin@form.enigmagroup.com.my):
+        # 1. Set these environment variables in your .env file:
+        #    SMTP_SERVER=mail.enigmagroup.com.my  (your mail server)
+        #    SMTP_PORT=587  (or 465 for SSL)
+        #    SMTP_EMAIL=admin@form.enigmagroup.com.my
+        #    SMTP_PASSWORD=your_password_here
+        #    SMTP_SENDER_NAME=HRMS System
+        # 2. Restart the application
+        self.smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+        self.smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+        self.sender_email = os.environ.get("SMTP_EMAIL", "luminascea123@gmail.com")
+        self.sender_password = os.environ.get("SMTP_PASSWORD", "mjvp zvud haab krmu")
+        self.sender_name = os.environ.get("SMTP_SENDER_NAME", "HRMS System")
         
         # Company information
         self.company_name = "Enigma Technical Solutions Sdn Bhd"
