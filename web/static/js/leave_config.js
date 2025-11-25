@@ -217,8 +217,10 @@ function renderLeaveTypesTable() {
     let html = '';
     currentLeaveTypes.forEach(type => {
         const statusBadge = type.is_active ? '<span style="color: green;">✓ Active</span>' : '<span style="color: gray;">○ Inactive</span>';
-        // Use id if available, otherwise use code as identifier (for fallback data)
-        const typeIdentifier = type.id !== undefined && type.id !== null ? type.id : `'${type.code}'`;
+        // Always use quotes for the identifier (whether ID or code) to handle UUIDs and string codes
+        const typeIdentifier = type.id !== undefined && type.id !== null ? type.id : type.code;
+        // Escape single quotes in the identifier to prevent XSS and syntax errors
+        const safeIdentifier = String(typeIdentifier).replace(/'/g, "\\'");
         html += `
             <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 8px;">${statusBadge}</td>
@@ -230,8 +232,8 @@ function renderLeaveTypesTable() {
                 <td style="padding: 8px; text-align: center;">${type.max_duration || '-'}</td>
                 <td style="padding: 8px; font-size: 0.9em;">${type.description || '-'}</td>
                 <td style="padding: 8px; text-align: center;">
-                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editLeaveType(${typeIdentifier})">✏️ Edit</button>
-                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteLeaveType(${typeIdentifier})">🗑️ Delete</button>
+                    <button class="btn-sm" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-right: 4px;" onclick="editLeaveType('${safeIdentifier}')">✏️ Edit</button>
+                    <button class="btn-sm" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;" onclick="deleteLeaveType('${safeIdentifier}')">🗑️ Delete</button>
                 </td>
             </tr>
         `;

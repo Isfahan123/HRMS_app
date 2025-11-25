@@ -3,21 +3,26 @@
  * Matching Python GUI functionality with full CRUD operations
  */
 
-// Malaysian Tax Rates for Residents (2024 rates - fallback)
+// Malaysian Tax Rates for Residents (LHDN 2025 rates - matching Python GUI)
 const RESIDENT_TAX_RATES = [
-    { from: 0, to: 5000, rate: 0, taxOnBand: 0 },
-    { from: 5001, to: 20000, rate: 1, taxOnBand: 150 },
-    { from: 20001, to: 35000, rate: 3, taxOnBand: 450 },
-    { from: 35001, to: 50000, rate: 8, taxOnBand: 1200 },
-    { from: 50001, to: 70000, rate: 13, taxOnBand: 2600 },
-    { from: 70001, to: 100000, rate: 21, taxOnBand: 6300 },
-    { from: 100001, to: 250000, rate: 24, taxOnBand: 36000 },
-    { from: 250001, to: 400000, rate: 24.5, taxOnBand: 36750 },
-    { from: 400001, to: 600000, rate: 25, taxOnBand: 50000 },
-    { from: 600001, to: 1000000, rate: 26, taxOnBand: 104000 },
-    { from: 1000001, to: 2000000, rate: 28, taxOnBand: 280000 },
-    { from: 2000001, to: 999999999, rate: 30, taxOnBand: 0 }
+    { from: 0, to: 5000, rate: 0, taxOnBand: 0, onFirst: 0, next: 0, taxFirst: 0, taxNext: 0 },
+    { from: 5001, to: 20000, rate: 1, taxOnBand: 150, onFirst: 5000, next: 15000, taxFirst: 0, taxNext: 150 },
+    { from: 20001, to: 35000, rate: 3, taxOnBand: 450, onFirst: 20000, next: 15000, taxFirst: 150, taxNext: 450 },
+    { from: 35001, to: 50000, rate: 6, taxOnBand: 900, onFirst: 35000, next: 15000, taxFirst: 600, taxNext: 900 },
+    { from: 50001, to: 70000, rate: 11, taxOnBand: 2200, onFirst: 50000, next: 20000, taxFirst: 1500, taxNext: 2200 },
+    { from: 70001, to: 100000, rate: 19, taxOnBand: 5700, onFirst: 70000, next: 30000, taxFirst: 3700, taxNext: 5700 },
+    { from: 100001, to: 400000, rate: 25, taxOnBand: 75000, onFirst: 100000, next: 300000, taxFirst: 9400, taxNext: 75000 },
+    { from: 400001, to: 600000, rate: 26, taxOnBand: 52000, onFirst: 400000, next: 200000, taxFirst: 84400, taxNext: 52000 },
+    { from: 600001, to: 2000000, rate: 28, taxOnBand: 392000, onFirst: 600000, next: 1400000, taxFirst: 136400, taxNext: 392000 },
+    { from: 2000001, to: 999999999, rate: 30, taxOnBand: 0, onFirst: 2000000, next: 0, taxFirst: 528400, taxNext: 0 }
 ];
+
+// Special tax provisions (matching Python GUI)
+const TAX_PROVISIONS = {
+    individualTaxRebate: 400.0,       // LHDN 2025: RM 400
+    rebateThreshold: 35000,           // Annual chargeable income threshold
+    nonResidentRate: 30.0             // Flat 30% for non-residents
+};
 
 // Tax Relief Categories and Maximum Amounts (2024)
 const TAX_RELIEF_CATEGORIES = [

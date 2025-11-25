@@ -777,10 +777,11 @@ async def create_new_employee(request: Request):
         
         result = insert_employee(data, password)
         
-        if result:
-            return {"success": True, "message": "Employee created successfully", "data": result}
+        if result and result.get("success"):
+            return {"success": True, "message": "Employee created successfully", "data": result, "employee_id": data.get("employee_id")}
         else:
-            return {"success": False, "message": "Failed to create employee"}
+            error_message = result.get("error") if result else "Failed to create employee"
+            return {"success": False, "message": error_message}
     except Exception as e:
         print(f"Error creating employee: {str(e)}")
         return {"success": False, "message": str(e)}
