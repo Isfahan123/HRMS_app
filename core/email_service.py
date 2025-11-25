@@ -29,7 +29,7 @@ class HRMSEmailService:
         self.smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
         self.smtp_port = int(os.environ.get("SMTP_PORT", "587"))
         self.sender_email = os.environ.get("SMTP_EMAIL", "luminascea123@gmail.com")
-        self.sender_password = os.environ.get("SMTP_PASSWORD", "mjvp zvud haab krmu")
+        self.sender_password = os.environ.get("SMTP_PASSWORD", "oyvw cvxo mbbh onac")
         self.sender_name = os.environ.get("SMTP_SENDER_NAME", "HRMS System")
         
         # Company information
@@ -593,3 +593,4 @@ class HRMSEmailService:
 
 # Create a global instance for easy import
 email_service = HRMSEmailService()
+
