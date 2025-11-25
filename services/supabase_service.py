@@ -906,6 +906,58 @@ def login_user_by_username(username: str, password: str):
         _log_security_event('login_failure', user_email=(username or '').lower(), success=False, error_message=str(e))
         return {"success": False, "role": None}
 
+def _normalize_employee_fields(employee_data: dict) -> dict:
+    """Normalize employee data fields to ensure correct types for database insertion/update.
+    
+    Handles conversion of:
+    - Empty string date fields to None (prevents error code 22007)
+    - Empty string boolean fields to proper values (prevents error code 22P02)
+    - Empty string integer fields to proper values (prevents error code 22P02)
+    
+    Returns the modified employee_data dictionary.
+    """
+    # Normalize empty-string date fields to None to avoid database errors
+    # Error code 22007: invalid input syntax for type date: ""
+    for date_field in ("date_of_birth", "join_date", "date_joined"):
+        if date_field in employee_data and employee_data[date_field] == "":
+            employee_data[date_field] = None
+    
+    # Normalize empty-string boolean fields to proper values to avoid database errors
+    # Error code 22P02: invalid input syntax for type boolean: ""
+    if "spouse_working" in employee_data:
+        sw = employee_data["spouse_working"]
+        if sw == "" or sw is None:
+            employee_data["spouse_working"] = None
+        elif isinstance(sw, str):
+            # Convert "Yes"/"No" strings to boolean
+            employee_data["spouse_working"] = sw.lower() in ("yes", "true", "1")
+        elif not isinstance(sw, bool):
+            employee_data["spouse_working"] = bool(sw)
+    
+    # Normalize empty-string integer fields to proper values to avoid database errors
+    # Error code 22P02: invalid input syntax for type integer: ""
+    if "number_of_children" in employee_data:
+        noc = employee_data["number_of_children"]
+        if noc == "" or noc is None:
+            employee_data["number_of_children"] = 0
+        elif isinstance(noc, str):
+            try:
+                employee_data["number_of_children"] = int(noc)
+            except ValueError:
+                employee_data["number_of_children"] = 0
+    
+    if "graduation_year" in employee_data:
+        gy = employee_data["graduation_year"]
+        if gy == "" or gy is None:
+            employee_data["graduation_year"] = None
+        elif isinstance(gy, str):
+            try:
+                employee_data["graduation_year"] = int(gy)
+            except ValueError:
+                employee_data["graduation_year"] = None
+    
+    return employee_data
+
 def insert_employee(data: dict, password: Optional[str] = None) -> dict:
     try:
         email = data.get("email")
@@ -930,11 +982,8 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
         employee_data["created_at"] = datetime.now(KL_TZ).isoformat()
         employee_data["religion"] = employee_data.get("religion", "Other")
         
-        # Normalize empty-string date fields to None to avoid database errors
-        # Error code 22007: invalid input syntax for type date: ""
-        for date_field in ("date_of_birth", "join_date", "date_joined"):
-            if date_field in employee_data and employee_data[date_field] == "":
-                employee_data[date_field] = None
+        # Normalize fields to ensure correct types for database
+        _normalize_employee_fields(employee_data)
         
         # Map frontend field names to database column names
         # Frontend sends 'join_date' but database expects 'date_joined'
@@ -1011,11 +1060,12 @@ def update_employee(employee_id: str, data: dict) -> dict:
             if bad in employee_data:
                 employee_data.pop(bad, None)
         # Normalize empty-string fields to None to avoid storing empty strings in DB
-        # This includes date fields to prevent error code 22007: invalid input syntax for type date: ""
-        for _k in ("work_status", "payroll_status", "functional_group", "position", 
-                   "date_of_birth", "join_date", "date_joined"):
+        for _k in ("work_status", "payroll_status", "functional_group", "position"):
             if _k in employee_data and employee_data[_k] == "":
                 employee_data[_k] = None
+        
+        # Normalize fields to ensure correct types for database
+        _normalize_employee_fields(employee_data)
         
         # Map frontend field name to database column name
         # Frontend sends 'join_date' but database expects 'date_joined'
