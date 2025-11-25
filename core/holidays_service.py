@@ -95,10 +95,55 @@ from services.supabase_service import _probe_table_exists, supabase
 
 def get_holidays_for_year(year: int, state: str = None, include_national: bool = True, include_observances: bool = True) -> Tuple[Set[date], Dict[str, List[str]]]:
     """Return (set_of_dates, details_dict) for holidays in `year`.
-    Prefers DB table 'calendar_holidays' if present. Runtime now uses python-holidays only.
+    
+    Combines holidays from:
+    1. Database table 'calendar_holidays' (imported holidays from Malaysia calendar)
+    2. python-holidays library as fallback
+    
+    This ensures imported holidays from 'Import Malaysia Calendar' feature are respected.
     """
-    # Use python-holidays only as requested
-    return get_holidays_python_only(year, state)
+    # Start with python-holidays
+    results, holiday_details = get_holidays_python_only(year, state)
+    
+    # Also fetch from database calendar_holidays table (imported holidays)
+    try:
+        db_holidays = supabase.table("calendar_holidays").select("*").gte(
+            "date", f"{year}-01-01"
+        ).lte(
+            "date", f"{year}-12-31"
+        ).execute()
+        
+        if db_holidays.data:
+            for h in db_holidays.data:
+                try:
+                    h_date = datetime.strptime(h.get('date', ''), '%Y-%m-%d').date()
+                    h_name = h.get('name', 'Holiday')
+                    h_state = h.get('state', None)
+                    is_national = h.get('is_national', True)
+                    
+                    # Apply state filter if specified
+                    if state:
+                        # Include if it's a national holiday or matches the state
+                        if not is_national and h_state and canonical_state_name(h_state) != canonical_state_name(state):
+                            continue
+                    
+                    # Include if it's national (when include_national is True) or state-specific
+                    if is_national and not include_national:
+                        continue
+                    
+                    # Add to results
+                    results.add(h_date)
+                    loc_label = 'National' if is_national else (h_state or 'National')
+                    holiday_details.setdefault(h_date.isoformat(), []).append(
+                        f"database:{h_name} [{normalize_location_label(loc_label)}]"
+                    )
+                except Exception:
+                    continue
+    except Exception as db_error:
+        # If database fetch fails, continue with python-holidays only
+        pass
+    
+    return results, holiday_details
 
 
 def _compact_holiday_details(details: Dict[str, List[str]]) -> Dict[str, List[str]]:

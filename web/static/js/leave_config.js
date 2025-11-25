@@ -419,9 +419,10 @@ async function saveLeaveType() {
  * @param {number|string} leaveTypeIdOrCode - The leave type ID (number) or code (string)
  */
 function editLeaveType(leaveTypeIdOrCode) {
-    // Find leave type by ID or code
+    // Find leave type by ID or code - convert both to string for comparison to handle type mismatches
+    const searchValue = String(leaveTypeIdOrCode);
     const leaveType = currentLeaveTypes.find(t => 
-        t.id === leaveTypeIdOrCode || t.code === leaveTypeIdOrCode
+        String(t.id) === searchValue || t.code === searchValue
     );
     if (!leaveType) {
         console.error('Leave type not found:', leaveTypeIdOrCode);
@@ -450,9 +451,10 @@ function editLeaveType(leaveTypeIdOrCode) {
  * @param {number|string} leaveTypeIdOrCode - The leave type ID (number) or code (string)
  */
 async function deleteLeaveType(leaveTypeIdOrCode) {
-    // Find leave type by ID or code
+    // Find leave type by ID or code - convert both to string for comparison to handle type mismatches
+    const searchValue = String(leaveTypeIdOrCode);
     const leaveType = currentLeaveTypes.find(t => 
-        t.id === leaveTypeIdOrCode || t.code === leaveTypeIdOrCode
+        String(t.id) === searchValue || t.code === searchValue
     );
     if (!leaveType) {
         console.error('Leave type not found for delete:', leaveTypeIdOrCode);

@@ -902,7 +902,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success && data.data) {
-                const record = data.data.find(r => r.id === recordId);
+                // Convert recordId to string for comparison (handles both UUID and numeric IDs)
+                const recordIdStr = String(recordId);
+                const record = data.data.find(r => String(r.id) === recordIdStr);
                 if (!record) {
                     alert('Record not found');
                     return;
