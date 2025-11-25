@@ -604,12 +604,13 @@ async function saveEntitlement() {
 /**
  * Edit entitlement
  */
-function editEntitlement(leaveTypeCode, employeeTier) {
+async function editEntitlement(leaveTypeCode, employeeTier) {
     const entitlement = currentEntitlements.find(e => 
         e.leave_type_code === leaveTypeCode && e.employee_tier === employeeTier
     );
     if (!entitlement) {
         console.error('Entitlement not found:', leaveTypeCode, employeeTier);
+        alert('❌ Entitlement not found');
         return;
     }
     
@@ -620,10 +621,11 @@ function editEntitlement(leaveTypeCode, employeeTier) {
         employee_tier: employeeTier
     });
     
-    // Populate dropdowns first
+    // Populate dropdowns first and wait for async tier dropdown to complete
     populateLeaveTypeDropdown();
-    populateTierDropdown();
+    await populateTierDropdown();
     
+    // Now set the values after dropdowns are populated
     document.getElementById('entitlementLeaveType').value = entitlement.leave_type_code || '';
     document.getElementById('entitlementTier').value = entitlement.employee_tier || '';
     document.getElementById('entitlementDays').value = entitlement.days_entitlement || 0;
