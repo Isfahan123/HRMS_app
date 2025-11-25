@@ -2179,51 +2179,95 @@
                             <button class="subtab-button" data-subtab="lhdnReliefOverrides">Relief Overrides</button>
                         </div>
                         
-                        <!-- Tax Rates Sub-subtab -->
+                        <!-- Tax Rates Sub-subtab (matching Python GUI 1:1) -->
                         <div id="lhdnTaxRatesSubtab" class="subtab-content active">
-                            <h4>📊 Malaysian Income Tax Rates (Year of Assessment)</h4>
-                            <p style="color: #666; margin-bottom: 20px;">Configure progressive tax rates for residents and non-residents</p>
-                            
-                            <!-- Resident Tax Rates -->
-                            <div style="margin-bottom: 30px;">
-                                <h5 style="color: #667eea;">Resident Tax Rates</h5>
-                                <button class="btn-primary btn-sm" onclick="addTaxBracket('resident')" style="margin-bottom: 10px;">➕ Add Tax Bracket</button>
-                                
-                                <table style="width: 100%; border-collapse: collapse;">
-                                    <thead>
-                                        <tr style="background: #667eea; color: white;">
-                                            <th style="padding: 10px;">Income From (RM)</th>
-                                            <th style="padding: 10px;">Income To (RM)</th>
-                                            <th style="padding: 10px;">Rate (%)</th>
-                                            <th style="padding: 10px;">Tax on Band (RM)</th>
-                                            <th style="padding: 10px;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="residentTaxRatesBody">
-                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Loading...</td></tr>
-                                    </tbody>
-                                </table>
+                            <!-- Tax Rate Information Panel (matching Python GUI) -->
+                            <div style="background: #f0f8ff; border: 1px solid #ccc; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+                                <h4 style="margin-top: 0;">Malaysian Personal Income Tax Rates (Assessment Year 2023, 2024 & 2025)</h4>
+                                <p style="margin-bottom: 10px;"><b>LHDN Progressive Tax System 2025:</b></p>
+                                <ul style="margin: 0 0 10px 20px; padding: 0;">
+                                    <li><b>Tax Year:</b> Assessment Year 2025 (Income Year 2024)</li>
+                                    <li><b>Progressive Rates:</b> 0% to 30% across multiple tax brackets</li>
+                                    <li><b>Non-Resident Rate:</b> Flat 30% on total income</li>
+                                </ul>
+                                <p style="margin: 0;"><b>Reference:</b> <a href="https://www.hasil.gov.my/en/individual/individual-life-cycle/how-to-declare-income/tax-rate/" target="_blank" style="color: #667eea;">HASIL Official Tax Rates</a></p>
                             </div>
                             
-                            <!-- Non-Resident Tax Rates -->
-                            <div style="margin-top: 40px;">
-                                <h5 style="color: #667eea;">Non-Resident Tax Rates</h5>
-                                <button class="btn-primary btn-sm" onclick="addTaxBracket('non-resident')" style="margin-bottom: 10px;">➕ Add Tax Bracket</button>
+                            <!-- Tax Brackets Configuration (matching Python GUI) -->
+                            <div style="border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+                                <h5 style="color: #667eea; margin-top: 0;">Tax Brackets Configuration</h5>
                                 
-                                <table style="width: 100%; border-collapse: collapse;">
-                                    <thead>
-                                        <tr style="background: #667eea; color: white;">
-                                            <th style="padding: 10px;">Income From (RM)</th>
-                                            <th style="padding: 10px;">Income To (RM)</th>
-                                            <th style="padding: 10px;">Rate (%)</th>
-                                            <th style="padding: 10px;">Tax on Band (RM)</th>
-                                            <th style="padding: 10px;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="nonResidentTaxRatesBody">
-                                        <tr><td colspan="5" style="padding: 15px; text-align: center;">Flat 30% for non-residents</td></tr>
-                                    </tbody>
-                                </table>
+                                <!-- Scrollable tax brackets table -->
+                                <div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                        <thead>
+                                            <tr style="background: #667eea; color: white; position: sticky; top: 0;">
+                                                <th style="padding: 10px; text-align: center;">#</th>
+                                                <th style="padding: 10px; text-align: right;">From (RM)</th>
+                                                <th style="padding: 10px; text-align: right;">To (RM)</th>
+                                                <th style="padding: 10px; text-align: right;">On First (RM)</th>
+                                                <th style="padding: 10px; text-align: right;">Next (RM)</th>
+                                                <th style="padding: 10px; text-align: center;">Rate (%)</th>
+                                                <th style="padding: 10px; text-align: right;">Tax on First (RM)</th>
+                                                <th style="padding: 10px; text-align: right;">Tax on Next (RM)</th>
+                                                <th style="padding: 10px; text-align: center;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="residentTaxRatesBody">
+                                            <tr><td colspan="9" style="padding: 15px; text-align: center;">Loading...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <button class="btn-primary btn-sm" onclick="addTaxBracket('resident')">➕ Add Tax Bracket</button>
+                            </div>
+                            
+                            <!-- Special Tax Provisions (matching Python GUI) -->
+                            <div style="border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+                                <h5 style="color: #667eea; margin-top: 0;">Special Tax Provisions</h5>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                                    <div class="form-group">
+                                        <label for="individualTaxRebate">Individual Tax Rebate:</label>
+                                        <div style="display: flex; align-items: center;">
+                                            <input type="number" id="individualTaxRebate" value="400" min="0" max="10000" step="0.01" 
+                                                   style="width: 120px; padding: 8px;" title="Individual tax rebate amount (LHDN 2025: RM 400)">
+                                            <span style="margin-left: 5px;">RM</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="rebateThreshold">Rebate Threshold (Annual):</label>
+                                        <div style="display: flex; align-items: center;">
+                                            <input type="number" id="rebateThreshold" value="35000" min="0" max="1000000" step="500" 
+                                                   style="width: 120px; padding: 8px;" title="Annual chargeable income threshold to apply individual rebate (default RM 35,000)">
+                                            <span style="margin-left: 5px;">RM</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="nonResidentRate">Non-Resident Tax Rate:</label>
+                                        <div style="display: flex; align-items: center;">
+                                            <input type="number" id="nonResidentRate" value="30" min="0" max="100" step="0.1" 
+                                                   style="width: 80px; padding: 8px;" title="Flat tax rate for non-residents (LHDN 2025: 30%)">
+                                            <span style="margin-left: 5px;">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons (matching Python GUI) -->
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn-secondary" onclick="toggleTaxRatesEditing()">🔧 Toggle Input Fields</button>
+                                <button class="btn-secondary" onclick="resetTaxRatesToDefault()">↺ Reset to LHDN Default</button>
+                                <button class="btn-primary" onclick="saveTaxBracketsConfiguration()">💾 Save Tax Brackets</button>
+                                <button class="btn-secondary" onclick="testTaxRatesCalculation()">🧮 Test Tax Calculation</button>
+                            </div>
+                            
+                            <!-- Non-Resident Info (simplified since flat rate) -->
+                            <div style="margin-top: 30px; padding: 15px; background: #fff8e1; border: 1px solid #ffcc80; border-radius: 5px;">
+                                <h5 style="margin-top: 0; color: #e65100;">Non-Resident Tax Rate</h5>
+                                <p style="margin: 0;">Non-residents are taxed at a flat rate of <strong id="nonResidentRateDisplay">30%</strong> on all income earned in Malaysia.</p>
                             </div>
                         </div>
                         
