@@ -77,11 +77,15 @@
                     
                     <button id="addEmployeeBtn" class="btn-primary" style="margin-bottom: 20px;">Add New Employee</button>
                     
-                    <!-- Add Employee Form (hidden by default) -->
-                    <div id="addEmployeeForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                        <h3>Add New Employee - Comprehensive Profile</h3>
-                        <p style="color: #666; margin-bottom: 15px;"><span style="color: #c0392b;">*</span> indicates required fields (Full Name, Email, and Password are the minimum required for employee registration)</p>
-                        <form id="newEmployeeForm">
+                    <!-- Add Employee Modal -->
+                    <div id="addEmployeeModal" class="modal" style="display: none;">
+                        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                            <div class="modal-header">
+                                <h3>Add New Employee - Comprehensive Profile</h3>
+                                <span class="modal-close" onclick="closeAddEmployeeModal()">&times;</span>
+                            </div>
+                            <p style="color: #666; margin-bottom: 15px;"><span style="color: #c0392b;">*</span> indicates required fields (Full Name, Email, and Password are the minimum required for employee registration)</p>
+                            <form id="newEmployeeForm">
                             <!-- Basic Information -->
                             <h4 style="margin-top: 20px; color: #667eea;">Basic Information</h4>
                             <div class="form-row">
@@ -551,6 +555,7 @@
                             
                             <div id="addEmployeeMessage" style="display: none; margin-top: 10px;"></div>
                         </form>
+                        </div>
                     </div>
                     
                     <!-- Edit Employee Modal -->
@@ -2681,18 +2686,22 @@
                     <p style="color: #666; margin-bottom: 20px;">Track employee work history including internal job changes (promotions, transfers, status changes) and previous employment at other companies.</p>
                     
                     <!-- Add Employment History Button -->
-                    <button class="btn-primary" onclick="showAddEmploymentHistoryForm()" style="margin-bottom: 20px;">
+                    <button class="btn-primary" onclick="openAddEmploymentHistoryModal()" style="margin-bottom: 20px;">
                         ➕ Add Employment History
                     </button>
                     
-                    <!-- Add Employment History Form (hidden by default) -->
-                    <div id="addEmploymentHistoryForm" class="form-section" style="display: none; margin-bottom: 30px;">
-                        <h3>Add Employment / Re-Employment History</h3>
-                        <form id="newEmploymentHistoryForm">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="empHistoryEmployeeSelect">Employee:*</label>
-                                    <select id="empHistoryEmployeeSelect" name="employee_email" required style="width: 100%; padding: 8px;">
+                    <!-- Add Employment History Modal -->
+                    <div id="addEmploymentHistoryModal" class="modal" style="display: none;">
+                        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                            <div class="modal-header">
+                                <h3>Add Employment / Re-Employment History</h3>
+                                <span class="modal-close" onclick="closeAddEmploymentHistoryModal()">&times;</span>
+                            </div>
+                            <form id="newEmploymentHistoryForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="empHistoryEmployeeSelect">Employee:*</label>
+                                        <select id="empHistoryEmployeeSelect" name="employee_email" required style="width: 100%; padding: 8px;">
                                         <option value="">Select Employee</option>
                                     </select>
                                 </div>
@@ -2847,11 +2856,12 @@
                             
                             <div style="margin-top: 15px;">
                                 <button type="submit" class="btn-primary">Save Employment History</button>
-                                <button type="button" class="btn-secondary" onclick="hideAddEmploymentHistoryForm()">Cancel</button>
+                                <button type="button" class="btn-secondary" onclick="closeAddEmploymentHistoryModal()">Cancel</button>
                             </div>
                             
                             <div id="addEmploymentHistoryMessage" style="display: none; margin-top: 10px;"></div>
                         </form>
+                        </div>
                     </div>
                     
                     <!-- Employee Selection (Quick Filter) -->

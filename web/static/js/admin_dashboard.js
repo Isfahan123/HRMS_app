@@ -1477,21 +1477,28 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupEmployeeManagement() {
         const addBtn = document.getElementById('addEmployeeBtn');
         const cancelBtn = document.getElementById('cancelAddEmployeeBtn');
-        const addForm = document.getElementById('addEmployeeForm');
+        const addModal = document.getElementById('addEmployeeModal');
         const newEmployeeForm = document.getElementById('newEmployeeForm');
         const messageDiv = document.getElementById('addEmployeeMessage');
         
+        // Open add employee modal
         addBtn.addEventListener('click', function() {
-            addForm.style.display = 'block';
-            addBtn.style.display = 'none';
+            addModal.style.display = 'block';
         });
         
+        // Cancel button closes the modal
         cancelBtn.addEventListener('click', function() {
-            addForm.style.display = 'none';
-            addBtn.style.display = 'inline-block';
+            addModal.style.display = 'none';
             newEmployeeForm.reset();
             messageDiv.style.display = 'none';
         });
+        
+        // Close modal function
+        window.closeAddEmployeeModal = function() {
+            addModal.style.display = 'none';
+            newEmployeeForm.reset();
+            messageDiv.style.display = 'none';
+        };
         
         newEmployeeForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -1603,10 +1610,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Reload employee list
                     loadEmployeeList();
                     
-                    // Hide form after a delay
+                    // Hide modal after a delay
                     setTimeout(() => {
-                        addForm.style.display = 'none';
-                        addBtn.style.display = 'inline-block';
+                        addModal.style.display = 'none';
                         messageDiv.style.display = 'none';
                     }, 2000);
                 } else {
@@ -3122,16 +3128,20 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Employment History Management Functions
-    window.showAddEmploymentHistoryForm = function() {
+    window.openAddEmploymentHistoryModal = function() {
         loadEmployeeHistorySelector();
-        document.getElementById('addEmploymentHistoryForm').style.display = 'block';
+        document.getElementById('addEmploymentHistoryModal').style.display = 'block';
     };
     
-    window.hideAddEmploymentHistoryForm = function() {
-        document.getElementById('addEmploymentHistoryForm').style.display = 'none';
+    window.closeAddEmploymentHistoryModal = function() {
+        document.getElementById('addEmploymentHistoryModal').style.display = 'none';
         document.getElementById('newEmploymentHistoryForm').reset();
         document.getElementById('addEmploymentHistoryMessage').style.display = 'none';
     };
+    
+    // Backwards compatibility aliases
+    window.showAddEmploymentHistoryForm = window.openAddEmploymentHistoryModal;
+    window.hideAddEmploymentHistoryForm = window.closeAddEmploymentHistoryModal;
     
     // Load employees into the employment history employee selector
     async function loadEmployeeHistorySelector() {
