@@ -933,10 +933,10 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
         # Map frontend field names to database column names
         # Frontend sends 'join_date' but database expects 'date_joined'
         if "join_date" in employee_data:
+            # Use join_date value only if date_joined is not already set
             if not employee_data.get("date_joined"):
-                employee_data["date_joined"] = employee_data.pop("join_date")
-            else:
-                employee_data.pop("join_date", None)
+                employee_data["date_joined"] = employee_data["join_date"]
+            del employee_data["join_date"]
         
         # Ensure employee_id is set (generate from email if not provided)
         if not employee_data.get("employee_id"):
@@ -960,12 +960,12 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
                 break
             except Exception as ie:
                 msg = str(ie)
-                m = _re.search(r"Could find the '([^']+)' column|Could not find the '([^']+)' column", msg)
+                m = _re.search(r"Could not find the '([^']+)' column", msg)
                 if not m:
                     m2 = _re.search(r"'([^']+)' column of 'employees' in the schema cache", msg)
                     missing = m2.group(1) if m2 else None
                 else:
-                    missing = m.group(1) or m.group(2)
+                    missing = m.group(1)
                 if missing and missing in payload:
                     print(f"DEBUG: Stripping unknown employees column during insert: {missing}")
                     payload.pop(missing, None)
@@ -1034,12 +1034,12 @@ def update_employee(employee_id: str, data: dict) -> dict:
                 break
             except Exception as ue:
                 msg = str(ue)
-                m = _re.search(r"Could find the '([^']+)' column|Could not find the '([^']+)' column", msg)
+                m = _re.search(r"Could not find the '([^']+)' column", msg)
                 if not m:
                     m2 = _re.search(r"'([^']+)' column of 'employees' in the schema cache", msg)
                     missing = m2.group(1) if m2 else None
                 else:
-                    missing = m.group(1) or m.group(2)
+                    missing = m.group(1)
                 if missing and missing in payload:
                     print(f"DEBUG: Stripping unknown employees column during update: {missing}")
                     payload.pop(missing, None)
