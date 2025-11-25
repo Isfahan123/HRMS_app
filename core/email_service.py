@@ -62,7 +62,11 @@ class HRMSEmailService:
         thread.start()
     
     def send_leave_request_notification(self, manager_email: str, employee_data: Dict, leave_data: Dict) -> bool:
-        """Send leave request notification to manager"""
+        """Send leave request notification to manager.
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             subject = f"Leave Request from {employee_data.get('full_name', 'Employee')} - {leave_data.get('leave_type', 'Leave')}"
             message = self._create_base_message(manager_email, subject)
@@ -166,7 +170,11 @@ class HRMSEmailService:
             return False
     
     def send_leave_status_notification(self, employee_email: str, employee_name: str, leave_data: Dict, status: str, reviewed_by: str) -> bool:
-        """Send leave status notification to employee (approved, rejected, or submitted)."""
+        """Send leave status notification to employee (approved, rejected, or submitted).
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             s = (status or "").lower()
             if s == "approved":
@@ -276,7 +284,11 @@ class HRMSEmailService:
             return False
     
     def send_payslip_notification(self, employee_email: str, employee_name: str, payslip_data: Dict, month: str, year: str) -> bool:
-        """Send payslip notification to employee"""
+        """Send payslip notification to employee.
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             subject = f"Payslip Available - {month} {year}"
             message = self._create_base_message(employee_email, subject)
@@ -347,7 +359,11 @@ class HRMSEmailService:
             return False
     
     def send_admin_leave_request_notification(self, admin_email: str, employee_data: Dict, leave_data: Dict, submitted_by: str) -> bool:
-        """Send leave request notification when admin submits on behalf of employee"""
+        """Send leave request notification when admin submits on behalf of employee.
+        
+        Note: Email is sent asynchronously in a background thread.
+        Returns True if the email was queued successfully, not when it's actually sent.
+        """
         try:
             subject = f"Leave Request Submitted by Admin for {employee_data.get('full_name', 'Employee')} - {leave_data.get('leave_type', 'Leave')}"
             message = self._create_base_message(admin_email, subject)
