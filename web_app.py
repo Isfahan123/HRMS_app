@@ -58,6 +58,7 @@ from services.supabase_training_overseas import (
     fetch_overseas_work_trip_records
 )
 from services.supabase_employee_history import (
+    insert_employee_history_record,
     update_employee_history_record,
     delete_employee_history_record
 )
@@ -1515,9 +1516,9 @@ async def create_employment_history(request: Request):
         employee_id = employee_response.data[0]['id']
         
         # Create employment history record with all fields from Python GUI
+        # Note: employee_email is not stored in employee_history table, only employee_id
         history_record = {
             "employee_id": employee_id,
-            "employee_email": data['employee_email'],
             "company": data.get('company', ''),  # Optional: empty for internal history
             "job_title": data['job_title'],
             "position": data.get('position', ''),
@@ -1530,12 +1531,12 @@ async def create_employment_history(request: Request):
             "start_date": data['start_date'],
             "end_date": data.get('end_date', None),  # None means currently employed
             "notes": data.get('notes', ''),
-            "created_at": datetime.utcnow().isoformat(),
         }
         
-        response = supabase.table("employee_history").insert(history_record).execute()
+        # Use resilient insert function that handles schema mismatches
+        response = insert_employee_history_record(history_record)
         
-        if response.data:
+        if response and hasattr(response, 'data') and response.data:
             return {"success": True, "message": "Employment history recorded successfully", "data": response.data[0]}
         else:
             return {"success": False, "message": "Failed to record employment history"}
@@ -3187,12 +3188,20 @@ async def location_autocomplete(query: str, country: Optional[str] = None):
         if not query or len(query.strip()) < 3:
             return {"success": True, "data": []}
         
-        # Geoapify API configuration
+        # Geoapify API configuration - use same key as Python GUI
         GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_KEY')
+        if not GEOAPIFY_API_KEY:
+            # Fallback to the key from places_autocomplete.py (same as Python GUI)
+            try:
+                from gui.places_autocomplete import GEOAPIFY_API_KEY as GUI_KEY
+                GEOAPIFY_API_KEY = GUI_KEY
+            except ImportError:
+                GEOAPIFY_API_KEY = None
+        
         if not GEOAPIFY_API_KEY:
             return {
                 "success": False,
-                "message": "Location service not configured. Please set GEOAPIFY_KEY environment variable.",
+                "message": "Location service not configured.",
                 "data": []
             }
         

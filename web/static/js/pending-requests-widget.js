@@ -180,7 +180,7 @@ class PendingRequestsWidget {
 // Navigation helper functions
 function navigateToLeaveRequests() {
     // Switch to Leaves tab and Pending subtab
-    const leaveTab = document.querySelector('[data-tab="leaves"]');
+    const leaveTab = document.querySelector('[data-tab="leave"]');
     if (leaveTab) {
         leaveTab.click();
         setTimeout(() => {
@@ -203,10 +203,14 @@ function navigateToBonuses() {
 }
 
 function navigateToEngagements() {
-    // Switch to Activities tab
-    const activitiesTab = document.querySelector('[data-tab="activities"]');
-    if (activitiesTab) {
-        activitiesTab.click();
+    // Switch to Engagements (Activities) tab and View subtab
+    const engagementsTab = document.querySelector('[data-tab="engagements"]');
+    if (engagementsTab) {
+        engagementsTab.click();
+        setTimeout(() => {
+            const viewSubtab = document.querySelector('[data-subtab="engagementsView"]');
+            if (viewSubtab) viewSubtab.click();
+        }, 100);
     }
 }
 

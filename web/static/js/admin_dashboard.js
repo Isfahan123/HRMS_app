@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load approved/rejected leave requests
-    async function loadApprovedRejectedLeaveRequests(statusFilter = '') {
+    async function loadApprovedRejectedLeaveRequests(statusFilter = '', typeFilter = '', employeeFilter = '', startDateFilter = '', endDateFilter = '') {
         try {
             const response = await fetch('/api/admin/leave-requests');
             const data = await response.json();
@@ -395,8 +395,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     filteredRequests = filteredRequests.filter(r => r.status === statusFilter);
                 }
                 
+                // Apply leave type filter if specified
+                if (typeFilter) {
+                    filteredRequests = filteredRequests.filter(r => 
+                        (r.leave_type || '').toLowerCase() === typeFilter.toLowerCase()
+                    );
+                }
+                
+                // Apply employee filter if specified
+                if (employeeFilter) {
+                    const searchTerm = employeeFilter.toLowerCase();
+                    filteredRequests = filteredRequests.filter(r => {
+                        const employeeName = (r.employees?.full_name || r.employee_email || r.email || '').toLowerCase();
+                        return employeeName.includes(searchTerm);
+                    });
+                }
+                
+                // Apply date range filter if specified
+                if (startDateFilter) {
+                    filteredRequests = filteredRequests.filter(r => 
+                        r.start_date && r.start_date >= startDateFilter
+                    );
+                }
+                if (endDateFilter) {
+                    filteredRequests = filteredRequests.filter(r => 
+                        r.end_date && r.end_date <= endDateFilter
+                    );
+                }
+                
                 if (filteredRequests.length === 0) {
-                    container.innerHTML = '<p>No approved/rejected leave requests found.</p>';
+                    container.innerHTML = '<p>No approved/rejected leave requests found matching the filters.</p>';
                     return;
                 }
                 
@@ -422,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 html += '</tbody></table>';
+                html += `<p style="margin-top: 10px; color: #666;">Showing ${filteredRequests.length} leave request(s)</p>`;
                 container.innerHTML = html;
             } else {
                 container.innerHTML = '<p>No leave requests found.</p>';
@@ -438,7 +467,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (filterLeaveBtn) {
         filterLeaveBtn.addEventListener('click', () => {
             const statusFilter = document.getElementById('leaveStatusFilter')?.value || '';
-            loadApprovedRejectedLeaveRequests(statusFilter);
+            const typeFilter = document.getElementById('leaveTypeFilter')?.value || '';
+            const employeeFilter = document.getElementById('leaveEmployeeFilter')?.value || '';
+            const startDateFilter = document.getElementById('leaveStartDateFilter')?.value || '';
+            const endDateFilter = document.getElementById('leaveEndDateFilter')?.value || '';
+            loadApprovedRejectedLeaveRequests(statusFilter, typeFilter, employeeFilter, startDateFilter, endDateFilter);
         });
     }
     
@@ -446,6 +479,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (clearLeaveFilterBtn) {
         clearLeaveFilterBtn.addEventListener('click', () => {
             document.getElementById('leaveStatusFilter').value = '';
+            if (document.getElementById('leaveTypeFilter')) document.getElementById('leaveTypeFilter').value = '';
+            if (document.getElementById('leaveEmployeeFilter')) document.getElementById('leaveEmployeeFilter').value = '';
+            if (document.getElementById('leaveStartDateFilter')) document.getElementById('leaveStartDateFilter').value = '';
+            if (document.getElementById('leaveEndDateFilter')) document.getElementById('leaveEndDateFilter').value = '';
             loadApprovedRejectedLeaveRequests();
         });
     }
@@ -902,7 +939,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success && data.data) {
-                const record = data.data.find(r => r.id === recordId);
+                // Convert recordId to string for comparison (handles both UUID and numeric IDs)
+                const recordIdStr = String(recordId);
+                const record = data.data.find(r => String(r.id) === recordIdStr);
                 if (!record) {
                     alert('Record not found');
                     return;
