@@ -47,7 +47,9 @@ from services.supabase_service import (
     update_payroll_settings,
     get_monthly_deductions,
     upsert_monthly_deductions,
-    get_variable_percentage_config
+    get_variable_percentage_config,
+    get_attendance_settings,
+    update_attendance_settings
 )
 from services.supabase_engagements import (
     fetch_engagements, 
@@ -563,6 +565,39 @@ async def get_all_attendance():
         return {"success": True, "data": attendance_data}
     except Exception as e:
         print(f"Error fetching all attendance: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/attendance-settings")
+async def get_attendance_settings_api():
+    """
+    Get attendance/working hours settings
+    """
+    try:
+        settings = get_attendance_settings()
+        return {"success": True, "data": settings}
+    except Exception as e:
+        print(f"Error fetching attendance settings: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/admin/attendance-settings")
+async def update_attendance_settings_api(request: Request):
+    """
+    Update attendance/working hours settings
+    """
+    try:
+        data = await request.json()
+        start_time = data.get("work_start", "09:00")
+        end_time = data.get("work_end", "18:00")
+        limit_time = data.get("clock_in_limit", "09:30")
+        
+        success = update_attendance_settings(start_time, end_time, limit_time)
+        
+        if success:
+            return {"success": True, "message": "Working hours updated successfully"}
+        else:
+            return {"success": False, "message": "Failed to update working hours"}
+    except Exception as e:
+        print(f"Error updating attendance settings: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.get("/api/admin/leave-requests")

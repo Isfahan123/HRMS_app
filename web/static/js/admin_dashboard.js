@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupBonusManagement();
     setupExportHandlers();
     setupTableSorting();
+    setupAttendanceSettings();
     
     async function initializeAdminDashboard() {
         try {
@@ -274,6 +275,95 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (indicator) {
                     indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
                 }
+            }
+        }
+    }
+    
+    // Setup attendance settings save/load
+    function setupAttendanceSettings() {
+        // Load current settings when page loads
+        loadAttendanceSettings();
+        
+        // Handle save button click
+        const saveBtn = document.getElementById('saveWorkingHoursBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveAttendanceSettings);
+        }
+    }
+    
+    async function loadAttendanceSettings() {
+        try {
+            const response = await fetch('/api/admin/attendance-settings');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const settings = data.data;
+                
+                // Populate form fields
+                const clockIn = document.getElementById('clockInTime');
+                const clockOut = document.getElementById('clockOutTime');
+                const clockInLimit = document.getElementById('clockInLimit');
+                
+                if (clockIn && settings.work_start) clockIn.value = settings.work_start;
+                if (clockOut && settings.work_end) clockOut.value = settings.work_end;
+                if (clockInLimit && settings.clock_in_limit) clockInLimit.value = settings.clock_in_limit;
+            }
+        } catch (error) {
+            console.error('Error loading attendance settings:', error);
+        }
+    }
+    
+    async function saveAttendanceSettings() {
+        const clockIn = document.getElementById('clockInTime');
+        const clockOut = document.getElementById('clockOutTime');
+        const clockInLimit = document.getElementById('clockInLimit');
+        const messageDiv = document.getElementById('workingHoursMessage');
+        
+        if (!clockIn || !clockOut || !clockInLimit) {
+            console.error('Attendance settings form elements not found');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/admin/attendance-settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    work_start: clockIn.value,
+                    work_end: clockOut.value,
+                    clock_in_limit: clockInLimit.value
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (messageDiv) {
+                if (data.success) {
+                    messageDiv.style.display = 'block';
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = '✅ Working hours saved successfully!';
+                } else {
+                    messageDiv.style.display = 'block';
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = '❌ ' + (data.message || 'Failed to save working hours');
+                }
+                
+                // Hide message after 3 seconds
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Error saving attendance settings:', error);
+            if (messageDiv) {
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = '❌ Error saving working hours';
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 3000);
             }
         }
     }
