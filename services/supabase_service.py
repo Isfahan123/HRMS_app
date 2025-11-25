@@ -930,6 +930,12 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
         employee_data["created_at"] = datetime.now(KL_TZ).isoformat()
         employee_data["religion"] = employee_data.get("religion", "Other")
         
+        # Normalize empty-string date fields to None to avoid database errors
+        # Error code 22007: invalid input syntax for type date: ""
+        for date_field in ("date_of_birth", "join_date", "date_joined"):
+            if date_field in employee_data and employee_data[date_field] == "":
+                employee_data[date_field] = None
+        
         # Map frontend field names to database column names
         # Frontend sends 'join_date' but database expects 'date_joined'
         if "join_date" in employee_data:
@@ -1005,9 +1011,18 @@ def update_employee(employee_id: str, data: dict) -> dict:
             if bad in employee_data:
                 employee_data.pop(bad, None)
         # Normalize empty-string fields to None to avoid storing empty strings in DB
-        for _k in ("work_status", "payroll_status", "functional_group", "position"):
+        # This includes date fields to prevent error code 22007: invalid input syntax for type date: ""
+        for _k in ("work_status", "payroll_status", "functional_group", "position", 
+                   "date_of_birth", "join_date", "date_joined"):
             if _k in employee_data and employee_data[_k] == "":
                 employee_data[_k] = None
+        
+        # Map frontend field name to database column name
+        # Frontend sends 'join_date' but database expects 'date_joined'
+        if "join_date" in employee_data:
+            if not employee_data.get("date_joined"):
+                employee_data["date_joined"] = employee_data["join_date"]
+            del employee_data["join_date"]
         employee_data["updated_at"] = datetime.now(pytz.UTC).isoformat()
         employee_data["religion"] = employee_data.get("religion", "Other")
 
