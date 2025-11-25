@@ -750,7 +750,7 @@ table tr:hover {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 10001;
     left: 0;
     top: 0;
     width: 100%;
@@ -792,6 +792,9 @@ table tr:hover {
     padding: 4px 8px;
     font-size: 0.85em;
     margin-right: 5px;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
 }
 
 .btn-success {
