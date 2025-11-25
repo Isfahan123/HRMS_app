@@ -1473,6 +1473,12 @@
                                             Requires Document (e.g., medical certificate)
                                         </label>
                                     </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="leaveTypeIsActive" checked>
+                                            Active (visible and available for leave requests)
+                                        </label>
+                                    </div>
                                     <div style="margin-top: 20px;">
                                         <button type="submit" class="btn-primary">💾 Save</button>
                                         <button type="button" class="btn-secondary" onclick="closeLeaveTypeModal()">Cancel</button>
@@ -1500,6 +1506,11 @@
                                         <label for="entitlementTier">Employee Tier: *</label>
                                         <select id="entitlementTier" required style="width: 100%; padding: 8px;">
                                             <option value="">Select Tier</option>
+                                            <!-- Years of Service Tiers (matching Python GUI) -->
+                                            <option value="lt2">< 2 years service</option>
+                                            <option value="2to5">2 - 5 years service</option>
+                                            <option value="gt5">> 5 years service</option>
+                                            <!-- Position-based Tiers (legacy) -->
                                             <option value="junior">Junior Staff / Entry Level</option>
                                             <option value="mid">Mid-Level Staff</option>
                                             <option value="senior">Senior Staff</option>

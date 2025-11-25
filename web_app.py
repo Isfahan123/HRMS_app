@@ -2,7 +2,7 @@
 Web application entry point for HRMS
 This provides a web-based interface using HTML/JavaScript with Python backend
 """
-from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File, Query
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -2068,6 +2068,11 @@ async def create_leave_type(data: Dict[str, Any]):
             "description": data.get("description", ""),
             "requires_approval": data.get("requires_approval", True),
             "is_paid": data.get("is_paid", True),
+            "is_active": data.get("is_active", True),
+            "deduct_from": data.get("deduct_from", "none"),
+            "requires_document": data.get("requires_document", False),
+            "default_duration": data.get("default_duration", 1.0),
+            "max_duration": data.get("max_duration", 14.0),
             "created_at": datetime.utcnow().isoformat()
         }
         
@@ -2087,10 +2092,16 @@ async def update_leave_type(type_id: int, data: Dict[str, Any]):
     try:
         leave_type = {
             "name": data.get("name"),
+            "code": data.get("code"),
             "color": data.get("color"),
             "description": data.get("description"),
             "requires_approval": data.get("requires_approval"),
             "is_paid": data.get("is_paid"),
+            "is_active": data.get("is_active"),
+            "deduct_from": data.get("deduct_from"),
+            "requires_document": data.get("requires_document"),
+            "default_duration": data.get("default_duration"),
+            "max_duration": data.get("max_duration"),
             "updated_at": datetime.utcnow().isoformat()
         }
         
@@ -2121,101 +2132,141 @@ async def delete_leave_type(type_id: int):
         print(f"Error deleting leave type: {str(e)}")
         return {"success": False, "message": str(e)}
 
+# Default multiplier for max accumulation calculation (3x the entitlement days)
+DEFAULT_MAX_ACCUMULATION_MULTIPLIER = 3
+
 @app.get("/api/admin/leave-entitlements")
 async def get_leave_entitlements():
-    """Get leave entitlements/caps"""
+    """Get leave entitlements/caps - returns per leave-type per tier format"""
     try:
         # Get tiers and caps from the actual database structure
         tiers_response = supabase.table("leave_caps_tiers").select("*").execute()
         caps_response = supabase.table("leave_caps").select("*").execute()
         
-        # Transform to expected format
-        entitlements = []
+        # Get leave types for name lookup
+        leave_types_response = supabase.table("leave_types").select("*").execute()
+        leave_type_names = {}
+        if leave_types_response.data:
+            for lt in leave_types_response.data:
+                leave_type_names[lt.get("code", "").lower()] = lt.get("name", lt.get("code", ""))
+        
+        # Create tier lookup for labels
+        tier_labels = {}
+        tier_id_to_label = {}
         if tiers_response.data:
             for tier in tiers_response.data:
-                tier_caps = [cap for cap in caps_response.data if cap.get("tier_id") == tier.get("id")]
+                tier_id = tier.get("id")
+                tier_labels[tier_id] = tier.get("label", f"{tier.get('min_years', 0)}-{tier.get('max_years', 99)} years")
+                tier_id_to_label[tier_id] = tier_labels[tier_id]
+        
+        # Transform to expected format: one entry per leave_type per tier
+        entitlements = []
+        entry_id = 1
+        
+        if caps_response.data:
+            for cap in caps_response.data:
+                tier_id = cap.get("tier_id")
+                leave_type_code = cap.get("leave_type", "").lower()
+                cap_value = cap.get("cap", 0) or 0
                 
-                # Create entitlement entry for this tier
-                entitlement = {
-                    "id": tier.get("id"),
-                    "position_level": tier.get("label"),
-                    "min_years": tier.get("min_years", 0),
-                    "max_years": tier.get("max_years", 9999),
-                    "annual_leave_days": 0,
-                    "sick_leave_days": 0,
-                    "carry_forward_max": 0
-                }
+                # Get leave type name from database or capitalize code
+                leave_type_name = leave_type_names.get(leave_type_code, leave_type_code.capitalize() + " Leave")
                 
-                # Extract specific leave types from caps
-                for cap in tier_caps:
-                    leave_type = cap.get("leave_type", "").lower()
-                    cap_value = cap.get("cap", 0)
-                    
-                    if "annual" in leave_type:
-                        entitlement["annual_leave_days"] = cap_value
-                    elif "sick" in leave_type:
-                        entitlement["sick_leave_days"] = cap_value
-                    elif "carry" in leave_type or "forward" in leave_type:
-                        entitlement["carry_forward_max"] = cap_value
+                # Get tier label
+                tier_label = tier_id_to_label.get(tier_id, tier_id)
                 
-                entitlements.append(entitlement)
+                entitlements.append({
+                    "id": entry_id,
+                    "leave_type_code": leave_type_code,
+                    "leave_type_name": leave_type_name,
+                    "employee_tier": tier_id,
+                    "tier_label": tier_label,
+                    "days_entitlement": cap_value,
+                    "max_accumulation": cap.get("max_accumulation") or cap_value * DEFAULT_MAX_ACCUMULATION_MULTIPLIER
+                })
+                entry_id += 1
         
         return {"success": True, "data": entitlements}
     except Exception as e:
         print(f"Error fetching leave entitlements: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return {"success": False, "message": str(e), "data": []}
 
 @app.post("/api/admin/leave-entitlements")
 async def create_leave_entitlement(data: Dict[str, Any]):
-    """Create a leave entitlement rule"""
+    """Create a leave entitlement rule in leave_caps table"""
     try:
-        entitlement = {
-            "leave_type_id": data["leave_type_id"],
-            "employee_level": data.get("employee_level", "all"),
-            "annual_days": data["annual_days"],
-            "carry_forward_days": data.get("carry_forward_days", 0),
-            "effective_year": data.get("effective_year", 2024),
-            "created_at": datetime.utcnow().isoformat()
-        }
+        leave_type_code = data.get("leave_type_code")
+        tier_id = data.get("employee_tier")
+        days_entitlement = data.get("days_entitlement", 0)
         
-        response = supabase.table("leave_entitlements").insert(entitlement).execute()
+        if not leave_type_code or not tier_id:
+            return {"success": False, "message": "leave_type_code and employee_tier are required"}
         
-        if response.data:
-            return {"success": True, "message": "Leave entitlement created successfully", "data": response.data[0]}
+        # Check if this combination already exists
+        existing = supabase.table("leave_caps").select("*").eq("tier_id", tier_id).eq("leave_type", leave_type_code).execute()
+        
+        if existing.data and len(existing.data) > 0:
+            # Update existing record
+            response = supabase.table("leave_caps").update({
+                "cap": days_entitlement
+            }).eq("tier_id", tier_id).eq("leave_type", leave_type_code).execute()
+            
+            if response.data:
+                return {"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to create leave entitlement"}
+            # Insert new record
+            response = supabase.table("leave_caps").insert({
+                "tier_id": tier_id,
+                "leave_type": leave_type_code,
+                "cap": days_entitlement
+            }).execute()
+            
+            if response.data:
+                return {"success": True, "message": "Leave entitlement created successfully", "data": response.data[0]}
+        
+        return {"success": False, "message": "Failed to create/update leave entitlement"}
     except Exception as e:
         print(f"Error creating leave entitlement: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.put("/api/admin/leave-entitlements/{entitlement_id}")
 async def update_leave_entitlement(entitlement_id: int, data: Dict[str, Any]):
-    """Update a leave entitlement rule"""
+    """Update a leave entitlement rule in leave_caps table"""
     try:
-        entitlement = {
-            "annual_days": data.get("annual_days"),
-            "carry_forward_days": data.get("carry_forward_days"),
-            "updated_at": datetime.utcnow().isoformat()
-        }
+        leave_type_code = data.get("leave_type_code")
+        tier_id = data.get("employee_tier")
+        days_entitlement = data.get("days_entitlement")
         
-        # Remove None values
-        entitlement = {k: v for k, v in entitlement.items() if v is not None}
-        
-        response = supabase.table("leave_entitlements").update(entitlement).eq("id", entitlement_id).execute()
-        
-        if response.data:
-            return {"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]}
+        if leave_type_code and tier_id:
+            # Update by tier_id and leave_type combination
+            response = supabase.table("leave_caps").update({
+                "cap": days_entitlement
+            }).eq("tier_id", tier_id).eq("leave_type", leave_type_code).execute()
+            
+            if response.data:
+                return {"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]}
+            else:
+                return {"success": False, "message": "Leave entitlement not found"}
         else:
-            return {"success": False, "message": "Leave entitlement not found"}
+            return {"success": False, "message": "leave_type_code and employee_tier are required for update"}
     except Exception as e:
         print(f"Error updating leave entitlement: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.delete("/api/admin/leave-entitlements/{entitlement_id}")
-async def delete_leave_entitlement(entitlement_id: int):
-    """Delete a leave entitlement rule"""
+async def delete_leave_entitlement(
+    entitlement_id: int, 
+    leave_type_code: Optional[str] = Query(None, description="Leave type code for identifying the entitlement"),
+    employee_tier: Optional[str] = Query(None, description="Employee tier ID for identifying the entitlement")
+):
+    """Delete a leave entitlement rule from leave_caps table"""
     try:
-        response = supabase.table("leave_entitlements").delete().eq("id", entitlement_id).execute()
+        if leave_type_code and employee_tier:
+            # Delete by tier_id and leave_type
+            response = supabase.table("leave_caps").delete().eq("tier_id", employee_tier).eq("leave_type", leave_type_code).execute()
+        else:
+            # Fallback: try to delete by record id if available
+            response = supabase.table("leave_caps").delete().eq("id", entitlement_id).execute()
         
         if response.data:
             return {"success": True, "message": "Leave entitlement deleted successfully"}
@@ -2224,6 +2275,33 @@ async def delete_leave_entitlement(entitlement_id: int):
     except Exception as e:
         print(f"Error deleting leave entitlement: {str(e)}")
         return {"success": False, "message": str(e)}
+
+@app.get("/api/admin/leave-tiers")
+async def get_leave_tiers():
+    """Get leave entitlement tiers (years of service)"""
+    try:
+        response = supabase.table("leave_caps_tiers").select("*").order("min_years", desc=False).execute()
+        
+        if response.data:
+            tiers = []
+            for tier in response.data:
+                tiers.append({
+                    "id": tier.get("id"),
+                    "label": tier.get("label"),
+                    "min_years": tier.get("min_years", 0),
+                    "max_years": tier.get("max_years", 99)
+                })
+            return {"success": True, "data": tiers}
+        else:
+            # Return default tiers if none exist
+            return {"success": True, "data": [
+                {"id": "lt2", "label": "< 2 years", "min_years": 0, "max_years": 1.99},
+                {"id": "2to5", "label": "2 - 5 years", "min_years": 2, "max_years": 5},
+                {"id": "gt5", "label": "> 5 years", "min_years": 5.01, "max_years": 100}
+            ]}
+    except Exception as e:
+        print(f"Error fetching leave tiers: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
 
 # ====================
 # Leave Policies Endpoints
