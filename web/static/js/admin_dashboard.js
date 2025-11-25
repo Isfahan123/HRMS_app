@@ -3945,39 +3945,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (halfDayCheckbox && halfDayPeriod && durationInput) {
             halfDayCheckbox.addEventListener('change', function() {
                 if (this.checked) {
-                    // Half-day selected: lock duration to 0.5 and disable editing
-                    durationInput.value = 0.5;
+                    // Half-day selected: enable 0.5 step for fractional days (e.g., 0.5, 1.5, 2.5)
                     durationInput.min = 0.5;
-                    durationInput.max = 0.5;
                     durationInput.step = 0.5;
-                    durationInput.readOnly = true;
-                    durationInput.style.backgroundColor = '#f0f0f0';
-                    
-                    // For half-day, set end date same as start date and disable it
-                    const startDate = document.getElementById('adminLeaveStartDate');
-                    if (startDate && endDateInput && startDate.value) {
-                        endDateInput.value = startDate.value;
-                    }
-                    if (endDateInput) {
-                        endDateInput.readOnly = true;
-                        endDateInput.style.backgroundColor = '#f0f0f0';
-                    }
+                    // If current value is whole number, keep it; otherwise allow fractional
                     updateWorkingDaysDisplay();
                 } else {
-                    // Full day selected: restore normal duration input
+                    // Full day selected: only allow whole days
                     durationInput.min = 1;
-                    durationInput.max = 365;
-                    durationInput.step = 0.5;
-                    durationInput.readOnly = false;
-                    durationInput.style.backgroundColor = '';
-                    if (durationInput.value < 1) {
-                        durationInput.value = 1;
+                    durationInput.step = 1;
+                    // Round up to nearest whole day if currently fractional
+                    const currentVal = parseFloat(durationInput.value);
+                    if (currentVal % 1 !== 0) {
+                        durationInput.value = Math.ceil(currentVal);
                     }
-                    
-                    // Re-enable end date
-                    if (endDateInput) {
-                        endDateInput.readOnly = false;
-                        endDateInput.style.backgroundColor = '';
+                    if (parseFloat(durationInput.value) < 1) {
+                        durationInput.value = 1;
                     }
                     updateWorkingDaysDisplay();
                 }
@@ -4041,21 +4024,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const display = document.getElementById('adminWorkingDaysDisplay');
             const halfDay = document.getElementById('adminLeaveHalfDay');
             const stateSelect = document.getElementById('adminLeaveState');
+            const durationInput = document.getElementById('adminLeaveDuration');
             
             if (!startDate || !endDate) {
                 display.textContent = 'Working days: - (excludes weekends & holidays)';
-                return;
-            }
-            
-            // For half-day leave, validate that start and end dates are the same
-            if (halfDay && halfDay.checked) {
-                if (startDate !== endDate) {
-                    display.textContent = 'Half-day leave must have same start and end date';
-                    display.style.color = '#d32f2f';
-                } else {
-                    display.textContent = 'Working days: 0.5 (half-day)';
-                    display.style.color = '#555';
-                }
                 return;
             }
             
@@ -4077,7 +4049,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 
                 if (data.success) {
-                    display.textContent = `Working days: ${data.working_days} (excludes weekends & holidays)`;
+                    // Check if half-day is selected and show duration input value for fractional days
+                    const currentDuration = durationInput ? parseFloat(durationInput.value) : data.working_days;
+                    const isHalfDayEnabled = halfDay && halfDay.checked;
+                    
+                    if (isHalfDayEnabled && currentDuration % 1 !== 0) {
+                        display.textContent = `Working days: ${currentDuration} (includes half-day, excludes weekends & holidays)`;
+                    } else {
+                        display.textContent = `Working days: ${data.working_days} (excludes weekends & holidays)`;
+                    }
                 } else {
                     // Fallback to local calculation
                     const days = calculateWorkingDays(startDate, endDate);
