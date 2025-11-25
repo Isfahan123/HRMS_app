@@ -348,9 +348,9 @@ async def create_engagement(request: Request):
         
         # Determine which table to insert into based on type
         if data['type'] in ['training', 'course']:
-            table_name = "training_courses"
+            table_name = "training_course_records"
         elif data['type'] == 'overseas_trip':
-            table_name = "overseas_trips"
+            table_name = "overseas_work_trip_records"
         else:
             table_name = "engagements"
         
@@ -374,7 +374,7 @@ async def get_all_engagements():
         
         # Fetch from all engagement tables
         try:
-            training_response = supabase.table("training_courses").select("*").order("created_at", desc=True).limit(100).execute()
+            training_response = supabase.table("training_course_records").select("*").order("created_at", desc=True).limit(100).execute()
             if training_response.data:
                 for record in training_response.data:
                     record['type'] = 'training'
@@ -383,7 +383,7 @@ async def get_all_engagements():
             pass
         
         try:
-            trips_response = supabase.table("overseas_trips").select("*").order("created_at", desc=True).limit(100).execute()
+            trips_response = supabase.table("overseas_work_trip_records").select("*").order("created_at", desc=True).limit(100).execute()
             if trips_response.data:
                 for record in trips_response.data:
                     record['type'] = 'overseas_trip'
@@ -433,7 +433,7 @@ async def update_engagement_record(engagement_id: str, request: Request):
         
         # Try training_courses table
         try:
-            response = supabase.table("training_courses").update(data).eq("id", engagement_id).execute()
+            response = supabase.table("training_course_records").update(data).eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Training course updated successfully", "data": response.data[0]}
             success = True
@@ -442,7 +442,7 @@ async def update_engagement_record(engagement_id: str, request: Request):
         
         # Try overseas_trips table
         try:
-            response = supabase.table("overseas_trips").update(data).eq("id", engagement_id).execute()
+            response = supabase.table("overseas_work_trip_records").update(data).eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Overseas trip updated successfully", "data": response.data[0]}
             success = True
@@ -478,7 +478,7 @@ async def delete_engagement_record(engagement_id: str):
         
         # Try training_courses table
         try:
-            response = supabase.table("training_courses").delete().eq("id", engagement_id).execute()
+            response = supabase.table("training_course_records").delete().eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Training course deleted successfully"}
             deleted = True
@@ -487,7 +487,7 @@ async def delete_engagement_record(engagement_id: str):
         
         # Try overseas_trips table
         try:
-            response = supabase.table("overseas_trips").delete().eq("id", engagement_id).execute()
+            response = supabase.table("overseas_work_trip_records").delete().eq("id", engagement_id).execute()
             if response.data:
                 return {"success": True, "message": "Overseas trip deleted successfully"}
             deleted = True
@@ -1135,19 +1135,19 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
 @app.get("/api/admin/variable-percentage")
 async def get_variable_percentage_rules():
     """
-    Get all variable percentage rules
+    Get all variable percentage configurations (same table as Python GUI)
     """
     try:
-        response = supabase.table("variable_percentage_rules").select("*").order("created_at", desc=True).execute()
+        response = supabase.table("variable_percentage_configs").select("*").order("created_at", desc=True).execute()
         return {"success": True, "data": response.data or []}
     except Exception as e:
-        print(f"Error getting variable percentage rules: {str(e)}")
+        print(f"Error getting variable percentage configs: {str(e)}")
         return {"success": False, "message": str(e), "data": []}
 
 @app.post("/api/admin/variable-percentage")
 async def create_variable_percentage_rule(request: Request):
     """
-    Create a new variable percentage rule
+    Create a new variable percentage configuration
     """
     try:
         data = await request.json()
@@ -1169,20 +1169,20 @@ async def create_variable_percentage_rule(request: Request):
         # Add timestamp
         data['created_at'] = datetime.utcnow().isoformat()
         
-        response = supabase.table("variable_percentage_rules").insert(data).execute()
+        response = supabase.table("variable_percentage_configs").insert(data).execute()
         
         if response.data:
-            return {"success": True, "message": "Variable percentage rule created successfully", "data": response.data[0]}
+            return {"success": True, "message": "Variable percentage config created successfully", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to create rule"}
+            return {"success": False, "message": "Failed to create config"}
     except Exception as e:
-        print(f"Error creating variable percentage rule: {str(e)}")
+        print(f"Error creating variable percentage config: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.put("/api/admin/variable-percentage/{rule_id}")
 async def update_variable_percentage_rule(rule_id: str, request: Request):
     """
-    Update an existing variable percentage rule
+    Update an existing variable percentage configuration
     """
     try:
         data = await request.json()
@@ -1194,30 +1194,30 @@ async def update_variable_percentage_rule(rule_id: str, request: Request):
         # Add updated timestamp
         data['updated_at'] = datetime.utcnow().isoformat()
         
-        response = supabase.table("variable_percentage_rules").update(data).eq("id", rule_id).execute()
+        response = supabase.table("variable_percentage_configs").update(data).eq("id", rule_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Rule updated successfully", "data": response.data[0]}
+            return {"success": True, "message": "Config updated successfully", "data": response.data[0]}
         else:
-            return {"success": False, "message": "Failed to update rule"}
+            return {"success": False, "message": "Failed to update config"}
     except Exception as e:
-        print(f"Error updating variable percentage rule: {str(e)}")
+        print(f"Error updating variable percentage config: {str(e)}")
         return {"success": False, "message": str(e)}
 
 @app.delete("/api/admin/variable-percentage/{rule_id}")
 async def delete_variable_percentage_rule(rule_id: str):
     """
-    Delete a variable percentage rule
+    Delete a variable percentage configuration
     """
     try:
-        response = supabase.table("variable_percentage_rules").delete().eq("id", rule_id).execute()
+        response = supabase.table("variable_percentage_configs").delete().eq("id", rule_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Rule deleted successfully"}
+            return {"success": True, "message": "Config deleted successfully"}
         else:
-            return {"success": False, "message": "Failed to delete rule"}
+            return {"success": False, "message": "Failed to delete config"}
     except Exception as e:
-        print(f"Error deleting variable percentage rule: {str(e)}")
+        print(f"Error deleting variable percentage config: {str(e)}")
         return {"success": False, "message": str(e)}
 
 # Skipped Payroll API Endpoint
@@ -2623,7 +2623,7 @@ async def export_engagements_csv():
         
         # Fetch from all engagement tables
         try:
-            training_response = supabase.table("training_courses").select("*").order("created_at", desc=True).limit(1000).execute()
+            training_response = supabase.table("training_course_records").select("*").order("created_at", desc=True).limit(1000).execute()
             if training_response.data:
                 for record in training_response.data:
                     record['type'] = 'training'
@@ -2632,7 +2632,7 @@ async def export_engagements_csv():
             pass
         
         try:
-            trips_response = supabase.table("overseas_trips").select("*").order("created_at", desc=True).limit(1000).execute()
+            trips_response = supabase.table("overseas_work_trip_records").select("*").order("created_at", desc=True).limit(1000).execute()
             if trips_response.data:
                 for record in trips_response.data:
                     record['type'] = 'overseas_trip'
