@@ -1585,7 +1585,7 @@ async def update_employment_history(record_id: str, request: Request):
         data.pop('created_at', None)
         
         # Convert empty string end_date to None (for optional date field)
-        if 'end_date' in data and data['end_date'] in ('', None):
+        if 'end_date' in data and data['end_date'] == '':
             data['end_date'] = None
         
         # Update the record using the service
