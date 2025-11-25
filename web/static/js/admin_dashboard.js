@@ -3146,6 +3146,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
             
             if (data.success && data.data && data.data.length > 0) {
+                // Store employees data for pre-fill functionality
+                window.employeeHistoryData = data.data;
+                
                 selectors.forEach(selector => {
                     if (!selector) return;
                     // Different default text for the quick select
@@ -3165,6 +3168,40 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error loading employees for employment history:', error);
         }
+    }
+    
+    // Pre-fill employment history form when an employee is selected
+    const empHistoryEmployeeSelect = document.getElementById('empHistoryEmployeeSelect');
+    if (empHistoryEmployeeSelect) {
+        empHistoryEmployeeSelect.addEventListener('change', async function() {
+            const selectedEmail = this.value;
+            if (!selectedEmail) {
+                // Clear pre-filled fields when no employee is selected
+                document.getElementById('empHistoryDepartment').value = '';
+                document.getElementById('empHistoryPosition').value = '';
+                document.getElementById('empHistoryJobTitle').value = '';
+                return;
+            }
+            
+            // Find the employee in the cached data
+            const employee = (window.employeeHistoryData || []).find(emp => emp.email === selectedEmail);
+            if (employee) {
+                // Pre-fill fields with employee's current data
+                const departmentField = document.getElementById('empHistoryDepartment');
+                const positionField = document.getElementById('empHistoryPosition');
+                const jobTitleField = document.getElementById('empHistoryJobTitle');
+                
+                if (departmentField && employee.department) {
+                    departmentField.value = employee.department;
+                }
+                if (positionField && employee.position) {
+                    positionField.value = employee.position;
+                }
+                if (jobTitleField && employee.position) {
+                    jobTitleField.value = employee.position; // Often same as position
+                }
+            }
+        });
     }
     
     // Add event listener for quick employee selection in employment history
@@ -3796,14 +3833,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 // Build leave request data
+                const isHalfDay = formData.get('is_half_day') === 'on';
                 const leaveData = {
                     employee_email: employeeEmail,
                     leave_type: formData.get('leave_type'),
                     start_date: formData.get('start_date'),
                     end_date: formData.get('end_date'),
                     title: formData.get('title') || 'Admin submitted leave',
-                    is_half_day: formData.get('is_half_day') === 'on',
-                    half_day_period: formData.get('is_half_day') === 'on' ? 'morning' : null
+                    is_half_day: isHalfDay,
+                    half_day_period: isHalfDay ? formData.get('half_day_period') : null
                 };
                 
                 // Submit leave request
@@ -3898,25 +3936,48 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Handle half-day period visibility
+        // Handle half-day period visibility and duration input
         const halfDayCheckbox = document.getElementById('adminLeaveHalfDay');
         const halfDayPeriod = document.getElementById('adminHalfDayPeriod');
         const durationInput = document.getElementById('adminLeaveDuration');
+        const endDateInput = document.getElementById('adminLeaveEndDate');
         
         if (halfDayCheckbox && halfDayPeriod && durationInput) {
             halfDayCheckbox.addEventListener('change', function() {
                 if (this.checked) {
+                    // Half-day selected: lock duration to 0.5 and disable editing
                     durationInput.value = 0.5;
-                    // For half-day, set end date same as start date
+                    durationInput.min = 0.5;
+                    durationInput.max = 0.5;
+                    durationInput.step = 0.5;
+                    durationInput.readOnly = true;
+                    durationInput.style.backgroundColor = '#f0f0f0';
+                    
+                    // For half-day, set end date same as start date and disable it
                     const startDate = document.getElementById('adminLeaveStartDate');
-                    const endDate = document.getElementById('adminLeaveEndDate');
-                    if (startDate && endDate && startDate.value) {
-                        endDate.value = startDate.value;
+                    if (startDate && endDateInput && startDate.value) {
+                        endDateInput.value = startDate.value;
+                    }
+                    if (endDateInput) {
+                        endDateInput.readOnly = true;
+                        endDateInput.style.backgroundColor = '#f0f0f0';
                     }
                     updateWorkingDaysDisplay();
                 } else {
-                    if (durationInput.value == 0.5) {
+                    // Full day selected: restore normal duration input
+                    durationInput.min = 1;
+                    durationInput.max = 365;
+                    durationInput.step = 0.5;
+                    durationInput.readOnly = false;
+                    durationInput.style.backgroundColor = '';
+                    if (durationInput.value < 1) {
                         durationInput.value = 1;
+                    }
+                    
+                    // Re-enable end date
+                    if (endDateInput) {
+                        endDateInput.readOnly = false;
+                        endDateInput.style.backgroundColor = '';
                     }
                     updateWorkingDaysDisplay();
                 }

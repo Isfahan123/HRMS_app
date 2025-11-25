@@ -324,8 +324,14 @@ class BonusManager {
      * Edit bonus
      */
     async editBonus(bonusId) {
-        const bonus = this.bonuses.find(b => b.id === bonusId);
-        if (!bonus) return;
+        // Convert bonusId to string for comparison (handles both UUID strings and numbers)
+        const searchId = String(bonusId);
+        const bonus = this.bonuses.find(b => String(b.id) === searchId);
+        if (!bonus) {
+            console.error('Bonus not found for editing, ID:', bonusId);
+            alert('Bonus not found. Please refresh the page and try again.');
+            return;
+        }
 
         // Populate employee dropdown FIRST before setting values
         this.populateEmployeeDropdown();
