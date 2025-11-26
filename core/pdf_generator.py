@@ -9,10 +9,15 @@ This version replicates the same format as the desktop GUI payslip generator
 """
 import io
 import json
+import os
+import tempfile
 import traceback
 import requests
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+
+# Constants for PDF layout
+LABEL_MAX_LENGTH = 25  # Maximum characters for table labels before truncation
 
 try:
     from fpdf import FPDF
@@ -526,24 +531,24 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
         text_x = left_margin
         
         if logo_bytes:
+            tmp_path = None
             try:
                 # Save logo to temp file for fpdf2
-                import tempfile
-                import os
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
                     tmp.write(logo_bytes)
                     tmp_path = tmp.name
                 
                 pdf.image(tmp_path, left_margin, top_y, logo_size, logo_size)
                 text_x = left_margin + logo_size + 6
-                
-                # Clean up temp file
-                try:
-                    os.unlink(tmp_path)
-                except:
-                    pass
             except Exception as e:
                 print(f"Warning: Could not add logo to PDF: {e}")
+            finally:
+                # Clean up temp file
+                if tmp_path:
+                    try:
+                        os.unlink(tmp_path)
+                    except (OSError, FileNotFoundError):
+                        pass
         
         # Company name and details (right of logo)
         pdf.set_xy(text_x, top_y)
@@ -652,7 +657,7 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
             y_ytd = float(earning_ytd_map.get(lbl, 0.0))
             
             pdf.set_xy(left_margin, y)
-            pdf.cell(col1_w * 0.5, 5, lbl[:25])  # Truncate long labels
+            pdf.cell(col1_w * 0.5, 5, lbl[:LABEL_MAX_LENGTH])  # Truncate long labels
             pdf.cell(col1_w * 0.25, 5, money(y_curr), align='R')
             pdf.cell(col1_w * 0.25, 5, money(y_ytd), align='R')
             
@@ -711,7 +716,7 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
         
         for lbl, ycur, yytd in deduction_items:
             pdf.set_xy(ded_x, y2)
-            pdf.cell(col2_w * 0.5, 5, lbl[:25])
+            pdf.cell(col2_w * 0.5, 5, lbl[:LABEL_MAX_LENGTH])
             pdf.cell(col2_w * 0.25, 5, money(ycur), align='R')
             pdf.cell(col2_w * 0.25, 5, money(yytd), align='R')
             
