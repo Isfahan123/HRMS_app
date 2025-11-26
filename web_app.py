@@ -397,14 +397,14 @@ async def create_engagement(request: Request):
                 return {"success": False, "message": f"Missing required field: {field}"}
         
         # Look up employee_id from employee_email if not provided
-        if 'employee_id' not in data or not data['employee_id']:
+        if not data.get('employee_id'):
             employee_email = data.get('employee_email')
             if not employee_email:
                 return {"success": False, "message": "Missing required field: employee_email or employee_id"}
             
             # Fetch employee UUID from email
             emp_response = supabase.table("employees").select("id").eq("email", employee_email.lower()).execute()
-            if not emp_response.data or len(emp_response.data) == 0:
+            if not emp_response.data:
                 return {"success": False, "message": f"Employee not found with email: {employee_email}"}
             
             data['employee_id'] = emp_response.data[0]['id']
@@ -1620,7 +1620,7 @@ async def create_employment_history(request: Request):
         
         # Get employee_id from email
         employee_response = supabase.table("employees").select("id").eq("email", data['employee_email']).execute()
-        if not employee_response.data or len(employee_response.data) == 0:
+        if not employee_response.data:
             return {"success": False, "message": "Employee not found"}
         
         employee_id = employee_response.data[0]['id']
@@ -1647,6 +1647,22 @@ async def create_employment_history(request: Request):
         response = insert_employee_history_record(history_record)
         
         if response and hasattr(response, 'data') and response.data:
+            # Sync payroll_status and status to the employees table so run_payroll respects it
+            payroll_status = data.get('payroll_status', '')
+            employment_status = data.get('status', '')
+            employee_update = {}
+            
+            if payroll_status:
+                employee_update['payroll_status'] = payroll_status
+            if employment_status:
+                employee_update['status'] = employment_status
+            
+            if employee_update:
+                try:
+                    supabase.table("employees").update(employee_update).eq("id", employee_id).execute()
+                except Exception as sync_err:
+                    print(f"Warning: Failed to sync status to employees table: {sync_err}")
+            
             return {"success": True, "message": "Employment history recorded successfully", "data": response.data[0]}
         else:
             return {"success": False, "message": "Failed to record employment history"}
@@ -1662,6 +1678,9 @@ async def update_employment_history(record_id: str, request: Request):
     try:
         data = await request.json()
         
+        # Store employee_id before removing read-only fields
+        employee_id = data.get('employee_id')
+        
         # Remove read-only fields
         data.pop('id', None)
         data.pop('created_at', None)
@@ -1674,6 +1693,22 @@ async def update_employment_history(record_id: str, request: Request):
         response = update_employee_history_record(record_id, data)
         
         if response and response.data:
+            # Sync payroll_status and status to the employees table so run_payroll respects it
+            payroll_status = data.get('payroll_status', '')
+            employment_status = data.get('status', '')
+            employee_update = {}
+            
+            if payroll_status:
+                employee_update['payroll_status'] = payroll_status
+            if employment_status:
+                employee_update['status'] = employment_status
+            
+            if employee_update and employee_id:
+                try:
+                    supabase.table("employees").update(employee_update).eq("id", employee_id).execute()
+                except Exception as sync_err:
+                    print(f"Warning: Failed to sync status to employees table: {sync_err}")
+            
             return {"success": True, "message": "Employee history record updated successfully", "data": response.data[0] if response.data else None}
         else:
             return {"success": False, "message": "Failed to update employee history record"}
