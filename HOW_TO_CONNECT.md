@@ -32,7 +32,9 @@ cd hrms
 ```bash
 cd ~/public_html/hrms
 source ~/virtualenv/hrms/3.11/bin/activate
-pip install -r requirements.txt
+
+# Use web-only requirements (avoids PyQt5/Java errors on cPanel)
+pip install -r requirements-web.txt
 
 # Create environment file
 cp .env.example .env
@@ -44,6 +46,8 @@ nano .htaccess  # Replace $CPANEL_USER with your actual username
 # Restart
 touch passenger_wsgi.py
 ```
+
+> ⚠️ **Important**: Use `requirements-web.txt` instead of `requirements.txt` on cPanel. The full `requirements.txt` includes PyQt5 and tabula-py which require system libraries not available on shared hosting.
 
 **Done!** Visit `https://yourdomain.com` 🎉
 
@@ -129,12 +133,14 @@ Visit: `https://yourdomain.com`
 
 ### "503 Service Unavailable"
 ```bash
-# Check dependencies are installed
+# Check dependencies are installed (use web-only requirements)
 cd ~/public_html/hrms
 source ~/virtualenv/hrms/3.11/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-web.txt
 touch passenger_wsgi.py
 ```
+
+> ⚠️ **Module Installation Error?** If `pip install -r requirements.txt` fails, use `requirements-web.txt` instead. The full requirements include PyQt5 and tabula-py which won't install on cPanel.
 
 ### "500 Internal Server Error"
 ```bash

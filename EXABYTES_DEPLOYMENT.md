@@ -138,12 +138,14 @@ source ~/virtualenv/hrms/3.11/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install dependencies
-pip install -r requirements.txt
+# Install web-only dependencies (recommended for cPanel)
+pip install -r requirements-web.txt
 
 # Verify installation
 python3 verify_packages.py
 ```
+
+> ⚠️ **Important**: Use `requirements-web.txt` instead of `requirements.txt`. The full requirements include PyQt5 and tabula-py which require system libraries not available on shared hosting and will cause installation errors.
 
 #### Using Exabytes Python App Interface
 
@@ -151,7 +153,7 @@ Some Exabytes cPanel versions allow dependency installation via UI:
 1. Go to **Setup Python App**
 2. Find your application
 3. Look for **Run pip install** or similar option
-4. Upload or paste contents of `requirements.txt`
+4. Upload or paste contents of `requirements-web.txt`
 
 ### Step 6: Update Configuration Files
 
