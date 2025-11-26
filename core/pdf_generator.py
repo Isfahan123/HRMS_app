@@ -8,6 +8,8 @@ For desktop environments where reportlab is available, the gui/payslip_generator
 can be used instead for more advanced formatting.
 """
 import io
+import json
+import traceback
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -329,7 +331,6 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
             pay_date = datetime.now().strftime('%d-%m-%Y')
         
         # Parse allowances
-        import json
         allowances = payroll_run.get('allowances', {})
         if isinstance(allowances, str):
             allowances = json.loads(allowances) if allowances else {}
@@ -533,6 +534,5 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
         
     except Exception as e:
         print(f"DEBUG: Error generating payslip for employee: {e}")
-        import traceback
         traceback.print_exc()
         return None
