@@ -1,6 +1,9 @@
 # Web-only dependencies for cPanel/Exabytes deployment
-# Use this file instead of requirements.txt for web hosting
+# This file is now functionally identical to requirements.txt
+# Both files are web-compatible since desktop dependencies were moved to requirements-desktop.txt
+#
 # Installation: pip install -r requirements-web.txt
+# Or simply: pip install -r requirements.txt (now also web-safe)
 
 # Database
 supabase==2.8.1
@@ -19,9 +22,11 @@ holidays==0.81
 # - reportlab: PDF payslip generation
 # - pandas: Data analysis and Excel file parsing
 # - openpyxl: Excel backend for pandas
+# - PyPDF2: PDF processing
 reportlab==4.2.2
 pandas==2.2.2
 openpyxl==3.1.2
+PyPDF2==3.0.1
 
 # FastAPI stack (Web Framework)
 fastapi==0.115.5
@@ -33,7 +38,6 @@ python-multipart==0.0.18
 # a2wsgi converts ASGI (FastAPI) to WSGI (Passenger)
 a2wsgi==1.10.10
 
-# Note: The following packages from requirements.txt are NOT needed for web:
+# Note: Desktop-only packages are in requirements-desktop.txt:
 # - PyQt5 (Desktop GUI - causes errors on cPanel)
 # - tabula-py (Requires Java - causes errors on cPanel)
-# - PyPDF2 (PDF processing - optional)
