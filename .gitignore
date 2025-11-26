@@ -41,6 +41,7 @@ Thumbs.db
 .coverage
 htmlcov/
 *.log
+log/
 
 # Application specific
 *.db

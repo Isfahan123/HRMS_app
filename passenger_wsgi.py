@@ -15,6 +15,7 @@ DO NOT MODIFY unless you know what you're doing!
 
 import sys
 import os
+import re
 
 # Ensure the application directory is in the Python path
 # This allows imports to work correctly
@@ -38,15 +39,61 @@ except ImportError as e:
     import traceback
     error_msg = f"Failed to import web_app: {e}\n{traceback.format_exc()}"
     
+    # Check for common missing module issues
+    missing_module = None
+    error_str = str(e)
+    if "No module named" in error_str:
+        # Extract the module name from the error
+        match = re.search(r"No module named ['\"]?([^'\"]+)['\"]?", error_str)
+        if match:
+            missing_module = match.group(1)
+    
+    # Create helpful error message
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    helpful_msg = f"""
+================================================================================
+HRMS Application Import Error
+================================================================================
+Error: {e}
+
+Python Path: {sys.executable}
+Working Directory: {app_dir}
+Python Version: {sys.version}
+"""
+    
+    if missing_module:
+        helpful_msg += f"""
+Missing Module: {missing_module}
+
+FIX: Run the following commands to install dependencies:
+
+    1. Activate your virtual environment (adjust path as needed):
+       source ~/virtualenv/<app_name>/<python_version>/bin/activate
+    
+    2. Install dependencies:
+       cd {app_dir}
+       pip install -r requirements.txt
+    
+    3. Restart Passenger:
+       touch passenger_wsgi.py
+
+See CPANEL_DEPLOYMENT.md for detailed deployment instructions.
+================================================================================
+"""
+    
     # Try to log to file
     try:
-        log_dir = os.path.join(os.path.dirname(__file__), 'log')
+        log_dir = os.path.join(app_dir, 'log')
         os.makedirs(log_dir, exist_ok=True)
         with open(os.path.join(log_dir, 'passenger_error.log'), 'a') as f:
             from datetime import datetime
-            f.write(f"\n[{datetime.now()}] {error_msg}\n")
+            f.write(f"\n[{datetime.now()}] {helpful_msg}\n")
+            f.write(f"Full traceback:\n{traceback.format_exc()}\n")
     except:
         pass
+    
+    # Print to stderr for Passenger logs
+    print(helpful_msg, file=sys.stderr)
     
     # Re-raise the error so Passenger shows it
     raise
