@@ -25,6 +25,129 @@ function formatNumber(value, decimals = 2) {
     return numValue.toFixed(decimals);
 }
 
+// Calculate age from date of birth
+function calculateAge(dobStr) {
+    if (!dobStr) return 0;
+    const dob = new Date(dobStr);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    return age;
+}
+
+// Update EPF/SOCSO status based on citizenship, nationality, and DOB
+function updateEpfSocsoStatus(prefix) {
+    const citizenshipEl = document.getElementById(prefix + 'Citizenship');
+    const nationalityEl = document.getElementById(prefix + 'Nationality');
+    const dobEl = document.getElementById(prefix + 'DOB');
+    const epfStatusEl = document.getElementById(prefix + 'EPFStatus');
+    const socsoStatusEl = document.getElementById(prefix + 'SOCSOStatus');
+    const epfPartGroupEl = document.getElementById(prefix + 'EPFPartGroup');
+    const epfPartEl = document.getElementById(prefix + 'EPFPart');
+    
+    if (!citizenshipEl || !nationalityEl || !dobEl || !epfStatusEl || !socsoStatusEl) return;
+    
+    const citizenship = citizenshipEl.value;
+    const nationality = (nationalityEl.value || '').toLowerCase();
+    const dob = dobEl.value;
+    const age = calculateAge(dob);
+    
+    // Determine citizenship status (handle common variations of Malaysia/Malaysian)
+    const isMalaysian = nationality.includes('malaysia') || nationality === 'malaysian' || citizenship === 'Citizen';
+    const isPR = citizenship === 'Permanent Resident';
+    const isNonCitizen = !isMalaysian && !isPR;
+    
+    // Valid EPF part values
+    const validEpfParts = ['', 'part_a', 'part_b', 'part_c', 'part_d'];
+    
+    // Show/hide EPF part selection based on citizenship
+    if (epfPartGroupEl) {
+        if (isNonCitizen) {
+            epfPartGroupEl.style.display = '';
+            // Update available options based on age
+            if (epfPartEl) {
+                const currentValue = epfPartEl.value;
+                epfPartEl.innerHTML = '<option value="">None</option>';
+                if (age < 60) {
+                    epfPartEl.innerHTML += '<option value="part_a">Part A</option>';
+                    epfPartEl.innerHTML += '<option value="part_b">Part B</option>';
+                } else {
+                    epfPartEl.innerHTML += '<option value="part_c">Part C</option>';
+                    epfPartEl.innerHTML += '<option value="part_d">Part D</option>';
+                }
+                // Restore selection if still valid (safely check without CSS injection risk)
+                if (currentValue && validEpfParts.includes(currentValue)) {
+                    epfPartEl.value = currentValue;
+                }
+            }
+        } else {
+            epfPartGroupEl.style.display = 'none';
+        }
+    }
+    
+    // Update EPF Status display
+    if (isMalaysian) {
+        if (age < 60) {
+            epfStatusEl.value = 'Part A - Malaysian Citizen';
+        } else {
+            epfStatusEl.value = 'Part E - Malaysian Citizen ≥60';
+        }
+    } else if (isPR) {
+        if (age < 60) {
+            epfStatusEl.value = 'Part A - Permanent Resident';
+        } else {
+            epfStatusEl.value = 'Part C - Permanent Resident ≥60';
+        }
+    } else {
+        // Non-citizens depend on their selection
+        const selectedPart = epfPartEl ? epfPartEl.value : '';
+        if (selectedPart) {
+            const partDescriptions = {
+                'part_a': 'Part A - Non-citizen (Pre-1998 Election)',
+                'part_b': 'Part B - Non-citizen (Post-1998 Election)',
+                'part_c': 'Part C - Non-citizen ≥60 (Pre-1998)',
+                'part_d': 'Part D - Non-citizen ≥60 (Post-1998)'
+            };
+            epfStatusEl.value = partDescriptions[selectedPart] || selectedPart;
+        } else {
+            epfStatusEl.value = 'Not Selected';
+        }
+    }
+    
+    // Update SOCSO Status display (per PERKESO official regulations)
+    if (age >= 60) {
+        socsoStatusEl.value = 'Exempt (Age ≥60)';
+    } else if (isMalaysian || isPR) {
+        socsoStatusEl.value = 'Category 1 (Malaysian/PR Mandatory)';
+    } else {
+        socsoStatusEl.value = 'Category 1 (Foreign Worker Mandatory)';
+    }
+}
+
+// Setup EPF/SOCSO status listeners for a form
+function setupEpfSocsoListeners(prefix) {
+    const citizenshipEl = document.getElementById(prefix + 'Citizenship');
+    const nationalityEl = document.getElementById(prefix + 'Nationality');
+    const dobEl = document.getElementById(prefix + 'DOB');
+    const epfPartEl = document.getElementById(prefix + 'EPFPart');
+    
+    if (citizenshipEl) {
+        citizenshipEl.addEventListener('change', () => updateEpfSocsoStatus(prefix));
+    }
+    if (nationalityEl) {
+        nationalityEl.addEventListener('input', () => updateEpfSocsoStatus(prefix));
+    }
+    if (dobEl) {
+        dobEl.addEventListener('change', () => updateEpfSocsoStatus(prefix));
+    }
+    if (epfPartEl) {
+        epfPartEl.addEventListener('change', () => updateEpfSocsoStatus(prefix));
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Check if user is logged in as admin
     const userEmail = sessionStorage.getItem('userEmail');
@@ -982,6 +1105,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEmpTertiaryStatus').value = employee.tertiary_status || '';
                 document.getElementById('editEmpTertiaryCGPA').value = employee.tertiary_cgpa || '';
                 
+                // Set EPF Part selection
+                const epfPartEl = document.getElementById('editEmpEPFPart');
+                if (epfPartEl) {
+                    epfPartEl.value = employee.epf_part || '';
+                }
+                
+                // Setup EPF/SOCSO listeners and update status
+                setupEpfSocsoListeners('editEmp');
+                updateEpfSocsoStatus('editEmp');
+                
                 // Show the modal
                 document.getElementById('editEmployeeModal').style.display = 'block';
             }
@@ -1481,9 +1614,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const newEmployeeForm = document.getElementById('newEmployeeForm');
         const messageDiv = document.getElementById('addEmployeeMessage');
         
+        // Setup EPF/SOCSO status listeners for new employee form
+        setupEpfSocsoListeners('newEmp');
+        
         // Open add employee modal
         addBtn.addEventListener('click', function() {
             addModal.style.display = 'block';
+            updateEpfSocsoStatus('newEmp'); // Initialize status
         });
         
         // Cancel button closes the modal
@@ -1538,6 +1675,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 payroll_status: document.getElementById('newEmpPayrollStatus').value,
                 join_date: document.getElementById('newEmpJoinDate').value,
                 // EPF/SOCSO Information
+                epf_part: (() => {
+                    const val = document.getElementById('newEmpEPFPart').value;
+                    const valid = ['part_a', 'part_b', 'part_c', 'part_d'];
+                    return valid.includes(val) ? val : null;
+                })(),
                 epf_number: document.getElementById('newEmpEPFNumber').value,
                 socso_number: document.getElementById('newEmpSOCSONumber').value,
                 income_tax_number: document.getElementById('newEmpIncomeTaxNumber').value,
