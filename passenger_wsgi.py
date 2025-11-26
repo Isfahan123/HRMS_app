@@ -10,11 +10,33 @@ Compatible with:
 - General cPanel with Passenger
 - Any hosting provider that supports Passenger for Python
 
+PYTHON VERSION REQUIREMENT: Python 3.9+ (Python 3.11 recommended)
+
 DO NOT MODIFY unless you know what you're doing!
 """
 
 import sys
 import os
+
+# Check Python version compatibility FIRST
+# Required: Python 3.9+ (packages: supabase, holidays, pandas require 3.9+)
+MIN_PYTHON_VERSION = (3, 9)
+if sys.version_info < MIN_PYTHON_VERSION:
+    error_msg = (
+        f"HRMS requires Python {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}+ "
+        f"but found {sys.version_info.major}.{sys.version_info.minor}. "
+        f"Required packages (supabase, holidays, pandas) are incompatible with older Python versions."
+    )
+    # Log to file for debugging
+    try:
+        log_dir = os.path.join(os.path.dirname(__file__), 'log')
+        os.makedirs(log_dir, exist_ok=True)
+        from datetime import datetime
+        with open(os.path.join(log_dir, 'python_version_error.log'), 'a') as f:
+            f.write(f"[{datetime.now()}] {error_msg}\n")
+    except (OSError, IOError):
+        pass
+    raise RuntimeError(error_msg)
 
 # Ensure the application directory is in the Python path
 # This allows imports to work correctly

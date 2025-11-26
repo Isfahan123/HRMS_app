@@ -6,6 +6,24 @@ This script starts the FastAPI web server
 
 import sys
 import os
+
+# Check Python version compatibility
+# Required: Python 3.9+ (packages: supabase, holidays, pandas require 3.9+)
+MIN_PYTHON_VERSION = (3, 9)
+if sys.version_info < MIN_PYTHON_VERSION:
+    print("=" * 60)
+    print("ERROR: Incompatible Python Version")
+    print("=" * 60)
+    print(f"\nYour Python version: {sys.version}")
+    print(f"Minimum required: Python {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}+")
+    print("\nThe following packages require Python 3.9+:")
+    print("  - supabase")
+    print("  - holidays")
+    print("  - pandas")
+    print("\nPlease upgrade to Python 3.9 or higher (3.11 recommended).")
+    print("=" * 60)
+    sys.exit(1)
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file

@@ -106,7 +106,8 @@ All critical packages verified:
 ## Configuration Requirements
 
 ### Server Requirements ✅
-- ✅ Python 3.8 or higher
+- ✅ **Python 3.9 or higher** (Python 3.11 recommended)
+  - ⚠️ Python 3.8 is NOT compatible - supabase, holidays, pandas require 3.9+
 - ✅ cPanel with Python App support
 - ✅ Passenger support
 - ✅ SSH access (recommended)
@@ -204,7 +205,7 @@ python3 -c "from web_app import app; print('OK')"
 Use this checklist when deploying:
 
 ### Pre-Deployment
-- [ ] Verify Python 3.8+ available in cPanel
+- [ ] Verify Python 3.9+ available in cPanel (3.11 recommended)
 - [ ] Supabase credentials ready
 - [ ] Git repository accessible (if using Git deploy)
 - [ ] Domain/subdomain configured

@@ -6,7 +6,8 @@ Complete guide for deploying the HRMS web application on **Exabytes** cPanel hos
 
 ### Exabytes Hosting Requirements
 - ✅ Exabytes cPanel hosting account with Python support
-- ✅ Python 3.8 or higher available
+- ✅ **Python 3.9 or higher available** (Python 3.11 recommended)
+  - ⚠️ Python 3.8 is NOT compatible with this application
 - ✅ SSH access (optional but recommended)
 - ✅ Git access (for automated deployments)
 - ✅ Passenger support (Exabytes provides this)
@@ -35,7 +36,7 @@ Complete guide for deploying the HRMS web application on **Exabytes** cPanel hos
 2. Click on **Setup Python App** (or **Python Selector**)
 3. Click **Create Application**
 4. Configure:
-   - **Python Version**: `3.11` (or highest available, minimum 3.8)
+   - **Python Version**: `3.11` (or highest available, minimum 3.9)
    - **Application Root**: `/home/yourusername/public_html/hrms`
    - **Application URL**: Your domain or subdomain
    - **Application Startup File**: `passenger_wsgi.py`

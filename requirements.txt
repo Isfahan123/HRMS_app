@@ -1,6 +1,12 @@
 # HRMS Web Application - Production Dependencies
 # For web deployment on cPanel, Exabytes, or similar hosting
 #
+# PYTHON VERSION REQUIREMENT: Python >= 3.9 (Python 3.11 recommended)
+# Several packages require Python 3.9+:
+#   - supabase==2.8.1 requires Python >=3.9
+#   - holidays==0.81 requires Python >=3.9
+#   - pandas==2.2.2 requires Python >=3.9
+#
 # NOTE: This file is for web hosting ONLY.
 # For desktop GUI application, also install requirements-desktop.txt:
 #   pip install -r requirements.txt -r requirements-desktop.txt

@@ -25,7 +25,7 @@ Enable the HRMS web application to be deployed on cPanel hosting with Python sup
 
 #### `.cpanel.yml` (Enhanced - 3.5 KB)
 - Automated Git deployment configuration
-- Multi-version Python support (3.8-3.11)
+- Multi-version Python support (3.9-3.11; 3.11 recommended)
 - Step-by-step deployment feedback
 - Automatic dependency installation
 - Package verification

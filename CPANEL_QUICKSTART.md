@@ -130,7 +130,7 @@ ENVIRONMENT=production
 
 ## ✅ Verification Checklist
 
-- [ ] Python 3.8+ available in cPanel
+- [ ] Python 3.9+ available in cPanel (3.11 recommended)
 - [ ] Git repository cloned/deployed
 - [ ] Python app created in cPanel
 - [ ] Virtual environment activated
