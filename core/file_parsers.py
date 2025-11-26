@@ -6,7 +6,7 @@ and the built-in csv module for CSV files. This ensures compatibility with
 cPanel/shared hosting environments that cannot compile numpy/pandas.
 """
 import csv
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from openpyxl import load_workbook
 
 
@@ -135,7 +135,7 @@ def get_column_names(data: List[Dict[str, Any]]) -> List[str]:
     return list(data[0].keys())
 
 
-def parse_wage_range(wage_str: str) -> tuple:
+def parse_wage_range(wage_str: str) -> Tuple[float, float]:
     """
     Parse a wage range string into (min, max) values.
     

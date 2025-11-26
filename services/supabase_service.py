@@ -17,30 +17,6 @@ from datetime import timedelta, date
 from decimal import Decimal, ROUND_HALF_UP, ROUND_CEILING
 from dotenv import load_dotenv
 
-# Lazy imports for PDF generation - fpdf2 is used for web, reportlab for desktop
-_pdf_lib = None
-
-def _get_pdf_lib():
-    """Lazily load PDF library - try fpdf2 first (web), fallback to reportlab (desktop)"""
-    global _pdf_lib
-    if _pdf_lib is not None:
-        return _pdf_lib
-    
-    try:
-        # Try fpdf2 first (pure Python, cPanel compatible)
-        from fpdf import FPDF
-        _pdf_lib = 'fpdf2'
-        return _pdf_lib
-    except ImportError:
-        try:
-            # Fallback to reportlab (desktop)
-            from reportlab.lib.pagesizes import A4
-            _pdf_lib = 'reportlab'
-            return _pdf_lib
-        except ImportError:
-            _pdf_lib = None
-            return None
-
 # Load environment variables from .env file
 load_dotenv()
 
