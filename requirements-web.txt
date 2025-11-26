@@ -1,32 +1,28 @@
-# Web-only dependencies for cPanel/Exabytes deployment
-# This file is now functionally identical to requirements.txt
-# Both files are web-compatible since desktop dependencies were moved to requirements-desktop.txt
+# Web-only dependencies for cPanel/Exabytes SHARED HOSTING deployment
+# This file contains ONLY pure-Python packages that work on shared hosting
+# without requiring native C compilation or system libraries.
 #
 # Installation: pip install -r requirements-web.txt
-# Or simply: pip install -r requirements.txt (now also web-safe)
+#
+# NOTE: Some features (PDF payslips, Excel parsing) are DISABLED on shared hosting.
+# For full functionality, use a VPS/dedicated server with requirements.txt instead.
 
 # Database
 supabase==2.8.1
 
-# Authentication & Security
-bcrypt==4.2.0
-
-# Utilities
+# Utilities (all pure Python - safe for shared hosting)
 pytz==2024.1
 python-dotenv==1.0.1
 requests==2.32.3
 num2words==0.5.13
 holidays==0.81
+python-dateutil==2.9.0
 
-# Data processing (required by services)
-# - reportlab: PDF payslip generation
-# - pandas: Data analysis and Excel file parsing
-# - openpyxl: Excel backend for pandas
-# - PyPDF2: PDF processing
-reportlab==4.2.2
-pandas==2.2.2
-openpyxl==3.1.2
+# PDF processing (pure Python - safe for shared hosting)
 PyPDF2==3.0.1
+
+# Excel files (pure Python - works on shared hosting)
+openpyxl==3.1.2
 
 # FastAPI stack (Web Framework)
 fastapi==0.115.5
@@ -37,6 +33,19 @@ python-multipart==0.0.18
 # REQUIRED for FastAPI to run under cPanel Passenger
 # a2wsgi converts ASGI (FastAPI) to WSGI (Passenger)
 a2wsgi==1.10.10
+
+# ============================================================================
+# PACKAGES EXCLUDED FROM SHARED HOSTING (require C compilation):
+# ============================================================================
+# These packages are in requirements.txt but NOT here because they fail
+# on Exabytes/cPanel shared hosting due to missing compilers/libraries:
+#
+# - bcrypt==4.2.0        (requires Rust compiler and system libraries)
+# - reportlab==4.2.2     (requires freetype, zlib, libjpeg system libs)
+# - pandas==2.2.2        (requires numpy which needs C compilation)
+#
+# If you need these packages, use a VPS or dedicated server instead.
+# ============================================================================
 
 # Note: Desktop-only packages are in requirements-desktop.txt:
 # - PyQt5 (Desktop GUI - causes errors on cPanel)
