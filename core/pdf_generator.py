@@ -286,10 +286,7 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
         return None
     
     try:
-        # Import supabase locally to avoid circular imports
-        import sys
-        import os
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        # Import supabase service (relative import within the package)
         from services.supabase_service import supabase, get_monthly_unpaid_leave_deduction
         
         # Get employee data
@@ -318,7 +315,7 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
                 payroll_year = date_obj.year
                 payroll_month = date_obj.month
                 pay_date = date_obj.strftime('%d-%m-%Y')
-            except:
+            except ValueError:
                 month = datetime.now().strftime('%B')
                 year = datetime.now().year
                 payroll_year = datetime.now().year
@@ -359,9 +356,6 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
         net_salary = float(payroll_run.get('net_salary', 0))
         basic_salary = float(employee.get('basic_salary', 0))
         bonus = float(payroll_run.get('bonus', 0))
-        
-        # Calculate total deductions
-        total_deductions = epf_employee + socso_employee + eis_employee + pcb + unpaid_deduction
         
         # Generate output path if not provided
         if not output_path:
@@ -468,14 +462,17 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
         if pcb > 0:
             deduction_items.append(('PCB Tax', pcb))
         
-        # Add other deductions from payroll run
-        for ded_key in ['sip_deduction', 'additional_epf_deduction', 'prs_deduction', 
-                        'insurance_premium', 'medical_premium', 'other_deductions']:
+        # Add other deductions from payroll run and update total_deductions
+        other_deduction_keys = ['sip_deduction', 'additional_epf_deduction', 'prs_deduction', 
+                        'insurance_premium', 'medical_premium', 'other_deductions']
+        for ded_key in other_deduction_keys:
             ded_amount = float(payroll_run.get(ded_key, 0))
             if ded_amount > 0:
                 ded_name = ded_key.replace('_deduction', '').replace('_', ' ').title()
                 deduction_items.append((ded_name, ded_amount))
-                total_deductions += ded_amount
+        
+        # Calculate total deductions from all items displayed
+        total_deductions = sum(amount for _, amount in deduction_items)
         
         for desc, amount in deduction_items:
             if float(amount) > 0:
