@@ -67,8 +67,8 @@ Missing Module: {missing_module}
 
 FIX: Run the following commands to install dependencies:
 
-    1. Activate your virtual environment (adjust path as needed):
-       source ~/virtualenv/<app_name>/<python_version>/bin/activate
+    1. Activate your virtual environment:
+       source ~/virtualenv/HRMS_app/3.11/bin/activate
     
     2. Install dependencies:
        cd {app_dir}
