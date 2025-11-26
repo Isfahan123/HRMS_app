@@ -1001,12 +1001,12 @@ def _safe_to_float(value):
 async def generate_payslip(employee_id: str, payroll_run_id: str):
     """
     Generate and download payslip PDF for an employee
-    Uses Python-based reportlab payslip generator (same as desktop GUI)
+    Uses fpdf2-based PDF generator (pure Python, web-compatible)
     """
     try:
         import tempfile
         
-        from gui.payslip_generator import generate_payslip_for_employee as generate_pdf
+        from core.pdf_generator import generate_payslip_for_employee as generate_pdf
         
         # Get employee data for filename
         employee_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()

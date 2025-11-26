@@ -263,3 +263,279 @@ def generate_payslip_pdf_to_file(payroll_data: Dict, output_path: str = None) ->
     except Exception as e:
         print(f"DEBUG: Error generating payslip PDF: {e}")
         return None
+
+
+def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_path: str = None) -> Optional[str]:
+    """
+    Generate payslip PDF for a specific employee and payroll run using fpdf2.
+    
+    This is a web-compatible version that uses fpdf2 (pure Python) instead of 
+    reportlab which requires C libraries. It mirrors the interface of
+    gui/payslip_generator.py for seamless replacement in web environments.
+    
+    Args:
+        employee_id: UUID of the employee
+        payroll_run_id: UUID of the payroll run
+        output_path: Optional output file path. Auto-generated if not provided.
+        
+    Returns:
+        Path to generated PDF file, or None on error
+    """
+    if not FPDF_AVAILABLE:
+        print("DEBUG: fpdf2 not available for PDF generation")
+        return None
+    
+    try:
+        # Import supabase locally to avoid circular imports
+        import sys
+        import os
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from services.supabase_service import supabase, get_monthly_unpaid_leave_deduction
+        
+        # Get employee data
+        employee_response = supabase.table("employees").select("*").eq("id", employee_id).execute()
+        if not employee_response.data:
+            print(f"DEBUG: No employee found for ID: {employee_id}")
+            return None
+        
+        employee = employee_response.data[0]
+        
+        # Get payroll run data
+        payroll_response = supabase.table("payroll_runs").select("*").eq("id", payroll_run_id).execute()
+        if not payroll_response.data:
+            print(f"DEBUG: No payroll run found for ID: {payroll_run_id}")
+            return None
+            
+        payroll_run = payroll_response.data[0]
+        
+        # Parse payroll date
+        payroll_date = payroll_run.get('payroll_date', '')
+        if payroll_date:
+            try:
+                date_obj = datetime.strptime(payroll_date, '%Y-%m-%d')
+                month = date_obj.strftime('%B')
+                year = date_obj.year
+                payroll_year = date_obj.year
+                payroll_month = date_obj.month
+                pay_date = date_obj.strftime('%d-%m-%Y')
+            except:
+                month = datetime.now().strftime('%B')
+                year = datetime.now().year
+                payroll_year = datetime.now().year
+                payroll_month = datetime.now().month
+                pay_date = datetime.now().strftime('%d-%m-%Y')
+        else:
+            month = datetime.now().strftime('%B')
+            year = datetime.now().year
+            payroll_year = datetime.now().year
+            payroll_month = datetime.now().month
+            pay_date = datetime.now().strftime('%d-%m-%Y')
+        
+        # Parse allowances
+        import json
+        allowances = payroll_run.get('allowances', {})
+        if isinstance(allowances, str):
+            allowances = json.loads(allowances) if allowances else {}
+        
+        # Get unpaid leave data
+        unpaid_days = 0.0
+        unpaid_deduction = 0.0
+        try:
+            unpaid_leave_data = get_monthly_unpaid_leave_deduction(employee_id, payroll_year, payroll_month)
+            unpaid_days = unpaid_leave_data.get('unpaid_days', 0.0)
+            unpaid_deduction = unpaid_leave_data.get('total_deduction', 0.0)
+        except Exception as e:
+            print(f"DEBUG: Could not get unpaid leave data: {e}")
+        
+        # Get contributions from payroll run
+        epf_employee = float(payroll_run.get('epf_employee', 0))
+        epf_employer = float(payroll_run.get('epf_employer', 0))
+        socso_employee = float(payroll_run.get('socso_employee', 0))
+        socso_employer = float(payroll_run.get('socso_employer', 0))
+        eis_employee = float(payroll_run.get('eis_employee', 0))
+        eis_employer = float(payroll_run.get('eis_employer', 0))
+        pcb = float(payroll_run.get('pcb', 0))
+        gross_salary = float(payroll_run.get('gross_salary', 0))
+        net_salary = float(payroll_run.get('net_salary', 0))
+        basic_salary = float(employee.get('basic_salary', 0))
+        bonus = float(payroll_run.get('bonus', 0))
+        
+        # Calculate total deductions
+        total_deductions = epf_employee + socso_employee + eis_employee + pcb + unpaid_deduction
+        
+        # Generate output path if not provided
+        if not output_path:
+            employee_display_id = employee.get('employee_id', employee_id)
+            output_path = f"Payslip_{employee_display_id}_{month}_{year}.pdf"
+        
+        # Generate PDF using fpdf2
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        # Title
+        pdf.set_font('Helvetica', 'B', 18)
+        pdf.set_text_color(0, 0, 139)  # Dark blue
+        pdf.cell(0, 12, 'PAYSLIP', ln=True, align='C')
+        pdf.set_font('Helvetica', '', 10)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 6, f"For {month} {year}", ln=True, align='C')
+        pdf.ln(5)
+        
+        # Employee information section
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.cell(0, 8, 'Employee Information', ln=True)
+        
+        pdf.set_font('Helvetica', '', 10)
+        emp_position = employee.get('position') or employee.get('job_title') or ''
+        info_rows = [
+            ('Employee ID:', employee.get('employee_id', '')),
+            ('Employee Name:', employee.get('full_name', '')),
+            ('Position:', emp_position),
+            ('IC Number:', employee.get('ic_number', employee.get('nric', ''))),
+            ('EPF Number:', employee.get('epf_number', '')),
+            ('Bank:', f"{employee.get('bank_name', '')} - {employee.get('bank_account', '')}"),
+            ('Pay Date:', pay_date),
+        ]
+        
+        for label, value in info_rows:
+            if value:  # Only show non-empty values
+                pdf.set_fill_color(211, 211, 211)
+                pdf.cell(50, 7, label, 1, 0, 'L', True)
+                pdf.cell(120, 7, str(value), 1, 1, 'L')
+        
+        pdf.ln(5)
+        
+        # Income section
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.set_fill_color(0, 0, 139)  # Dark blue
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(100, 10, 'INCOME', 1, 0, 'C', True)
+        pdf.cell(70, 10, 'AMOUNT (RM)', 1, 1, 'C', True)
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Helvetica', '', 10)
+        
+        # Income items
+        income_items = [('Basic Salary', basic_salary)]
+        
+        # Add allowances
+        if allowances:
+            for name, amount in allowances.items():
+                if amount and float(amount) > 0:
+                    income_items.append((f"{name.replace('_', ' ').title()} Allowance", float(amount)))
+        
+        # Add bonus if any
+        if bonus > 0:
+            income_items.append(('Bonus', bonus))
+        
+        for desc, amount in income_items:
+            if float(amount) > 0:
+                pdf.cell(100, 8, desc, 1, 0, 'L')
+                pdf.cell(70, 8, f"{float(amount):,.2f}", 1, 1, 'R')
+        
+        # Gross income total
+        pdf.set_fill_color(173, 216, 230)  # Light blue
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.cell(100, 8, 'GROSS INCOME', 1, 0, 'L', True)
+        pdf.cell(70, 8, f"{gross_salary:,.2f}", 1, 1, 'R', True)
+        
+        pdf.ln(5)
+        
+        # Deductions section
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.set_fill_color(139, 0, 0)  # Dark red
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(100, 10, 'DEDUCTIONS', 1, 0, 'C', True)
+        pdf.cell(70, 10, 'AMOUNT (RM)', 1, 1, 'C', True)
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Helvetica', '', 10)
+        
+        deduction_items = []
+        
+        # Add unpaid leave deduction first
+        if unpaid_days > 0 and unpaid_deduction > 0:
+            deduction_items.append((f'Unpaid Leave ({unpaid_days} days)', unpaid_deduction))
+        
+        # Standard deductions
+        if epf_employee > 0:
+            deduction_items.append(('EPF (Employee)', epf_employee))
+        if socso_employee > 0:
+            deduction_items.append(('SOCSO', socso_employee))
+        if eis_employee > 0:
+            deduction_items.append(('EIS', eis_employee))
+        if pcb > 0:
+            deduction_items.append(('PCB Tax', pcb))
+        
+        # Add other deductions from payroll run
+        for ded_key in ['sip_deduction', 'additional_epf_deduction', 'prs_deduction', 
+                        'insurance_premium', 'medical_premium', 'other_deductions']:
+            ded_amount = float(payroll_run.get(ded_key, 0))
+            if ded_amount > 0:
+                ded_name = ded_key.replace('_deduction', '').replace('_', ' ').title()
+                deduction_items.append((ded_name, ded_amount))
+                total_deductions += ded_amount
+        
+        for desc, amount in deduction_items:
+            if float(amount) > 0:
+                pdf.cell(100, 8, desc, 1, 0, 'L')
+                pdf.cell(70, 8, f"{float(amount):,.2f}", 1, 1, 'R')
+        
+        # Total deductions
+        pdf.set_fill_color(255, 182, 193)  # Light pink
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.cell(100, 8, 'TOTAL DEDUCTIONS', 1, 0, 'L', True)
+        pdf.cell(70, 8, f"{total_deductions:,.2f}", 1, 1, 'R', True)
+        
+        pdf.ln(5)
+        
+        # Employer contributions section
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.set_fill_color(70, 130, 180)  # Steel blue
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(100, 10, 'EMPLOYER CONTRIBUTIONS', 1, 0, 'C', True)
+        pdf.cell(70, 10, 'AMOUNT (RM)', 1, 1, 'C', True)
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Helvetica', '', 10)
+        
+        employer_items = []
+        if epf_employer > 0:
+            employer_items.append(('EPF (Employer)', epf_employer))
+        if socso_employer > 0:
+            employer_items.append(('SOCSO (Employer)', socso_employer))
+        if eis_employer > 0:
+            employer_items.append(('EIS (Employer)', eis_employer))
+        
+        for desc, amount in employer_items:
+            pdf.cell(100, 8, desc, 1, 0, 'L')
+            pdf.cell(70, 8, f"{float(amount):,.2f}", 1, 1, 'R')
+        
+        pdf.ln(5)
+        
+        # Net salary
+        pdf.set_font('Helvetica', 'B', 14)
+        pdf.set_fill_color(0, 100, 0)  # Dark green
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(100, 12, 'NET SALARY', 1, 0, 'C', True)
+        pdf.cell(70, 12, f"RM {net_salary:,.2f}", 1, 1, 'C', True)
+        
+        pdf.ln(5)
+        
+        # Footer
+        pdf.set_text_color(128, 128, 128)
+        pdf.set_font('Helvetica', 'I', 8)
+        pdf.cell(0, 6, 'This is a computer-generated payslip and does not require a signature.', ln=True, align='C')
+        pdf.set_font('Helvetica', '', 9)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 8, f"Generated on: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} (Malaysia Time)", ln=True)
+        
+        pdf.output(output_path)
+        return output_path
+        
+    except Exception as e:
+        print(f"DEBUG: Error generating payslip for employee: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
