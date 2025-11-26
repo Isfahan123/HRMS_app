@@ -3,7 +3,7 @@
 ## 🚀 Deploy in 5 Minutes
 
 ### Prerequisites
-- ✅ Exabytes cPanel hosting with Python support
+- ✅ Exabytes cPanel hosting with Python support (Python 3.9+ required, 3.11 recommended)
 - ✅ Your Supabase credentials (URL and Key)
 - ✅ SSH access (optional but helpful)
 

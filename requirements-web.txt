@@ -2,6 +2,12 @@
 # This file is now functionally identical to requirements.txt
 # Both files are web-compatible since desktop dependencies were moved to requirements-desktop.txt
 #
+# PYTHON VERSION REQUIREMENT: Python >= 3.9 (Python 3.11 recommended)
+# Several packages require Python 3.9+:
+#   - supabase>=2.8.1 requires Python >=3.9
+#   - holidays>=0.81 requires Python >=3.9
+#   - pandas>=2.2.2 requires Python >=3.9
+#
 # Installation: pip install -r requirements-web.txt
 # Or simply: pip install -r requirements.txt (now also web-safe)
 

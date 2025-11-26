@@ -41,7 +41,9 @@ All application files are ready:
 
 You need a cPanel hosting account with:
 
-- **Python 3.8+** support (Python 3.11 recommended)
+- **Python 3.9+** support (Python 3.11 recommended)
+  - ⚠️ Python 3.8 is NOT compatible with this application
+  - Required by: supabase>=2.8.1, holidays>=0.81, pandas>=2.2.2
 - **Passenger** support for Python applications
 - **SSH access** (recommended, but optional)
 - **Git support** (optional, for auto-deploy method)
@@ -49,7 +51,7 @@ You need a cPanel hosting account with:
 **Check with your hosting provider:**
 - Does cPanel have "Setup Python App" option?
 - Is Passenger available for Python?
-- Which Python versions are available?
+- Which Python versions are available? (must be 3.9+)
 
 ### 2. Supabase Database ⚠️ REQUIRED
 
@@ -111,7 +113,7 @@ Before you start deployment, verify you have:
 
 ### Hosting Infrastructure
 - [ ] cPanel account active
-- [ ] Python 3.8+ available in cPanel
+- [ ] Python 3.9+ available in cPanel (3.11 recommended)
 - [ ] Passenger support confirmed
 - [ ] SSH access working (optional but recommended)
 - [ ] Domain/subdomain ready
@@ -207,7 +209,7 @@ All packages are listed in `requirements.txt` and will be installed automaticall
 - Operating System: Linux (typically CentOS, Ubuntu, or similar)
 - Web Server: Apache (managed by cPanel)
 - Application Server: Passenger (must be available)
-- Python: 3.8, 3.9, 3.10, or 3.11 (3.11 recommended)
+- Python: 3.9, 3.10, 3.11, 3.12, or 3.13 (3.11 recommended)
 
 **Client Side (Users):**
 - Any modern web browser (Chrome, Firefox, Safari, Edge)
@@ -262,7 +264,7 @@ All packages are listed in `requirements.txt` and will be installed automaticall
 **A**: No, regular cPanel account is sufficient.
 
 ### Q: What if my cPanel doesn't have Python 3.11?
-**A**: Python 3.8+ works. Update `.htaccess` and `.cpanel.yml` with your version.
+**A**: Python 3.9+ is required (3.11 recommended). Python 3.8 is NOT compatible due to package dependencies. Update `.htaccess` and `.cpanel.yml` with your version.
 
 ### Q: Do I need to buy an SSL certificate?
 **A**: No, cPanel offers free AutoSSL (Let's Encrypt). Strongly recommended.
@@ -281,7 +283,7 @@ All packages are listed in `requirements.txt` and will be installed automaticall
 ## 🎯 Summary: What You Actually Need
 
 ### Absolutely Required:
-1. ✅ cPanel hosting with Python 3.8+ and Passenger
+1. ✅ cPanel hosting with Python 3.9+ (3.11 recommended) and Passenger
 2. ✅ Domain or subdomain
 3. ✅ Supabase credentials (provided or create your own)
 
@@ -333,7 +335,7 @@ If you're unsure about any requirement:
 **What you need for deployment:**
 
 **REQUIRED:**
-- cPanel hosting (with Python 3.8+ and Passenger)
+- cPanel hosting (with Python 3.9+ and Passenger; 3.11 recommended)
 - Domain/subdomain
 - Supabase database credentials (already provided in repo)
 

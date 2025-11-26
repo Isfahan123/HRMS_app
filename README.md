@@ -194,7 +194,7 @@ HRMS_app/
 ## 🌐 Technology Stack
 
 ### Backend
-- **Framework**: FastAPI (Python 3.8+)
+- **Framework**: FastAPI (Python 3.9+, 3.11 recommended)
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Bcrypt
 - **WSGI Server**: Passenger (cPanel) / Uvicorn (development)
@@ -247,7 +247,7 @@ For testing (change these in production!):
 
 ## 📝 Requirements
 
-- **Python**: 3.8 or higher
+- **Python**: 3.9 or higher (3.11 recommended)
 - **Database**: Supabase account (free tier available)
 - **For Desktop**: PyQt5 and system GUI support (install with `pip install -r requirements-desktop.txt`)
 - **For Web**: Modern web browser (Chrome, Firefox, Safari, Edge)

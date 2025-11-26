@@ -57,7 +57,7 @@ touch passenger_wsgi.py
 
 Before connecting, ensure you have:
 - ✅ Exabytes cPanel hosting account with Python support
-- ✅ Python 3.8+ available in cPanel
+- ✅ Python 3.9+ available in cPanel (Python 3.11 recommended)
 - ✅ Supabase account (for database) - [Get one free](https://supabase.com)
 - ✅ Domain name pointed to Exabytes hosting
 

@@ -5,7 +5,9 @@ This guide provides step-by-step instructions for deploying the HRMS web applica
 ## Prerequisites
 
 ✅ cPanel hosting account with:
-- Python 3.8 or higher support
+- **Python 3.9 or higher support** (Python 3.11 recommended)
+  - ⚠️ Python 3.8 is NOT compatible with this application
+  - Required by: supabase>=2.8.1, holidays>=0.81, pandas>=2.2.2
 - SSH access (recommended)
 - Git access (recommended)
 - Passenger support for Python applications
