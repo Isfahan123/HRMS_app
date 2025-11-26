@@ -953,6 +953,13 @@ def _normalize_employee_fields(employee_data: dict) -> dict:
     integer_fields_default_none = (
         "graduation_year",
         "days_in_malaysia_current_year",
+        # Education year fields
+        "primary_year_started",
+        "primary_year_completed",
+        "secondary_year_started",
+        "secondary_year_completed",
+        "tertiary_year_started",
+        "tertiary_year_completed",
     )
     for field in integer_fields_default_none:
         if field in employee_data:

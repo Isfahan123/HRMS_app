@@ -348,6 +348,27 @@
                             <h4 style="margin-top: 20px; color: #667eea;">EPF/SOCSO Information</h4>
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="newEmpEPFStatus">EPF Status:</label>
+                                    <input type="text" id="newEmpEPFStatus" readonly style="background-color: #ecf0f1; color: #2c3e50;" placeholder="Auto-calculated">
+                                </div>
+                                <div class="form-group" id="newEmpEPFPartGroup" style="display: none;">
+                                    <label for="newEmpEPFPart">EPF Election (Non-Citizens):</label>
+                                    <select id="newEmpEPFPart" name="epf_part">
+                                        <option value="">None</option>
+                                        <option value="part_a">Part A</option>
+                                        <option value="part_b">Part B</option>
+                                        <option value="part_c">Part C</option>
+                                        <option value="part_d">Part D</option>
+                                    </select>
+                                    <small style="color: #7f8c8d; font-style: italic;">For Non-Citizens: Select EPF Part</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newEmpSOCSOStatus">SOCSO Status:</label>
+                                    <input type="text" id="newEmpSOCSOStatus" readonly style="background-color: #ecf0f1; color: #2c3e50;" placeholder="Auto-calculated">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label for="newEmpEPFNumber">EPF Number:</label>
                                     <input type="text" id="newEmpEPFNumber" name="epf_number">
                                 </div>
@@ -826,6 +847,27 @@
                                 
                                 <!-- EPF/SOCSO Information -->
                                 <h4 style="margin-top: 20px; color: #667eea;">EPF/SOCSO Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="editEmpEPFStatus">EPF Status:</label>
+                                        <input type="text" id="editEmpEPFStatus" readonly style="background-color: #ecf0f1; color: #2c3e50;" placeholder="Auto-calculated">
+                                    </div>
+                                    <div class="form-group" id="editEmpEPFPartGroup" style="display: none;">
+                                        <label for="editEmpEPFPart">EPF Election (Non-Citizens):</label>
+                                        <select id="editEmpEPFPart" name="epf_part">
+                                            <option value="">None</option>
+                                            <option value="part_a">Part A</option>
+                                            <option value="part_b">Part B</option>
+                                            <option value="part_c">Part C</option>
+                                            <option value="part_d">Part D</option>
+                                        </select>
+                                        <small style="color: #7f8c8d; font-style: italic;">For Non-Citizens: Select EPF Part</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmpSOCSOStatus">SOCSO Status:</label>
+                                        <input type="text" id="editEmpSOCSOStatus" readonly style="background-color: #ecf0f1; color: #2c3e50;" placeholder="Auto-calculated">
+                                    </div>
+                                </div>
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="editEmpEPFNumber">EPF Number:</label>
