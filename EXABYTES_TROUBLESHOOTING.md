@@ -372,7 +372,7 @@ python3 -c "from web_app import app; print('✓ FastAPI app works')"
 python3 -c "import passenger_wsgi; print('✓ WSGI adapter works')"
 
 # 8. List installed packages
-pip list | grep -E "(fastapi|uvicorn|asgiref|supabase)"
+pip list | grep -E "(fastapi|uvicorn|a2wsgi|supabase)"
 
 # 9. Check logs
 tail -n 50 log/passenger.log

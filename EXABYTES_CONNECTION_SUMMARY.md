@@ -73,11 +73,11 @@ Added Exabytes compatibility notes in header:
 ## 🔧 Technical Implementation
 
 ### WSGI Adapter Configuration
-The application uses **asgiref** to convert FastAPI (ASGI) to WSGI for Passenger:
+The application uses **a2wsgi** to convert FastAPI (ASGI) to WSGI for Passenger:
 
 ```python
-from asgiref.wsgi import WsgiToAsgi
-application = WsgiToAsgi(app)
+from a2wsgi import ASGIMiddleware
+application = ASGIMiddleware(app)
 ```
 
 This allows FastAPI to run on Exabytes cPanel with Passenger, which is the standard Python hosting method on cPanel.
@@ -118,14 +118,14 @@ HRMS_app/
 ```
 ✅ FastAPI app imported successfully (110 routes)
 ✅ passenger_wsgi imported successfully
-✅ Application type: WsgiToAsgi
+✅ Application type: ASGIMiddleware
 ```
 
 ### Package Tests ✓
 ```
 ✅ fastapi
 ✅ uvicorn
-✅ asgiref (required for WSGI conversion)
+✅ a2wsgi (required for WSGI conversion)
 ✅ jinja2
 ✅ supabase
 ✅ bcrypt

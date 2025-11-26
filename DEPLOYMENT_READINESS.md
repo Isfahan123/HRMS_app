@@ -46,13 +46,13 @@ The HRMS web application has been successfully configured for cPanel Python depl
 - **FastAPI app**: Imports successfully
 - **Routes**: 90 endpoints registered
 - **WSGI adapter**: Working correctly
-- **Type**: WsgiToAsgi (asgiref)
+- **Type**: ASGIMiddleware (a2wsgi)
 
 ### ✅ Required Packages
 All critical packages verified:
 - ✅ fastapi
 - ✅ uvicorn
-- ✅ asgiref
+- ✅ a2wsgi
 - ✅ jinja2
 - ✅ supabase
 - ✅ bcrypt
@@ -137,7 +137,7 @@ All critical packages verified:
 3. **Configuration Tests**
    - ✅ .htaccess has Passenger config
    - ✅ .cpanel.yml has deployment tasks
-   - ✅ passenger_wsgi.py uses WsgiToAsgi
+   - ✅ passenger_wsgi.py uses ASGIMiddleware
    - ✅ .env has required variables
 
 4. **File Structure Tests**
