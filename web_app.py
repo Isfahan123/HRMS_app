@@ -396,6 +396,19 @@ async def create_engagement(request: Request):
             if field not in data or not data[field]:
                 return {"success": False, "message": f"Missing required field: {field}"}
         
+        # Look up employee_id from employee_email if not provided
+        if 'employee_id' not in data or not data['employee_id']:
+            employee_email = data.get('employee_email')
+            if not employee_email:
+                return {"success": False, "message": "Missing required field: employee_email or employee_id"}
+            
+            # Fetch employee UUID from email
+            emp_response = supabase.table("employees").select("id").eq("email", employee_email.lower()).execute()
+            if not emp_response.data or len(emp_response.data) == 0:
+                return {"success": False, "message": f"Employee not found with email: {employee_email}"}
+            
+            data['employee_id'] = emp_response.data[0]['id']
+        
         # Add timestamps and default status
         data['created_at'] = datetime.utcnow().isoformat()
         if 'status' not in data:
