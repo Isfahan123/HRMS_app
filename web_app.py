@@ -1499,6 +1499,19 @@ async def create_salary_change(request: Request):
     try:
         data = await request.json()
         
+        # Look up employee_id from employee_email if not provided
+        if not data.get('employee_id'):
+            employee_email = data.get('employee_email')
+            if not employee_email:
+                return {"success": False, "message": "Missing required field: employee_email or employee_id"}
+            
+            # Fetch employee UUID from email
+            emp_response = supabase.table("employees").select("id").eq("email", employee_email.lower()).execute()
+            if not emp_response.data:
+                return {"success": False, "message": f"Employee not found with email: {employee_email}"}
+            
+            data['employee_id'] = emp_response.data[0]['id']
+        
         # Validate required fields - using fields that match Python GUI's salary_history table
         required_fields = ['employee_id', 'previous_salary', 'new_salary', 'effective_date']
         for field in required_fields:
