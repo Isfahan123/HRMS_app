@@ -6,7 +6,7 @@ Used by .cpanel.yml to verify package installation
 
 def verify_packages():
     """Verify that critical packages are installed"""
-    packages = ['fastapi', 'uvicorn', 'asgiref', 'supabase']
+    packages = ['fastapi', 'uvicorn', 'a2wsgi', 'supabase']
     all_installed = True
     
     for pkg in packages:

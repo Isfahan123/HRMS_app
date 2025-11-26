@@ -53,14 +53,14 @@ except ImportError as e:
 
 # Convert FastAPI ASGI application to WSGI
 # Passenger expects a WSGI application, but FastAPI is ASGI
-# The asgiref library provides the bridge between them
+# The a2wsgi library provides the correct ASGI → WSGI bridge
 try:
-    from asgiref.wsgi import WsgiToAsgi
-    application = WsgiToAsgi(app)
+    from a2wsgi import ASGIMiddleware
+    application = ASGIMiddleware(app)
 except ImportError as e:
     raise ImportError(
-        "asgiref is required for Passenger deployment. "
-        "Install it with: pip install asgiref"
+        "a2wsgi is required for Passenger deployment. "
+        "Install it with: pip install a2wsgi"
     ) from e
 
 # For debugging: print successful initialization
