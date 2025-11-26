@@ -414,11 +414,34 @@ async def create_engagement(request: Request):
         if 'status' not in data:
             data['status'] = 'pending'  # For employee submissions
         
-        # Determine which table to insert into based on type
+        # Determine which table to insert into based on type and map fields accordingly
         if data['type'] in ['training', 'course']:
             table_name = "training_course_records"
+            # Map common fields to table-specific required fields
+            # training_course_records requires: course_name (NOT NULL), course_date (NOT NULL)
+            if 'course_name' not in data or not data['course_name']:
+                data['course_name'] = data.get('title', 'Training/Course')
+            if 'course_date' not in data or not data['course_date']:
+                data['course_date'] = data.get('start_date')
         elif data['type'] == 'overseas_trip':
             table_name = "overseas_work_trip_records"
+            # Map common fields to table-specific required fields
+            # overseas_work_trip_records requires: location (NOT NULL), trip_date (NOT NULL)
+            if 'trip_date' not in data or not data['trip_date']:
+                data['trip_date'] = data.get('start_date')
+            if 'location' not in data or not data['location']:
+                # Build location from city, state, country or use title/description
+                location_parts = []
+                if data.get('city'):
+                    location_parts.append(data['city'])
+                if data.get('state'):
+                    location_parts.append(data['state'])
+                if data.get('country'):
+                    location_parts.append(data['country'])
+                if location_parts:
+                    data['location'] = ', '.join(location_parts)
+                else:
+                    data['location'] = data.get('title') or data.get('description') or 'Overseas Trip'
         else:
             table_name = "engagements"
         
