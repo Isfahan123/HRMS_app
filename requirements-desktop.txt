@@ -1,0 +1,13 @@
+# HRMS Desktop GUI - Additional Dependencies
+# Install these ON TOP OF requirements.txt for desktop usage:
+#   pip install -r requirements.txt -r requirements-desktop.txt
+#
+# NOTE: These packages require:
+# - PyQt5: Desktop environment with display support (X11/Wayland/Windows)
+# - tabula-py: Java Runtime Environment (JRE) installed
+
+# Desktop GUI Framework
+PyQt5==5.15.10
+
+# PDF Table Extraction (requires Java)
+tabula-py==2.9.0

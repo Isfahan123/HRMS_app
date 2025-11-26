@@ -138,14 +138,16 @@ source ~/virtualenv/hrms/3.11/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install web-only dependencies (recommended for cPanel)
-pip install -r requirements-web.txt
+# Install dependencies (both files are now web-compatible)
+pip install -r requirements.txt
+# Or use the web-specific file (identical):
+# pip install -r requirements-web.txt
 
 # Verify installation
 python3 verify_packages.py
 ```
 
-> ⚠️ **Important**: Use `requirements-web.txt` instead of `requirements.txt`. The full requirements include PyQt5 and tabula-py which require system libraries not available on shared hosting and will cause installation errors.
+> ✅ **Note**: Both `requirements.txt` and `requirements-web.txt` are now web-compatible. Desktop-only dependencies (PyQt5, tabula-py) have been moved to `requirements-desktop.txt`.
 
 #### Using Exabytes Python App Interface
 

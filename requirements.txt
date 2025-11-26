@@ -1,18 +1,30 @@
+# HRMS Web Application - Production Dependencies
+# For web deployment on cPanel, Exabytes, or similar hosting
+#
+# NOTE: This file is for web hosting ONLY.
+# For desktop GUI application, also install requirements-desktop.txt:
+#   pip install -r requirements.txt -r requirements-desktop.txt
+
+# Database
 supabase==2.8.1
-PyQt5==5.15.10
+
+# Authentication & Security
 bcrypt==4.2.0
+
+# Utilities
 pytz==2024.1
-reportlab==4.2.2
-pandas==2.2.2
-openpyxl==3.1.2
 python-dotenv==1.0.1
 requests==2.32.3
-tabula-py==2.9.0
-PyPDF2==3.0.1
 num2words==0.5.13
 holidays==0.81
 
-# FastAPI stack
+# Data processing (required for payroll reports)
+reportlab==4.2.2
+pandas==2.2.2
+openpyxl==3.1.2
+PyPDF2==3.0.1
+
+# FastAPI stack (Web Framework)
 fastapi==0.115.5
 uvicorn==0.32.1
 jinja2==3.1.4

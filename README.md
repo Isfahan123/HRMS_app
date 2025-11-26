@@ -38,6 +38,16 @@ python start_web.py
 # Visit: http://localhost:8000
 ```
 
+### For Desktop GUI (Optional)
+
+```bash
+# Install additional desktop dependencies (requires display + Java)
+pip install -r requirements-desktop.txt
+
+# Run desktop application
+python main.py
+```
+
 ### For cPanel Deployment
 
 **🎯 Quickest method** (via Git auto-deploy):
@@ -162,7 +172,9 @@ HRMS_app/
 ├── main.py                 # Desktop application (PyQt5)
 ├── .htaccess               # Apache/cPanel configuration
 ├── .cpanel.yml             # cPanel deployment automation
-├── requirements.txt        # Python dependencies
+├── requirements.txt          # Python dependencies (web-compatible)
+├── requirements-web.txt      # Web-only dependencies (same as requirements.txt)
+├── requirements-desktop.txt  # Desktop GUI dependencies (PyQt5, tabula-py)
 ├── .env                    # Environment configuration
 │
 ├── core/                   # Business logic
@@ -237,7 +249,7 @@ For testing (change these in production!):
 
 - **Python**: 3.8 or higher
 - **Database**: Supabase account (free tier available)
-- **For Desktop**: PyQt5 and system GUI support
+- **For Desktop**: PyQt5 and system GUI support (install with `pip install -r requirements-desktop.txt`)
 - **For Web**: Modern web browser (Chrome, Firefox, Safari, Edge)
 
 ## 🆘 Troubleshooting
