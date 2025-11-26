@@ -5,9 +5,26 @@
 # NOTE: These packages require:
 # - PyQt5: Desktop environment with display support (X11/Wayland/Windows)
 # - tabula-py: Java Runtime Environment (JRE) installed
+# - reportlab/pandas/holidays: C compiler and development libraries
 
 # Desktop GUI Framework
 PyQt5==5.15.10
 
 # PDF Table Extraction (requires Java)
 tabula-py==2.9.0
+
+# PDF Generation (requires freetype, zlib, libjpeg)
+# Desktop-only because it needs C compilation
+reportlab==4.2.2
+
+# Data Analysis & Excel Processing (requires numpy C compilation)
+# Desktop-only because shared hosting cannot compile numpy
+pandas==2.2.2
+
+# Malaysia Public Holidays (requires pandas)
+# Desktop-only because it depends on pandas
+holidays==0.81
+
+# Password Hashing (may require libsodium on some systems)
+# Desktop-only as backup; web uses passlib
+bcrypt==4.2.0

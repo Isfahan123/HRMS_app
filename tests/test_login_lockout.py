@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import bcrypt
 import pytz
 from datetime import datetime, timedelta
 
@@ -9,6 +8,7 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from services import supabase_service
+from core.password_utils import hash_password
 
 
 class FakeResponse:
@@ -80,7 +80,7 @@ def _read_log_lines():
 def test_success_resets_counters(tmp_path, monkeypatch):
     # Prepare a user with a known password and failed attempts
     password_plain = 'CorrectHorseBatteryStaple'
-    hashed = bcrypt.hashpw(password_plain.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hashed = hash_password(password_plain)
     user = {
         'email': 'alice@example.com',
         'password': hashed,
@@ -113,7 +113,7 @@ def test_failed_attempts_and_lock(monkeypatch):
     monkeypatch.setattr(supabase_service, 'LOGIN_LOCK_DURATION_MINUTES', 1)
 
     wrong_pw = 'wrongpassword'
-    hashed = bcrypt.hashpw('secret'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hashed = hash_password('secret')
     # start with failed_attempts one less than threshold
     user = {
         'email': 'bob@example.com',
@@ -142,7 +142,7 @@ def test_failed_attempts_and_lock(monkeypatch):
 
 def test_locked_account_rejected(monkeypatch):
     # Set a locked_until in the future
-    hashed = bcrypt.hashpw('secret'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hashed = hash_password('secret')
     future = (datetime.now(pytz.UTC) + timedelta(minutes=10)).isoformat()
     user = {
         'email': 'charlie@example.com',

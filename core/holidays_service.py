@@ -1,3 +1,14 @@
+"""
+Holiday service for Malaysian public holidays.
+
+This module provides holiday data from multiple sources:
+1. Database table 'calendar_holidays' (primary source - imported holidays)
+2. python-holidays library (optional - requires pandas which may not be available on cPanel)
+
+On cPanel/shared hosting where the 'holidays' library cannot be installed,
+holiday data should be imported into the database using the Calendar admin page
+or via the Calendarific API.
+"""
 import os
 import json
 from datetime import date, datetime, timedelta

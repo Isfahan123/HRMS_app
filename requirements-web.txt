@@ -1,30 +1,34 @@
 # Web-only dependencies for cPanel/Exabytes deployment
-# This file is now functionally identical to requirements.txt
+# This file is functionally identical to requirements.txt
 # Both files are web-compatible since desktop dependencies were moved to requirements-desktop.txt
 #
 # Installation: pip install -r requirements-web.txt
 # Or simply: pip install -r requirements.txt (now also web-safe)
+#
+# IMPORTANT: All packages here are pure Python or have pre-built wheels
+# to ensure compatibility with cPanel/shared hosting environments.
 
 # Database
 supabase==2.8.1
 
 # Authentication & Security
-bcrypt==4.2.0
+# Using passlib with pbkdf2_sha256 (pure Python) instead of bcrypt (requires C compilation)
+passlib==1.7.4
 
 # Utilities
 pytz==2024.1
 python-dotenv==1.0.1
 requests==2.32.3
 num2words==0.5.13
-holidays==0.81
+# Note: 'holidays' library removed - uses compiled numpy/pandas dependencies
+# Holiday data is now fetched from database (calendar_holidays table) or Calendarific API
 
 # Data processing (required by services)
-# - reportlab: PDF payslip generation
-# - pandas: Data analysis and Excel file parsing
-# - openpyxl: Excel backend for pandas
-# - PyPDF2: PDF processing
-reportlab==4.2.2
-pandas==2.2.2
+# - fpdf2: PDF payslip generation (pure Python, replaces reportlab)
+# - openpyxl: Excel file parsing (pure Python)
+# - PyPDF2: PDF processing (pure Python)
+# Note: pandas/reportlab removed - require C compilation which fails on shared hosting
+fpdf2==2.8.1
 openpyxl==3.1.2
 PyPDF2==3.0.1
 
@@ -41,3 +45,6 @@ a2wsgi==1.10.10
 # Note: Desktop-only packages are in requirements-desktop.txt:
 # - PyQt5 (Desktop GUI - causes errors on cPanel)
 # - tabula-py (Requires Java - causes errors on cPanel)
+# - reportlab (PDF generation for desktop - requires C libraries)
+# - pandas (Data analysis - requires numpy C compilation)
+# - holidays (Holiday data - requires pandas)
