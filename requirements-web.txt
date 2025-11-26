@@ -15,6 +15,11 @@ requests==2.32.3
 num2words==0.5.13
 holidays==0.81
 
+# Data processing (required by services)
+reportlab==4.2.2
+pandas==2.2.2
+openpyxl==3.1.2
+
 # FastAPI stack (Web Framework)
 fastapi==0.115.5
 uvicorn==0.32.1
@@ -26,8 +31,5 @@ asgiref==3.8.1
 
 # Note: The following packages from requirements.txt are NOT needed for web:
 # - PyQt5 (Desktop GUI - causes errors on cPanel)
-# - reportlab (PDF generation - optional)
-# - pandas (Data analysis - optional)
-# - openpyxl (Excel files - optional)
 # - tabula-py (Requires Java - causes errors on cPanel)
 # - PyPDF2 (PDF processing - optional)
