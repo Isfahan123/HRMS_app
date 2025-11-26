@@ -3,7 +3,7 @@ from typing import Dict, Optional, List, Any
 import os
 from datetime import datetime
 import json
-import bcrypt
+from core.password_utils import hash_password, verify_password, needs_rehash
 import uuid
 import pytz
 import io
@@ -13,13 +13,7 @@ import time
 import random
 import traceback
 import sys
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.units import cm
 from datetime import timedelta, date
-import pandas as pd
 from decimal import Decimal, ROUND_HALF_UP, ROUND_CEILING
 from dotenv import load_dotenv
 
@@ -789,8 +783,8 @@ def login_user(email, password):
                                     details={'locked_until': lu.isoformat()})
                 return {"success": False, "role": None, "locked_until": lu.isoformat()}
 
-        stored_password = user["password"].encode('utf-8')
-        if bcrypt.checkpw(password.encode('utf-8'), stored_password):
+        stored_password = user["password"]
+        if verify_password(password, stored_password):
             # Successful login; reset counters if columns exist
             try:
                 if 'failed_attempts' in user or 'locked_until' in user:
@@ -798,6 +792,13 @@ def login_user(email, password):
                         'failed_attempts': 0,
                         'locked_until': None
                     }).eq('email', email_norm).execute()
+                # Rehash password if using old bcrypt format for cPanel compatibility
+                if needs_rehash(stored_password):
+                    try:
+                        new_hash = hash_password(password)
+                        supabase.table('user_logins').update({'password': new_hash}).eq('email', email_norm).execute()
+                    except Exception:
+                        pass  # Non-fatal: password still works
             except Exception:
                 pass
             _log_security_event('login_success', user_email=email_norm, success=True, details={'role': user.get('role')})
@@ -862,8 +863,8 @@ def login_user_by_username(username: str, password: str):
                                     details={'locked_until': lu.isoformat()})
                 return {"success": False, "role": None, "locked_until": lu.isoformat()}
 
-        stored_password = user["password"].encode('utf-8')
-        if bcrypt.checkpw(password.encode('utf-8'), stored_password):
+        stored_password = user["password"]
+        if verify_password(password, stored_password):
             # Successful login; reset counters if present
             try:
                 if 'failed_attempts' in user or 'locked_until' in user:
@@ -1073,7 +1074,7 @@ def insert_employee(data: dict, password: Optional[str] = None) -> dict:
             return {"success": False, "error": "Failed to create employee record"}
 
         if password:
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            hashed_password = hash_password(password)
             login_data = {
                 "email": email.lower(),
                 "username": username or email.split('@')[0].lower(),
@@ -2339,7 +2340,7 @@ def add_employee_with_login(employee_data, password: str, role="employee"):
             alphabet = string.ascii_letters + string.digits + "!@#$%^&*_-"
             password = ''.join(secrets.choice(alphabet) for _ in range(12))
             print("DEBUG: Generated fallback password for employee (was None/empty)")
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        hashed_password = hash_password(password)
         username = (employee_data.get("username") or "").strip().lower()
         # Derive username from email if not provided
         email_val = (employee_data.get("email") or "").strip().lower()
@@ -2499,7 +2500,7 @@ def update_user_login_credentials(email: str, username: Optional[str] = None, pa
         if password is not None:
             pw = (password or '').strip()
             if pw:
-                hashed = bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                hashed = hash_password(pw)
                 update_data['password'] = hashed
         if role is not None:
             update_data['role'] = role
@@ -2589,7 +2590,25 @@ def calculate_pcb(gross_salary: float, epf_employee: float, relief: float) -> fl
             return (taxable_income - 35000) * 0.13 + 1700
 
 def generate_payslip_pdf(employee: Dict, payroll_data: Dict, payroll_date: str) -> bytes:
+    """Generate payslip PDF. Uses fpdf2 (pure Python) on web, reportlab on desktop."""
     try:
+        # Try fpdf2 first (web/cPanel compatible)
+        from core.pdf_generator import generate_payslip_pdf_fpdf
+        result = generate_payslip_pdf_fpdf(employee, payroll_data, payroll_date)
+        if result:
+            print(f"DEBUG: Payslip PDF generated for {employee.get('employee_id', 'unknown')} using fpdf2")
+            return result
+    except ImportError:
+        pass
+    
+    # Fallback to reportlab (desktop)
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.units import cm
+        
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
         styles = getSampleStyleSheet()
@@ -2609,7 +2628,6 @@ def generate_payslip_pdf(employee: Dict, payroll_data: Dict, payroll_date: str) 
         for allowance_type, amount in payroll_data.get("allowances", {}).items():
             data.append([allowance_type.replace("_", " ").title(), f"{amount:.2f}"])
         
-        # Add unpaid leave deduction if present (Malaysian standard)
         unpaid_days = payroll_data.get("unpaid_days", 0)
         unpaid_deduction = payroll_data.get("unpaid_leave_deduction", 0)
         if unpaid_days > 0 and unpaid_deduction > 0:
@@ -2643,8 +2661,11 @@ def generate_payslip_pdf(employee: Dict, payroll_data: Dict, payroll_date: str) 
         doc.build(elements)
         pdf_data = buffer.getvalue()
         buffer.close()
-        print(f"DEBUG: Payslip PDF generated for {employee['employee_id']}")
+        print(f"DEBUG: Payslip PDF generated for {employee['employee_id']} using reportlab")
         return pdf_data
+    except ImportError:
+        print("DEBUG: Neither fpdf2 nor reportlab available for PDF generation")
+        return b""
     except Exception as e:
         print(f"DEBUG: Error generating payslip PDF: {str(e)}")
         return b""
@@ -2679,40 +2700,42 @@ def upload_and_parse_contribution_file(file_path: str, source_type: str, categor
         
         # Original handling for other contribution types
         if ext in [".csv"]:
-            df = pd.read_csv(file_path)
-            df.columns = [
-                c.strip().lower()
-                 .replace(" ", "_")
-                 .replace("(", "")
-                 .replace(")", "")
-                 .replace("'", "")
-                 .replace(",", "")
-                for c in df.columns
-            ]
+            from core.file_parsers import read_csv_as_dicts, find_column_by_names, parse_wage_range
+            rows = read_csv_as_dicts(file_path)
+            if not rows:
+                print(f"DEBUG: No data found in CSV file {file_path}")
+                return False
+            
+            # Get column names from first row
             expected_cols = ["actual_monthly_wage_rm", "employers_contribution_first_category_rm",
                              "employees_contribution_first_category_rm", "total_contribution_first_category_rm",
                              "contribution_by_employer_only_second_category_rm"]
+            
+            # Check for required columns
+            columns = list(rows[0].keys()) if rows else []
             for col in expected_cols:
-                if col not in df.columns:
+                if col not in columns:
                     print(f"DEBUG: Missing expected column {col} in file {file_path}")
                     return False
-            for _, row in df.iterrows():
-                wage_range = str(row["actual_monthly_wage_rm"])
+            
+            for row in rows:
+                wage_range = str(row.get("actual_monthly_wage_rm", ""))
                 # Handle "and above"
-                if "and above" in wage_range:
-                    wage_min = float(wage_range.split()[0])
-                    wage_max = float('inf')
-                else:
-                    wage_min, wage_max = map(float, wage_range.replace('RM', '').replace('–', '-').split('-'))
+                try:
+                    wage_min, wage_max = parse_wage_range(wage_range)
+                except ValueError as e:
+                    print(f"DEBUG: Could not parse wage range: {wage_range}: {e}")
+                    continue
+                    
                 data = {
-                    'contrib_type': source_type,  # Changed from source_type to contrib_type
+                    'contrib_type': source_type,
                     'category': category,
                     'from_wage': wage_min,
                     'to_wage': wage_max,
-                    'employee_contribution': float(row['employees_contribution_first_category_rm']),
-                    'employer_contribution': float(row['employers_contribution_first_category_rm']),
-                    'total_contribution': float(row['total_contribution_first_category_rm']),
-                    'employer_only_contribution': float(row['contribution_by_employer_only_second_category_rm']),
+                    'employee_contribution': float(row.get('employees_contribution_first_category_rm', 0) or 0),
+                    'employer_contribution': float(row.get('employers_contribution_first_category_rm', 0) or 0),
+                    'total_contribution': float(row.get('total_contribution_first_category_rm', 0) or 0),
+                    'employer_only_contribution': float(row.get('contribution_by_employer_only_second_category_rm', 0) or 0),
                     'created_at': datetime.now(KL_TZ).isoformat(),
                     'updated_at': datetime.now(KL_TZ).isoformat()
                 }
@@ -2758,17 +2781,13 @@ def update_contribution_table(data: List[Dict], contrib_type: str) -> bool:
         return False
 
 def parse_contribution_xlsx(file_path):
-    df = pd.read_excel(file_path)
-    # Improved normalization: remove spaces, parentheses, apostrophes, commas
-    df.columns = [
-        c.strip().lower()
-         .replace(" ", "_")
-         .replace("(", "")
-         .replace(")", "")
-         .replace("'", "")
-         .replace(",", "")
-        for c in df.columns
-    ]
+    """Parse contribution Excel file using openpyxl (pure Python, no pandas/numpy)."""
+    from core.file_parsers import read_excel_as_dicts, find_column_by_names, parse_wage_range
+    
+    rows = read_excel_as_dicts(file_path)
+    if not rows:
+        return []
+    
     column_map = {
         "wage_range": ["actual_monthly_wage_rm", "wage_range"],
         "employer_contribution": ["employers_contribution_first_category_rm"],
@@ -2776,31 +2795,37 @@ def parse_contribution_xlsx(file_path):
         "total_contribution": ["total_contribution_first_category_rm"],
         "employer_only_contribution": ["contribution_by_employer_only_second_category_rm"],
     }
+    
+    # Get column names from first row
+    columns = list(rows[0].keys())
+    
     def find_column(possible_names):
         for name in possible_names:
-            if name in df.columns:
+            if name in columns:
                 return name
         raise ValueError(f"Missing expected column. Tried: {possible_names}")
+    
     wage_col = find_column(column_map["wage_range"])
     employer_col = find_column(column_map["employer_contribution"])
     employee_col = find_column(column_map["employee_contribution"])
     total_col = find_column(column_map["total_contribution"])
     employer_only_col = find_column(column_map["employer_only_contribution"])
+    
     contrib_data = []
-    for _, row in df.iterrows():
-        wage_range = str(row[wage_col])
-        if "and above" in wage_range:
-            wage_min = float(wage_range.split()[0])
-            wage_max = 999999.99  # or any suitably large value
-        else:
-            wage_min, wage_max = map(float, wage_range.replace('RM', '').replace('–', '-').split('-'))
+    for row in rows:
+        wage_range = str(row.get(wage_col, ""))
+        try:
+            wage_min, wage_max = parse_wage_range(wage_range)
+        except ValueError as e:
+            print(f"DEBUG: Could not parse wage range: {wage_range}: {e}")
+            continue
         contrib_data.append({
             'wage_min': wage_min,
             'wage_max': wage_max,
-            'employer_contribution': float(row[employer_col]),
-            'employee_contribution': float(row[employee_col]),
-            'total_contribution': float(row[total_col]),
-            'employer_only_contribution': float(row[employer_only_col])
+            'employer_contribution': float(row.get(employer_col, 0) or 0),
+            'employee_contribution': float(row.get(employee_col, 0) or 0),
+            'total_contribution': float(row.get(total_col, 0) or 0),
+            'employer_only_contribution': float(row.get(employer_only_col, 0) or 0)
         })
     return contrib_data
 
@@ -6840,13 +6865,29 @@ def get_all_payroll_records(month_year: str = None) -> List[Dict]:
 # =============================================================================
 
 def generate_payslip_pdf(payroll_data: Dict, output_path: str = None) -> Optional[str]:
-    """Generate payslip PDF from payroll data"""
+    """Generate payslip PDF from payroll data. Uses fpdf2 (pure Python) on web, reportlab on desktop."""
+    if not output_path:
+        # Generate filename based on employee and date
+        employee_id = payroll_data.get('employee_id', 'unknown')
+        month_year = payroll_data.get('month_year', 'unknown')
+        output_path = f"Payslip_{employee_id}_{month_year.replace('/', '_')}.pdf"
+    
+    # Try fpdf2 first (web/cPanel compatible)
     try:
-        if not output_path:
-            # Generate filename based on employee and date
-            employee_id = payroll_data.get('employee_id', 'unknown')
-            month_year = payroll_data.get('month_year', 'unknown')
-            output_path = f"Payslip_{employee_id}_{month_year.replace('/', '_')}.pdf"
+        from core.pdf_generator import generate_payslip_pdf_to_file
+        result = generate_payslip_pdf_to_file(payroll_data, output_path)
+        if result:
+            return result
+    except ImportError:
+        pass  # fpdf2 not available, try reportlab
+    
+    # Fallback to reportlab (desktop)
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.units import cm
         
         # Create PDF document
         doc = SimpleDocTemplate(output_path, pagesize=A4)
@@ -7026,6 +7067,15 @@ def generate_payslip_pdf(payroll_data: Dict, output_path: str = None) -> Optiona
         
         return output_path
         
+    except ImportError:
+        print("DEBUG: reportlab not available, using fpdf2 fallback")
+        # Fallback to fpdf2 (pure Python)
+        try:
+            from core.pdf_generator import generate_payslip_pdf_to_file
+            return generate_payslip_pdf_to_file(payroll_data, output_path)
+        except ImportError:
+            print("DEBUG: Neither reportlab nor fpdf2 available for PDF generation")
+            return None
     except Exception as e:
         print(f"DEBUG: Error generating payslip PDF: {e}")
         return None
@@ -9325,8 +9375,8 @@ def login_user_by_username(username: str, password: str):
                                     details={'locked_until': lu.isoformat()})
                 return {"success": False, "role": None, "locked_until": lu.isoformat()}
 
-        stored_password = user["password"].encode('utf-8')
-        if bcrypt.checkpw(password.encode('utf-8'), stored_password):
+        stored_password = user["password"]
+        if verify_password(password, stored_password):
             # Successful login; reset counters if present
             try:
                 if 'failed_attempts' in user or 'locked_until' in user:

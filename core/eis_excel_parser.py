@@ -1,9 +1,15 @@
-import pandas as pd
-import re
+"""
+EIS Excel file parser using openpyxl (pure Python, no pandas/numpy).
+
+This module provides functionality to parse EIS contribution rate tables
+from Excel files and upload them to the database.
+"""
 from datetime import datetime
 import pytz
+from core.file_parsers import read_excel_as_dicts, parse_wage_range
 
 KL_TZ = pytz.timezone('Asia/Kuala_Lumpur')
+
 
 def parse_eis_excel(file_path):
     """
@@ -16,47 +22,64 @@ def parse_eis_excel(file_path):
         list: List of dictionaries containing EIS contribution data
     """
     try:
-        df = pd.read_excel(file_path)
+        rows = read_excel_as_dicts(file_path)
         
-        # Expected columns in EIS file
+        if not rows:
+            print("DEBUG: No data found in EIS Excel file")
+            return []
+        
+        # Expected columns in EIS file (normalized)
         expected_columns = [
-            'Actual Monthly Wage (RM)',
-            "Employer's Contribution (RM)",
-            "Employee's Contribution (RM)",
-            'Total Contribution (RM)'
+            'actual_monthly_wage_rm',
+            "employers_contribution_rm",
+            "employees_contribution_rm",
+            'total_contribution_rm'
         ]
         
-        # Validate columns
-        for col in expected_columns:
-            if col not in df.columns:
-                raise ValueError(f"Missing expected column: {col}")
+        # Get actual column names
+        columns = list(rows[0].keys()) if rows else []
+        
+        # Validate columns - try to find matching columns
+        def find_col(partial_matches):
+            for col in columns:
+                for match in partial_matches:
+                    if match in col:
+                        return col
+            return None
+        
+        wage_col = find_col(['actual_monthly_wage', 'wage'])
+        employer_col = find_col(['employers_contribution', 'employer'])
+        employee_col = find_col(['employees_contribution', 'employee'])
+        total_col = find_col(['total_contribution', 'total'])
+        
+        if not all([wage_col, employer_col, employee_col, total_col]):
+            missing = []
+            if not wage_col: missing.append('wage')
+            if not employer_col: missing.append('employer contribution')
+            if not employee_col: missing.append('employee contribution')
+            if not total_col: missing.append('total contribution')
+            raise ValueError(f"Missing expected columns: {', '.join(missing)}")
         
         eis_data = []
         
-        for _, row in df.iterrows():
+        for row in rows:
             try:
-                wage_range = str(row['Actual Monthly Wage (RM)']).strip()
+                wage_range = str(row.get(wage_col, '')).strip()
                 
-                # Parse wage range
-                if "and above" in wage_range.lower():
-                    # Handle "6000.01 and above" case
-                    from_wage = float(wage_range.split()[0])
-                    to_wage = 999999.99  # Use large number for "and above"
-                else:
-                    # Handle "0.00 - 30.00" format
-                    wage_range = wage_range.replace('RM', '').strip()
-                    if ' - ' in wage_range:
-                        from_str, to_str = wage_range.split(' - ')
-                        from_wage = float(from_str.strip())
-                        to_wage = float(to_str.strip())
-                    else:
-                        print(f"DEBUG: Could not parse wage range: {wage_range}")
-                        continue
+                if not wage_range:
+                    continue
+                
+                # Parse wage range using shared utility
+                try:
+                    from_wage, to_wage = parse_wage_range(wage_range)
+                except ValueError as e:
+                    print(f"DEBUG: Could not parse wage range: {wage_range}: {e}")
+                    continue
                 
                 # Extract contribution amounts
-                employer_contribution = float(row["Employer's Contribution (RM)"])
-                employee_contribution = float(row["Employee's Contribution (RM)"])
-                total_contribution = float(row['Total Contribution (RM)'])
+                employer_contribution = float(row.get(employer_col, 0) or 0)
+                employee_contribution = float(row.get(employee_col, 0) or 0)
+                total_contribution = float(row.get(total_col, 0) or 0)
                 
                 # Create data record
                 eis_record = {
@@ -73,7 +96,7 @@ def parse_eis_excel(file_path):
                 eis_data.append(eis_record)
                 
             except (ValueError, IndexError) as e:
-                print(f"DEBUG: Error parsing EIS row {row.to_dict()}: {e}")
+                print(f"DEBUG: Error parsing EIS row: {e}")
                 continue
         
         print(f"DEBUG: Successfully parsed {len(eis_data)} EIS records")
@@ -82,6 +105,7 @@ def parse_eis_excel(file_path):
     except Exception as e:
         print(f"DEBUG: Error parsing EIS Excel file {file_path}: {e}")
         return []
+
 
 def upload_and_parse_eis_excel(file_path, supabase):
     """

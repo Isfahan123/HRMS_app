@@ -10,23 +10,30 @@
 # NOTE: This file is for web hosting ONLY.
 # For desktop GUI application, also install requirements-desktop.txt:
 #   pip install -r requirements.txt -r requirements-desktop.txt
+#
+# IMPORTANT: All packages here are pure Python or have pre-built wheels
+# to ensure compatibility with cPanel/shared hosting environments.
 
 # Database
 supabase==2.8.1
 
 # Authentication & Security
-bcrypt==4.2.0
+# Using passlib with pbkdf2_sha256 (pure Python) instead of bcrypt (requires C compilation)
+passlib==1.7.4
 
 # Utilities
 pytz==2024.1
 python-dotenv==1.0.1
 requests==2.32.3
 num2words==0.5.13
-holidays==0.81
+# Note: 'holidays' library removed - uses compiled numpy/pandas dependencies
+# Holiday data is now fetched from database (calendar_holidays table) or Calendarific API
 
 # Data processing (required for payroll reports)
-reportlab==4.2.2
-pandas==2.2.2
+# Using fpdf2 (pure Python) instead of reportlab (requires C libraries)
+fpdf2==2.8.1
+# Note: pandas removed - requires numpy which needs C compilation
+# Excel parsing now uses openpyxl directly (pure Python)
 openpyxl==3.1.2
 PyPDF2==3.0.1
 
