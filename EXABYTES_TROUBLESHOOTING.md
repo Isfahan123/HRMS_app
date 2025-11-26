@@ -311,7 +311,20 @@ Fix: Ensure passenger_wsgi.py exists in root directory
 Fix: Install dependencies in virtual environment:
 cd ~/public_html/hrms
 source ~/virtualenv/hrms/3.11/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-web.txt
+```
+
+#### Error: Module Installation Failed (PyQt5, tabula-py, etc.)
+```
+The full requirements.txt includes desktop packages that won't install on cPanel:
+- PyQt5 requires system GUI libraries (not available on headless servers)
+- tabula-py requires Java runtime (not usually installed on cPanel)
+
+Fix: Use web-only requirements file instead:
+cd ~/public_html/hrms
+source ~/virtualenv/hrms/3.11/bin/activate
+pip install -r requirements-web.txt
+touch passenger_wsgi.py
 ```
 
 #### Error: "Permission denied"

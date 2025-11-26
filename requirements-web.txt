@@ -1,0 +1,33 @@
+# Web-only dependencies for cPanel/Exabytes deployment
+# Use this file instead of requirements.txt for web hosting
+# Installation: pip install -r requirements-web.txt
+
+# Database
+supabase==2.8.1
+
+# Authentication & Security
+bcrypt==4.2.0
+
+# Utilities
+pytz==2024.1
+python-dotenv==1.0.1
+requests==2.32.3
+num2words==0.5.13
+holidays==0.81
+
+# FastAPI stack (Web Framework)
+fastapi==0.115.5
+uvicorn==0.32.1
+jinja2==3.1.4
+python-multipart==0.0.18
+
+# REQUIRED for FastAPI to run under cPanel Passenger
+asgiref==3.8.1
+
+# Note: The following packages from requirements.txt are NOT needed for web:
+# - PyQt5 (Desktop GUI - causes errors on cPanel)
+# - reportlab (PDF generation - optional)
+# - pandas (Data analysis - optional)
+# - openpyxl (Excel files - optional)
+# - tabula-py (Requires Java - causes errors on cPanel)
+# - PyPDF2 (PDF processing - optional)

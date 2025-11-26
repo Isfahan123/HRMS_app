@@ -33,11 +33,17 @@ deployment:
     - echo "✓ pip upgraded"
     - echo ""
 
-    # Install dependencies
+    # Install dependencies (web-only to avoid PyQt5/Java errors on cPanel)
     - echo "Step 3: Installing Python dependencies..."
     - echo "This may take a few minutes..."
-    - pip install -r requirements.txt --quiet --disable-pip-version-check
-    - echo "✓ All dependencies installed"
+    - |
+      if [ -f "requirements-web.txt" ]; then
+        pip install -r requirements-web.txt --quiet --disable-pip-version-check
+        echo "✓ Web dependencies installed (using requirements-web.txt)"
+      else
+        pip install -r requirements.txt --quiet --disable-pip-version-check
+        echo "✓ All dependencies installed"
+      fi
     - echo ""
 
     # Verify critical packages

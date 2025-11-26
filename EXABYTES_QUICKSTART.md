@@ -39,8 +39,11 @@ cd hrms
 ### Step 4: Install Dependencies
 ```bash
 source ~/virtualenv/hrms/3.11/bin/activate
-pip install -r requirements.txt
+# Use web-only requirements (avoids PyQt5/Java errors on cPanel)
+pip install -r requirements-web.txt
 ```
+
+> ⚠️ If `pip install -r requirements.txt` fails with errors about PyQt5 or Java, use `requirements-web.txt` instead.
 
 ### Step 5: Configure Environment
 ```bash
