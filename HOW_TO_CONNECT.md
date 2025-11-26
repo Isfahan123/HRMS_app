@@ -107,7 +107,7 @@ Supabase (PostgreSQL database)
 
 1. **Apache + Passenger** - Web server that runs Python apps on cPanel
 2. **passenger_wsgi.py** - Converts ASGI (FastAPI) to WSGI (Passenger)
-3. **asgiref** - Python library that provides the ASGI-to-WSGI bridge
+3. **a2wsgi** - Python library that provides the ASGI-to-WSGI bridge
 4. **FastAPI** - Modern Python web framework
 5. **Supabase** - Cloud database (PostgreSQL)
 

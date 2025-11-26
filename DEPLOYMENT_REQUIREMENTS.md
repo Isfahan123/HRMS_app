@@ -183,7 +183,7 @@ All packages are listed in `requirements.txt` and will be installed automaticall
 - ✅ uvicorn==0.32.1
 - ✅ jinja2==3.1.4
 - ✅ python-multipart==0.0.18
-- ✅ asgiref==3.8.1 (CRITICAL for cPanel/Passenger)
+- ✅ a2wsgi==1.10.10 (CRITICAL for cPanel/Passenger - converts ASGI to WSGI)
 
 **Database & Auth:**
 - ✅ supabase==2.8.1

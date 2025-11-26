@@ -17,7 +17,7 @@ Enable the HRMS web application to be deployed on cPanel hosting with Python sup
 
 #### `passenger_wsgi.py` (Enhanced - 2.2 KB)
 - WSGI entry point for Passenger
-- Converts FastAPI (ASGI) to WSGI using asgiref
+- Converts FastAPI (ASGI) to WSGI using a2wsgi
 - Enhanced error handling and logging
 - Environment variable loading support
 - Debug mode for troubleshooting
@@ -114,8 +114,8 @@ Enable the HRMS web application to be deployed on cPanel hosting with Python sup
 
 ### WSGI Adapter
 ```python
-from asgiref.wsgi import WsgiToAsgi
-application = WsgiToAsgi(app)  # Converts FastAPI to WSGI
+from a2wsgi import ASGIMiddleware
+application = ASGIMiddleware(app)  # Converts FastAPI (ASGI) to WSGI
 ```
 
 ### Deployment Flow
@@ -157,7 +157,7 @@ HRMS_app/
 ### Package Tests ✓
 - ✅ fastapi installed
 - ✅ uvicorn installed
-- ✅ asgiref installed
+- ✅ a2wsgi installed
 - ✅ jinja2 installed
 - ✅ supabase installed
 - ✅ bcrypt installed
