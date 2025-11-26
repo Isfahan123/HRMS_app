@@ -4,12 +4,13 @@ PDF generation utilities using fpdf2 (pure Python).
 This module provides PDF generation functionality using fpdf2, which is a pure
 Python library that works on cPanel/shared hosting without requiring C compilation.
 
-For desktop environments where reportlab is available, the gui/payslip_generator.py
-can be used instead for more advanced formatting.
+This version replicates the same format as the desktop GUI payslip generator
+(gui/payslip_generator.py) but using fpdf2 instead of reportlab.
 """
 import io
 import json
 import traceback
+import requests
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -18,6 +19,89 @@ try:
     FPDF_AVAILABLE = True
 except ImportError:
     FPDF_AVAILABLE = False
+
+try:
+    from num2words import num2words
+    NUM2WORDS_AVAILABLE = True
+except ImportError:
+    NUM2WORDS_AVAILABLE = False
+
+# --------------------------
+# Company details (same as gui/payslip_generator.py)
+# --------------------------
+LOGO_URL = "https://enigmatechnicalsolutions.com/wp-content/uploads/2024/07/cropped-enigma512px-300x300-1.png"
+COMPANY_NAME = "ENIGMA TECHNICAL SOLUTIONS SDN BHD"
+SSM_NO = "002628025-K"
+COMPANY_ADDRESS_LINES = [
+    "56 & 57, Persiaran Venice Sutera 1, Desa Manjung Raya",
+    "32200 Lumut, Perak, Malaysia",
+    "Tel: +60-3-4131 9114 | Email: info@enigmatechnical.com"
+]
+
+# --------------------------
+# Helpers
+# --------------------------
+def download_logo_bytes(url):
+    """Try download logo and return bytes or None"""
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        return resp.content
+    except Exception as e:
+        print("Warning: logo download failed:", e)
+        return None
+
+def money(v):
+    """Format money with comma separators and 2 decimal places"""
+    return f"{v:,.2f}"
+
+def money_words(amount):
+    """Convert amount to words (e.g., 'One Thousand Two Hundred Ringgit Fifty Sen Only')"""
+    if not NUM2WORDS_AVAILABLE:
+        return f"RM {money(amount)}"
+    
+    whole = int(amount)
+    cents = int(round((amount - whole) * 100))
+    w = num2words(whole, to='cardinal', lang='en').title()
+    if cents:
+        c = num2words(cents, to='cardinal', lang='en').title()
+        return f"{w} Ringgit {c} Sen Only"
+    else:
+        return f"{w} Ringgit Only"
+
+def _parse_any_date(val):
+    """Best-effort parse of common date formats to a datetime object.
+    Supports: YYYY-MM-DD, YYYY/MM/DD, DD/MM/YYYY, DD-MM-YYYY, YYYY-MM, YYYY/MM, MM/YYYY, MM-YYYY.
+    Returns None on failure.
+    """
+    try:
+        if not val:
+            return None
+        from datetime import datetime as _dt
+        s = str(val).strip()
+        fmts = [
+            '%Y-%m-%d', '%Y/%m/%d',
+            '%d/%m/%Y', '%d-%m-%Y',
+            '%Y-%m', '%Y/%m',
+            '%m/%Y', '%m-%Y',
+        ]
+        for f in fmts:
+            try:
+                dt = _dt.strptime(s, f)
+                if f in ('%Y-%m', '%Y/%m', '%m/%Y', '%m-%Y'):
+                    parts = s.replace('-', '/').split('/')
+                    if f in ('%m/%Y', '%m-%Y'):
+                        mm, yy = int(parts[0]), int(parts[1])
+                        return _dt(yy, mm, 1)
+                    else:
+                        yy, mm = int(parts[0]), int(parts[1])
+                        return _dt(yy, mm, 1)
+                return dt
+            except Exception:
+                continue
+        return None
+    except Exception:
+        return None
 
 
 def generate_payslip_pdf_fpdf(employee: Dict, payroll_data: Dict, payroll_date: str) -> bytes:
@@ -272,8 +356,8 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
     Generate payslip PDF for a specific employee and payroll run using fpdf2.
     
     This is a web-compatible version that uses fpdf2 (pure Python) instead of 
-    reportlab which requires C libraries. It mirrors the interface of
-    gui/payslip_generator.py for seamless replacement in web environments.
+    reportlab which requires C libraries. It replicates the same format as
+    gui/payslip_generator.py for consistent output between desktop and web.
     
     Args:
         employee_id: UUID of the employee
@@ -358,177 +442,384 @@ def generate_payslip_for_employee(employee_id: str, payroll_run_id: str, output_
         basic_salary = float(employee.get('basic_salary', 0))
         bonus = float(payroll_run.get('bonus', 0))
         
+        # Resolve YTD snapshot (as of previous month)
+        gross_ytd = 0.0
+        ytd_epf_emp = 0.0
+        ytd_socso = 0.0
+        ytd_pcb = 0.0
+        ytd_eis = 0.0
+        try:
+            # Preferred: use snapshot columns on payroll_runs if present
+            gross_ytd = float(payroll_run.get('accumulated_gross_salary_ytd', 0.0) or 0.0)
+            ytd_epf_emp = float(payroll_run.get('accumulated_epf_employee_ytd', 0.0) or 0.0)
+            ytd_pcb = float(payroll_run.get('accumulated_pcb_ytd', 0.0) or 0.0)
+            ytd_socso = float(payroll_run.get('accumulated_socso_employee_ytd', 0.0) or 0.0)
+            ytd_eis = float(payroll_run.get('accumulated_eis_employee_ytd', 0.0) or 0.0)
+
+            # Fallback to calculating from payroll runs if snapshot columns are empty
+            def _fallback_from_payroll_runs():
+                nonlocal gross_ytd, ytd_epf_emp, ytd_pcb, ytd_socso, ytd_eis
+                _pr_date = payroll_run.get('payroll_date', '')
+                if not _pr_date:
+                    return False
+                emp_uuid = employee.get('id')
+                if not emp_uuid:
+                    return False
+                pr = (
+                    supabase.table('payroll_runs')
+                    .select('gross_salary, epf_employee, pcb, socso_employee, eis_employee, payroll_date')
+                    .eq('employee_id', emp_uuid)
+                    .execute()
+                )
+                if pr and pr.data:
+                    try:
+                        _ref = _parse_any_date(_pr_date)
+                    except Exception:
+                        _ref = None
+                    _rows = []
+                    for r in pr.data:
+                        try:
+                            _dtp = _parse_any_date(r.get('payroll_date'))
+                            if _ref and _dtp and _dtp < _ref:
+                                _rows.append(r)
+                        except Exception:
+                            continue
+                    if _rows:
+                        gross_ytd = sum(float(r.get('gross_salary', 0) or 0) for r in _rows)
+                        ytd_epf_emp = sum(float(r.get('epf_employee', 0) or 0) for r in _rows)
+                        ytd_pcb = sum(float(r.get('pcb', 0) or 0) for r in _rows)
+                        ytd_socso = sum(float(r.get('socso_employee', 0) or 0) for r in _rows)
+                        ytd_eis = sum(float(r.get('eis_employee', 0) or 0) for r in _rows)
+                        return True
+                return False
+
+            # If core YTDs are all zero, derive them from runs
+            if gross_ytd == 0.0 and ytd_epf_emp == 0.0 and ytd_pcb == 0.0:
+                _fallback_from_payroll_runs()
+        except Exception as _ytd_err:
+            print(f"Warning: could not resolve YTD snapshot for payslip: {_ytd_err}")
+        
         # Generate output path if not provided
         if not output_path:
             employee_display_id = employee.get('employee_id', employee_id)
             output_path = f"Payslip_{employee_display_id}_{month}_{year}.pdf"
         
-        # Generate PDF using fpdf2
-        pdf = FPDF()
+        # =========================================================
+        # Generate PDF using fpdf2 - Replicate old reportlab format
+        # =========================================================
+        pdf = FPDF('P', 'mm', 'A4')
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
         
-        # Title
-        pdf.set_font('Helvetica', 'B', 18)
-        pdf.set_text_color(0, 0, 139)  # Dark blue
-        pdf.cell(0, 12, 'PAYSLIP', ln=True, align='C')
-        pdf.set_font('Helvetica', '', 10)
+        # Page dimensions (A4 = 210 x 297 mm)
+        W = 210
+        left_margin = 18
+        right_margin = 18
+        usable_width = W - left_margin - right_margin
+        
+        # Try to download and add logo
+        logo_bytes = download_logo_bytes(LOGO_URL)
+        logo_size = 28  # mm
+        
+        # Starting position
+        top_y = 18
+        text_x = left_margin
+        
+        if logo_bytes:
+            try:
+                # Save logo to temp file for fpdf2
+                import tempfile
+                import os
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+                    tmp.write(logo_bytes)
+                    tmp_path = tmp.name
+                
+                pdf.image(tmp_path, left_margin, top_y, logo_size, logo_size)
+                text_x = left_margin + logo_size + 6
+                
+                # Clean up temp file
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
+            except Exception as e:
+                print(f"Warning: Could not add logo to PDF: {e}")
+        
+        # Company name and details (right of logo)
+        pdf.set_xy(text_x, top_y)
+        pdf.set_font('Helvetica', 'B', 14)
         pdf.set_text_color(0, 0, 0)
-        pdf.cell(0, 6, f"For {month} {year}", ln=True, align='C')
-        pdf.ln(5)
+        pdf.cell(0, 6, COMPANY_NAME, ln=True)
         
-        # Employee information section
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.cell(0, 8, 'Employee Information', ln=True)
+        pdf.set_xy(text_x, top_y + 7)
+        pdf.set_font('Helvetica', '', 9)
+        pdf.cell(0, 5, f"SSM No: {SSM_NO}", ln=True)
         
-        pdf.set_font('Helvetica', '', 10)
-        emp_position = employee.get('position') or employee.get('job_title') or ''
-        info_rows = [
-            ('Employee ID:', employee.get('employee_id', '')),
-            ('Employee Name:', employee.get('full_name', '')),
-            ('Position:', emp_position),
-            ('IC Number:', employee.get('ic_number', employee.get('nric', ''))),
-            ('EPF Number:', employee.get('epf_number', '')),
-            ('Bank:', f"{employee.get('bank_name', '')} - {employee.get('bank_account', '')}"),
-            ('Pay Date:', pay_date),
-        ]
+        # Company address lines
+        y_pos = top_y + 13
+        for line in COMPANY_ADDRESS_LINES:
+            if line.strip():
+                pdf.set_xy(text_x, y_pos)
+                pdf.cell(0, 4, line, ln=True)
+                y_pos += 4
         
-        for label, value in info_rows:
-            if value:  # Only show non-empty values
-                pdf.set_fill_color(211, 211, 211)
-                pdf.cell(50, 7, label, 1, 0, 'L', True)
-                pdf.cell(120, 7, str(value), 1, 1, 'L')
-        
-        pdf.ln(5)
-        
-        # Income section
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.set_fill_color(0, 0, 139)  # Dark blue
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(100, 10, 'INCOME', 1, 0, 'C', True)
-        pdf.cell(70, 10, 'AMOUNT (RM)', 1, 1, 'C', True)
-        
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Helvetica', '', 10)
-        
-        # Income items
-        income_items = [('Basic Salary', basic_salary)]
-        
-        # Add allowances
-        if allowances:
-            for name, amount in allowances.items():
-                if amount and float(amount) > 0:
-                    income_items.append((f"{name.replace('_', ' ').title()} Allowance", float(amount)))
-        
-        # Add bonus if any
-        if bonus > 0:
-            income_items.append(('Bonus', bonus))
-        
-        for desc, amount in income_items:
-            if float(amount) > 0:
-                pdf.cell(100, 8, desc, 1, 0, 'L')
-                pdf.cell(70, 8, f"{float(amount):,.2f}", 1, 1, 'R')
-        
-        # Gross income total
-        pdf.set_fill_color(173, 216, 230)  # Light blue
+        # Payslip meta (right side)
         pdf.set_font('Helvetica', 'B', 10)
-        pdf.cell(100, 8, 'GROSS INCOME', 1, 0, 'L', True)
-        pdf.cell(70, 8, f"{gross_salary:,.2f}", 1, 1, 'R', True)
+        pdf.set_xy(W - right_margin - 60, top_y)
+        pdf.cell(60, 5, f"Payslip for {month} {year}", align='R')
         
-        pdf.ln(5)
+        pdf.set_font('Helvetica', '', 9)
+        pdf.set_xy(W - right_margin - 60, top_y + 7)
+        pdf.cell(60, 5, f"Date: {pay_date}", align='R')
         
-        # Deductions section
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.set_fill_color(139, 0, 0)  # Dark red
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(100, 10, 'DEDUCTIONS', 1, 0, 'C', True)
-        pdf.cell(70, 10, 'AMOUNT (RM)', 1, 1, 'C', True)
+        # Employee block (boxed section)
+        block_y = top_y + logo_size + 14
+        box_h = 20
         
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Helvetica', '', 10)
+        pdf.set_draw_color(0, 0, 0)
+        pdf.set_line_width(0.3)
+        pdf.rect(left_margin, block_y, usable_width, box_h)
         
+        emp_position = employee.get('position') or employee.get('job_title') or '-'
+        emp_name = employee.get('full_name', '')
+        emp_staff_no = employee.get('employee_id', '')
+        emp_ic = employee.get('ic_number', employee.get('nric', '-'))
+        emp_epf_no = employee.get('epf_number', '-')
+        emp_socso_no = employee.get('socso_number', '-')
+        
+        # Employee info - left side
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_xy(left_margin + 4, block_y + 4)
+        pdf.cell(0, 5, f"NAME: {emp_name}")
+        
+        pdf.set_xy(left_margin + 4, block_y + 10)
+        pdf.cell(0, 5, f"STAFF NO: {emp_staff_no}   NRIC: {emp_ic}")
+        
+        # Employee info - right side
+        pdf.set_xy(left_margin + usable_width - 74, block_y + 4)
+        pdf.cell(70, 5, f"Position: {emp_position}", align='R')
+        
+        pdf.set_xy(left_margin + usable_width - 74, block_y + 10)
+        pdf.cell(70, 5, f"EPF No: {emp_epf_no}   SOCSO: {emp_socso_no}", align='R')
+        
+        # =========================================================
+        # Income and Deductions tables (two columns with Current/YTD)
+        # =========================================================
+        table_y = block_y + box_h + 8
+        col_gap = 12
+        col1_w = (usable_width - col_gap) / 2
+        col2_w = col1_w
+        row_h = 6
+        
+        # Build income items
+        earning_current = [("Basic Salary", basic_salary)]
+        if allowances:
+            for allowance_type, amount in allowances.items():
+                if amount and float(amount) > 0:
+                    earning_current.append((f"{allowance_type.title()} Allowance", float(amount)))
+        if bonus > 0:
+            earning_current.append(("Bonus", bonus))
+        
+        # Build YTD map (put all YTD on first item for simplicity)
+        earning_ytd_map = {}
+        if earning_current:
+            first_label = earning_current[0][0]
+            earning_ytd_map[first_label] = gross_ytd
+            for lbl, _amt in earning_current[1:]:
+                earning_ytd_map[lbl] = 0.0
+        
+        # Left column: INCOME
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_xy(left_margin, table_y)
+        pdf.cell(col1_w, 6, "INCOME", ln=True)
+        
+        # Income header row
+        income_y = table_y + 7
+        pdf.set_font('Helvetica', 'B', 9)
+        pdf.set_xy(left_margin, income_y)
+        pdf.cell(col1_w * 0.5, 5, "Description")
+        pdf.cell(col1_w * 0.25, 5, "Current", align='R')
+        pdf.cell(col1_w * 0.25, 5, "Y-T-D", align='R')
+        
+        # Income data rows
+        pdf.set_font('Helvetica', '', 9)
+        y = income_y + row_h
+        gross_current = 0.0
+        gross_ytd_total = 0.0
+        
+        for lbl, amt in earning_current:
+            y_curr = float(amt)
+            y_ytd = float(earning_ytd_map.get(lbl, 0.0))
+            
+            pdf.set_xy(left_margin, y)
+            pdf.cell(col1_w * 0.5, 5, lbl[:25])  # Truncate long labels
+            pdf.cell(col1_w * 0.25, 5, money(y_curr), align='R')
+            pdf.cell(col1_w * 0.25, 5, money(y_ytd), align='R')
+            
+            y += row_h
+            gross_current += y_curr
+            gross_ytd_total += y_ytd
+        
+        # Gross totals row
+        pdf.set_font('Helvetica', 'B', 9)
+        pdf.set_xy(left_margin, y)
+        pdf.cell(col1_w * 0.5, 5, "Gross Total")
+        pdf.cell(col1_w * 0.25, 5, money(gross_current), align='R')
+        pdf.cell(col1_w * 0.25, 5, money(gross_ytd_total), align='R')
+        income_end_y = y + row_h
+        
+        # Right column: DEDUCTION
+        ded_x = left_margin + col1_w + col_gap
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_xy(ded_x, table_y)
+        pdf.cell(col2_w, 6, "DEDUCTION", ln=True)
+        
+        # Deduction header row
+        pdf.set_font('Helvetica', 'B', 9)
+        pdf.set_xy(ded_x, income_y)
+        pdf.cell(col2_w * 0.5, 5, "Description")
+        pdf.cell(col2_w * 0.25, 5, "Current", align='R')
+        pdf.cell(col2_w * 0.25, 5, "Y-T-D", align='R')
+        
+        # Deduction data rows
+        pdf.set_font('Helvetica', '', 9)
+        y2 = income_y + row_h
+        total_ded_current = 0.0
+        total_ded_ytd = 0.0
+        
+        # Build deduction items with YTD
         deduction_items = []
         
-        # Add unpaid leave deduction first
+        # Other deductions first (unpaid leave, etc.)
         if unpaid_days > 0 and unpaid_deduction > 0:
-            deduction_items.append((f'Unpaid Leave ({unpaid_days} days)', unpaid_deduction))
+            deduction_items.append((f'Unpaid Leave ({unpaid_days} days)', unpaid_deduction, 0.0))
         
-        # Standard deductions
-        if epf_employee > 0:
-            deduction_items.append(('EPF (Employee)', epf_employee))
-        if socso_employee > 0:
-            deduction_items.append(('SOCSO', socso_employee))
-        if eis_employee > 0:
-            deduction_items.append(('EIS', eis_employee))
-        if pcb > 0:
-            deduction_items.append(('PCB Tax', pcb))
-        
-        # Add other deductions from payroll run and update total_deductions
+        # Add other optional deductions from payroll run
         other_deduction_keys = ['sip_deduction', 'additional_epf_deduction', 'prs_deduction', 
                         'insurance_premium', 'medical_premium', 'other_deductions']
         for ded_key in other_deduction_keys:
             ded_amount = float(payroll_run.get(ded_key, 0))
             if ded_amount > 0:
                 ded_name = ded_key.replace('_deduction', '').replace('_', ' ').title()
-                deduction_items.append((ded_name, ded_amount))
+                deduction_items.append((ded_name, ded_amount, 0.0))
         
-        # Calculate total deductions from all items displayed
-        total_deductions = sum(amount for _, amount in deduction_items)
+        # Statutory deductions with YTD
+        deduction_items.append(("EPF (Employee)", epf_employee, ytd_epf_emp))
+        deduction_items.append(("SOCSO", socso_employee, ytd_socso))
+        deduction_items.append(("PCB", pcb, ytd_pcb))
+        deduction_items.append(("EIS", eis_employee, ytd_eis))
         
-        for desc, amount in deduction_items:
-            if float(amount) > 0:
-                pdf.cell(100, 8, desc, 1, 0, 'L')
-                pdf.cell(70, 8, f"{float(amount):,.2f}", 1, 1, 'R')
+        for lbl, ycur, yytd in deduction_items:
+            pdf.set_xy(ded_x, y2)
+            pdf.cell(col2_w * 0.5, 5, lbl[:25])
+            pdf.cell(col2_w * 0.25, 5, money(ycur), align='R')
+            pdf.cell(col2_w * 0.25, 5, money(yytd), align='R')
+            
+            y2 += row_h
+            total_ded_current += ycur
+            total_ded_ytd += yytd
         
-        # Total deductions
-        pdf.set_fill_color(255, 182, 193)  # Light pink
+        # Total deductions row
+        pdf.set_font('Helvetica', 'B', 9)
+        pdf.set_xy(ded_x, y2)
+        pdf.cell(col2_w * 0.5, 5, "Total Deductions")
+        pdf.cell(col2_w * 0.25, 5, money(total_ded_current), align='R')
+        pdf.cell(col2_w * 0.25, 5, money(total_ded_ytd), align='R')
+        ded_end_y = y2 + row_h
+        
+        # =========================================================
+        # Employer contributions block
+        # =========================================================
+        emp_cont_y = max(income_end_y, ded_end_y) + 8
+        
         pdf.set_font('Helvetica', 'B', 10)
-        pdf.cell(100, 8, 'TOTAL DEDUCTIONS', 1, 0, 'L', True)
-        pdf.cell(70, 8, f"{total_deductions:,.2f}", 1, 1, 'R', True)
+        pdf.set_xy(left_margin, emp_cont_y)
+        pdf.cell(0, 5, "Employer Contributions")
         
-        pdf.ln(5)
-        
-        # Employer contributions section
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.set_fill_color(70, 130, 180)  # Steel blue
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(100, 10, 'EMPLOYER CONTRIBUTIONS', 1, 0, 'C', True)
-        pdf.cell(70, 10, 'AMOUNT (RM)', 1, 1, 'C', True)
-        
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Helvetica', '', 10)
-        
-        employer_items = []
-        if epf_employer > 0:
-            employer_items.append(('EPF (Employer)', epf_employer))
-        if socso_employer > 0:
-            employer_items.append(('SOCSO (Employer)', socso_employer))
-        if eis_employer > 0:
-            employer_items.append(('EIS (Employer)', eis_employer))
-        
-        for desc, amount in employer_items:
-            pdf.cell(100, 8, desc, 1, 0, 'L')
-            pdf.cell(70, 8, f"{float(amount):,.2f}", 1, 1, 'R')
-        
-        pdf.ln(5)
-        
-        # Net salary
-        pdf.set_font('Helvetica', 'B', 14)
-        pdf.set_fill_color(0, 100, 0)  # Dark green
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(100, 12, 'NET SALARY', 1, 0, 'C', True)
-        pdf.cell(70, 12, f"RM {net_salary:,.2f}", 1, 1, 'C', True)
-        
-        pdf.ln(5)
-        
-        # Footer
-        pdf.set_text_color(128, 128, 128)
-        pdf.set_font('Helvetica', 'I', 8)
-        pdf.cell(0, 6, 'This is a computer-generated payslip and does not require a signature.', ln=True, align='C')
         pdf.set_font('Helvetica', '', 9)
-        pdf.set_text_color(0, 0, 0)
-        pdf.cell(0, 8, f"Generated on: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} (Malaysia Time)", ln=True)
+        pdf.set_xy(left_margin + 4, emp_cont_y + 6)
+        pdf.cell(0, 5, f"Employer EPF: RM {money(epf_employer)}")
         
+        pdf.set_xy(left_margin + 4, emp_cont_y + 11)
+        pdf.cell(0, 5, f"Employer SOCSO: RM {money(socso_employer)}")
+        
+        pdf.set_xy(left_margin + 4, emp_cont_y + 16)
+        pdf.cell(0, 5, f"Employer EIS: RM {money(eis_employer)}")
+        
+        # =========================================================
+        # Totals / Net / End Month Pay (right side)
+        # =========================================================
+        net = gross_current - total_ded_current
+        
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_xy(W - right_margin - 70, emp_cont_y)
+        pdf.cell(70, 5, f"Gross Income : RM {money(gross_current)}", align='R')
+        
+        pdf.set_xy(W - right_margin - 70, emp_cont_y + 6)
+        pdf.cell(70, 5, f"Total Deductions : RM {money(total_ded_current)}", align='R')
+        
+        pdf.set_font('Helvetica', 'B', 12)
+        pdf.set_xy(W - right_margin - 70, emp_cont_y + 14)
+        pdf.cell(70, 5, f"Net Income : RM {money(net)}", align='R')
+        
+        pdf.set_font('Helvetica', '', 9)
+        pdf.set_xy(W - right_margin - 70, emp_cont_y + 21)
+        pdf.cell(70, 5, f"End Month Pay : RM {money(net)}", align='R')
+        
+        # =========================================================
+        # Net in words
+        # =========================================================
+        pdf.set_font('Helvetica', 'I', 9)
+        pdf.set_xy(left_margin, emp_cont_y + 28)
+        pdf.cell(0, 5, f"In Words: {money_words(net)}")
+        
+        # =========================================================
+        # Unpaid leave information (if any)
+        # =========================================================
+        if unpaid_days > 0:
+            pdf.set_font('Helvetica', 'B', 8)
+            pdf.set_xy(left_margin, emp_cont_y + 35)
+            pdf.cell(0, 5, f"Unpaid Leave: {unpaid_days} days (Deduction: RM {money(unpaid_deduction)})")
+        
+        # =========================================================
+        # Signature lines
+        # =========================================================
+        sig_y = 250  # Fixed position near bottom
+        sig_width = 40
+        gap = 20
+        
+        pdf.set_draw_color(0, 0, 0)
+        pdf.set_line_width(0.2)
+        
+        # Prepared by
+        pdf.line(left_margin, sig_y, left_margin + sig_width, sig_y)
+        pdf.set_font('Helvetica', '', 8)
+        pdf.set_xy(left_margin, sig_y + 1)
+        pdf.cell(sig_width, 5, "Prepared By (Name & Signature)")
+        
+        # Approved by
+        app_x = left_margin + sig_width + gap
+        pdf.line(app_x, sig_y, app_x + sig_width, sig_y)
+        pdf.set_xy(app_x, sig_y + 1)
+        pdf.cell(sig_width, 5, "Approved By (Name & Signature)")
+        
+        # Employee acknowledgement
+        emp_x = app_x + sig_width + gap
+        emp_sig_width = sig_width + 12
+        pdf.line(emp_x, sig_y, emp_x + emp_sig_width, sig_y)
+        pdf.set_xy(emp_x, sig_y + 1)
+        pdf.cell(emp_sig_width, 5, "Employee (Acknowledgement & Signature)")
+        
+        # =========================================================
+        # Footer
+        # =========================================================
+        pdf.set_font('Helvetica', '', 7)
+        pdf.set_text_color(128, 128, 128)
+        pdf.set_xy(0, 280)
+        pdf.cell(W, 5, "This is a computer-generated payslip and does not require a signature.", align='C')
+        pdf.set_text_color(0, 0, 0)
+        
+        # Save PDF
         pdf.output(output_path)
         return output_path
         
