@@ -1,4 +1,6 @@
-from supabase import create_client, Client
+# Use REST API client instead of official SDK for cPanel/shared hosting compatibility
+# The official supabase-py SDK requires Rust compilation which fails on shared hosting
+from services.supabase_rest_client import create_client, Client
 from typing import Dict, Optional, List, Any
 import os
 from datetime import datetime

@@ -3,8 +3,6 @@
 # Both files are web-compatible since desktop dependencies were moved to requirements-desktop.txt
 #
 # PYTHON VERSION REQUIREMENT: Python >= 3.9 (Python 3.11 recommended)
-# Several packages require Python 3.9+:
-#   - supabase==2.8.1 requires Python >=3.9
 #
 # Installation: pip install -r requirements-web.txt
 # Or simply: pip install -r requirements.txt (now also web-safe)
@@ -13,7 +11,10 @@
 # to ensure compatibility with cPanel/shared hosting environments.
 
 # Database
-supabase==2.8.1
+# NOTE: We use a custom REST API client (services/supabase_rest_client.py) instead of
+# the official supabase-py SDK because the SDK requires Rust compilation which fails
+# on cPanel/shared hosting. The REST client uses the 'requests' library directly.
+# No supabase package needed - using requests for REST API calls
 
 # Authentication & Security
 # Using passlib with pbkdf2_sha256 (pure Python) instead of bcrypt (requires C compilation)
