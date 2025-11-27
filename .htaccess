@@ -1,49 +1,39 @@
 # HRMS Web Application - Apache/cPanel Configuration
 # This file configures Apache to use Passenger for Python applications
 # Compatible with Exabytes and other cPanel hosting providers
-
 # Enable Passenger
 PassengerEnabled On
-
 # Set the Python version (adjust based on your cPanel Python selector)
 # Update the version number (3.11) to match your virtual environment
 # Common paths: 3.8, 3.9, 3.10, 3.11, 3.12
 # IMPORTANT: Replace both $CPANEL_USER and the app directory name with your actual values
 # For Exabytes: Replace $CPANEL_USER with your cPanel username and hrms with your app folder name
 # Example: /home/yourusername/virtualenv/hrms/3.11/bin/python
-PassengerPython /home/enigmagr/virtualenv/HRMS_app/3.11/bin/python
-
+PassengerPython /home/enigmagr/virtualenv/form.enigmagroup.com.my/HRMS_app/3.11/bin/python
 # Set the application root
 # IMPORTANT: Replace $CPANEL_USER with your cPanel username and hrms with your app folder name
 # Example: /home/yourusername/public_html/hrms
-PassengerAppRoot /home/enigmagr/public_html/HRMS_app
-
+PassengerAppRoot /home/enigmagr/form.enigmagroup.com.my/HRMS_app
 # Set the startup file (WSGI entry point)
 PassengerStartupFile passenger_wsgi.py
-
 # Performance tuning for Passenger
 # Adjust based on your hosting plan resources
 PassengerMinInstances 1
 PassengerMaxPoolSize 4
 PassengerStartTimeout 600
-
 # Application environment
 SetEnv ENVIRONMENT production
-
 # Enable error pages
 ErrorDocument 404 /404.html
 ErrorDocument 500 /500.html
-
 # Security headers
 Header always set X-Frame-Options "SAMEORIGIN"
 Header always set X-Content-Type-Options "nosniff"
 Header always set X-XSS-Protection "1; mode=block"
-
 # Compression for static files
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
 </IfModule>
-
 # Cache static files
 <IfModule mod_expires.c>
     ExpiresActive On
@@ -56,33 +46,27 @@ Header always set X-XSS-Protection "1; mode=block"
     ExpiresByType application/javascript "access plus 1 month"
     ExpiresByType text/javascript "access plus 1 month"
 </IfModule>
-
 # Prevent directory listing
 Options -Indexes
-
 # Protect sensitive files
 <FilesMatch "^\.">
     Order allow,deny
     Deny from all
 </FilesMatch>
-
 <FilesMatch "\.(env|py|pyc|log|ini|md|txt)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
-
 # Allow access to passenger_wsgi.py (required by Passenger)
 <Files "passenger_wsgi.py">
     Order allow,deny
     Allow from all
 </Files>
-
 # Allow static files
 <FilesMatch "\.(css|js|jpg|jpeg|png|gif|svg|woff|woff2|ttf|eot|ico)$">
     Order allow,deny
     Allow from all
 </FilesMatch>
-
 # Rewrite rules for clean URLs (if needed)
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -95,3 +79,4 @@ Options -Indexes
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
+
