@@ -1267,24 +1267,39 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
             tmp_path = tmp_file.name
         
         try:
-            # For EPF, use the dedicated parser if available
+            # For EPF, use the dedicated parser
             if contribution_type == 'epf':
                 try:
-                    from services.epf_pdf_parser import upload_and_parse_epf_pdf
+                    from core.epf_pdf_parser import upload_and_parse_epf_pdf
                     upload_and_parse_epf_pdf(tmp_path, supabase)
-                    return {"success": True, "message": f"EPF rates uploaded and parsed successfully"}
-                except ImportError:
-                    # Fall back to generic parsing
-                    pass
+                    return {"success": True, "message": "EPF rates uploaded and parsed successfully"}
+                except ImportError as e:
+                    return {"success": False, "message": f"EPF parser not available: {str(e)}. Install pdfplumber."}
+                except Exception as e:
+                    return {"success": False, "message": f"Error parsing EPF PDF: {str(e)}"}
             
-            # Generic PDF parsing for SOCSO/EIS or EPF fallback
-            # For now, just acknowledge the upload
-            # TODO: Implement PDF parsing for SOCSO and EIS
-            return {
-                "success": True, 
-                "message": f"{contribution_type.upper()} rate table uploaded successfully. Parsing functionality will be implemented soon.",
-                "note": "Manual rate verification recommended until parsing is fully implemented"
-            }
+            # For SOCSO, use the dedicated parser
+            elif contribution_type == 'socso':
+                try:
+                    from core.socso_pdf_parser import upload_and_parse_socso_pdf
+                    result = upload_and_parse_socso_pdf(tmp_path, supabase)
+                    return result
+                except ImportError as e:
+                    return {"success": False, "message": f"SOCSO parser not available: {str(e)}. Install pdfplumber."}
+                except Exception as e:
+                    return {"success": False, "message": f"Error parsing SOCSO PDF: {str(e)}"}
+            
+            # For EIS, use the dedicated parser
+            elif contribution_type == 'eis':
+                try:
+                    from core.eis_pdf_parser import upload_and_parse_eis_pdf
+                    result = upload_and_parse_eis_pdf(tmp_path, supabase)
+                    return result
+                except ImportError as e:
+                    return {"success": False, "message": f"EIS parser not available: {str(e)}. Install pdfplumber."}
+                except Exception as e:
+                    return {"success": False, "message": f"Error parsing EIS PDF: {str(e)}"}
+            
         finally:
             # Clean up temporary file
             if os.path.exists(tmp_path):
@@ -3449,37 +3464,283 @@ async def get_variable_config_api(config_name: str):
         }
 
 # ============================================================================
-# TP1 Relief Claims Endpoints (Placeholder for future implementation)
+# TP1 Relief Claims Endpoints
 # ============================================================================
 
 @app.get("/api/admin/tp1-reliefs/{employee_id}")
 async def get_tp1_reliefs(employee_id: str, year: Optional[int] = None, month: Optional[int] = None):
-    """Get TP1 relief claims for an employee (placeholder)"""
-    return {
-        "success": False,
-        "message": "TP1 relief claims API is not yet implemented. This endpoint is reserved for future use.",
-        "data": []
-    }
+    """
+    Get TP1 relief claims for an employee from the tp1_monthly_details table.
+    
+    Args:
+        employee_id: Employee UUID
+        year: Optional year filter (defaults to current year)
+        month: Optional month filter (1-12). If not provided, returns all months for the year.
+    
+    Returns:
+        List of TP1 relief claim records with details JSON and aggregates
+    """
+    try:
+        if year is None:
+            year = datetime.now().year
+        
+        # Build query
+        query = supabase.table("tp1_monthly_details").select("*").eq("employee_id", employee_id).eq("year", year)
+        
+        if month is not None:
+            query = query.eq("month", month)
+        
+        query = query.order("month", desc=False)
+        response = query.execute()
+        
+        if response.data:
+            # Transform data for frontend consumption
+            reliefs = []
+            for record in response.data:
+                reliefs.append({
+                    "id": record.get("id"),
+                    "employee_id": record.get("employee_id"),
+                    "year": record.get("year"),
+                    "month": record.get("month"),
+                    "details": record.get("details", {}),
+                    "other_reliefs_monthly": float(record.get("other_reliefs_monthly", 0) or 0),
+                    "socso_eis_lp1_monthly": float(record.get("socso_eis_lp1_monthly", 0) or 0),
+                    "zakat_monthly": float(record.get("zakat_monthly", 0) or 0),
+                    "created_at": record.get("created_at"),
+                    "updated_at": record.get("updated_at")
+                })
+            return {"success": True, "data": reliefs}
+        else:
+            return {"success": True, "data": []}
+    except Exception as e:
+        print(f"Error fetching TP1 reliefs: {str(e)}")
+        return {"success": False, "message": str(e), "data": []}
 
 @app.post("/api/admin/tp1-reliefs")
 async def create_tp1_relief(relief_data: Dict[str, Any]):
-    """Create/update TP1 relief claims (placeholder)"""
-    return {
-        "success": False,
-        "message": "TP1 relief claims API is not yet implemented. This endpoint is reserved for future use."
-    }
+    """
+    Create or update TP1 relief claims for an employee.
+    Uses the upsert_tp1_monthly_details function from supabase_service.
+    
+    Args:
+        relief_data: Dictionary containing:
+            - employee_id: Employee UUID (required)
+            - year: Year (required, e.g., 2024)
+            - month: Month (required, 1-12)
+            - details: Dictionary of relief claim details (required)
+            - other_reliefs_monthly: Optional aggregate for other reliefs
+            - socso_eis_lp1_monthly: Optional aggregate for SOCSO/EIS LP1
+            - zakat_monthly: Optional aggregate for zakat
+    
+    Returns:
+        Success status and message
+    """
+    try:
+        from services.supabase_service import upsert_tp1_monthly_details
+        
+        employee_id = relief_data.get("employee_id")
+        year = relief_data.get("year")
+        month = relief_data.get("month")
+        details = relief_data.get("details", {})
+        
+        # Validate required fields
+        if not employee_id:
+            return {"success": False, "message": "employee_id is required"}
+        if year is None:
+            return {"success": False, "message": "year is required"}
+        if month is None:
+            return {"success": False, "message": "month is required"}
+        
+        # Validate month range
+        if not (1 <= int(month) <= 12):
+            return {"success": False, "message": "month must be between 1 and 12"}
+        
+        # Build aggregates dictionary
+        aggregates = {
+            "other_reliefs_monthly": relief_data.get("other_reliefs_monthly", 0),
+            "socso_eis_lp1_monthly": relief_data.get("socso_eis_lp1_monthly", 0),
+            "zakat_monthly": relief_data.get("zakat_monthly", 0)
+        }
+        
+        # Call the service function to upsert
+        success = upsert_tp1_monthly_details(
+            employee_uuid=employee_id,
+            year=int(year),
+            month=int(month),
+            details=details,
+            aggregates=aggregates
+        )
+        
+        if success:
+            return {"success": True, "message": "TP1 relief claims saved successfully"}
+        else:
+            return {"success": False, "message": "Failed to save TP1 relief claims. The tp1_monthly_details table may not exist."}
+    except Exception as e:
+        print(f"Error saving TP1 relief: {str(e)}")
+        return {"success": False, "message": str(e)}
+
+@app.delete("/api/admin/tp1-reliefs/{relief_id}")
+async def delete_tp1_relief(relief_id: str):
+    """
+    Delete a TP1 relief claim record by ID.
+    
+    Args:
+        relief_id: UUID of the TP1 relief record to delete
+    
+    Returns:
+        Success status and message
+    """
+    try:
+        response = supabase.table("tp1_monthly_details").delete().eq("id", relief_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "TP1 relief claim deleted successfully"}
+        else:
+            return {"success": False, "message": "TP1 relief claim not found"}
+    except Exception as e:
+        print(f"Error deleting TP1 relief: {str(e)}")
+        return {"success": False, "message": str(e)}
 
 # ============================================================================
 # Bulk Operations Endpoints
 # ============================================================================
 
 @app.post("/api/admin/employees/generate-pdfs")
-async def generate_all_employee_pdfs():
-    """Generate PDFs for all employees and return as ZIP (placeholder)"""
-    return {
-        "success": False,
-        "message": "Bulk PDF generation is not yet implemented. This feature requires PDF generation library integration."
-    }
+async def generate_all_employee_pdfs(request: Request):
+    """
+    Generate payslip PDFs for multiple employees and return as a ZIP file.
+    
+    Request body:
+        - payroll_run_id: UUID of a payroll run (optional). If provided, extracts month_year from it.
+        - month_year: Month/year string like "01/2024" (optional, used if payroll_run_id not provided)
+        - employee_ids: Optional list of employee UUIDs. If not provided, generates for all employees with payroll runs for the period.
+    
+    Returns:
+        ZIP file containing all generated payslip PDFs
+    """
+    import tempfile
+    import zipfile
+    import shutil
+    
+    temp_dir = None
+    try:
+        from core.pdf_generator import generate_payslip_for_employee as generate_pdf
+        
+        data = await request.json()
+        payroll_run_id = data.get("payroll_run_id")
+        month_year = data.get("month_year")
+        employee_ids = data.get("employee_ids", [])
+        
+        # Determine month_year from payroll_run_id if provided
+        if payroll_run_id:
+            payroll_response = supabase.table("payroll_runs").select("month_year, payroll_date, employee_id").eq("id", payroll_run_id).execute()
+            if not payroll_response.data:
+                return {"success": False, "message": "Payroll run not found"}
+            payroll_info = payroll_response.data[0]
+            month_year = payroll_info.get("month_year")
+            # If no employee_ids provided, use the one from this payroll run
+            if not employee_ids:
+                employee_ids = [payroll_info.get("employee_id")]
+        
+        if not month_year:
+            return {"success": False, "message": "Either payroll_run_id or month_year is required"}
+        
+        # If no specific employee_ids provided, get all employees with payroll runs for this month/year
+        if not employee_ids:
+            runs_response = supabase.table("payroll_runs").select("id, employee_id").eq("month_year", month_year).execute()
+            if runs_response.data:
+                employee_ids = list(set([run.get("employee_id") for run in runs_response.data if run.get("employee_id")]))
+            if not employee_ids:
+                return {"success": False, "message": f"No payroll runs found for {month_year}"}
+        
+        # Get payroll run IDs for each employee in this period
+        employee_payroll_map = {}
+        runs = supabase.table("payroll_runs").select("id, employee_id").eq("month_year", month_year).in_("employee_id", employee_ids).execute()
+        if runs.data:
+            for run in runs.data:
+                employee_payroll_map[run.get("employee_id")] = run.get("id")
+        
+        month_year_safe = month_year.replace("/", "_") if month_year else "unknown"
+        
+        # Create temporary directory for PDFs
+        temp_dir = tempfile.mkdtemp(prefix="payslips_")
+        generated_files = []
+        errors = []
+        
+        for employee_id in employee_ids:
+            try:
+                # Get the payroll run ID for this employee
+                run_id = employee_payroll_map.get(employee_id)
+                if not run_id:
+                    errors.append(f"No payroll run found for employee {employee_id} in {month_year}")
+                    continue
+                
+                # Get employee info for filename
+                emp_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()
+                if not emp_response.data:
+                    errors.append(f"Employee {employee_id} not found")
+                    continue
+                
+                emp = emp_response.data[0]
+                emp_display_id = emp.get("employee_id", employee_id)
+                emp_name = emp.get("full_name", "Unknown").replace(" ", "_").replace("/", "-")
+                
+                # Generate filename
+                filename = f"payslip_{emp_display_id}_{emp_name}_{month_year_safe}.pdf"
+                output_path = os.path.join(temp_dir, filename)
+                
+                # Generate the PDF
+                result_path = generate_pdf(employee_id, run_id, output_path)
+                
+                if result_path and os.path.exists(result_path):
+                    generated_files.append((filename, result_path))
+                else:
+                    errors.append(f"Failed to generate PDF for {emp.get('full_name', employee_id)}")
+            except Exception as e:
+                errors.append(f"Error generating PDF for {employee_id}: {str(e)}")
+        
+        if not generated_files:
+            # Clean up temp directory on failure
+            if temp_dir and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            return {
+                "success": False, 
+                "message": "No PDFs were generated",
+                "errors": errors
+            }
+        
+        # Create ZIP file
+        zip_filename = f"payslips_{month_year_safe}.zip"
+        zip_path = os.path.join(temp_dir, zip_filename)
+        
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for filename, filepath in generated_files:
+                zipf.write(filepath, filename)
+        
+        # Clean up individual PDF files (keep only the ZIP)
+        for _, filepath in generated_files:
+            try:
+                os.remove(filepath)
+            except (OSError, FileNotFoundError):
+                pass
+        
+        # Return the ZIP file
+        # Note: FastAPI's FileResponse handles the file, but temp directory cleanup 
+        # is left to the OS temp file cleanup mechanism for simplicity
+        return FileResponse(
+            zip_path,
+            media_type="application/zip",
+            filename=zip_filename,
+            headers={"Content-Disposition": f"attachment; filename={zip_filename}"}
+        )
+        
+    except Exception as e:
+        # Clean up temp directory on error
+        if temp_dir and os.path.exists(temp_dir):
+            import shutil
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        print(f"Error generating bulk PDFs: {str(e)}")
+        return {"success": False, "message": f"Error generating PDFs: {str(e)}"}
 
 # ============================================================================
 # Location Autocomplete Endpoint
