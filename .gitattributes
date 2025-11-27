@@ -1,0 +1,29 @@
+# Auto-normalize line endings to LF for all text files
+# This ensures cPanel/Linux compatibility
+* text=auto eol=lf
+
+# Explicitly set common file types to LF
+*.py text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.sql text eol=lf
+*.env text eol=lf
+
+# Binary files - do not convert
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
