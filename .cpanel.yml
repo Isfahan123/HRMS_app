@@ -1,12 +1,37 @@
 ---
+# cPanel Git Deployment Configuration
+# This file is used by cPanel's Git Version Control for automatic deployments
 deployment:
   tasks:
+    - echo "=========================================="
     - echo "Deploying HRMS Web App..."
-    - mkdir -p tmp log
+    - echo "=========================================="
+    
+    # Create required directories
+    - mkdir -p tmp log logs
+    
+    # Set correct permissions
     - chmod 755 .
-    - find . -type f -exec chmod 644 {} \;
-    - find . -type d -exec chmod 755 {} \;
+    - find . -type f -name "*.py" -exec chmod 644 {} \; 2>/dev/null || true
+    - find . -type f -name "*.txt" -exec chmod 644 {} \; 2>/dev/null || true
+    - find . -type f -name "*.html" -exec chmod 644 {} \; 2>/dev/null || true
+    - find . -type f -name "*.css" -exec chmod 644 {} \; 2>/dev/null || true
+    - find . -type f -name "*.js" -exec chmod 644 {} \; 2>/dev/null || true
+    - find . -type d -exec chmod 755 {} \; 2>/dev/null || true
+    
+    # Try to install Python dependencies
+    # First try full requirements, then minimal if that fails
+    - echo "Installing Python dependencies..."
     - pip install --upgrade pip 2>/dev/null || echo "pip upgrade skipped"
-    - pip install -r requirements.txt 2>/dev/null || pip install -r requirements-minimal.txt 2>/dev/null || echo "pip install skipped - run manually"
+    - pip install -r requirements-minimal.txt 2>&1 || echo "WARNING: pip install failed - run manually via SSH"
+    
+    # Touch restart file to reload Passenger
     - touch tmp/restart.txt
+    - touch passenger_wsgi.py
+    
+    - echo "=========================================="
     - echo "Deployment completed."
+    - echo "If you see errors above, run these commands via SSH:"
+    - echo "  source ~/virtualenv/YOUR_APP/3.11/bin/activate"
+    - echo "  pip install -r requirements-minimal.txt"
+    - echo "=========================================="

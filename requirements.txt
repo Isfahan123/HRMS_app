@@ -1,18 +1,26 @@
 # HRMS Web Application Dependencies
 # Python >= 3.8 required
+#
+# If pip install fails on cPanel, try:
+#   pip install -r requirements-minimal.txt
+#
+# To use flexible versions (recommended for compatibility):
+#   passlib>=1.7.4
+#   pytz>=2024.1
+# etc.
 
 # Core dependencies
-passlib==1.7.4
-pytz==2024.1
-python-dotenv==1.0.1
-requests==2.32.3
-num2words==0.5.13
+passlib>=1.7.4
+pytz>=2024.1
+python-dotenv>=1.0.0
+requests>=2.31.0
+num2words>=0.5.12
 
-# PDF generation (optional - remove if installation fails)
-fpdf2==2.7.6
-openpyxl==3.1.2
-PyPDF2==3.0.1
+# PDF generation (optional - remove these lines if installation fails)
+fpdf2>=2.7.4
+openpyxl>=3.1.0
+PyPDF2>=3.0.0
 
 # Web framework
-flask==3.0.0
-jinja2==3.1.4
+flask>=3.0.0
+jinja2>=3.1.0
