@@ -62,6 +62,15 @@ Options -Indexes
     Order allow,deny
     Allow from all
 </Files>
+# Allow access to error pages (required by ErrorDocument directives)
+<Files "404.html">
+    Order allow,deny
+    Allow from all
+</Files>
+<Files "500.html">
+    Order allow,deny
+    Allow from all
+</Files>
 # Allow static files
 <FilesMatch "\.(css|js|jpg|jpeg|png|gif|svg|woff|woff2|ttf|eot|ico)$">
     Order allow,deny
