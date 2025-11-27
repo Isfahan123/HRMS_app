@@ -1267,24 +1267,39 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
             tmp_path = tmp_file.name
         
         try:
-            # For EPF, use the dedicated parser if available
+            # For EPF, use the dedicated parser
             if contribution_type == 'epf':
                 try:
-                    from services.epf_pdf_parser import upload_and_parse_epf_pdf
+                    from core.epf_pdf_parser import upload_and_parse_epf_pdf
                     upload_and_parse_epf_pdf(tmp_path, supabase)
-                    return {"success": True, "message": f"EPF rates uploaded and parsed successfully"}
-                except ImportError:
-                    # Fall back to generic parsing
-                    pass
+                    return {"success": True, "message": "EPF rates uploaded and parsed successfully"}
+                except ImportError as e:
+                    return {"success": False, "message": f"EPF parser not available: {str(e)}. Install pdfplumber."}
+                except Exception as e:
+                    return {"success": False, "message": f"Error parsing EPF PDF: {str(e)}"}
             
-            # Generic PDF parsing for SOCSO/EIS or EPF fallback
-            # For now, just acknowledge the upload
-            # TODO: Implement PDF parsing for SOCSO and EIS
-            return {
-                "success": True, 
-                "message": f"{contribution_type.upper()} rate table uploaded successfully. Parsing functionality will be implemented soon.",
-                "note": "Manual rate verification recommended until parsing is fully implemented"
-            }
+            # For SOCSO, use the dedicated parser
+            elif contribution_type == 'socso':
+                try:
+                    from core.socso_pdf_parser import upload_and_parse_socso_pdf
+                    result = upload_and_parse_socso_pdf(tmp_path, supabase)
+                    return result
+                except ImportError as e:
+                    return {"success": False, "message": f"SOCSO parser not available: {str(e)}. Install pdfplumber."}
+                except Exception as e:
+                    return {"success": False, "message": f"Error parsing SOCSO PDF: {str(e)}"}
+            
+            # For EIS, use the dedicated parser
+            elif contribution_type == 'eis':
+                try:
+                    from core.eis_pdf_parser import upload_and_parse_eis_pdf
+                    result = upload_and_parse_eis_pdf(tmp_path, supabase)
+                    return result
+                except ImportError as e:
+                    return {"success": False, "message": f"EIS parser not available: {str(e)}. Install pdfplumber."}
+                except Exception as e:
+                    return {"success": False, "message": f"Error parsing EIS PDF: {str(e)}"}
+            
         finally:
             # Clean up temporary file
             if os.path.exists(tmp_path):
