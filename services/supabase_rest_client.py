@@ -26,7 +26,8 @@ class SupabaseResponse:
         self.count = count
     
     def __bool__(self):
-        return self.data is not None or self.error is None
+        # Response is truthy when there's no error
+        return self.error is None
 
 
 class QueryBuilder:

@@ -143,14 +143,19 @@ class TestSupabaseResponse(unittest.TestCase):
         self.assertEqual(resp.error, {'message': 'Not found'})
 
     def test_response_bool_with_data(self):
-        """Test bool conversion with data."""
+        """Test bool conversion with data and no error."""
         resp = SupabaseResponse(data=[])
-        self.assertTrue(resp)  # Empty list is still truthy
+        self.assertTrue(resp)  # No error means truthy
 
     def test_response_bool_without_data(self):
         """Test bool conversion without data but no error."""
         resp = SupabaseResponse()
         self.assertTrue(resp)  # No error means truthy
+
+    def test_response_bool_with_error(self):
+        """Test bool conversion with error."""
+        resp = SupabaseResponse(error={'message': 'Error'})
+        self.assertFalse(resp)  # Error means falsy
 
 
 class TestStorageClient(unittest.TestCase):
