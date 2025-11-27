@@ -44,7 +44,6 @@ class QueryBuilder:
         self._filters: List[str] = []
         self._order_column: Optional[str] = None
         self._order_desc: bool = False
-        self._order_nullslast: bool = False
         self._limit_value: Optional[int] = None
         self._offset_value: Optional[int] = None
         self._body: Optional[Dict] = None
@@ -191,10 +190,21 @@ class QueryBuilder:
         """
         # Handle special value types
         if operator == 'in' and isinstance(value, (list, tuple)):
-            encoded = ','.join(str(v) for v in value)
+            # Properly encode each value in the list to prevent injection
+            encoded = ','.join(self._encode_value(v) for v in value)
             self._filters.append(f"{column}=in.({encoded})")
         elif operator == 'is':
-            self._filters.append(f"{column}=is.{str(value).lower()}")
+            # Validate 'is' operator values - only null, true, false are allowed
+            if value is None:
+                encoded_val = 'null'
+            elif isinstance(value, bool):
+                encoded_val = 'true' if value else 'false'
+            elif isinstance(value, str) and value.lower() in ('null', 'true', 'false'):
+                encoded_val = value.lower()
+            else:
+                # For safety, treat unknown values as null
+                encoded_val = 'null'
+            self._filters.append(f"{column}=is.{encoded_val}")
         else:
             self._filters.append(f"{column}={operator}.{self._encode_value(value)}")
         return self
@@ -528,6 +538,39 @@ class StorageBucket:
         except requests.RequestException as e:
             raise Exception(f"Storage download request failed: {str(e)}")
     
+    @staticmethod
+    def _sanitize_path(path: str) -> str:
+        """
+        Sanitize a storage path to prevent path traversal attacks.
+        
+        Args:
+            path: Path string to sanitize
+        
+        Returns:
+            Sanitized path string
+        
+        Raises:
+            ValueError: If path contains dangerous components
+        """
+        if not path:
+            return ''
+        
+        # Normalize path separators
+        normalized = path.replace('\\', '/')
+        
+        # Check for path traversal attempts
+        if '..' in normalized:
+            raise ValueError("Path cannot contain '..'")
+        
+        # Remove leading slashes to prevent absolute path access
+        normalized = normalized.lstrip('/')
+        
+        # Check for null bytes
+        if '\x00' in normalized:
+            raise ValueError("Path cannot contain null bytes")
+        
+        return normalized
+    
     def list(self, path: str = '', limit: int = 100, offset: int = 0, 
              sort_by: Optional[Dict[str, str]] = None, search: Optional[str] = None) -> List[Dict]:
         """
@@ -546,6 +589,9 @@ class StorageBucket:
         Example:
             files = client.storage.from_('bucket').list('folder/', limit=50)
         """
+        # Sanitize the path to prevent path traversal
+        safe_path = self._sanitize_path(path)
+        
         url = f"{self._client.url}/storage/v1/object/list/{self._bucket_name}"
         
         headers = {
@@ -555,7 +601,7 @@ class StorageBucket:
         }
         
         body: Dict[str, Any] = {
-            'prefix': path,
+            'prefix': safe_path,
             'limit': limit,
             'offset': offset,
         }
@@ -597,6 +643,10 @@ class StorageBucket:
         Returns:
             Response dictionary with move result
         """
+        # Sanitize paths to prevent path traversal
+        safe_from = self._sanitize_path(from_path)
+        safe_to = self._sanitize_path(to_path)
+        
         url = f"{self._client.url}/storage/v1/object/move"
         
         headers = {
@@ -607,8 +657,8 @@ class StorageBucket:
         
         body = {
             'bucketId': self._bucket_name,
-            'sourceKey': from_path,
-            'destinationKey': to_path,
+            'sourceKey': safe_from,
+            'destinationKey': safe_to,
         }
         
         try:
@@ -642,6 +692,10 @@ class StorageBucket:
         Returns:
             Response dictionary with copy result
         """
+        # Sanitize paths to prevent path traversal
+        safe_from = self._sanitize_path(from_path)
+        safe_to = self._sanitize_path(to_path)
+        
         url = f"{self._client.url}/storage/v1/object/copy"
         
         headers = {
@@ -652,8 +706,8 @@ class StorageBucket:
         
         body = {
             'bucketId': self._bucket_name,
-            'sourceKey': from_path,
-            'destinationKey': to_path,
+            'sourceKey': safe_from,
+            'destinationKey': safe_to,
         }
         
         try:
@@ -687,7 +741,10 @@ class StorageBucket:
         Returns:
             Signed URL string
         """
-        url = f"{self._client.url}/storage/v1/object/sign/{self._bucket_name}/{path}"
+        # Sanitize the path to prevent path traversal
+        safe_path = self._sanitize_path(path)
+        
+        url = f"{self._client.url}/storage/v1/object/sign/{self._bucket_name}/{safe_path}"
         
         headers = {
             'apikey': self._client.key,
@@ -715,8 +772,13 @@ class StorageBucket:
                 data = response.json() if response.text else {}
                 signed_url = data.get('signedURL', '')
                 if signed_url and not signed_url.startswith('http'):
-                    # If it's a relative URL, prepend the base URL
-                    signed_url = f"{self._client.url}{signed_url}"
+                    # Validate that the signed URL is a proper relative path
+                    # It should start with /storage/ for Supabase signed URLs
+                    if signed_url.startswith('/storage/') or signed_url.startswith('/object/'):
+                        signed_url = f"{self._client.url}{signed_url}"
+                    else:
+                        # Invalid signed URL format - return empty
+                        return ''
                 return signed_url
             except json.JSONDecodeError:
                 return ''

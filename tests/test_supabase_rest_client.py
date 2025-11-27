@@ -186,10 +186,22 @@ class TestQueryBuilder(unittest.TestCase):
         self.assertIn('id=in.(1,2,3)', qb._filters)
     
     def test_filter_with_is_operator(self):
-        """Test filter() with 'is' operator."""
+        """Test filter() with 'is' operator for null value."""
         qb = self.client.table('employees')
         qb.filter('deleted_at', 'is', None)
-        self.assertIn('deleted_at=is.none', qb._filters)
+        self.assertIn('deleted_at=is.null', qb._filters)
+    
+    def test_filter_with_is_operator_true(self):
+        """Test filter() with 'is' operator for boolean true."""
+        qb = self.client.table('employees')
+        qb.filter('active', 'is', True)
+        self.assertIn('active=is.true', qb._filters)
+    
+    def test_filter_with_is_operator_false(self):
+        """Test filter() with 'is' operator for boolean false."""
+        qb = self.client.table('employees')
+        qb.filter('active', 'is', False)
+        self.assertIn('active=is.false', qb._filters)
     
     def test_match_method(self):
         """Test match() method with multiple column-value pairs."""
@@ -293,6 +305,42 @@ class TestStorageClient(unittest.TestCase):
         bucket = self.client.storage.from_('test-bucket')
         self.assertTrue(hasattr(bucket, 'download'))
         self.assertTrue(callable(bucket.download))
+    
+    def test_path_sanitization_normal_path(self):
+        """Test that normal paths pass through sanitization."""
+        bucket = self.client.storage.from_('test-bucket')
+        result = bucket._sanitize_path('folder/file.txt')
+        self.assertEqual(result, 'folder/file.txt')
+    
+    def test_path_sanitization_empty_path(self):
+        """Test that empty paths return empty string."""
+        bucket = self.client.storage.from_('test-bucket')
+        result = bucket._sanitize_path('')
+        self.assertEqual(result, '')
+    
+    def test_path_sanitization_leading_slash(self):
+        """Test that leading slashes are removed."""
+        bucket = self.client.storage.from_('test-bucket')
+        result = bucket._sanitize_path('/folder/file.txt')
+        self.assertEqual(result, 'folder/file.txt')
+    
+    def test_path_sanitization_path_traversal(self):
+        """Test that path traversal attempts raise ValueError."""
+        bucket = self.client.storage.from_('test-bucket')
+        with self.assertRaises(ValueError):
+            bucket._sanitize_path('../../../etc/passwd')
+    
+    def test_path_sanitization_embedded_traversal(self):
+        """Test that embedded path traversal raises ValueError."""
+        bucket = self.client.storage.from_('test-bucket')
+        with self.assertRaises(ValueError):
+            bucket._sanitize_path('folder/../secret')
+    
+    def test_path_sanitization_null_bytes(self):
+        """Test that null bytes raise ValueError."""
+        bucket = self.client.storage.from_('test-bucket')
+        with self.assertRaises(ValueError):
+            bucket._sanitize_path('file\x00.txt')
 
 
 if __name__ == '__main__':
