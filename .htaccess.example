@@ -1,21 +1,22 @@
-# HRMS Web Application - Apache/cPanel Configuration
+# HRMS Web Application - Apache/cPanel Configuration (Template)
 # This file configures Apache to use Passenger for Python applications
 # Compatible with Exabytes, cPanel, and other hosting providers
 #
-# ⚠️ IMPORTANT: SUBDOMAIN DEPLOYMENT CONFIGURATION
-# ================================================
+# SUBDOMAIN DEPLOYMENT INSTRUCTIONS:
+# ==================================
 # This application is designed to run on a subdomain (e.g., hrms.example.com)
+# 
+# To deploy on a subdomain:
+# 1. Copy this file to .htaccess
+# 2. Replace all {{PLACEHOLDER}} values:
+#    - {{YOUR_CPANEL_USERNAME}}: Your cPanel account username (e.g., enigmagr)
+#    - {{YOUR_SUBDOMAIN}}: Your subdomain name (e.g., hrms.example.com)
+#    - {{YOUR_APP_FOLDER}}: The folder name where the app is deployed (e.g., HRMS_app)
+#    - 3.11: Change if using a different Python version (3.9, 3.10, 3.12, etc.)
 #
-# BEFORE DEPLOYING: You MUST update the PassengerPython and PassengerAppRoot paths
-# below by replacing the {{PLACEHOLDER}} values with your actual configuration:
-#
-#   {{YOUR_CPANEL_USERNAME}} - Your cPanel account username
-#   {{YOUR_SUBDOMAIN}}       - Your subdomain (e.g., hrms.example.com)
-#   {{YOUR_APP_FOLDER}}      - The folder name where the app is deployed (e.g., HRMS_app)
-#
-# The application will NOT work until you replace these placeholders!
-#
-# See .htaccess.example for a template with detailed documentation.
+# Example for subdomain hrms.example.com:
+#    PassengerPython /home/myuser/virtualenv/hrms.example.com/HRMS_app/3.11/bin/python
+#    PassengerAppRoot /home/myuser/hrms.example.com/HRMS_app
 
 # Enable Passenger
 PassengerEnabled On
@@ -25,18 +26,12 @@ PassengerEnabled On
 # Common paths: 3.9, 3.10, 3.11, 3.12
 #
 # IMPORTANT: Replace {{YOUR_CPANEL_USERNAME}}, {{YOUR_SUBDOMAIN}}, {{YOUR_APP_FOLDER}}
-#
-# Example for subdomain form.enigmagroup.com.my:
-#   PassengerPython /home/enigmagr/virtualenv/form.enigmagroup.com.my/HRMS_app/3.11/bin/python
-#
+# Example: /home/myuser/virtualenv/hrms.example.com/HRMS_app/3.11/bin/python
 PassengerPython /home/{{YOUR_CPANEL_USERNAME}}/virtualenv/{{YOUR_SUBDOMAIN}}/{{YOUR_APP_FOLDER}}/3.11/bin/python
 
 # Set the application root
 # IMPORTANT: Replace {{YOUR_CPANEL_USERNAME}}, {{YOUR_SUBDOMAIN}}, {{YOUR_APP_FOLDER}}
-#
-# Example for subdomain form.enigmagroup.com.my:
-#   PassengerAppRoot /home/enigmagr/form.enigmagroup.com.my/HRMS_app
-#
+# Example: /home/myuser/hrms.example.com/HRMS_app
 PassengerAppRoot /home/{{YOUR_CPANEL_USERNAME}}/{{YOUR_SUBDOMAIN}}/{{YOUR_APP_FOLDER}}
 
 # Set the startup file (WSGI entry point)
@@ -86,6 +81,7 @@ Options -Indexes
     Order allow,deny
     Deny from all
 </FilesMatch>
+
 <FilesMatch "\.(env|py|pyc|log|ini|md|txt)$">
     Order allow,deny
     Deny from all
@@ -111,8 +107,7 @@ Options -Indexes
     # RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
     # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
     
-    # Force HTTPS (optional, uncomment if you have SSL)
+    # Force HTTPS (recommended for production, uncomment if you have SSL)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
-
