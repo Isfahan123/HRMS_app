@@ -327,6 +327,21 @@ pip install -r requirements-web.txt
 touch passenger_wsgi.py
 ```
 
+#### Error: "An error occurred during installation of modules" (Pillow, fonttools, fpdf2)
+```
+Some packages like fpdf2 require Pillow and fonttools which may fail to compile
+on restricted cPanel environments without development headers.
+
+Fix: Use the minimal requirements file (excludes PDF generation):
+cd ~/public_html/hrms
+source ~/virtualenv/hrms/3.11/bin/activate
+pip install -r requirements-minimal.txt
+touch passenger_wsgi.py
+
+Note: This disables PDF payslip generation, but all other features work.
+To enable PDF generation later, try: pip install fpdf2
+```
+
 #### Error: "Permission denied"
 ```
 Fix: Set correct permissions:

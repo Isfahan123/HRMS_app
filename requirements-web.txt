@@ -1,54 +1,18 @@
-# Web-only dependencies for cPanel/Exabytes deployment
-# This file is functionally identical to requirements.txt
-# Both files are web-compatible since desktop dependencies were moved to requirements-desktop.txt
-#
-# PYTHON VERSION REQUIREMENT: Python >= 3.9 (Python 3.11 recommended)
-#
-# Installation: pip install -r requirements-web.txt
-# Or simply: pip install -r requirements.txt (now also web-safe)
-#
-# IMPORTANT: All packages here are pure Python or have pre-built wheels
-# to ensure compatibility with cPanel/shared hosting environments.
+# HRMS Web Application Dependencies
+# Python >= 3.8 required
 
-# Database
-# NOTE: We use a custom REST API client (services/supabase_rest_client.py) instead of
-# the official supabase-py SDK because the SDK requires Rust compilation which fails
-# on cPanel/shared hosting. The REST client uses the 'requests' library directly.
-# No supabase package needed - using requests for REST API calls
-
-# Authentication & Security
-# Using passlib with pbkdf2_sha256 (pure Python) instead of bcrypt (requires C compilation)
+# Core dependencies
 passlib==1.7.4
-
-# Utilities
 pytz==2024.1
 python-dotenv==1.0.1
 requests==2.32.3
 num2words==0.5.13
-# Note: 'holidays' library removed - uses compiled numpy/pandas dependencies
-# Holiday data is now fetched from database (calendar_holidays table) or Calendarific API
 
-# Data processing (required by services)
-# - fpdf2: PDF payslip generation (pure Python, replaces reportlab)
-# - openpyxl: Excel file parsing (pure Python)
-# - PyPDF2: PDF processing (pure Python)
-# Note: pandas/reportlab removed - require C compilation which fails on shared hosting
-fpdf2==2.8.1
+# PDF generation (optional - remove if installation fails)
+fpdf2==2.7.6
 openpyxl==3.1.2
 PyPDF2==3.0.1
 
-# Flask stack (Web Framework)
-# Flask is used instead of FastAPI because:
-# - cPanel Passenger only supports WSGI (not ASGI)
-# - Flask is native WSGI - no conversion layer needed
-# - More reliable on shared hosting environments
-# - No uvicorn/a2wsgi dependencies that can fail to install
+# Web framework
 flask==3.0.0
 jinja2==3.1.4
-
-# Note: Desktop-only packages are in requirements-desktop.txt:
-# - PyQt5 (Desktop GUI - causes errors on cPanel)
-# - tabula-py (Requires Java - causes errors on cPanel)
-# - reportlab (PDF generation for desktop - requires C libraries)
-# - pandas (Data analysis - requires numpy C compilation)
-# - holidays (Holiday data - requires pandas)

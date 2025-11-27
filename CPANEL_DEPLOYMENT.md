@@ -264,6 +264,27 @@ pip install -r requirements.txt
 touch passenger_wsgi.py
 ```
 
+### Issue: "An error occurred during installation of modules"
+
+**Causes:**
+- fpdf2 requires Pillow and fonttools which may fail to compile on restricted hosting
+- Missing development headers for C compilation
+- Python version incompatibility
+
+**Solutions:**
+```bash
+# Use minimal requirements (excludes PDF generation but app will work)
+cd ~/public_html/HRMS_app
+source ~/virtualenv/HRMS_app/3.11/bin/activate
+pip install -r requirements-minimal.txt
+touch passenger_wsgi.py
+```
+
+If you need PDF generation later:
+```bash
+pip install fpdf2
+```
+
 ### Issue: "Internal Server Error (500)"
 
 **Causes:**
