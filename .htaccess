@@ -9,11 +9,11 @@ PassengerEnabled On
 # IMPORTANT: Replace both $CPANEL_USER and the app directory name with your actual values
 # For Exabytes: Replace $CPANEL_USER with your cPanel username and hrms with your app folder name
 # Example: /home/yourusername/virtualenv/hrms/3.11/bin/python
-PassengerPython /home/enigmagr/virtualenv/form.enigmagroup.com.my/HRMS_app/3.11/bin/python
+PassengerPython /home/enigmagr/virtualenv/form.enigmagroup.com.my/3.11/bin/python
 # Set the application root
 # IMPORTANT: Replace $CPANEL_USER with your cPanel username and hrms with your app folder name
 # Example: /home/yourusername/public_html/hrms
-PassengerAppRoot /home/enigmagr/form.enigmagroup.com.my/HRMS_app
+PassengerAppRoot /home/enigmagr/form.enigmagroup.com.my
 # Set the startup file (WSGI entry point)
 PassengerStartupFile passenger_wsgi.py
 # Performance tuning for Passenger
