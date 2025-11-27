@@ -37,15 +37,14 @@ fpdf2==2.8.1
 openpyxl==3.1.2
 PyPDF2==3.0.1
 
-# FastAPI stack (Web Framework)
-fastapi==0.115.5
-uvicorn==0.32.1
+# Flask stack (Web Framework)
+# Flask is used instead of FastAPI because:
+# - cPanel Passenger only supports WSGI (not ASGI)
+# - Flask is native WSGI - no conversion layer needed
+# - More reliable on shared hosting environments
+# - No uvicorn/a2wsgi dependencies that can fail to install
+flask==3.0.0
 jinja2==3.1.4
-python-multipart==0.0.18
-
-# REQUIRED for FastAPI to run under cPanel Passenger
-# a2wsgi converts ASGI (FastAPI) to WSGI (Passenger)
-a2wsgi==1.10.10
 
 # Note: Desktop-only packages are in requirements-desktop.txt:
 # - PyQt5 (Desktop GUI - causes errors on cPanel)

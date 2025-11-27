@@ -2,11 +2,7 @@
 Web application entry point for HRMS
 This provides a web-based interface using HTML/JavaScript with Python backend
 """
-from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File, Query
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from flask import Flask, request, jsonify, render_template, send_file, Response, make_response
 from typing import Optional, List, Dict, Any
 import os
 import csv
@@ -69,38 +65,24 @@ from services.supabase_employee_history import (
 )
 from core.employee_service import calculate_cumulative_service
 
-app = FastAPI(title="HRMS Web Application")
+# Create Flask app
+app = Flask(__name__, 
+            template_folder=os.path.join(os.path.dirname(__file__), "web", "templates"),
+            static_folder=os.path.join(os.path.dirname(__file__), "web", "static"))
 
 # Setup templates and static files
+# Ensure directories exist
 templates_dir = os.path.join(os.path.dirname(__file__), "web", "templates")
 static_dir = os.path.join(os.path.dirname(__file__), "web", "static")
-
-# Create directories if they don't exist
 os.makedirs(templates_dir, exist_ok=True)
 os.makedirs(static_dir, exist_ok=True)
 os.makedirs(os.path.join(static_dir, "css"), exist_ok=True)
 os.makedirs(os.path.join(static_dir, "js"), exist_ok=True)
 
-templates = Jinja2Templates(directory=templates_dir)
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+def get_template_context(**kwargs):
+    """Get template context with config values"""
+    return config.get_template_context(request=request, **kwargs)
 
-# Pydantic models for request/response
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-class LoginResponse(BaseModel):
-    success: bool
-    message: str
-    role: Optional[str] = None
-    email: Optional[str] = None
-    locked_until: Optional[str] = None
-
-class EmployeeData(BaseModel):
-    email: str
-    full_name: Optional[str] = None
-    department: Optional[str] = None
-    position: Optional[str] = None
 
 # Helper functions
 def normalize_payroll_date(payroll_date: str) -> Optional[str]:
@@ -125,105 +107,82 @@ def normalize_payroll_date(payroll_date: str) -> Optional[str]:
         return None
 
 # Routes
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
+@app.route("/")
+def root():
     """Serve the login page"""
-    context = config.get_template_context(
-        request=request,
-        page_title="Login - HRMS"
-    )
-    return templates.TemplateResponse("login.html", context)
+    context = get_template_context(page_title="Login - HRMS")
+    return render_template("login.html", **context)
 
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
+@app.route("/dashboard")
+def dashboard():
     """Serve the dashboard page"""
-    context = config.get_template_context(
-        request=request,
-        page_title="Employee Dashboard - HRMS"
-    )
-    return templates.TemplateResponse("dashboard.html", context)
+    context = get_template_context(page_title="Employee Dashboard - HRMS")
+    return render_template("dashboard.html", **context)
 
-@app.get("/admin-dashboard", response_class=HTMLResponse)
-async def admin_dashboard(request: Request):
+@app.route("/admin-dashboard")
+def admin_dashboard():
     """Serve the admin dashboard page"""
-    context = config.get_template_context(
-        request=request,
-        page_title="Admin Dashboard - HRMS"
-    )
-    return templates.TemplateResponse("admin_dashboard.html", context)
+    context = get_template_context(page_title="Admin Dashboard - HRMS")
+    return render_template("admin_dashboard.html", **context)
 
-@app.get("/demo", response_class=HTMLResponse)
-async def demo_dashboard(request: Request):
+@app.route("/demo")
+def demo_dashboard():
     """Serve the demo dashboard page (for testing UI without auth)"""
-    context = config.get_template_context(
-        request=request,
-        page_title="Demo Dashboard - HRMS"
-    )
-    return templates.TemplateResponse("demo_dashboard.html", context)
+    context = get_template_context(page_title="Demo Dashboard - HRMS")
+    return render_template("demo_dashboard.html", **context)
 
-@app.get("/admin-preview", response_class=HTMLResponse)
-async def admin_preview(request: Request):
+@app.route("/admin-preview")
+def admin_preview():
     """Serve the full admin dashboard for preview (no auth required)"""
-    context = config.get_template_context(
-        request=request,
-        page_title="Admin Preview - HRMS"
-    )
-    return templates.TemplateResponse("admin_dashboard.html", context)
+    context = get_template_context(page_title="Admin Preview - HRMS")
+    return render_template("admin_dashboard.html", **context)
 
-@app.get("/test-subtabs", response_class=HTMLResponse)
-async def test_subtabs(request: Request):
+@app.route("/test-subtabs")
+def test_subtabs():
     """Test page to verify subtabs fix"""
-    context = config.get_template_context(
-        request=request,
-        page_title="Test Subtabs - HRMS"
-    )
-    return templates.TemplateResponse("test_subtabs.html", context)
+    context = get_template_context(page_title="Test Subtabs - HRMS")
+    return render_template("test_subtabs.html", **context)
 
-@app.get("/ux-demo", response_class=HTMLResponse)
-async def ux_demo(request: Request):
+@app.route("/ux-demo")
+def ux_demo():
     """UX components demonstration page"""
-    context = config.get_template_context(
-        request=request,
-        page_title="UX Demo - HRMS"
-    )
-    return templates.TemplateResponse("ux_demo.html", context)
+    context = get_template_context(page_title="UX Demo - HRMS")
+    return render_template("ux_demo.html", **context)
 
-@app.get("/table-test", response_class=HTMLResponse)
-async def table_test(request: Request):
+@app.route("/table-test")
+def table_test():
     """Table mobile scrolling test page"""
-    context = config.get_template_context(
-        request=request,
-        page_title="Table Test - HRMS"
-    )
-    return templates.TemplateResponse("table_test.html", context)
+    context = get_template_context(page_title="Table Test - HRMS")
+    return render_template("table_test.html", **context)
 
-@app.get("/WEB_INTERFACE_GUIDE.md")
-async def serve_guide():
+@app.route("/WEB_INTERFACE_GUIDE.md")
+def serve_guide():
     """Serve the web interface guide"""
     import os
     guide_path = os.path.join(os.path.dirname(__file__), "WEB_INTERFACE_GUIDE.md")
     if os.path.exists(guide_path):
         with open(guide_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        return {"content": content, "format": "markdown"}
-    return {"error": "Guide not found"}
+        return jsonify({"content": content, "format": "markdown"})
+    return jsonify({"error": "Guide not found"})
 
 # API Endpoints
-@app.post("/api/login", response_model=LoginResponse)
-async def api_login(login_data: LoginRequest):
+@app.route("/api/login", methods=["POST"])
+def api_login():
     """
     Handle user login
     Reuses existing login_user_by_username function from services
     """
     try:
-        username = login_data.username.strip().lower()
-        password = login_data.password
+        login_data = request.get_json()
+        username = login_data.get("username", "").strip().lower()
+        password = login_data.get("password", "")
         
         if not username or not password:
-            return LoginResponse(
-                success=False,
-                message="Please enter both username and password"
-            )
+            return jsonify({
+                "success": False,
+                "message": "Please enter both username and password"
+            })
         
         result = login_user_by_username(username, password)
         
@@ -235,76 +194,77 @@ async def api_login(login_data: LoginRequest):
             except Exception:
                 display_locked = locked_until
             
-            return LoginResponse(
-                success=False,
-                message=f"Account is locked until {display_locked} (Malaysia Time)",
-                locked_until=display_locked
-            )
+            return jsonify({
+                "success": False,
+                "message": f"Account is locked until {display_locked} (Malaysia Time)",
+                "locked_until": display_locked
+            })
         
         # Check if login successful
         if result and result.get("role"):
-            return LoginResponse(
-                success=True,
-                message="Login successful",
-                role=result["role"].lower(),
-                email=result.get("email", "").lower()
-            )
+            return jsonify({
+                "success": True,
+                "message": "Login successful",
+                "role": result["role"].lower(),
+                "email": result.get("email", "").lower()
+            })
         else:
-            return LoginResponse(
-                success=False,
-                message="Invalid username or password"
-            )
+            return jsonify({
+                "success": False,
+                "message": "Invalid username or password"
+            })
             
     except Exception as e:
         print(f"Login error: {str(e)}")
-        return LoginResponse(
-            success=False,
-            message="An error occurred during login"
-        )
+        return jsonify({
+            "success": False,
+            "message": "An error occurred during login"
+        })
 
-@app.get("/api/employee/{email}")
-async def get_employee_data(email: str):
+
+@app.route("/api/employee/<email>")
+def get_employee_data(email):
     """
     Get employee data by email
     """
     try:
         response = supabase.table("employees").select("*").eq("email", email.lower()).execute()
         if response.data and len(response.data) > 0:
-            return {"success": True, "data": response.data[0]}
+            return jsonify({"success": True, "data": response.data[0]})
         else:
-            return {"success": False, "message": "Employee not found"}
+            return jsonify({"success": False, "message": "Employee not found"})
     except Exception as e:
         print(f"Error fetching employee: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/attendance/{email}")
-async def get_attendance(email: str):
+@app.route("/api/attendance/<email>")
+def get_attendance(email):
     """
     Get attendance history for employee
     Reuses existing get_attendance_history function
     """
     try:
         attendance_data = get_attendance_history(email)
-        return {"success": True, "data": attendance_data}
+        return jsonify({"success": True, "data": attendance_data})
     except Exception as e:
         print(f"Error fetching attendance: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/leave-requests/{email}")
-async def get_leave_requests(email: str):
+@app.route("/api/leave-requests/<email>")
+def get_leave_requests(email):
     """
     Get leave requests for employee
     Reuses existing fetch_user_leave_requests function
     """
     try:
         leave_requests = fetch_user_leave_requests(email)
-        return {"success": True, "data": leave_requests}
+        return jsonify({"success": True, "data": leave_requests})
     except Exception as e:
         print(f"Error fetching leave requests: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/leave-balance/{email}")
-async def get_leave_balance(email: str):
+@app.route("/api/leave-balance/<email>")
+def get_leave_balance(email):
     """
     Get leave balance for a specific employee by email
     Returns both annual and sick leave balances
@@ -328,35 +288,35 @@ async def get_leave_balance(email: str):
         }
     except Exception as e:
         print(f"Error getting leave balance: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/employees")
-async def list_employees():
+@app.route("/api/employees")
+def list_employees():
     """
     List all employees (admin only - add authentication later)
     """
     try:
         response = supabase.table("employees").select("*").execute()
-        return {"success": True, "data": response.data}
+        return jsonify({"success": True, "data": response.data})
     except Exception as e:
         print(f"Error listing employees: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/payroll/{employee_id}")
-async def get_payroll_history(employee_id: str):
+@app.route("/api/payroll/<employee_id>")
+def get_payroll_history(employee_id):
     """
     Get payroll history for employee
     Reuses existing get_employee_payroll_history function
     """
     try:
         payroll_data = get_employee_payroll_history(employee_id)
-        return {"success": True, "data": payroll_data}
+        return jsonify({"success": True, "data": payroll_data})
     except Exception as e:
         print(f"Error fetching payroll: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/engagements/{employee_id}")
-async def get_engagements(employee_id: str):
+@app.route("/api/engagements/<employee_id>")
+def get_engagements(employee_id):
     """
     Get engagements (training & trips) for employee
     """
@@ -380,32 +340,32 @@ async def get_engagements(employee_id: str):
         }
     except Exception as e:
         print(f"Error fetching engagements: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/engagements")
-async def create_engagement(request: Request):
+@app.route("/api/engagements", methods=["POST"])
+def create_engagement():
     """
     Create a new engagement (training/course/trip) record
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Validate required fields
         required_fields = ['type', 'title', 'start_date', 'end_date']
         for field in required_fields:
             if field not in data or not data[field]:
-                return {"success": False, "message": f"Missing required field: {field}"}
+                return jsonify({"success": False, "message": f"Missing required field: <field>"})
         
         # Look up employee_id from employee_email if not provided
         if not data.get('employee_id'):
             employee_email = data.get('employee_email')
             if not employee_email:
-                return {"success": False, "message": "Missing required field: employee_email or employee_id"}
+                return jsonify({"success": False, "message": "Missing required field: employee_email or employee_id"})
             
             # Fetch employee UUID from email
             emp_response = supabase.table("employees").select("id").eq("email", employee_email.lower()).execute()
             if not emp_response.data:
-                return {"success": False, "message": f"Employee not found with email: {employee_email}"}
+                return jsonify({"success": False, "message": f"Employee not found with email: <employee_email>"})
             
             data['employee_id'] = emp_response.data[0]['id']
         
@@ -448,15 +408,15 @@ async def create_engagement(request: Request):
         response = supabase.table(table_name).insert(data).execute()
         
         if response.data:
-            return {"success": True, "message": "Engagement submitted successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Engagement submitted successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to submit engagement"}
+            return jsonify({"success": False, "message": "Failed to submit engagement"})
     except Exception as e:
         print(f"Error creating engagement: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/engagements/all")
-async def get_all_engagements():
+@app.route("/api/admin/engagements/all")
+def get_all_engagements():
     """
     Get all engagements across all employees (admin only)
     """
@@ -492,18 +452,18 @@ async def get_all_engagements():
         # Sort by date
         all_data.sort(key=lambda x: x.get('created_at', ''), reverse=True)
         
-        return {"success": True, "data": all_data}
+        return jsonify({"success": True, "data": all_data})
     except Exception as e:
         print(f"Error getting all engagements: {str(e)}")
-        return {"success": False, "message": str(e), "data": []}
+        return jsonify({"success": False, "message": str(e), "data": []})
 
-@app.put("/api/admin/engagements/{engagement_id}")
-async def update_engagement_record(engagement_id: str, request: Request):
+@app.route("/api/admin/engagements/<engagement_id>", methods=["PUT"])
+def update_engagement_record(engagement_id):
     """
     Update an engagement record (admin only)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Remove read-only fields that shouldn't be updated
         data.pop('id', None)
@@ -517,7 +477,7 @@ async def update_engagement_record(engagement_id: str, request: Request):
         try:
             response = supabase.table("engagements").update(data).eq("id", engagement_id).execute()
             if response.data:
-                return {"success": True, "message": "Engagement updated successfully", "data": response.data[0]}
+                return jsonify({"success": True, "message": "Engagement updated successfully", "data": response.data[0]})
             success = True
         except Exception as e:
             error_msg = str(e)
@@ -526,7 +486,7 @@ async def update_engagement_record(engagement_id: str, request: Request):
         try:
             response = supabase.table("training_course_records").update(data).eq("id", engagement_id).execute()
             if response.data:
-                return {"success": True, "message": "Training course updated successfully", "data": response.data[0]}
+                return jsonify({"success": True, "message": "Training course updated successfully", "data": response.data[0]})
             success = True
         except Exception as e:
             error_msg = str(e)
@@ -535,21 +495,21 @@ async def update_engagement_record(engagement_id: str, request: Request):
         try:
             response = supabase.table("overseas_work_trip_records").update(data).eq("id", engagement_id).execute()
             if response.data:
-                return {"success": True, "message": "Overseas trip updated successfully", "data": response.data[0]}
+                return jsonify({"success": True, "message": "Overseas trip updated successfully", "data": response.data[0]})
             success = True
         except Exception as e:
             error_msg = str(e)
         
         if not success:
-            return {"success": False, "message": f"Failed to update engagement: {error_msg}"}
+            return jsonify({"success": False, "message": f"Failed to update engagement: <error_msg>"})
         
-        return {"success": True, "message": "Engagement updated successfully"}
+        return jsonify({"success": True, "message": "Engagement updated successfully"})
     except Exception as e:
         print(f"Error updating engagement: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/engagements/{engagement_id}")
-async def delete_engagement_record(engagement_id: str):
+@app.route("/api/admin/engagements/<engagement_id>", methods=["DELETE"])
+def delete_engagement_record(engagement_id):
     """
     Delete an engagement record (admin only)
     """
@@ -562,7 +522,7 @@ async def delete_engagement_record(engagement_id: str):
         try:
             response = supabase.table("engagements").delete().eq("id", engagement_id).execute()
             if response.data:
-                return {"success": True, "message": "Engagement deleted successfully"}
+                return jsonify({"success": True, "message": "Engagement deleted successfully"})
             deleted = True
         except Exception as e:
             error_msg = str(e)
@@ -571,7 +531,7 @@ async def delete_engagement_record(engagement_id: str):
         try:
             response = supabase.table("training_course_records").delete().eq("id", engagement_id).execute()
             if response.data:
-                return {"success": True, "message": "Training course deleted successfully"}
+                return jsonify({"success": True, "message": "Training course deleted successfully"})
             deleted = True
         except Exception as e:
             error_msg = str(e)
@@ -580,50 +540,50 @@ async def delete_engagement_record(engagement_id: str):
         try:
             response = supabase.table("overseas_work_trip_records").delete().eq("id", engagement_id).execute()
             if response.data:
-                return {"success": True, "message": "Overseas trip deleted successfully"}
+                return jsonify({"success": True, "message": "Overseas trip deleted successfully"})
             deleted = True
         except Exception as e:
             error_msg = str(e)
         
         if not deleted:
-            return {"success": False, "message": f"Failed to delete engagement: {error_msg}"}
+            return jsonify({"success": False, "message": f"Failed to delete engagement: <error_msg>"})
         
-        return {"success": True, "message": "Engagement deleted successfully"}
+        return jsonify({"success": True, "message": "Engagement deleted successfully"})
     except Exception as e:
         print(f"Error deleting engagement: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/attendance")
-async def get_all_attendance():
+@app.route("/api/admin/attendance")
+def get_all_attendance():
     """
     Get all attendance records (admin only)
     """
     try:
         attendance_data = get_all_attendance_records()
-        return {"success": True, "data": attendance_data}
+        return jsonify({"success": True, "data": attendance_data})
     except Exception as e:
         print(f"Error fetching all attendance: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/attendance-settings")
-async def get_attendance_settings_api():
+@app.route("/api/admin/attendance-settings")
+def get_attendance_settings_api():
     """
     Get attendance/working hours settings
     """
     try:
         settings = get_attendance_settings()
-        return {"success": True, "data": settings}
+        return jsonify({"success": True, "data": settings})
     except Exception as e:
         print(f"Error fetching attendance settings: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/attendance-settings")
-async def update_attendance_settings_api(request: Request):
+@app.route("/api/admin/attendance-settings", methods=["POST"])
+def update_attendance_settings_api():
     """
     Update attendance/working hours settings
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         start_time = data.get("work_start", "09:00")
         end_time = data.get("work_end", "18:00")
         limit_time = data.get("clock_in_limit", "09:30")
@@ -631,15 +591,15 @@ async def update_attendance_settings_api(request: Request):
         success = update_attendance_settings(start_time, end_time, limit_time)
         
         if success:
-            return {"success": True, "message": "Working hours updated successfully"}
+            return jsonify({"success": True, "message": "Working hours updated successfully"})
         else:
-            return {"success": False, "message": "Failed to update working hours"}
+            return jsonify({"success": False, "message": "Failed to update working hours"})
     except Exception as e:
         print(f"Error updating attendance settings: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/leave-requests")
-async def get_all_leave_requests():
+@app.route("/api/admin/leave-requests")
+def get_all_leave_requests():
     """
     Get all leave requests for admin approval
     """
@@ -648,7 +608,7 @@ async def get_all_leave_requests():
         response = supabase.table("leave_requests").select("*").order("created_at", desc=True).execute()
         
         if not response.data:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         # Enrich leave requests with employee names
         leave_requests = response.data
@@ -672,13 +632,13 @@ async def get_all_leave_requests():
             # Also set email field as fallback for frontend
             lr["email"] = employee_email
         
-        return {"success": True, "data": leave_requests}
+        return jsonify({"success": True, "data": leave_requests})
     except Exception as e:
         print(f"Error fetching leave requests: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/leave-requests/{leave_id}/approve")
-async def approve_leave_request(leave_id: str):
+@app.route("/api/admin/leave-requests/<leave_id>/approve", methods=["POST"])
+def approve_leave_request(leave_id):
     """
     Approve a leave request
     """
@@ -687,15 +647,15 @@ async def approve_leave_request(leave_id: str):
         admin_email = "admin@hrms.com"
         success = update_leave_request_status(leave_id, "approved", admin_email)
         if success:
-            return {"success": True, "message": "Leave request approved"}
+            return jsonify({"success": True, "message": "Leave request approved"})
         else:
-            return {"success": False, "message": "Failed to approve leave request"}
+            return jsonify({"success": False, "message": "Failed to approve leave request"})
     except Exception as e:
         print(f"Error approving leave: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/leave-requests/{leave_id}/reject")
-async def reject_leave_request(leave_id: str):
+@app.route("/api/admin/leave-requests/<leave_id>/reject", methods=["POST"])
+def reject_leave_request(leave_id):
     """
     Reject a leave request
     """
@@ -704,20 +664,20 @@ async def reject_leave_request(leave_id: str):
         admin_email = "admin@hrms.com"
         success = update_leave_request_status(leave_id, "rejected", admin_email)
         if success:
-            return {"success": True, "message": "Leave request rejected"}
+            return jsonify({"success": True, "message": "Leave request rejected"})
         else:
-            return {"success": False, "message": "Failed to reject leave request"}
+            return jsonify({"success": False, "message": "Failed to reject leave request"})
     except Exception as e:
         print(f"Error rejecting leave: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/leave-requests/submit")
-async def submit_new_leave_request(request: Request):
+@app.route("/api/leave-requests/submit", methods=["POST"])
+def submit_new_leave_request():
     """
     Submit a new leave request
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         employee_email = data.get("employee_email")
         leave_type = data.get("leave_type")
         start_date = data.get("start_date")
@@ -727,7 +687,7 @@ async def submit_new_leave_request(request: Request):
         half_day_period = data.get("half_day_period")
         
         if not all([employee_email, leave_type, start_date, end_date]):
-            return {"success": False, "message": "Missing required fields"}
+            return jsonify({"success": False, "message": "Missing required fields"})
         
         success = submit_leave_request(
             employee_email=employee_email,
@@ -740,15 +700,18 @@ async def submit_new_leave_request(request: Request):
         )
         
         if success:
-            return {"success": True, "message": "Leave request submitted successfully"}
+            return jsonify({"success": True, "message": "Leave request submitted successfully"})
         else:
-            return {"success": False, "message": "Failed to submit leave request"}
+            return jsonify({"success": False, "message": "Failed to submit leave request"})
     except Exception as e:
         print(f"Error submitting leave request: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/working-days")
-async def get_working_days(start_date: str, end_date: str, state: str = None):
+@app.route("/api/working-days")
+def get_working_days():
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    state = request.args.get("state")
     """
     Calculate working days between two dates, excluding weekends and holidays.
     Uses the same calculation logic as the leave request approval.
@@ -760,7 +723,7 @@ async def get_working_days(start_date: str, end_date: str, state: str = None):
     """
     try:
         if not start_date or not end_date:
-            return {"success": False, "message": "start_date and end_date are required"}
+            return jsonify({"success": False, "message": "start_date and end_date are required"})
         
         # Use the centralized calculate_working_days function
         working_days = calculate_working_days(start_date, end_date, state=state)
@@ -774,20 +737,20 @@ async def get_working_days(start_date: str, end_date: str, state: str = None):
         }
     except Exception as e:
         print(f"Error calculating working days: {str(e)}")
-        return {"success": False, "message": str(e), "working_days": 1}
+        return jsonify({"success": False, "message": str(e), "working_days": 1})
 
-@app.put("/api/employee/{email}")
-async def update_employee_profile(email: str, request: Request):
+@app.route("/api/employee/<email>", methods=["PUT"])
+def update_employee_profile(email):
     """
     Update employee profile information
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Get employee_id first
         emp_response = supabase.table("employees").select("id").eq("email", email.lower()).execute()
         if not emp_response.data or len(emp_response.data) == 0:
-            return {"success": False, "message": "Employee not found"}
+            return jsonify({"success": False, "message": "Employee not found"})
         
         employee_id = emp_response.data[0]["id"]
         
@@ -795,53 +758,53 @@ async def update_employee_profile(email: str, request: Request):
         result = update_employee(employee_id, data)
         
         if result:
-            return {"success": True, "message": "Profile updated successfully", "data": result}
+            return jsonify({"success": True, "message": "Profile updated successfully", "data": result})
         else:
-            return {"success": False, "message": "Failed to update profile"}
+            return jsonify({"success": False, "message": "Failed to update profile"})
     except Exception as e:
         print(f"Error updating employee: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/employees")
-async def create_new_employee(request: Request):
+@app.route("/api/admin/employees", methods=["POST"])
+def create_new_employee():
     """
     Create a new employee (admin only)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         password = data.pop("password", None)
         
         result = insert_employee(data, password)
         
         if result and result.get("success"):
-            return {"success": True, "message": "Employee created successfully", "data": result, "employee_id": data.get("employee_id")}
+            return jsonify({"success": True, "message": "Employee created successfully", "data": result, "employee_id": data.get("employee_id")})
         else:
             error_message = result.get("error") if result else "Failed to create employee"
-            return {"success": False, "message": error_message}
+            return jsonify({"success": False, "message": error_message})
     except Exception as e:
         print(f"Error creating employee: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/employees/{employee_id}")
-async def update_employee_admin(employee_id: str, request: Request):
+@app.route("/api/admin/employees/<employee_id>", methods=["PUT"])
+def update_employee_admin(employee_id):
     """
     Update employee information (admin only)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         result = update_employee(employee_id, data)
         
         if result:
-            return {"success": True, "message": "Employee updated successfully", "data": result}
+            return jsonify({"success": True, "message": "Employee updated successfully", "data": result})
         else:
-            return {"success": False, "message": "Failed to update employee"}
+            return jsonify({"success": False, "message": "Failed to update employee"})
     except Exception as e:
         print(f"Error updating employee: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/employees/{employee_id}")
-async def delete_employee_endpoint(employee_id: str):
+@app.route("/api/employees/<employee_id>", methods=["DELETE"])
+def delete_employee_endpoint(employee_id):
     """
     Delete an employee (admin only)
     """
@@ -849,105 +812,105 @@ async def delete_employee_endpoint(employee_id: str):
         result = delete_employee(employee_id)
         
         if result.get("success"):
-            return {"success": True, "message": "Employee deleted successfully"}
+            return jsonify({"success": True, "message": "Employee deleted successfully"})
         else:
-            return {"success": False, "message": result.get("error", "Failed to delete employee")}
+            return jsonify({"success": False, "message": result.get("error", "Failed to delete employee")})
     except Exception as e:
         print(f"Error deleting employee: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/payroll-runs")
-async def get_all_payroll_runs():
+@app.route("/api/admin/payroll-runs")
+def get_all_payroll_runs():
     """
     Get all payroll runs (admin only)
     """
     try:
         payroll_runs = get_payroll_runs()
-        return {"success": True, "data": payroll_runs}
+        return jsonify({"success": True, "data": payroll_runs})
     except Exception as e:
         print(f"Error fetching payroll runs: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/payroll/run")
-async def run_payroll_processing(request: Request):
+@app.route("/api/admin/payroll/run", methods=["POST"])
+def run_payroll_processing():
     """
     Run payroll for a specific month/year (admin only)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         payroll_date = data.get("payroll_date")  # Format: YYYY-MM from month input
         
         if not payroll_date:
-            return {"success": False, "message": "Payroll date is required"}
+            return jsonify({"success": False, "message": "Payroll date is required"})
         
         # Convert YYYY-MM to YYYY-MM-DD format
         # The run_payroll function expects YYYY-MM-DD format
         # Payroll is run on the first day of the month (day 01) for the given month
         payroll_date = normalize_payroll_date(payroll_date)
         if payroll_date is None:
-            return {"success": False, "message": "Invalid date format. Use YYYY-MM or YYYY-MM-DD"}
+            return jsonify({"success": False, "message": "Invalid date format. Use YYYY-MM or YYYY-MM-DD"})
         
         success = run_payroll(payroll_date)
         
         if success:
-            return {"success": True, "message": f"Payroll processed successfully for {payroll_date}"}
+            return jsonify({"success": True, "message": f"Payroll processed successfully for <payroll_date>"})
         else:
-            return {"success": False, "message": "Failed to process payroll"}
+            return jsonify({"success": False, "message": "Failed to process payroll"})
     except Exception as e:
         print(f"Error running payroll: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/bonuses")
-async def get_all_bonuses():
+@app.route("/api/admin/bonuses")
+def get_all_bonuses():
     """
     Get all bonus records (admin only)
     """
     try:
         # Fetch bonuses without join - bonuses table already has employee_name field
         response = supabase.table("bonuses").select("*").order("created_at", desc=True).execute()
-        return {"success": True, "data": response.data}
+        return jsonify({"success": True, "data": response.data})
     except Exception as e:
         print(f"Error fetching bonuses: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/bonuses")
-async def create_bonus(request: Request):
+@app.route("/api/admin/bonuses", methods=["POST"])
+def create_bonus():
     """
     Create a new bonus record (admin only)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         response = supabase.table("bonuses").insert(data).execute()
         
         if response.data:
-            return {"success": True, "message": "Bonus created successfully", "data": response.data}
+            return jsonify({"success": True, "message": "Bonus created successfully", "data": response.data})
         else:
-            return {"success": False, "message": "Failed to create bonus"}
+            return jsonify({"success": False, "message": "Failed to create bonus"})
     except Exception as e:
         print(f"Error creating bonus: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/bonuses/{bonus_id}")
-async def update_bonus(bonus_id: str, request: Request):
+@app.route("/api/admin/bonuses/<bonus_id>", methods=["PUT"])
+def update_bonus(bonus_id):
     """
     Update a bonus record (admin only)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         response = supabase.table("bonuses").update(data).eq("id", bonus_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Bonus updated successfully", "data": response.data}
+            return jsonify({"success": True, "message": "Bonus updated successfully", "data": response.data})
         else:
-            return {"success": False, "message": "Failed to update bonus"}
+            return jsonify({"success": False, "message": "Failed to update bonus"})
     except Exception as e:
         print(f"Error updating bonus: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/bonuses/{bonus_id}")
-async def delete_bonus(bonus_id: str):
+@app.route("/api/admin/bonuses/<bonus_id>", methods=["DELETE"])
+def delete_bonus(bonus_id):
     """
     Delete a bonus record (admin only)
     """
@@ -955,12 +918,12 @@ async def delete_bonus(bonus_id: str):
         response = supabase.table("bonuses").delete().eq("id", bonus_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Bonus deleted successfully"}
+            return jsonify({"success": True, "message": "Bonus deleted successfully"})
         else:
-            return {"success": False, "message": "Failed to delete bonus"}
+            return jsonify({"success": False, "message": "Failed to delete bonus"})
     except Exception as e:
         print(f"Error deleting bonus: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 def _safe_to_float(value):
     """
@@ -989,7 +952,7 @@ def _safe_to_float(value):
                 try:
                     total += float(v)
                 except (ValueError, TypeError):
-                    logging.warning(f"Could not convert dictionary value for key '{key}': {v!r}")
+                    logging.warning(f"Could not convert dictionary value for key '<key>': {v!r}")
         return total
     try:
         return float(value)
@@ -997,8 +960,8 @@ def _safe_to_float(value):
         logging.warning(f"Could not convert value to float: {value!r}")
         return 0.0
 
-@app.get("/api/payroll/payslip/{employee_id}/{payroll_run_id}")
-async def generate_payslip(employee_id: str, payroll_run_id: str):
+@app.route("/api/payroll/payslip/<employee_id>/<payroll_run_id>")
+def generate_payslip(employee_id: str, payroll_run_id: str):
     """
     Generate and download payslip PDF for an employee
     Uses fpdf2-based PDF generator (pure Python, web-compatible)
@@ -1011,14 +974,14 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
         # Get employee data for filename
         employee_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()
         if not employee_response.data:
-            raise HTTPException(status_code=404, detail=f"Employee with ID '{employee_id}' not found in database")
+            return jsonify({"success": False, "message": f"Employee with ID '<employee_id>' not found in database"}), 404
         
         employee = employee_response.data[0]
         
         # Get payroll run data for filename
         payroll_response = supabase.table("payroll_runs").select("month_year").eq("id", payroll_run_id).execute()
         if not payroll_response.data:
-            raise HTTPException(status_code=404, detail=f"Payroll run with ID '{payroll_run_id}' not found in database")
+            return jsonify({"success": False, "message": f"Payroll run with ID '<payroll_run_id>' not found in database"}), 404
         
         payroll = payroll_response.data[0]
         
@@ -1026,7 +989,7 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
         temp_dir = tempfile.gettempdir()
         month_year = payroll.get('month_year') or 'unknown'
         employee_display_id = employee.get('employee_id') or employee_id
-        output_filename = f"payslip_{employee_display_id}_{month_year.replace('/', '_')}.pdf"
+        output_filename = f"payslip_<employee_display_id>_{month_year.replace('/', '_')}.pdf"
         output_path = os.path.join(temp_dir, output_filename)
         
         # Generate payslip using Python-based generator (same as desktop GUI)
@@ -1043,17 +1006,14 @@ async def generate_payslip(employee_id: str, payroll_run_id: str):
             result_path,
             media_type="application/pdf",
             filename=output_filename,
-            headers={"Content-Disposition": f"attachment; filename={output_filename}"}
+            headers={"Content-Disposition": f"attachment; filename=<output_filename>"}
         )
-        
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"Error generating payslip: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Unexpected error generating payslip: {str(e)}")
+        return jsonify({"success": False, "message": f"Unexpected error generating payslip: {str(e)}"}), 500
 
-@app.get("/api/admin/leave-balances")
-async def get_leave_balances():
+@app.route("/api/admin/leave-balances")
+def get_leave_balances():
     """
     Get annual leave balances for all employees
     """
@@ -1061,13 +1021,13 @@ async def get_leave_balances():
         from services.supabase_service import get_employee_leave_balances
         current_year = datetime.now().year
         balances = get_employee_leave_balances(current_year)
-        return {"success": True, "data": balances}
+        return jsonify({"success": True, "data": balances})
     except Exception as e:
         print(f"Error getting leave balances: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/sick-leave-balances")
-async def get_sick_leave_balances():
+@app.route("/api/admin/sick-leave-balances")
+def get_sick_leave_balances():
     """
     Get sick leave balances for all employees
     """
@@ -1079,7 +1039,7 @@ async def get_sick_leave_balances():
         response = supabase.table("employees").select("id, employee_id, full_name, email, department").execute()
         
         if not response.data:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         balances = []
         for employee in response.data:
@@ -1105,19 +1065,19 @@ async def get_sick_leave_balances():
                 "years_of_service_display": f"{balance.get('years_of_service', 0.0):.1f}"
             })
         
-        return {"success": True, "data": balances}
+        return jsonify({"success": True, "data": balances})
     except Exception as e:
         print(f"Error getting sick leave balances: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/leave-balances/{employee_email}")
-async def update_leave_balance(employee_email: str, request: Request):
+@app.route("/api/admin/leave-balances/<employee_email>", methods=["PUT"])
+def update_leave_balance(employee_email):
     """
     Update an employee's leave balance
     """
     try:
         from services.supabase_service import update_employee_leave_balance
-        data = await request.json()
+        data = request.get_json()
         
         year = data.get('year', datetime.now().year)
         employee_email_decoded = employee_email.replace('%40', '@')
@@ -1125,45 +1085,45 @@ async def update_leave_balance(employee_email: str, request: Request):
         # Get employee_id from email
         emp_response = supabase.table("employees").select("employee_id").eq("email", employee_email_decoded).execute()
         if not emp_response.data:
-            return {"success": False, "message": "Employee not found"}
+            return jsonify({"success": False, "message": "Employee not found"})
         
         employee_id = emp_response.data[0]['employee_id']
         
         # Update balance
         result = update_employee_leave_balance(employee_id, year, data)
         
-        return {"success": True, "message": "Leave balance updated successfully"}
+        return jsonify({"success": True, "message": "Leave balance updated successfully"})
     except Exception as e:
         print(f"Error updating leave balance: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/leave-balances/carry-forward")
-async def process_carry_forward(request: Request):
+@app.route("/api/admin/leave-balances/carry-forward", methods=["POST"])
+def process_carry_forward():
     """
     Process year-end carry forward for all employees
     """
     try:
         from services.supabase_service import process_year_end_carry_forward
-        data = await request.json()
+        data = request.get_json()
         
         year = data.get('year', datetime.now().year)
         rules = data.get('rules', {})
         
         result = process_year_end_carry_forward(year, rules)
         
-        return {"success": result, "message": "Carry forward processed successfully" if result else "Failed to process carry forward"}
+        return jsonify({"success": result, "message": "Carry forward processed successfully" if result else "Failed to process carry forward"})
     except Exception as e:
         print(f"Error processing carry forward: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/leave-balances/set-carry-forward-all")
-async def set_carry_forward_all(request: Request):
+@app.route("/api/admin/leave-balances/set-carry-forward-all", methods=["POST"])
+def set_carry_forward_all():
     """
     Set carried forward days for all employees
     """
     try:
         from services.supabase_service import set_carried_forward_for_all
-        data = await request.json()
+        data = request.get_json()
         
         current_year = data.get('current_year', datetime.now().year)
         next_year = data.get('next_year', current_year + 1)
@@ -1172,13 +1132,13 @@ async def set_carry_forward_all(request: Request):
         
         result = set_carried_forward_for_all(current_year, next_year, days, applies_to)
         
-        return {"success": result, "message": f"Set {days} carried forward days for all employees" if result else "Failed to set carried forward"}
+        return jsonify({"success": result, "message": f"Set <days> carried forward days for all employees" if result else "Failed to set carried forward"})
     except Exception as e:
         print(f"Error setting carry forward for all: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/unpaid-leave-summary")
-async def get_unpaid_leave_summary():
+@app.route("/api/admin/unpaid-leave-summary")
+def get_unpaid_leave_summary():
     """
     Get unpaid leave summary for all employees
     """
@@ -1190,7 +1150,7 @@ async def get_unpaid_leave_summary():
         response = supabase.table("employees").select("id, employee_id, full_name, email").execute()
         
         if not response.data:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         summaries = []
         for employee in response.data:
@@ -1204,13 +1164,13 @@ async def get_unpaid_leave_summary():
                 "monthly_breakdown": summary
             })
         
-        return {"success": True, "data": summaries}
+        return jsonify({"success": True, "data": summaries})
     except Exception as e:
         print(f"Error getting unpaid leave summary: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/payroll-contributions")
-async def get_payroll_contributions():
+@app.route("/api/admin/payroll-contributions")
+def get_payroll_contributions():
     """
     Get EPF, SOCSO, EIS contributions summary
     """
@@ -1219,7 +1179,7 @@ async def get_payroll_contributions():
         response = supabase.table("payroll_runs").select("*").order("created_at", desc=True).limit(100).execute()
         
         if not response.data:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         contributions = []
         for run in response.data:
@@ -1239,31 +1199,32 @@ async def get_payroll_contributions():
                 "total_employer": float(run.get('epf_employer', 0)) + float(run.get('socso_employer', 0)) + eis_employer
             })
         
-        return {"success": True, "data": contributions}
+        return jsonify({"success": True, "data": contributions})
     except Exception as e:
         print(f"Error getting contributions: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/contributions/upload-rates")
-async def upload_contribution_rates(contribution_type: str, file: UploadFile = File(...)):
+@app.route("/api/admin/contributions/upload-rates", methods=["POST"])
+def upload_contribution_rates():
+    contribution_type = request.form.get("contribution_type") or request.args.get("contribution_type")
     """
     Upload PDF containing EPF/SOCSO/EIS contribution rate tables
     """
     try:
         # Validate contribution type
         if contribution_type not in ['epf', 'socso', 'eis']:
-            return {"success": False, "message": "Invalid contribution type. Must be epf, socso, or eis"}
+            return jsonify({"success": False, "message": "Invalid contribution type. Must be epf, socso, or eis"})
         
         # Validate file type
         if not file.filename.endswith('.pdf'):
-            return {"success": False, "message": "Only PDF files are supported"}
+            return jsonify({"success": False, "message": "Only PDF files are supported"})
         
         # Save the uploaded file temporarily
         import tempfile
         import shutil
         
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-            shutil.copyfileobj(file.file, tmp_file)
+            tmp_file.write(file.read())
             tmp_path = tmp_file.name
         
         try:
@@ -1272,11 +1233,11 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
                 try:
                     from core.epf_pdf_parser import upload_and_parse_epf_pdf
                     upload_and_parse_epf_pdf(tmp_path, supabase)
-                    return {"success": True, "message": "EPF rates uploaded and parsed successfully"}
+                    return jsonify({"success": True, "message": "EPF rates uploaded and parsed successfully"})
                 except ImportError as e:
-                    return {"success": False, "message": f"EPF parser not available: {str(e)}. Install pdfplumber."}
+                    return jsonify({"success": False, "message": f"EPF parser not available: {str(e)}. Install pdfplumber."})
                 except Exception as e:
-                    return {"success": False, "message": f"Error parsing EPF PDF: {str(e)}"}
+                    return jsonify({"success": False, "message": f"Error parsing EPF PDF: {str(e)}"})
             
             # For SOCSO, use the dedicated parser
             elif contribution_type == 'socso':
@@ -1285,9 +1246,9 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
                     result = upload_and_parse_socso_pdf(tmp_path, supabase)
                     return result
                 except ImportError as e:
-                    return {"success": False, "message": f"SOCSO parser not available: {str(e)}. Install pdfplumber."}
+                    return jsonify({"success": False, "message": f"SOCSO parser not available: {str(e)}. Install pdfplumber."})
                 except Exception as e:
-                    return {"success": False, "message": f"Error parsing SOCSO PDF: {str(e)}"}
+                    return jsonify({"success": False, "message": f"Error parsing SOCSO PDF: {str(e)}"})
             
             # For EIS, use the dedicated parser
             elif contribution_type == 'eis':
@@ -1296,9 +1257,9 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
                     result = upload_and_parse_eis_pdf(tmp_path, supabase)
                     return result
                 except ImportError as e:
-                    return {"success": False, "message": f"EIS parser not available: {str(e)}. Install pdfplumber."}
+                    return jsonify({"success": False, "message": f"EIS parser not available: {str(e)}. Install pdfplumber."})
                 except Exception as e:
-                    return {"success": False, "message": f"Error parsing EIS PDF: {str(e)}"}
+                    return jsonify({"success": False, "message": f"Error parsing EIS PDF: {str(e)}"})
             
         finally:
             # Clean up temporary file
@@ -1307,42 +1268,42 @@ async def upload_contribution_rates(contribution_type: str, file: UploadFile = F
             
     except Exception as e:
         print(f"Error uploading contribution rates: {str(e)}")
-        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+        return jsonify({"success": False, "message": f"Error uploading file: {str(e)}"})
 
 # Variable Percentage API Endpoints
-@app.get("/api/admin/variable-percentage")
-async def get_variable_percentage_rules():
+@app.route("/api/admin/variable-percentage")
+def get_variable_percentage_rules():
     """
     Get all variable percentage configurations (same table as Python GUI)
     """
     try:
         response = supabase.table("variable_percentage_configs").select("*").order("created_at", desc=True).execute()
-        return {"success": True, "data": response.data or []}
+        return jsonify({"success": True, "data": response.data or []})
     except Exception as e:
         print(f"Error getting variable percentage configs: {str(e)}")
-        return {"success": False, "message": str(e), "data": []}
+        return jsonify({"success": False, "message": str(e), "data": []})
 
-@app.post("/api/admin/variable-percentage")
-async def create_variable_percentage_rule(request: Request):
+@app.route("/api/admin/variable-percentage", methods=["POST"])
+def create_variable_percentage_rule():
     """
     Create a new variable percentage configuration
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Validate required fields
         required_fields = ['name', 'type', 'percentage', 'apply_to', 'base_on', 'frequency', 'status']
         for field in required_fields:
             if field not in data or not data[field]:
-                return {"success": False, "message": f"Missing required field: {field}"}
+                return jsonify({"success": False, "message": f"Missing required field: <field>"})
         
         # Validate percentage
         try:
             percentage = float(data['percentage'])
             if percentage < 0 or percentage > 100:
-                return {"success": False, "message": "Percentage must be between 0 and 100"}
+                return jsonify({"success": False, "message": "Percentage must be between 0 and 100"})
         except ValueError:
-            return {"success": False, "message": "Invalid percentage value"}
+            return jsonify({"success": False, "message": "Invalid percentage value"})
         
         # Add timestamp
         data['created_at'] = datetime.utcnow().isoformat()
@@ -1350,20 +1311,20 @@ async def create_variable_percentage_rule(request: Request):
         response = supabase.table("variable_percentage_configs").insert(data).execute()
         
         if response.data:
-            return {"success": True, "message": "Variable percentage config created successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Variable percentage config created successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to create config"}
+            return jsonify({"success": False, "message": "Failed to create config"})
     except Exception as e:
         print(f"Error creating variable percentage config: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/variable-percentage/{rule_id}")
-async def update_variable_percentage_rule(rule_id: str, request: Request):
+@app.route("/api/admin/variable-percentage/<rule_id>", methods=["PUT"])
+def update_variable_percentage_rule(rule_id):
     """
     Update an existing variable percentage configuration
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Remove fields that shouldn't be updated
         data.pop('id', None)
@@ -1375,15 +1336,15 @@ async def update_variable_percentage_rule(rule_id: str, request: Request):
         response = supabase.table("variable_percentage_configs").update(data).eq("id", rule_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Config updated successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Config updated successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to update config"}
+            return jsonify({"success": False, "message": "Failed to update config"})
     except Exception as e:
         print(f"Error updating variable percentage config: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/variable-percentage/{rule_id}")
-async def delete_variable_percentage_rule(rule_id: str):
+@app.route("/api/admin/variable-percentage/<rule_id>", methods=["DELETE"])
+def delete_variable_percentage_rule(rule_id):
     """
     Delete a variable percentage configuration
     """
@@ -1391,16 +1352,16 @@ async def delete_variable_percentage_rule(rule_id: str):
         response = supabase.table("variable_percentage_configs").delete().eq("id", rule_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Config deleted successfully"}
+            return jsonify({"success": True, "message": "Config deleted successfully"})
         else:
-            return {"success": False, "message": "Failed to delete config"}
+            return jsonify({"success": False, "message": "Failed to delete config"})
     except Exception as e:
         print(f"Error deleting variable percentage config: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 # Skipped Payroll API Endpoint
-@app.get("/api/admin/skipped-payroll")
-async def get_skipped_payroll():
+@app.route("/api/admin/skipped-payroll")
+def get_skipped_payroll():
     """
     Get skipped payroll records
     """
@@ -1437,7 +1398,7 @@ async def get_skipped_payroll():
                         "notes": record.get('notes', ''),
                         "can_include": True
                     })
-                return {"success": True, "data": skipped_records}
+                return jsonify({"success": True, "data": skipped_records})
         except Exception as e:
             print(f"Info: payroll_run_skips table query failed, trying payroll_runs: {str(e)}")
         
@@ -1446,7 +1407,7 @@ async def get_skipped_payroll():
         
         if not response.data:
             # If no skipped records found, return empty array
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         skipped_records = []
         for record in response.data:
@@ -1461,13 +1422,13 @@ async def get_skipped_payroll():
                 "can_include": record.get('can_include_next', True)
             })
         
-        return {"success": True, "data": skipped_records}
+        return jsonify({"success": True, "data": skipped_records})
     except Exception as e:
         print(f"Error getting skipped payroll: {str(e)}")
-        return {"success": False, "message": str(e), "data": []}
+        return jsonify({"success": False, "message": str(e), "data": []})
 
-@app.post("/api/admin/skipped-payroll/{record_id}/include")
-async def include_skipped_in_next_payroll(record_id: str):
+@app.route("/api/admin/skipped-payroll/<record_id>/include", methods=["POST"])
+def include_skipped_in_next_payroll(record_id):
     """
     Mark a skipped payroll record to be included in next run
     """
@@ -1482,15 +1443,15 @@ async def include_skipped_in_next_payroll(record_id: str):
         response = supabase.table("payroll_runs").update(data).eq("id", record_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Record marked for inclusion in next payroll"}
+            return jsonify({"success": True, "message": "Record marked for inclusion in next payroll"})
         else:
-            return {"success": False, "message": "Failed to update record"}
+            return jsonify({"success": False, "message": "Failed to update record"})
     except Exception as e:
         print(f"Error including skipped payroll: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/salary-history")
-async def get_salary_history():
+@app.route("/api/admin/salary-history")
+def get_salary_history():
     """
     Get salary change history for employees
     Uses salary_history table (same as Python GUI) with effective_date column
@@ -1500,7 +1461,7 @@ async def get_salary_history():
         response = supabase.table("salary_history").select("*").order("effective_date", desc=True).limit(100).execute()
         
         if not response.data:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         salary_changes = response.data
         
@@ -1524,29 +1485,29 @@ async def get_salary_history():
                 record["employee_name"] = ""
                 record["employee_email"] = ""
         
-        return {"success": True, "data": salary_changes}
+        return jsonify({"success": True, "data": salary_changes})
     except Exception as e:
         print(f"Error getting salary history: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/salary-history")
-async def create_salary_change(request: Request):
+@app.route("/api/admin/salary-history", methods=["POST"])
+def create_salary_change():
     """
     Record a salary change for an employee
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Look up employee_id from employee_email if not provided
         if not data.get('employee_id'):
             employee_email = data.get('employee_email')
             if not employee_email:
-                return {"success": False, "message": "Missing required field: employee_email or employee_id"}
+                return jsonify({"success": False, "message": "Missing required field: employee_email or employee_id"})
             
             # Fetch employee UUID from email
             emp_response = supabase.table("employees").select("id").eq("email", employee_email.lower()).execute()
             if not emp_response.data:
-                return {"success": False, "message": f"Employee not found with email: {employee_email}"}
+                return jsonify({"success": False, "message": f"Employee not found with email: <employee_email>"})
             
             data['employee_id'] = emp_response.data[0]['id']
         
@@ -1554,16 +1515,16 @@ async def create_salary_change(request: Request):
         required_fields = ['employee_id', 'previous_salary', 'new_salary', 'effective_date']
         for field in required_fields:
             if field not in data or data[field] == '':
-                return {"success": False, "message": f"Missing required field: {field}"}
+                return jsonify({"success": False, "message": f"Missing required field: <field>"})
         
         # Validate salary values
         try:
             prev_salary = float(data['previous_salary'])
             new_salary = float(data['new_salary'])
             if prev_salary < 0 or new_salary < 0:
-                return {"success": False, "message": "Salary values must be positive"}
+                return jsonify({"success": False, "message": "Salary values must be positive"})
         except ValueError:
-            return {"success": False, "message": "Invalid salary values"}
+            return jsonify({"success": False, "message": "Invalid salary values"})
         
         # Calculate change amount and percentage
         change_amount = new_salary - prev_salary
@@ -1593,15 +1554,15 @@ async def create_salary_change(request: Request):
         response = supabase.table("salary_history").insert(history_record).execute()
         
         if response.data:
-            return {"success": True, "message": "Salary change recorded successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Salary change recorded successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to record salary change"}
+            return jsonify({"success": False, "message": "Failed to record salary change"})
     except Exception as e:
         print(f"Error creating salary change: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/employee-history")
-async def get_employee_history():
+@app.route("/api/admin/employee-history")
+def get_employee_history():
     """
     Get complete employment/re-employment history (previous jobs, companies, positions)
     """
@@ -1610,7 +1571,7 @@ async def get_employee_history():
         response = supabase.table("employee_history").select("*").order("start_date", desc=True).limit(200).execute()
         
         if not response.data:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         records = response.data
         
@@ -1650,29 +1611,29 @@ async def get_employee_history():
             else:
                 record["employee_name"] = ""
         
-        return {"success": True, "data": records}
+        return jsonify({"success": True, "data": records})
     except Exception as e:
         print(f"Error getting employee history: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/employee-history")
-async def create_employment_history(request: Request):
+@app.route("/api/admin/employee-history", methods=["POST"])
+def create_employment_history():
     """
     Record employment / re-employment history (internal job changes and previous employment)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Validate required fields - company is now optional for internal history
         required_fields = ['employee_email', 'job_title', 'start_date']
         for field in required_fields:
             if field not in data or data[field] == '':
-                return {"success": False, "message": f"Missing required field: {field}"}
+                return jsonify({"success": False, "message": f"Missing required field: <field>"})
         
         # Get employee_id from email
         employee_response = supabase.table("employees").select("id").eq("email", data['employee_email']).execute()
         if not employee_response.data:
-            return {"success": False, "message": "Employee not found"}
+            return jsonify({"success": False, "message": "Employee not found"})
         
         employee_id = employee_response.data[0]['id']
         
@@ -1712,22 +1673,22 @@ async def create_employment_history(request: Request):
                 try:
                     supabase.table("employees").update(employee_update).eq("id", employee_id).execute()
                 except Exception as sync_err:
-                    print(f"Warning: Failed to sync status to employees table: {sync_err}")
+                    print(f"Warning: Failed to sync status to employees table: <sync_err>")
             
-            return {"success": True, "message": "Employment history recorded successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Employment history recorded successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to record employment history"}
+            return jsonify({"success": False, "message": "Failed to record employment history"})
     except Exception as e:
         print(f"Error creating employment history: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/employee-history/{record_id}")
-async def update_employment_history(record_id: str, request: Request):
+@app.route("/api/admin/employee-history/<record_id>", methods=["PUT"])
+def update_employment_history(record_id):
     """
     Update an employee history record (admin only)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Store employee_id before removing read-only fields
         employee_id = data.get('employee_id')
@@ -1758,17 +1719,17 @@ async def update_employment_history(record_id: str, request: Request):
                 try:
                     supabase.table("employees").update(employee_update).eq("id", employee_id).execute()
                 except Exception as sync_err:
-                    print(f"Warning: Failed to sync status to employees table: {sync_err}")
+                    print(f"Warning: Failed to sync status to employees table: <sync_err>")
             
-            return {"success": True, "message": "Employee history record updated successfully", "data": response.data[0] if response.data else None}
+            return jsonify({"success": True, "message": "Employee history record updated successfully", "data": response.data[0] if response.data else None})
         else:
-            return {"success": False, "message": "Failed to update employee history record"}
+            return jsonify({"success": False, "message": "Failed to update employee history record"})
     except Exception as e:
         print(f"Error updating employee history: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/employee-history/{record_id}")
-async def delete_employment_history(record_id: str):
+@app.route("/api/admin/employee-history/<record_id>", methods=["DELETE"])
+def delete_employment_history(record_id):
     """
     Delete an employee history record (admin only)
     """
@@ -1776,15 +1737,15 @@ async def delete_employment_history(record_id: str):
         response = delete_employee_history_record(record_id)
         
         if response:
-            return {"success": True, "message": "Employee history record deleted successfully"}
+            return jsonify({"success": True, "message": "Employee history record deleted successfully"})
         else:
-            return {"success": False, "message": "Failed to delete employee history record"}
+            return jsonify({"success": False, "message": "Failed to delete employee history record"})
     except Exception as e:
         print(f"Error deleting employee history: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/payroll-info/{employee_id}")
-async def get_payroll_info(employee_id: str):
+@app.route("/api/admin/payroll-info/<employee_id>")
+def get_payroll_info(employee_id):
     """
     Get payroll information (monthly deductions, tax info, etc.) for an employee
     """
@@ -1856,10 +1817,10 @@ async def get_payroll_info(employee_id: str):
             **deductions_data  # Include all deductions data
         }
         
-        return {"success": True, "data": result}
+        return jsonify({"success": True, "data": result})
     except Exception as e:
         print(f"Error getting payroll info: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 def _safe_update_employees(employee_id: str, payload: dict):
     """
@@ -1900,8 +1861,8 @@ def _safe_update_employees(employee_id: str, payload: dict):
             raise
     return None
 
-@app.post("/api/admin/payroll-info")
-async def save_payroll_info(request: Request):
+@app.route("/api/admin/payroll-info", methods=["POST"])
+def save_payroll_info():
     """
     Save payroll information (monthly deductions, tax info, etc.) for an employee
     """
@@ -1916,11 +1877,11 @@ async def save_payroll_info(request: Request):
     EXCLUDED_FROM_DEDUCTIONS = ["employee_id", "year", "month"] + EMPLOYEE_TABLE_FIELDS
     
     try:
-        data = await request.json()
+        data = request.get_json()
         
         employee_id = data.get("employee_id")
         if not employee_id:
-            return {"success": False, "message": "Missing employee_id"}
+            return jsonify({"success": False, "message": "Missing employee_id"})
         
         year = data.get("year", datetime.now().year)
         month = data.get("month", datetime.now().month)
@@ -1993,15 +1954,15 @@ async def save_payroll_info(request: Request):
         success = upsert_monthly_deductions(employee_id, year, month, deductions_data)
         
         if success:
-            return {"success": True, "message": "Payroll information saved successfully"}
+            return jsonify({"success": True, "message": "Payroll information saved successfully"})
         else:
-            return {"success": False, "message": "Failed to save payroll information"}
+            return jsonify({"success": False, "message": "Failed to save payroll information"})
     except Exception as e:
         print(f"Error saving payroll info: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/tp1-reliefs/{employee_id}/{year}/{month}")
-async def get_tp1_reliefs(employee_id: str, year: int, month: int):
+@app.route("/api/admin/tp1-reliefs/<employee_id>/<year>/<month>")
+def get_tp1_reliefs(employee_id: str, year: int, month: int):
     """
     Get TP1 tax relief data for an employee for a specific month
     """
@@ -2023,22 +1984,22 @@ async def get_tp1_reliefs(employee_id: str, year: int, month: int):
             if any(k.startswith(prefix) or k == prefix for prefix in TP1_RELIEF_PREFIXES)
         }
         
-        return {"success": True, "data": tp1_data}
+        return jsonify({"success": True, "data": tp1_data})
     except Exception as e:
         print(f"Error getting TP1 relief data: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/tp1-reliefs")
-async def save_tp1_reliefs(request: Request):
+@app.route("/api/admin/tp1-reliefs", methods=["POST"])
+def save_tp1_reliefs():
     """
     Save TP1 tax relief data for an employee for a specific month
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         employee_id = data.get("employee_id")
         if not employee_id:
-            return {"success": False, "message": "Missing employee_id"}
+            return jsonify({"success": False, "message": "Missing employee_id"})
         
         year = data.get("year", datetime.now().year)
         month = data.get("month", datetime.now().month)
@@ -2048,21 +2009,21 @@ async def save_tp1_reliefs(request: Request):
         success = upsert_monthly_deductions(employee_id, year, month, relief_data)
         
         if success:
-            return {"success": True, "message": "TP1 relief data saved successfully"}
+            return jsonify({"success": True, "message": "TP1 relief data saved successfully"})
         else:
-            return {"success": False, "message": "Failed to save TP1 relief data"}
+            return jsonify({"success": False, "message": "Failed to save TP1 relief data"})
     except Exception as e:
         print(f"Error saving TP1 relief data: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/salary-history/{record_id}")
-async def update_salary_history(record_id: str, request: Request):
+@app.route("/api/admin/salary-history/<record_id>", methods=["PUT"])
+def update_salary_history(record_id):
     """
     Update a salary history record (admin only)
     Uses salary_history table (same as Python GUI)
     """
     try:
-        data = await request.json()
+        data = request.get_json()
         
         # Remove read-only fields
         data.pop('id', None)
@@ -2100,15 +2061,15 @@ async def update_salary_history(record_id: str, request: Request):
         response = supabase.table("salary_history").update(update_data).eq("id", record_id).execute()
         
         if response and response.data:
-            return {"success": True, "message": "Salary history record updated successfully", "data": response.data[0] if response.data else None}
+            return jsonify({"success": True, "message": "Salary history record updated successfully", "data": response.data[0] if response.data else None})
         else:
-            return {"success": False, "message": "Failed to update salary history record"}
+            return jsonify({"success": False, "message": "Failed to update salary history record"})
     except Exception as e:
         print(f"Error updating salary history: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/salary-history/{record_id}")
-async def delete_salary_history(record_id: str):
+@app.route("/api/admin/salary-history/<record_id>", methods=["DELETE"])
+def delete_salary_history(record_id):
     """
     Delete a salary history record (admin only)
     Uses salary_history table (same as Python GUI)
@@ -2117,19 +2078,19 @@ async def delete_salary_history(record_id: str):
         response = supabase.table("salary_history").delete().eq("id", record_id).execute()
         
         if response:
-            return {"success": True, "message": "Salary history record deleted successfully"}
+            return jsonify({"success": True, "message": "Salary history record deleted successfully"})
         else:
-            return {"success": False, "message": "Failed to delete salary history record"}
+            return jsonify({"success": False, "message": "Failed to delete salary history record"})
     except Exception as e:
         print(f"Error deleting salary history: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 # ====================
 # LHDN Tax Configuration Endpoints
 # ====================
 
-@app.get("/api/admin/lhdn/tax-rates")
-async def get_tax_rates():
+@app.route("/api/admin/lhdn/tax-rates")
+def get_tax_rates():
     """Get LHDN tax rates for residents and non-residents"""
     try:
         # Fetch tax rates from progressive_tax_brackets table
@@ -2163,10 +2124,11 @@ async def get_tax_rates():
         }
     except Exception as e:
         print(f"Error fetching tax rates: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/lhdn/tax-rates")
-async def create_tax_rate(data: Dict[str, Any]):
+@app.route("/api/admin/lhdn/tax-rates", methods=["POST"])
+def create_tax_rate():
+    data = request.get_json()
     """Create or update a tax rate bracket"""
     try:
         tax_rate = {
@@ -2187,29 +2149,29 @@ async def create_tax_rate(data: Dict[str, Any]):
             response = supabase.table("lhdn_tax_rates").insert(tax_rate).execute()
         
         if response.data:
-            return {"success": True, "message": "Tax rate saved successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Tax rate saved successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to save tax rate"}
+            return jsonify({"success": False, "message": "Failed to save tax rate"})
     except Exception as e:
         print(f"Error saving tax rate: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/lhdn/tax-rates/{rate_id}")
-async def delete_tax_rate(rate_id: int):
+@app.route("/api/admin/lhdn/tax-rates/<rate_id>", methods=["DELETE"])
+def delete_tax_rate(rate_id: int):
     """Delete a tax rate bracket"""
     try:
         response = supabase.table("lhdn_tax_rates").delete().eq("id", rate_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Tax rate deleted successfully"}
+            return jsonify({"success": True, "message": "Tax rate deleted successfully"})
         else:
-            return {"success": False, "message": "Tax rate not found"}
+            return jsonify({"success": False, "message": "Tax rate not found"})
     except Exception as e:
         print(f"Error deleting tax rate: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/lhdn/relief-max")
-async def get_relief_maximums():
+@app.route("/api/admin/lhdn/relief-max")
+def get_relief_maximums():
     """Get tax relief maximum amounts"""
     try:
         response = supabase.table("tax_relief_max_config").select("*").eq("config_name", "default").execute()
@@ -2229,15 +2191,16 @@ async def get_relief_maximums():
                 {"relief_code": "sports", "relief_name": "Sports Equipment", "max_amount": config.get("sports_equipment_max", 300)},
                 {"relief_code": "epf_insurance", "relief_name": "Life Insurance & EPF", "max_amount": config.get("combined_epf_insurance_limit", 7000)},
             ]
-            return {"success": True, "data": relief_array}
+            return jsonify({"success": True, "data": relief_array})
         else:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
     except Exception as e:
         print(f"Error fetching relief maximums: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/lhdn/relief-max")
-async def update_relief_maximum(data: Dict[str, Any]):
+@app.route("/api/admin/lhdn/relief-max", methods=["POST"])
+def update_relief_maximum():
+    data = request.get_json()
     """Update a tax relief maximum amount"""
     try:
         relief_data = {
@@ -2261,15 +2224,15 @@ async def update_relief_maximum(data: Dict[str, Any]):
             response = supabase.table("lhdn_relief_max").insert(relief_data).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief maximum updated successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Relief maximum updated successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to update relief maximum"}
+            return jsonify({"success": False, "message": "Failed to update relief maximum"})
     except Exception as e:
         print(f"Error updating relief maximum: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/lhdn/relief-item-overrides")
-async def get_relief_item_overrides():
+@app.route("/api/admin/lhdn/relief-item-overrides")
+def get_relief_item_overrides():
     """Get relief item overrides (cap, pcb_only, cycle_years) - matches Python GUI"""
     try:
         response = supabase.table("relief_item_overrides").select("*").execute()
@@ -2287,13 +2250,13 @@ async def get_relief_item_overrides():
                     "created_at": item.get("created_at")
                 })
         
-        return {"success": True, "data": overrides}
+        return jsonify({"success": True, "data": overrides})
     except Exception as e:
         print(f"Error fetching relief item overrides: {str(e)}")
-        return {"success": True, "data": []}
+        return jsonify({"success": True, "data": []})
 
-@app.get("/api/admin/lhdn/relief-group-overrides")
-async def get_relief_group_overrides():
+@app.route("/api/admin/lhdn/relief-group-overrides")
+def get_relief_group_overrides():
     """Get relief group cap overrides - matches Python GUI"""
     try:
         response = supabase.table("relief_group_overrides").select("*").execute()
@@ -2308,18 +2271,19 @@ async def get_relief_group_overrides():
                     "created_at": item.get("created_at")
                 })
         
-        return {"success": True, "data": overrides}
+        return jsonify({"success": True, "data": overrides})
     except Exception as e:
         print(f"Error fetching relief group overrides: {str(e)}")
-        return {"success": True, "data": []}
+        return jsonify({"success": True, "data": []})
 
-@app.post("/api/admin/lhdn/relief-item-overrides")
-async def upsert_relief_item_override(data: Dict[str, Any]):
+@app.route("/api/admin/lhdn/relief-item-overrides", methods=["POST"])
+def upsert_relief_item_override():
+    data = request.get_json()
     """Create or update relief item override (upsert) - matches Python GUI"""
     try:
         item_key = data.get("item_key")
         if not item_key:
-            return {"success": False, "message": "item_key is required"}
+            return jsonify({"success": False, "message": "item_key is required"})
         
         override = {"item_key": item_key}
         
@@ -2335,24 +2299,25 @@ async def upsert_relief_item_override(data: Dict[str, Any]):
         response = supabase.table("relief_item_overrides").upsert(override).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief item override saved", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Relief item override saved", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to save relief item override"}
+            return jsonify({"success": False, "message": "Failed to save relief item override"})
     except Exception as e:
         print(f"Error saving relief item override: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/lhdn/relief-group-overrides")
-async def upsert_relief_group_override(data: Dict[str, Any]):
+@app.route("/api/admin/lhdn/relief-group-overrides", methods=["POST"])
+def upsert_relief_group_override():
+    data = request.get_json()
     """Create or update relief group override (upsert) - matches Python GUI"""
     try:
         group_id = data.get("group_id")
         cap = data.get("cap")
         
         if not group_id:
-            return {"success": False, "message": "group_id is required"}
+            return jsonify({"success": False, "message": "group_id is required"})
         if cap is None:
-            return {"success": False, "message": "cap is required"}
+            return jsonify({"success": False, "message": "cap is required"})
         
         override = {
             "group_id": group_id,
@@ -2363,61 +2328,62 @@ async def upsert_relief_group_override(data: Dict[str, Any]):
         response = supabase.table("relief_group_overrides").upsert(override).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief group override saved", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Relief group override saved", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to save relief group override"}
+            return jsonify({"success": False, "message": "Failed to save relief group override"})
     except Exception as e:
         print(f"Error saving relief group override: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/lhdn/relief-item-overrides/{item_key}")
-async def delete_relief_item_override(item_key: str):
+@app.route("/api/admin/lhdn/relief-item-overrides/<item_key>", methods=["DELETE"])
+def delete_relief_item_override(item_key):
     """Delete relief item override - matches Python GUI"""
     try:
         response = supabase.table("relief_item_overrides").delete().eq("item_key", item_key).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief item override deleted"}
+            return jsonify({"success": True, "message": "Relief item override deleted"})
         else:
-            return {"success": False, "message": "Relief item override not found"}
+            return jsonify({"success": False, "message": "Relief item override not found"})
     except Exception as e:
         print(f"Error deleting relief item override: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/lhdn/relief-group-overrides/{group_id}")
-async def delete_relief_group_override(group_id: str):
+@app.route("/api/admin/lhdn/relief-group-overrides/<group_id>", methods=["DELETE"])
+def delete_relief_group_override(group_id):
     """Delete relief group override - matches Python GUI"""
     try:
         response = supabase.table("relief_group_overrides").delete().eq("group_id", group_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Relief group override deleted"}
+            return jsonify({"success": True, "message": "Relief group override deleted"})
         else:
-            return {"success": False, "message": "Relief group override not found"}
+            return jsonify({"success": False, "message": "Relief group override not found"})
     except Exception as e:
         print(f"Error deleting relief group override: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 # ====================
 # Leave Configuration Endpoints
 # ====================
 
-@app.get("/api/admin/leave-types")
-async def get_leave_types():
+@app.route("/api/admin/leave-types")
+def get_leave_types():
     """Get all leave types"""
     try:
         response = supabase.table("leave_types").select("*").execute()
         
         if response.data:
-            return {"success": True, "data": response.data}
+            return jsonify({"success": True, "data": response.data})
         else:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
     except Exception as e:
         print(f"Error fetching leave types: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/leave-types")
-async def create_leave_type(data: Dict[str, Any]):
+@app.route("/api/admin/leave-types", methods=["POST"])
+def create_leave_type():
+    data = request.get_json()
     """Create a new leave type"""
     try:
         leave_type = {
@@ -2438,15 +2404,15 @@ async def create_leave_type(data: Dict[str, Any]):
         response = supabase.table("leave_types").insert(leave_type).execute()
         
         if response.data:
-            return {"success": True, "message": "Leave type created successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Leave type created successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Failed to create leave type"}
+            return jsonify({"success": False, "message": "Failed to create leave type"})
     except Exception as e:
         print(f"Error creating leave type: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/leave-types/{type_id}")
-async def update_leave_type(type_id: str, data: Dict[str, Any]):
+@app.route("/api/admin/leave-types/<type_id>", methods=["PUT"])
+def update_leave_type(type_id: str, data: Dict[str, Any]):
     """Update a leave type by ID (numeric) or code (string)"""
     try:
         leave_type = {
@@ -2476,15 +2442,15 @@ async def update_leave_type(type_id: str, data: Dict[str, Any]):
             response = supabase.table("leave_types").update(leave_type).eq("code", type_id).execute()
         
         if response and response.data:
-            return {"success": True, "message": "Leave type updated successfully", "data": response.data[0]}
+            return jsonify({"success": True, "message": "Leave type updated successfully", "data": response.data[0]})
         else:
-            return {"success": False, "message": "Leave type not found"}
+            return jsonify({"success": False, "message": "Leave type not found"})
     except Exception as e:
         print(f"Error updating leave type: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/leave-types/{type_id}")
-async def delete_leave_type(type_id: str):
+@app.route("/api/admin/leave-types/<type_id>", methods=["DELETE"])
+def delete_leave_type(type_id):
     """Delete a leave type by ID (numeric) or code (string)"""
     try:
         # Determine lookup method: if type_id is numeric, use ID; otherwise use code
@@ -2496,18 +2462,18 @@ async def delete_leave_type(type_id: str):
             response = supabase.table("leave_types").delete().eq("code", type_id).execute()
         
         if response and response.data:
-            return {"success": True, "message": "Leave type deleted successfully"}
+            return jsonify({"success": True, "message": "Leave type deleted successfully"})
         else:
-            return {"success": False, "message": "Leave type not found"}
+            return jsonify({"success": False, "message": "Leave type not found"})
     except Exception as e:
         print(f"Error deleting leave type: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 # Default multiplier for max accumulation calculation (3x the entitlement days)
 DEFAULT_MAX_ACCUMULATION_MULTIPLIER = 3
 
-@app.get("/api/admin/leave-entitlements")
-async def get_leave_entitlements():
+@app.route("/api/admin/leave-entitlements")
+def get_leave_entitlements():
     """Get leave entitlements/caps - returns per leave-type per tier format"""
     try:
         # Get tiers and caps from the actual database structure
@@ -2557,13 +2523,14 @@ async def get_leave_entitlements():
                 })
                 entry_id += 1
         
-        return {"success": True, "data": entitlements}
+        return jsonify({"success": True, "data": entitlements})
     except Exception as e:
         print(f"Error fetching leave entitlements: {str(e)}")
-        return {"success": False, "message": str(e), "data": []}
+        return jsonify({"success": False, "message": str(e), "data": []})
 
-@app.post("/api/admin/leave-entitlements")
-async def create_leave_entitlement(data: Dict[str, Any]):
+@app.route("/api/admin/leave-entitlements", methods=["POST"])
+def create_leave_entitlement():
+    data = request.get_json()
     """Create a leave entitlement rule in leave_caps table"""
     try:
         leave_type_code = data.get("leave_type_code")
@@ -2571,7 +2538,7 @@ async def create_leave_entitlement(data: Dict[str, Any]):
         days_entitlement = data.get("days_entitlement", 0)
         
         if not leave_type_code or not tier_id:
-            return {"success": False, "message": "leave_type_code and employee_tier are required"}
+            return jsonify({"success": False, "message": "leave_type_code and employee_tier are required"})
         
         # Check if this combination already exists
         existing = supabase.table("leave_caps").select("*").eq("tier_id", tier_id).eq("leave_type", leave_type_code).execute()
@@ -2583,7 +2550,7 @@ async def create_leave_entitlement(data: Dict[str, Any]):
             }).eq("tier_id", tier_id).eq("leave_type", leave_type_code).execute()
             
             if response.data:
-                return {"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]}
+                return jsonify({"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]})
         else:
             # Insert new record
             response = supabase.table("leave_caps").insert({
@@ -2593,15 +2560,15 @@ async def create_leave_entitlement(data: Dict[str, Any]):
             }).execute()
             
             if response.data:
-                return {"success": True, "message": "Leave entitlement created successfully", "data": response.data[0]}
+                return jsonify({"success": True, "message": "Leave entitlement created successfully", "data": response.data[0]})
         
-        return {"success": False, "message": "Failed to create/update leave entitlement"}
+        return jsonify({"success": False, "message": "Failed to create/update leave entitlement"})
     except Exception as e:
         print(f"Error creating leave entitlement: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/admin/leave-entitlements/{entitlement_id}")
-async def update_leave_entitlement(entitlement_id: int, data: Dict[str, Any]):
+@app.route("/api/admin/leave-entitlements/<entitlement_id>", methods=["PUT"])
+def update_leave_entitlement(entitlement_id: int, data: Dict[str, Any]):
     """Update a leave entitlement rule in leave_caps table"""
     try:
         leave_type_code = data.get("leave_type_code")
@@ -2615,23 +2582,21 @@ async def update_leave_entitlement(entitlement_id: int, data: Dict[str, Any]):
             }).eq("tier_id", tier_id).eq("leave_type", leave_type_code).execute()
             
             if response.data:
-                return {"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]}
+                return jsonify({"success": True, "message": "Leave entitlement updated successfully", "data": response.data[0]})
             else:
-                return {"success": False, "message": "Leave entitlement not found"}
+                return jsonify({"success": False, "message": "Leave entitlement not found"})
         else:
-            return {"success": False, "message": "leave_type_code and employee_tier are required for update"}
+            return jsonify({"success": False, "message": "leave_type_code and employee_tier are required for update"})
     except Exception as e:
         print(f"Error updating leave entitlement: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/leave-entitlements/{entitlement_id}")
-async def delete_leave_entitlement(
-    entitlement_id: int, 
-    leave_type_code: Optional[str] = Query(None, description="Leave type code for identifying the entitlement"),
-    employee_tier: Optional[str] = Query(None, description="Employee tier ID for identifying the entitlement")
-):
+@app.route("/api/admin/leave-entitlements/<entitlement_id>", methods=["DELETE"])
+def delete_leave_entitlement(entitlement_id):
     """Delete a leave entitlement rule from leave_caps table"""
     try:
+        leave_type_code = request.args.get("leave_type_code")
+        employee_tier = request.args.get("employee_tier")
         if leave_type_code and employee_tier:
             # Delete by tier_id and leave_type
             response = supabase.table("leave_caps").delete().eq("tier_id", employee_tier).eq("leave_type", leave_type_code).execute()
@@ -2640,15 +2605,15 @@ async def delete_leave_entitlement(
             response = supabase.table("leave_caps").delete().eq("id", entitlement_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Leave entitlement deleted successfully"}
+            return jsonify({"success": True, "message": "Leave entitlement deleted successfully"})
         else:
-            return {"success": False, "message": "Leave entitlement not found"}
+            return jsonify({"success": False, "message": "Leave entitlement not found"})
     except Exception as e:
         print(f"Error deleting leave entitlement: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/leave-tiers")
-async def get_leave_tiers():
+@app.route("/api/admin/leave-tiers")
+def get_leave_tiers():
     """Get leave entitlement tiers (years of service)"""
     try:
         response = supabase.table("leave_caps_tiers").select("*").order("min_years", desc=False).execute()
@@ -2662,39 +2627,39 @@ async def get_leave_tiers():
                     "min_years": tier.get("min_years", 0),
                     "max_years": tier.get("max_years", 99)
                 })
-            return {"success": True, "data": tiers}
+            return jsonify({"success": True, "data": tiers})
         else:
             # Return default tiers if none exist
-            return {"success": True, "data": [
+            return jsonify({"success": True, "data": [
                 {"id": "lt2", "label": "< 2 years", "min_years": 0, "max_years": 1.99},
                 {"id": "2to5", "label": "2 - 5 years", "min_years": 2, "max_years": 5},
                 {"id": "gt5", "label": "> 5 years", "min_years": 5.01, "max_years": 100}
-            ]}
+            ]})
     except Exception as e:
         print(f"Error fetching leave tiers: {str(e)}")
-        return {"success": False, "message": str(e), "data": []}
+        return jsonify({"success": False, "message": str(e), "data": []})
 
 # ====================
 # Leave Policies Endpoints
 # ====================
 
-@app.get("/api/admin/leave-policies")
-async def get_leave_policies():
+@app.route("/api/admin/leave-policies")
+def get_leave_policies():
     """Get company leave policies"""
     try:
         from services.supabase_service import get_company_leave_policies
         policies = get_company_leave_policies()
-        return {"success": True, "data": policies}
+        return jsonify({"success": True, "data": policies})
     except Exception as e:
         print(f"Error getting leave policies: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/admin/leave-policies")
-async def update_leave_policies(request: Request):
+@app.route("/api/admin/leave-policies", methods=["POST"])
+def update_leave_policies():
     """Update company leave policies"""
     try:
         from services.supabase_service import update_company_leave_policy
-        data = await request.json()
+        data = request.get_json()
         
         # Update each policy
         admin_email = "admin"  # Could be extracted from session
@@ -2708,46 +2673,46 @@ async def update_leave_policies(request: Request):
                 break
         
         if success:
-            return {"success": True, "message": "Leave policies updated successfully"}
+            return jsonify({"success": True, "message": "Leave policies updated successfully"})
         else:
-            return {"success": False, "message": "Failed to update some policies"}
+            return jsonify({"success": False, "message": "Failed to update some policies"})
     except Exception as e:
         print(f"Error updating leave policies: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 # ====================
 # Calendar & Holidays Endpoints
 # ====================
 
-@app.get("/api/holidays")
-async def get_holidays():
+@app.route("/api/holidays")
+def get_holidays():
     """Get public holidays"""
     try:
         # Get current year
         current_year = datetime.now().year
         
-        response = supabase.table("calendar_holidays").select("*").gte("date", f"{current_year}-01-01").lte("date", f"{current_year+1}-12-31").order("date").execute()
+        response = supabase.table("calendar_holidays").select("*").gte("date", f"<current_year>-01-01").lte("date", f"{current_year+1}-12-31").order("date").execute()
         
         if response.data:
-            return {"success": True, "data": response.data}
+            return jsonify({"success": True, "data": response.data})
         else:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
     except Exception as e:
         print(f"Error fetching holidays: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/leave-calendar/{employee_id}")
-async def get_leave_calendar(employee_id: str, year: Optional[int] = None):
+@app.route("/api/leave-calendar/<employee_id>")
+def get_leave_calendar(employee_id):
     """Get leave calendar for an employee"""
     try:
         if not year:
             year = datetime.now().year
         
         # Fetch leave requests for the year
-        response = supabase.table("leave_requests").select("*").eq("employee_id", employee_id).gte("start_date", f"{year}-01-01").lte("end_date", f"{year}-12-31").execute()
+        response = supabase.table("leave_requests").select("*").eq("employee_id", employee_id).gte("start_date", f"<year>-01-01").lte("end_date", f"<year>-12-31").execute()
         
         # Fetch holidays
-        holidays_response = supabase.table("calendar_holidays").select("*").gte("date", f"{year}-01-01").lte("date", f"{year}-12-31").execute()
+        holidays_response = supabase.table("calendar_holidays").select("*").gte("date", f"<year>-01-01").lte("date", f"<year>-12-31").execute()
         
         return {
             "success": True,
@@ -2758,52 +2723,56 @@ async def get_leave_calendar(employee_id: str, year: Optional[int] = None):
         }
     except Exception as e:
         print(f"Error fetching leave calendar: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/holidays")
-async def create_holiday(holiday: dict):
+@app.route("/api/holidays", methods=["POST"])
+def create_holiday():
+    holiday = request.get_json()
     """Create a new holiday"""
     try:
         response = supabase.table("calendar_holidays").insert(holiday).execute()
         
         if response.data:
-            return {"success": True, "data": response.data[0], "message": "Holiday created successfully"}
+            return jsonify({"success": True, "data": response.data[0], "message": "Holiday created successfully"})
         else:
-            return {"success": False, "message": "Failed to create holiday"}
+            return jsonify({"success": False, "message": "Failed to create holiday"})
     except Exception as e:
         print(f"Error creating holiday: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.put("/api/holidays/{holiday_id}")
-async def update_holiday(holiday_id: int, holiday: dict):
+@app.route("/api/holidays/<holiday_id>", methods=["PUT"])
+def update_holiday(holiday_id: int, holiday: dict):
     """Update an existing holiday"""
     try:
         response = supabase.table("calendar_holidays").update(holiday).eq("id", holiday_id).execute()
         
         if response.data:
-            return {"success": True, "data": response.data[0], "message": "Holiday updated successfully"}
+            return jsonify({"success": True, "data": response.data[0], "message": "Holiday updated successfully"})
         else:
-            return {"success": False, "message": "Failed to update holiday"}
+            return jsonify({"success": False, "message": "Failed to update holiday"})
     except Exception as e:
         print(f"Error updating holiday: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/holidays/{holiday_id}")
-async def delete_holiday(holiday_id: int):
+@app.route("/api/holidays/<holiday_id>", methods=["DELETE"])
+def delete_holiday(holiday_id: int):
     """Delete a holiday"""
     try:
         response = supabase.table("calendar_holidays").delete().eq("id", holiday_id).execute()
         
         if response.data:
-            return {"success": True, "message": "Holiday deleted successfully"}
+            return jsonify({"success": True, "message": "Holiday deleted successfully"})
         else:
-            return {"success": False, "message": "Failed to delete holiday"}
+            return jsonify({"success": False, "message": "Failed to delete holiday"})
     except Exception as e:
         print(f"Error deleting holiday: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.post("/api/holidays/import-malaysia")
-async def import_malaysia_holidays(year: int, state: Optional[str] = None, replace: bool = False):
+@app.route("/api/holidays/import-malaysia", methods=["POST"])
+def import_malaysia_holidays():
+    year = request.args.get("year", type=int)
+    state = request.args.get("state")
+    replace = request.args.get("replace", "false").lower() == "true"
     """
     Auto-import Malaysia public holidays for a specific year
     
@@ -2888,17 +2857,17 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None, repla
                     imported_count += 1
                     existing_dates.add(date_str)  # Update cache
                 else:
-                    errors.append(f"Failed to import {name} on {date_str}")
+                    errors.append(f"Failed to import <name> on <date_str>")
             except Exception as e:
-                errors.append(f"Failed to import {name} on {date_str}: {str(e)}")
+                errors.append(f"Failed to import <name> on <date_str>: {str(e)}")
         
         # Build message based on whether replacement occurred
         if replace and deleted_count > 0:
-            message = f"Replaced {deleted_count} existing holidays. Imported {imported_count} new holidays, skipped {skipped_count} duplicates"
+            message = f"Replaced <deleted_count> existing holidays. Imported <imported_count> new holidays, skipped <skipped_count> duplicates"
         elif replace and deleted_count == 0:
-            message = f"No existing holidays to replace. Imported {imported_count} holidays, skipped {skipped_count} duplicates"
+            message = f"No existing holidays to replace. Imported <imported_count> holidays, skipped <skipped_count> duplicates"
         else:
-            message = f"Imported {imported_count} holidays, skipped {skipped_count} duplicates"
+            message = f"Imported <imported_count> holidays, skipped <skipped_count> duplicates"
         
         return {
             "success": True,
@@ -2917,10 +2886,10 @@ async def import_malaysia_holidays(year: int, state: Optional[str] = None, repla
         }
     except Exception as e:
         print(f"Error importing Malaysia holidays: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 # Helper function to generate CSV from data
-def generate_csv(headers: List[str], rows: List[List[Any]]) -> StreamingResponse:
+def generate_csv(headers: List[str], rows: List[List[Any]]):
     """Generate a CSV file from headers and rows"""
     output = io.StringIO()
     writer = csv.writer(output)
@@ -2928,15 +2897,14 @@ def generate_csv(headers: List[str], rows: List[List[Any]]) -> StreamingResponse
     writer.writerows(rows)
     
     output.seek(0)
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"}
-    )
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "text/csv"
+    response.headers["Content-Disposition"] = f"attachment; filename=export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return response
 
 # CSV Export Endpoints
-@app.get("/api/admin/skipped-payroll/export/csv")
-async def export_skipped_payroll_csv():
+@app.route("/api/admin/skipped-payroll/export/csv")
+def export_skipped_payroll_csv():
     """Export skipped payroll records to CSV"""
     try:
         # Try to get data from payroll_run_skips table first
@@ -2997,10 +2965,10 @@ async def export_skipped_payroll_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting skipped payroll: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/admin/contributions/export/csv")
-async def export_contributions_csv():
+@app.route("/api/admin/contributions/export/csv")
+def export_contributions_csv():
     """Export payroll contributions to CSV"""
     try:
         # Get payroll contributions data
@@ -3036,10 +3004,10 @@ async def export_contributions_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting contributions: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/admin/salary-history/export/csv")
-async def export_salary_history_csv():
+@app.route("/api/admin/salary-history/export/csv")
+def export_salary_history_csv():
     """Export salary history to CSV"""
     try:
         # Get salary history data from salary_history table (same as Python GUI)
@@ -3084,10 +3052,10 @@ async def export_salary_history_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting salary history: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/admin/engagements/export/csv")
-async def export_engagements_csv():
+@app.route("/api/admin/engagements/export/csv")
+def export_engagements_csv():
     """Export engagements to CSV"""
     try:
         all_data = []
@@ -3141,10 +3109,10 @@ async def export_engagements_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting engagements: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/admin/employee-history/export/csv")
-async def export_employee_history_csv():
+@app.route("/api/admin/employee-history/export/csv")
+def export_employee_history_csv():
     """Export employment/re-employment history to CSV"""
     try:
         # Get employee history data
@@ -3173,10 +3141,10 @@ async def export_employee_history_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting employee history: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/admin/attendance/export/csv")
-async def export_attendance_csv():
+@app.route("/api/admin/attendance/export/csv")
+def export_attendance_csv():
     """Export attendance records to CSV"""
     try:
         # Get attendance data
@@ -3203,10 +3171,10 @@ async def export_attendance_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting attendance: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/admin/leave-requests/export/csv")
-async def export_leave_requests_csv():
+@app.route("/api/admin/leave-requests/export/csv")
+def export_leave_requests_csv():
     """Export leave requests to CSV"""
     try:
         # Fetch leave requests
@@ -3253,10 +3221,10 @@ async def export_leave_requests_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting leave requests: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.get("/api/admin/payroll/export/csv")
-async def export_payroll_runs_csv():
+@app.route("/api/admin/payroll/export/csv")
+def export_payroll_runs_csv():
     """Export payroll runs to CSV"""
     try:
         # Get payroll runs
@@ -3290,30 +3258,33 @@ async def export_payroll_runs_csv():
         return generate_csv(headers, rows)
     except Exception as e:
         print(f"Error exporting payroll runs: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # ============================================================================
 # File Upload Endpoints
 # ============================================================================
 
-@app.post("/api/employees/{employee_id}/profile-picture")
-async def upload_employee_profile_picture(employee_id: str, file: UploadFile = File(...)):
+@app.route("/api/employees/<employee_id>/profile-picture", methods=["POST"])
+def upload_employee_profile_picture(employee_id: str):
     """Upload profile picture for an employee"""
     try:
         # Validate file type
         if not file.content_type or not file.content_type.startswith('image/'):
-            return {"success": False, "message": "Only image files are allowed"}
+            return jsonify({"success": False, "message": "Only image files are allowed"})
         
         # Validate file size (5MB limit)
-        contents = await file.read()
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"success": False, "message": "No file provided"})
+        contents = file.read()
         if len(contents) > 5 * 1024 * 1024:
-            return {"success": False, "message": "File size must be less than 5MB"}
+            return jsonify({"success": False, "message": "File size must be less than 5MB"})
         
         # Save temporarily
         import tempfile
         temp_dir = tempfile.gettempdir()
         os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, f"profile_{employee_id}_{file.filename}")
+        temp_path = os.path.join(temp_dir, f"profile_<employee_id>_{file.filename}")
         
         with open(temp_path, "wb") as f:
             f.write(contents)
@@ -3325,7 +3296,7 @@ async def upload_employee_profile_picture(employee_id: str, file: UploadFile = F
         try:
             os.remove(temp_path)
         except (OSError, FileNotFoundError) as e:
-            print(f"Warning: Could not remove temp file: {e}")
+            print(f"Warning: Could not remove temp file: <e>")
         
         if photo_url:
             return {
@@ -3334,32 +3305,35 @@ async def upload_employee_profile_picture(employee_id: str, file: UploadFile = F
                 "photo_url": photo_url
             }
         else:
-            return {"success": False, "message": "Failed to upload profile picture"}
+            return jsonify({"success": False, "message": "Failed to upload profile picture"})
     
     except Exception as e:
         print(f"Error uploading profile picture: {str(e)}")
-        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+        return jsonify({"success": False, "message": f"Error uploading file: {str(e)}"})
 
-@app.post("/api/employees/{employee_id}/resume")
-async def upload_employee_resume(employee_id: str, file: UploadFile = File(...)):
+@app.route("/api/employees/<employee_id>/resume", methods=["POST"])
+def upload_employee_resume(employee_id: str):
     """Upload resume/CV for an employee"""
     try:
         # Validate file type
         allowed_types = ['application/pdf', 'application/msword', 
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
         if not file.content_type or file.content_type not in allowed_types:
-            return {"success": False, "message": "Only PDF, DOC, and DOCX files are allowed"}
+            return jsonify({"success": False, "message": "Only PDF, DOC, and DOCX files are allowed"})
         
         # Validate file size (10MB limit)
-        contents = await file.read()
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"success": False, "message": "No file provided"})
+        contents = file.read()
         if len(contents) > 10 * 1024 * 1024:
-            return {"success": False, "message": "File size must be less than 10MB"}
+            return jsonify({"success": False, "message": "File size must be less than 10MB"})
         
         # Save temporarily
         import tempfile
         temp_dir = tempfile.gettempdir()
         os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, f"resume_{employee_id}_{file.filename}")
+        temp_path = os.path.join(temp_dir, f"resume_<employee_id>_{file.filename}")
         
         with open(temp_path, "wb") as f:
             f.write(contents)
@@ -3371,7 +3345,7 @@ async def upload_employee_resume(employee_id: str, file: UploadFile = File(...))
         try:
             os.remove(temp_path)
         except (OSError, FileNotFoundError) as e:
-            print(f"Warning: Could not remove temp file: {e}")
+            print(f"Warning: Could not remove temp file: <e>")
         
         if resume_url:
             return {
@@ -3380,18 +3354,18 @@ async def upload_employee_resume(employee_id: str, file: UploadFile = File(...))
                 "resume_url": resume_url
             }
         else:
-            return {"success": False, "message": "Failed to upload resume"}
+            return jsonify({"success": False, "message": "Failed to upload resume"})
     
     except Exception as e:
         print(f"Error uploading resume: {str(e)}")
-        return {"success": False, "message": f"Error uploading file: {str(e)}"}
+        return jsonify({"success": False, "message": f"Error uploading file: {str(e)}"})
 
 # ============================================================================
 # Payroll Settings Endpoints
 # ============================================================================
 
-@app.get("/api/admin/payroll/settings")
-async def get_payroll_settings_api():
+@app.route("/api/admin/payroll/settings")
+def get_payroll_settings_api():
     """Get current payroll settings (calculation method preference)"""
     try:
         settings = get_payroll_settings()
@@ -3407,8 +3381,9 @@ async def get_payroll_settings_api():
             "data": {"calculation_method": "fixed"}
         }
 
-@app.post("/api/admin/payroll/settings")
-async def update_payroll_settings_api(settings: Dict[str, Any]):
+@app.route("/api/admin/payroll/settings", methods=["POST"])
+def update_payroll_settings_api():
+    settings = request.get_json()
     """Update payroll settings (calculation method preference)"""
     try:
         calculation_method = settings.get('calculation_method')
@@ -3438,10 +3413,10 @@ async def update_payroll_settings_api(settings: Dict[str, Any]):
     
     except Exception as e:
         print(f"Error updating payroll settings: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.get("/api/admin/variable-config/{config_name}")
-async def get_variable_config_api(config_name: str):
+@app.route("/api/admin/variable-config/<config_name>")
+def get_variable_config_api(config_name):
     """Get variable percentage configuration (EPF/SOCSO/EIS rates)"""
     try:
         config = get_variable_percentage_config(config_name)
@@ -3454,7 +3429,7 @@ async def get_variable_config_api(config_name: str):
         else:
             return {
                 "success": False,
-                "message": f"Configuration '{config_name}' not found"
+                "message": f"Configuration '<config_name>' not found"
             }
     except Exception as e:
         print(f"Error getting variable config: {str(e)}")
@@ -3467,8 +3442,8 @@ async def get_variable_config_api(config_name: str):
 # TP1 Relief Claims Endpoints
 # ============================================================================
 
-@app.get("/api/admin/tp1-reliefs/{employee_id}")
-async def get_tp1_reliefs(employee_id: str, year: Optional[int] = None, month: Optional[int] = None):
+@app.route("/api/admin/tp1-reliefs/<employee_id>")
+def get_tp1_relief_claims(employee_id):
     """
     Get TP1 relief claims for an employee from the tp1_monthly_details table.
     
@@ -3481,6 +3456,9 @@ async def get_tp1_reliefs(employee_id: str, year: Optional[int] = None, month: O
         List of TP1 relief claim records with details JSON and aggregates
     """
     try:
+        year = request.args.get("year", type=int)
+        month = request.args.get("month", type=int)
+        
         if year is None:
             year = datetime.now().year
         
@@ -3509,15 +3487,16 @@ async def get_tp1_reliefs(employee_id: str, year: Optional[int] = None, month: O
                     "created_at": record.get("created_at"),
                     "updated_at": record.get("updated_at")
                 })
-            return {"success": True, "data": reliefs}
+            return jsonify({"success": True, "data": reliefs})
         else:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
     except Exception as e:
         print(f"Error fetching TP1 reliefs: {str(e)}")
-        return {"success": False, "message": str(e), "data": []}
+        return jsonify({"success": False, "message": str(e), "data": []})
 
-@app.post("/api/admin/tp1-reliefs")
-async def create_tp1_relief(relief_data: Dict[str, Any]):
+@app.route("/api/admin/tp1-reliefs", methods=["POST"])
+def create_tp1_relief():
+    relief_data = request.get_json()
     """
     Create or update TP1 relief claims for an employee.
     Uses the upsert_tp1_monthly_details function from supabase_service.
@@ -3545,15 +3524,15 @@ async def create_tp1_relief(relief_data: Dict[str, Any]):
         
         # Validate required fields
         if not employee_id:
-            return {"success": False, "message": "employee_id is required"}
+            return jsonify({"success": False, "message": "employee_id is required"})
         if year is None:
-            return {"success": False, "message": "year is required"}
+            return jsonify({"success": False, "message": "year is required"})
         if month is None:
-            return {"success": False, "message": "month is required"}
+            return jsonify({"success": False, "message": "month is required"})
         
         # Validate month range
         if not (1 <= int(month) <= 12):
-            return {"success": False, "message": "month must be between 1 and 12"}
+            return jsonify({"success": False, "message": "month must be between 1 and 12"})
         
         # Build aggregates dictionary
         aggregates = {
@@ -3572,15 +3551,15 @@ async def create_tp1_relief(relief_data: Dict[str, Any]):
         )
         
         if success:
-            return {"success": True, "message": "TP1 relief claims saved successfully"}
+            return jsonify({"success": True, "message": "TP1 relief claims saved successfully"})
         else:
-            return {"success": False, "message": "Failed to save TP1 relief claims. The tp1_monthly_details table may not exist."}
+            return jsonify({"success": False, "message": "Failed to save TP1 relief claims. The tp1_monthly_details table may not exist."})
     except Exception as e:
         print(f"Error saving TP1 relief: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
-@app.delete("/api/admin/tp1-reliefs/{relief_id}")
-async def delete_tp1_relief(relief_id: str):
+@app.route("/api/admin/tp1-reliefs/<relief_id>", methods=["DELETE"])
+def delete_tp1_relief(relief_id):
     """
     Delete a TP1 relief claim record by ID.
     
@@ -3594,19 +3573,19 @@ async def delete_tp1_relief(relief_id: str):
         response = supabase.table("tp1_monthly_details").delete().eq("id", relief_id).execute()
         
         if response.data:
-            return {"success": True, "message": "TP1 relief claim deleted successfully"}
+            return jsonify({"success": True, "message": "TP1 relief claim deleted successfully"})
         else:
-            return {"success": False, "message": "TP1 relief claim not found"}
+            return jsonify({"success": False, "message": "TP1 relief claim not found"})
     except Exception as e:
         print(f"Error deleting TP1 relief: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return jsonify({"success": False, "message": str(e)})
 
 # ============================================================================
 # Bulk Operations Endpoints
 # ============================================================================
 
-@app.post("/api/admin/employees/generate-pdfs")
-async def generate_all_employee_pdfs(request: Request):
+@app.route("/api/admin/employees/generate-pdfs", methods=["POST"])
+def generate_all_employee_pdfs():
     """
     Generate payslip PDFs for multiple employees and return as a ZIP file.
     
@@ -3626,7 +3605,7 @@ async def generate_all_employee_pdfs(request: Request):
     try:
         from core.pdf_generator import generate_payslip_for_employee as generate_pdf
         
-        data = await request.json()
+        data = request.get_json()
         payroll_run_id = data.get("payroll_run_id")
         month_year = data.get("month_year")
         employee_ids = data.get("employee_ids", [])
@@ -3635,7 +3614,7 @@ async def generate_all_employee_pdfs(request: Request):
         if payroll_run_id:
             payroll_response = supabase.table("payroll_runs").select("month_year, payroll_date, employee_id").eq("id", payroll_run_id).execute()
             if not payroll_response.data:
-                return {"success": False, "message": "Payroll run not found"}
+                return jsonify({"success": False, "message": "Payroll run not found"})
             payroll_info = payroll_response.data[0]
             month_year = payroll_info.get("month_year")
             # If no employee_ids provided, use the one from this payroll run
@@ -3643,7 +3622,7 @@ async def generate_all_employee_pdfs(request: Request):
                 employee_ids = [payroll_info.get("employee_id")]
         
         if not month_year:
-            return {"success": False, "message": "Either payroll_run_id or month_year is required"}
+            return jsonify({"success": False, "message": "Either payroll_run_id or month_year is required"})
         
         # If no specific employee_ids provided, get all employees with payroll runs for this month/year
         if not employee_ids:
@@ -3651,7 +3630,7 @@ async def generate_all_employee_pdfs(request: Request):
             if runs_response.data:
                 employee_ids = list(set([run.get("employee_id") for run in runs_response.data if run.get("employee_id")]))
             if not employee_ids:
-                return {"success": False, "message": f"No payroll runs found for {month_year}"}
+                return jsonify({"success": False, "message": f"No payroll runs found for <month_year>"})
         
         # Get payroll run IDs for each employee in this period
         employee_payroll_map = {}
@@ -3672,13 +3651,13 @@ async def generate_all_employee_pdfs(request: Request):
                 # Get the payroll run ID for this employee
                 run_id = employee_payroll_map.get(employee_id)
                 if not run_id:
-                    errors.append(f"No payroll run found for employee {employee_id} in {month_year}")
+                    errors.append(f"No payroll run found for employee <employee_id> in <month_year>")
                     continue
                 
                 # Get employee info for filename
                 emp_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()
                 if not emp_response.data:
-                    errors.append(f"Employee {employee_id} not found")
+                    errors.append(f"Employee <employee_id> not found")
                     continue
                 
                 emp = emp_response.data[0]
@@ -3686,7 +3665,7 @@ async def generate_all_employee_pdfs(request: Request):
                 emp_name = emp.get("full_name", "Unknown").replace(" ", "_").replace("/", "-")
                 
                 # Generate filename
-                filename = f"payslip_{emp_display_id}_{emp_name}_{month_year_safe}.pdf"
+                filename = f"payslip_<emp_display_id>_<emp_name>_<month_year_safe>.pdf"
                 output_path = os.path.join(temp_dir, filename)
                 
                 # Generate the PDF
@@ -3697,7 +3676,7 @@ async def generate_all_employee_pdfs(request: Request):
                 else:
                     errors.append(f"Failed to generate PDF for {emp.get('full_name', employee_id)}")
             except Exception as e:
-                errors.append(f"Error generating PDF for {employee_id}: {str(e)}")
+                errors.append(f"Error generating PDF for <employee_id>: {str(e)}")
         
         if not generated_files:
             # Clean up temp directory on failure
@@ -3710,7 +3689,7 @@ async def generate_all_employee_pdfs(request: Request):
             }
         
         # Create ZIP file
-        zip_filename = f"payslips_{month_year_safe}.zip"
+        zip_filename = f"payslips_<month_year_safe>.zip"
         zip_path = os.path.join(temp_dir, zip_filename)
         
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -3731,7 +3710,7 @@ async def generate_all_employee_pdfs(request: Request):
             zip_path,
             media_type="application/zip",
             filename=zip_filename,
-            headers={"Content-Disposition": f"attachment; filename={zip_filename}"}
+            headers={"Content-Disposition": f"attachment; filename=<zip_filename>"}
         )
         
     except Exception as e:
@@ -3740,14 +3719,14 @@ async def generate_all_employee_pdfs(request: Request):
             import shutil
             shutil.rmtree(temp_dir, ignore_errors=True)
         print(f"Error generating bulk PDFs: {str(e)}")
-        return {"success": False, "message": f"Error generating PDFs: {str(e)}"}
+        return jsonify({"success": False, "message": f"Error generating PDFs: {str(e)}"})
 
 # ============================================================================
 # Location Autocomplete Endpoint
 # ============================================================================
 
-@app.get("/api/location/autocomplete")
-async def location_autocomplete(query: str, country: Optional[str] = None):
+@app.route("/api/location/autocomplete")
+def location_autocomplete(query: str, country: Optional[str] = None):
     """
     Location autocomplete using Geoapify API
     
@@ -3761,7 +3740,7 @@ async def location_autocomplete(query: str, country: Optional[str] = None):
     try:
         # Validate query length
         if not query or len(query.strip()) < 3:
-            return {"success": True, "data": []}
+            return jsonify({"success": True, "data": []})
         
         # Geoapify API configuration - use same key as Python GUI
         GEOAPIFY_API_KEY = os.environ.get('GEOAPIFY_KEY')
@@ -3823,22 +3802,21 @@ async def location_autocomplete(query: str, country: Optional[str] = None):
                 "formatted": props.get("formatted")
             })
         
-        return {"success": True, "data": results}
+        return jsonify({"success": True, "data": results})
         
     except requests.exceptions.RequestException as e:
         print(f"Error calling Geoapify API: {str(e)}")
-        return {"success": False, "message": f"Location service error: {str(e)}", "data": []}
+        return jsonify({"success": False, "message": f"Location service error: {str(e)}", "data": []})
     except Exception as e:
         print(f"Error in location autocomplete: {str(e)}")
-        return {"success": False, "message": str(e), "data": []}
+        return jsonify({"success": False, "message": str(e), "data": []})
 
-@app.get("/health")
-async def health_check():
+@app.route("/health")
+def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 if __name__ == "__main__":
-    import uvicorn
     print("Starting HRMS Web Application...")
     print("Access the application at: http://localhost:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000, debug=True)
