@@ -354,7 +354,7 @@ def create_engagement():
         required_fields = ['type', 'title', 'start_date', 'end_date']
         for field in required_fields:
             if field not in data or not data[field]:
-                return jsonify({"success": False, "message": f"Missing required field: <field>"})
+                return jsonify({"success": False, "message": f"Missing required field: {field}"})
         
         # Look up employee_id from employee_email if not provided
         if not data.get('employee_id'):
@@ -365,7 +365,7 @@ def create_engagement():
             # Fetch employee UUID from email
             emp_response = supabase.table("employees").select("id").eq("email", employee_email.lower()).execute()
             if not emp_response.data:
-                return jsonify({"success": False, "message": f"Employee not found with email: <employee_email>"})
+                return jsonify({"success": False, "message": f"Employee not found with email: {employee_email}"})
             
             data['employee_id'] = emp_response.data[0]['id']
         
@@ -501,7 +501,7 @@ def update_engagement_record(engagement_id):
             error_msg = str(e)
         
         if not success:
-            return jsonify({"success": False, "message": f"Failed to update engagement: <error_msg>"})
+            return jsonify({"success": False, "message": f"Failed to update engagement: {error_msg}"})
         
         return jsonify({"success": True, "message": "Engagement updated successfully"})
     except Exception as e:
@@ -546,7 +546,7 @@ def delete_engagement_record(engagement_id):
             error_msg = str(e)
         
         if not deleted:
-            return jsonify({"success": False, "message": f"Failed to delete engagement: <error_msg>"})
+            return jsonify({"success": False, "message": f"Failed to delete engagement: {error_msg}"})
         
         return jsonify({"success": True, "message": "Engagement deleted successfully"})
     except Exception as e:
@@ -853,7 +853,7 @@ def run_payroll_processing():
         success = run_payroll(payroll_date)
         
         if success:
-            return jsonify({"success": True, "message": f"Payroll processed successfully for <payroll_date>"})
+            return jsonify({"success": True, "message": f"Payroll processed successfully for {payroll_date}"})
         else:
             return jsonify({"success": False, "message": "Failed to process payroll"})
     except Exception as e:
@@ -952,7 +952,7 @@ def _safe_to_float(value):
                 try:
                     total += float(v)
                 except (ValueError, TypeError):
-                    logging.warning(f"Could not convert dictionary value for key '<key>': {v!r}")
+                    logging.warning(f"Could not convert dictionary value for key '{key}': {v!r}")
         return total
     try:
         return float(value)
@@ -974,7 +974,7 @@ def generate_payslip(employee_id: str, payroll_run_id: str):
         # Get employee data for filename
         employee_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()
         if not employee_response.data:
-            return jsonify({"success": False, "message": f"Employee with ID '<employee_id>' not found in database"}), 404
+            return jsonify({"success": False, "message": f"Employee with ID '{employee_id}' not found in database"}), 404
         
         employee = employee_response.data[0]
         
@@ -989,7 +989,7 @@ def generate_payslip(employee_id: str, payroll_run_id: str):
         temp_dir = tempfile.gettempdir()
         month_year = payroll.get('month_year') or 'unknown'
         employee_display_id = employee.get('employee_id') or employee_id
-        output_filename = f"payslip_<employee_display_id>_{month_year.replace('/', '_')}.pdf"
+        output_filename = f"payslip_{employee_display_id}_{month_year.replace('/', '_')}.pdf"
         output_path = os.path.join(temp_dir, output_filename)
         
         # Generate payslip using Python-based generator (same as desktop GUI)
@@ -1006,7 +1006,7 @@ def generate_payslip(employee_id: str, payroll_run_id: str):
             result_path,
             media_type="application/pdf",
             filename=output_filename,
-            headers={"Content-Disposition": f"attachment; filename=<output_filename>"}
+            headers={"Content-Disposition": f"attachment; filename={output_filename}"}
         )
     except Exception as e:
         print(f"Error generating payslip: {str(e)}")
@@ -1132,7 +1132,7 @@ def set_carry_forward_all():
         
         result = set_carried_forward_for_all(current_year, next_year, days, applies_to)
         
-        return jsonify({"success": result, "message": f"Set <days> carried forward days for all employees" if result else "Failed to set carried forward"})
+        return jsonify({"success": result, "message": f"Set {days} carried forward days for all employees" if result else "Failed to set carried forward"})
     except Exception as e:
         print(f"Error setting carry forward for all: {str(e)}")
         return jsonify({"success": False, "message": str(e)})
@@ -1295,7 +1295,7 @@ def create_variable_percentage_rule():
         required_fields = ['name', 'type', 'percentage', 'apply_to', 'base_on', 'frequency', 'status']
         for field in required_fields:
             if field not in data or not data[field]:
-                return jsonify({"success": False, "message": f"Missing required field: <field>"})
+                return jsonify({"success": False, "message": f"Missing required field: {field}"})
         
         # Validate percentage
         try:
@@ -1507,7 +1507,7 @@ def create_salary_change():
             # Fetch employee UUID from email
             emp_response = supabase.table("employees").select("id").eq("email", employee_email.lower()).execute()
             if not emp_response.data:
-                return jsonify({"success": False, "message": f"Employee not found with email: <employee_email>"})
+                return jsonify({"success": False, "message": f"Employee not found with email: {employee_email}"})
             
             data['employee_id'] = emp_response.data[0]['id']
         
@@ -1515,7 +1515,7 @@ def create_salary_change():
         required_fields = ['employee_id', 'previous_salary', 'new_salary', 'effective_date']
         for field in required_fields:
             if field not in data or data[field] == '':
-                return jsonify({"success": False, "message": f"Missing required field: <field>"})
+                return jsonify({"success": False, "message": f"Missing required field: {field}"})
         
         # Validate salary values
         try:
@@ -1628,7 +1628,7 @@ def create_employment_history():
         required_fields = ['employee_email', 'job_title', 'start_date']
         for field in required_fields:
             if field not in data or data[field] == '':
-                return jsonify({"success": False, "message": f"Missing required field: <field>"})
+                return jsonify({"success": False, "message": f"Missing required field: {field}"})
         
         # Get employee_id from email
         employee_response = supabase.table("employees").select("id").eq("email", data['employee_email']).execute()
@@ -1673,7 +1673,7 @@ def create_employment_history():
                 try:
                     supabase.table("employees").update(employee_update).eq("id", employee_id).execute()
                 except Exception as sync_err:
-                    print(f"Warning: Failed to sync status to employees table: <sync_err>")
+                    print(f"Warning: Failed to sync status to employees table: {sync_err}")
             
             return jsonify({"success": True, "message": "Employment history recorded successfully", "data": response.data[0]})
         else:
@@ -1719,7 +1719,7 @@ def update_employment_history(record_id):
                 try:
                     supabase.table("employees").update(employee_update).eq("id", employee_id).execute()
                 except Exception as sync_err:
-                    print(f"Warning: Failed to sync status to employees table: <sync_err>")
+                    print(f"Warning: Failed to sync status to employees table: {sync_err}")
             
             return jsonify({"success": True, "message": "Employee history record updated successfully", "data": response.data[0] if response.data else None})
         else:
@@ -1962,7 +1962,7 @@ def save_payroll_info():
         return jsonify({"success": False, "message": str(e)})
 
 @app.route("/api/admin/tp1-reliefs/<employee_id>/<year>/<month>")
-def get_tp1_reliefs(employee_id: str, year: int, month: int):
+def get_tp1_reliefs(employee_id, year, month):
     """
     Get TP1 tax relief data for an employee for a specific month
     """
@@ -1975,6 +1975,9 @@ def get_tp1_reliefs(employee_id: str, year: int, month: int):
     ]
     
     try:
+        # Convert year and month to int
+        year = int(year)
+        month = int(month)
         # Get monthly deductions which includes TP1 relief data
         deductions_data = get_monthly_deductions(employee_id, year, month)
         
@@ -2128,9 +2131,9 @@ def get_tax_rates():
 
 @app.route("/api/admin/lhdn/tax-rates", methods=["POST"])
 def create_tax_rate():
-    data = request.get_json()
     """Create or update a tax rate bracket"""
     try:
+        data = request.get_json()
         tax_rate = {
             "residency_type": data.get("residency_type", "resident"),
             "income_from": data["income_from"],
@@ -2157,7 +2160,7 @@ def create_tax_rate():
         return jsonify({"success": False, "message": str(e)})
 
 @app.route("/api/admin/lhdn/tax-rates/<rate_id>", methods=["DELETE"])
-def delete_tax_rate(rate_id: int):
+def delete_tax_rate(rate_id):
     """Delete a tax rate bracket"""
     try:
         response = supabase.table("lhdn_tax_rates").delete().eq("id", rate_id).execute()
@@ -2568,9 +2571,10 @@ def create_leave_entitlement():
         return jsonify({"success": False, "message": str(e)})
 
 @app.route("/api/admin/leave-entitlements/<entitlement_id>", methods=["PUT"])
-def update_leave_entitlement(entitlement_id: int, data: Dict[str, Any]):
+def update_leave_entitlement(entitlement_id):
     """Update a leave entitlement rule in leave_caps table"""
     try:
+        data = request.get_json()
         leave_type_code = data.get("leave_type_code")
         tier_id = data.get("employee_tier")
         days_entitlement = data.get("days_entitlement")
@@ -2691,7 +2695,7 @@ def get_holidays():
         # Get current year
         current_year = datetime.now().year
         
-        response = supabase.table("calendar_holidays").select("*").gte("date", f"<current_year>-01-01").lte("date", f"{current_year+1}-12-31").order("date").execute()
+        response = supabase.table("calendar_holidays").select("*").gte("date", f"{current_year}-01-01").lte("date", f"{current_year+1}-12-31").order("date").execute()
         
         if response.data:
             return jsonify({"success": True, "data": response.data})
@@ -2709,10 +2713,10 @@ def get_leave_calendar(employee_id):
             year = datetime.now().year
         
         # Fetch leave requests for the year
-        response = supabase.table("leave_requests").select("*").eq("employee_id", employee_id).gte("start_date", f"<year>-01-01").lte("end_date", f"<year>-12-31").execute()
+        response = supabase.table("leave_requests").select("*").eq("employee_id", employee_id).gte("start_date", f"{year}-01-01").lte("end_date", f"{year}-12-31").execute()
         
         # Fetch holidays
-        holidays_response = supabase.table("calendar_holidays").select("*").gte("date", f"<year>-01-01").lte("date", f"<year>-12-31").execute()
+        holidays_response = supabase.table("calendar_holidays").select("*").gte("date", f"{year}-01-01").lte("date", f"{year}-12-31").execute()
         
         return {
             "success": True,
@@ -2741,9 +2745,10 @@ def create_holiday():
         return jsonify({"success": False, "message": str(e)})
 
 @app.route("/api/holidays/<holiday_id>", methods=["PUT"])
-def update_holiday(holiday_id: int, holiday: dict):
+def update_holiday(holiday_id):
     """Update an existing holiday"""
     try:
+        holiday = request.get_json()
         response = supabase.table("calendar_holidays").update(holiday).eq("id", holiday_id).execute()
         
         if response.data:
@@ -2755,7 +2760,7 @@ def update_holiday(holiday_id: int, holiday: dict):
         return jsonify({"success": False, "message": str(e)})
 
 @app.route("/api/holidays/<holiday_id>", methods=["DELETE"])
-def delete_holiday(holiday_id: int):
+def delete_holiday(holiday_id):
     """Delete a holiday"""
     try:
         response = supabase.table("calendar_holidays").delete().eq("id", holiday_id).execute()
@@ -2770,9 +2775,6 @@ def delete_holiday(holiday_id: int):
 
 @app.route("/api/holidays/import-malaysia", methods=["POST"])
 def import_malaysia_holidays():
-    year = request.args.get("year", type=int)
-    state = request.args.get("state")
-    replace = request.args.get("replace", "false").lower() == "true"
     """
     Auto-import Malaysia public holidays for a specific year
     
@@ -2781,6 +2783,10 @@ def import_malaysia_holidays():
         state: Optional state filter (e.g., 'Selangor', 'Johor'). None for national holidays.
         replace: If True, delete existing holidays for this year/state before importing
     """
+    year = request.args.get("year", type=int)
+    state = request.args.get("state")
+    replace = request.args.get("replace", "false").lower() == "true"
+    
     try:
         # Validate year parameter
         if year < 1900 or year > 2100:
@@ -3284,7 +3290,7 @@ def upload_employee_profile_picture(employee_id: str):
         import tempfile
         temp_dir = tempfile.gettempdir()
         os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, f"profile_<employee_id>_{file.filename}")
+        temp_path = os.path.join(temp_dir, f"profile_{employee_id}_{file.filename}")
         
         with open(temp_path, "wb") as f:
             f.write(contents)
@@ -3333,7 +3339,7 @@ def upload_employee_resume(employee_id: str):
         import tempfile
         temp_dir = tempfile.gettempdir()
         os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, f"resume_<employee_id>_{file.filename}")
+        temp_path = os.path.join(temp_dir, f"resume_{employee_id}_{file.filename}")
         
         with open(temp_path, "wb") as f:
             f.write(contents)
@@ -3651,13 +3657,13 @@ def generate_all_employee_pdfs():
                 # Get the payroll run ID for this employee
                 run_id = employee_payroll_map.get(employee_id)
                 if not run_id:
-                    errors.append(f"No payroll run found for employee <employee_id> in <month_year>")
+                    errors.append(f"No payroll run found for employee {employee_id} in <month_year>")
                     continue
                 
                 # Get employee info for filename
                 emp_response = supabase.table("employees").select("employee_id, full_name").eq("id", employee_id).execute()
                 if not emp_response.data:
-                    errors.append(f"Employee <employee_id> not found")
+                    errors.append(f"Employee {employee_id} not found")
                     continue
                 
                 emp = emp_response.data[0]
@@ -3676,7 +3682,7 @@ def generate_all_employee_pdfs():
                 else:
                     errors.append(f"Failed to generate PDF for {emp.get('full_name', employee_id)}")
             except Exception as e:
-                errors.append(f"Error generating PDF for <employee_id>: {str(e)}")
+                errors.append(f"Error generating PDF for {employee_id}: {str(e)}")
         
         if not generated_files:
             # Clean up temp directory on failure
@@ -3726,7 +3732,7 @@ def generate_all_employee_pdfs():
 # ============================================================================
 
 @app.route("/api/location/autocomplete")
-def location_autocomplete(query: str, country: Optional[str] = None):
+def location_autocomplete():
     """
     Location autocomplete using Geoapify API
     
@@ -3738,6 +3744,9 @@ def location_autocomplete(query: str, country: Optional[str] = None):
         List of location suggestions with description and place_id
     """
     try:
+        query = request.args.get("query")
+        country = request.args.get("country")
+        
         # Validate query length
         if not query or len(query.strip()) < 3:
             return jsonify({"success": True, "data": []})
@@ -3814,9 +3823,12 @@ def location_autocomplete(query: str, country: Optional[str] = None):
 @app.route("/health")
 def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
 
 if __name__ == "__main__":
+    import os
     print("Starting HRMS Web Application...")
     print("Access the application at: http://localhost:8000")
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    # Only enable debug mode if explicitly set via environment variable
+    debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", port=8000, debug=debug_mode)
