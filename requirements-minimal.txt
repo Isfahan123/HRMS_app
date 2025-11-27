@@ -1,0 +1,42 @@
+# HRMS Web Application - Minimal Dependencies
+# Use this file if pip install -r requirements.txt fails on cPanel
+#
+# This version EXCLUDES:
+# - fpdf2 (PDF generation) - requires Pillow/fonttools which may fail to compile
+# - openpyxl (Excel parsing) - not required for core functionality
+#
+# LIMITATION: PDF payslip generation will NOT work with this minimal setup.
+# All other features (login, attendance, leave, employee management) will work.
+#
+# INSTALLATION:
+#   pip install -r requirements-minimal.txt
+#
+# PYTHON VERSION: Python >= 3.8 (Python 3.11 recommended)
+
+# Database
+# Using custom REST API client (services/supabase_rest_client.py) instead of supabase-py SDK
+# No database package needed - using requests for REST API calls
+
+# Authentication & Security (pure Python)
+passlib==1.7.4
+
+# Utilities (all pure Python)
+pytz==2024.1
+python-dotenv==1.0.1
+requests==2.32.3
+num2words==0.5.13
+
+# Flask stack (Web Framework) - pure Python with pre-built wheels
+flask==3.0.0
+jinja2==3.1.4
+
+# NOTE: The following are EXCLUDED in this minimal version:
+# - fpdf2: PDF generation (requires Pillow/fonttools compilation)
+# - openpyxl: Excel file parsing
+# - PyPDF2: PDF processing
+#
+# If you need PDF generation, try installing the full requirements:
+#   pip install -r requirements.txt
+#
+# Or install fpdf2 separately after the core dependencies:
+#   pip install fpdf2

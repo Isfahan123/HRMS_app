@@ -7,7 +7,12 @@
 # Installation: pip install -r requirements-web.txt
 # Or simply: pip install -r requirements.txt (now also web-safe)
 #
-# IMPORTANT: All packages here are pure Python or have pre-built wheels
+# INSTALLATION TROUBLESHOOTING:
+# If pip install fails due to compilation errors (Pillow, fonttools), use:
+#   pip install -r requirements-minimal.txt
+# This excludes PDF generation but all other features will work.
+#
+# IMPORTANT: All core packages here are pure Python or have pre-built wheels
 # to ensure compatibility with cPanel/shared hosting environments.
 
 # Database
@@ -20,7 +25,7 @@
 # Using passlib with pbkdf2_sha256 (pure Python) instead of bcrypt (requires C compilation)
 passlib==1.7.4
 
-# Utilities
+# Utilities (all pure Python)
 pytz==2024.1
 python-dotenv==1.0.1
 requests==2.32.3
@@ -28,12 +33,11 @@ num2words==0.5.13
 # Note: 'holidays' library removed - uses compiled numpy/pandas dependencies
 # Holiday data is now fetched from database (calendar_holidays table) or Calendarific API
 
-# Data processing (required by services)
-# - fpdf2: PDF payslip generation (pure Python, replaces reportlab)
-# - openpyxl: Excel file parsing (pure Python)
-# - PyPDF2: PDF processing (pure Python)
-# Note: pandas/reportlab removed - require C compilation which fails on shared hosting
-fpdf2==2.8.1
+# Data processing (required for payroll reports)
+# fpdf2 requires Pillow and fonttools which may need compilation on some systems.
+# If this fails, use requirements-minimal.txt instead - PDF generation will be disabled.
+# Use fpdf2 2.7.6 for Python 3.7-3.9 compatibility
+fpdf2==2.7.6
 openpyxl==3.1.2
 PyPDF2==3.0.1
 

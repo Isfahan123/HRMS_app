@@ -7,7 +7,13 @@
 # For desktop GUI application, also install requirements-desktop.txt:
 #   pip install -r requirements.txt -r requirements-desktop.txt
 #
-# IMPORTANT: All packages here are pure Python or have pre-built wheels
+# INSTALLATION TROUBLESHOOTING:
+# If pip install fails on cPanel, use the minimal requirements file:
+#   pip install -r requirements-minimal.txt
+# The minimal version excludes PDF generation (fpdf2/Pillow) which may
+# fail to compile on some hosting environments.
+#
+# IMPORTANT: All core packages here are pure Python or have pre-built wheels
 # to ensure compatibility with cPanel/shared hosting environments.
 
 # Database
@@ -20,7 +26,7 @@
 # Using passlib with pbkdf2_sha256 (pure Python) instead of bcrypt (requires C compilation)
 passlib==1.7.4
 
-# Utilities
+# Utilities (all pure Python)
 pytz==2024.1
 python-dotenv==1.0.1
 requests==2.32.3
@@ -29,8 +35,10 @@ num2words==0.5.13
 # Holiday data is now fetched from database (calendar_holidays table) or Calendarific API
 
 # Data processing (required for payroll reports)
-# Using fpdf2 (pure Python) instead of reportlab (requires C libraries)
-fpdf2==2.8.1
+# fpdf2 requires Pillow and fonttools which may need compilation on some systems.
+# If this fails, use requirements-minimal.txt instead - PDF generation will be disabled.
+# Use fpdf2 2.7.6 for Python 3.7-3.9 compatibility, or 2.8.1+ for Python 3.10+
+fpdf2==2.7.6
 # Note: pandas removed - requires numpy which needs C compilation
 # Excel parsing now uses openpyxl directly (pure Python)
 openpyxl==3.1.2
