@@ -8,7 +8,7 @@ This document answers: **"What do you need (or not need) for the deployment?"**
 All essential files are included in the repository:
 
 - ✅ **`.htaccess`** - Apache/Passenger configuration
-- ✅ **`passenger_wsgi.py`** - WSGI entry point (FastAPI → WSGI adapter)
+- ✅ **`passenger_wsgi.py`** - WSGI entry point (Flask app)
 - ✅ **`.cpanel.yml`** - Automated Git deployment configuration
 - ✅ **`requirements.txt`** - All Python dependencies listed
 - ✅ **`runtime.txt`** - Python version specification (3.11.9)
@@ -27,7 +27,7 @@ Comprehensive guides are provided:
 ### Application Code ✓
 All application files are ready:
 
-- ✅ **`web_app.py`** - FastAPI application (90 routes)
+- ✅ **`web_app.py`** - Flask application (114 routes)
 - ✅ **`start_web.py`** - Development server launcher
 - ✅ **Web interface** - HTML templates and static files
 - ✅ **Services** - Database and business logic
@@ -97,6 +97,8 @@ You need a domain or subdomain where the app will be accessible:
 - ❌ **Custom domain registrar** - Can use existing domain
 - ❌ **Email server** - Not required by the app
 - ❌ **External API keys** - Only Supabase needed
+- ❌ **uvicorn** - Not needed (Flask uses Passenger directly)
+- ❌ **ASGI adapters** - Not needed (Flask is native WSGI)
 
 ### Optional (Can Install Later):
 
@@ -181,15 +183,11 @@ You have 3 deployment options, all fully documented:
 All packages are listed in `requirements.txt` and will be installed automatically:
 
 **Core Web Framework:**
-- ✅ fastapi==0.115.5
-- ✅ uvicorn==0.32.1
+- ✅ flask==3.0.0 (native WSGI - works directly with Passenger)
 - ✅ jinja2==3.1.4
-- ✅ python-multipart==0.0.18
-- ✅ asgiref==3.8.1 (CRITICAL for cPanel/Passenger)
 
 **Database & Auth:**
-- ✅ supabase==2.8.1
-- ✅ bcrypt==4.2.0
+- ✅ passlib==1.7.4 (pbkdf2_sha256 for password hashing)
 
 **Utilities:**
 - ✅ python-dotenv==1.0.1
@@ -278,6 +276,9 @@ All packages are listed in `requirements.txt` and will be installed automaticall
 ### Q: What about the desktop version (PyQt5)?
 **A**: Completely separate. The web version doesn't need PyQt5 or any GUI libraries.
 
+### Q: Do I need uvicorn or ASGI adapters?
+**A**: No! Flask is a native WSGI framework, so it works directly with cPanel Passenger without any adapters.
+
 ---
 
 ## 🎯 Summary: What You Actually Need
@@ -351,6 +352,7 @@ If you're unsure about any requirement:
 - External API keys (except Supabase)
 - Root/sudo access
 - Manual database setup (Supabase is cloud)
+- uvicorn or ASGI adapters (Flask is native WSGI)
 
 **RECOMMENDED:**
 - SSH access

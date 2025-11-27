@@ -60,34 +60,20 @@ Tabs available:
 
 ## 🔧 Alternative Startup Methods
 
-### Using uvicorn directly
+### Using Flask directly
 ```bash
-uvicorn web_app:app --host 0.0.0.0 --port 8000
+python -c "from web_app import app; app.run(host='0.0.0.0', port=8000)"
 ```
 
-### With auto-reload (for development)
+### With debug mode (for development)
 ```bash
-uvicorn web_app:app --host 0.0.0.0 --port 8000 --reload
+FLASK_DEBUG=true python start_web.py
 ```
 
 ### Using Python directly
 ```bash
-python -m uvicorn web_app:app --host 0.0.0.0 --port 8000
+python web_app.py
 ```
-
----
-
-## 📚 API Documentation
-
-Once the server is running, visit:
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-Interactive API documentation with:
-- All endpoints listed
-- Request/response schemas
-- Try-it-out functionality
 
 ---
 
@@ -109,7 +95,7 @@ Available settings:
 | `SUPABASE_KEY` | Your Supabase service role key | Default provided |
 | `WEB_HOST` | Host to bind the server | `0.0.0.0` |
 | `WEB_PORT` | Port for the server | `8000` |
-| `WEB_RELOAD` | Enable auto-reload (dev mode) | `false` |
+| `FLASK_DEBUG` | Enable debug mode (dev mode) | `false` |
 | `ENVIRONMENT` | Environment name | `production` |
 
 ### Change Port
@@ -122,7 +108,7 @@ WEB_PORT=8001
 
 Option 2 - Command line:
 ```bash
-uvicorn web_app:app --port 8001
+python -c "from web_app import app; app.run(port=8001)"
 ```
 
 ### Development Mode
@@ -130,7 +116,7 @@ uvicorn web_app:app --port 8001
 For auto-reload during development:
 ```bash
 # In .env file
-WEB_RELOAD=true
+FLASK_DEBUG=true
 ENVIRONMENT=development
 ```
 
@@ -147,7 +133,7 @@ lsof -i :8000  # macOS/Linux
 netstat -ano | findstr :8000  # Windows
 
 # Use a different port
-python -c "import uvicorn; from web_app import app; uvicorn.run(app, port=8001)"
+python -c "from web_app import app; app.run(port=8001)"
 ```
 
 ### Module Not Found

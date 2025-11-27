@@ -11,8 +11,8 @@ The web application follows a modern architecture:
   - `/web/static/css/` - CSS stylesheets
   - `/web/static/js/` - JavaScript logic for client-side functionality
 
-- **Backend (API)**: FastAPI (Python) with existing business logic
-  - `/web_app.py` - Main FastAPI application server
+- **Backend (API)**: Flask (Python) with existing business logic
+  - `/web_app.py` - Main Flask application server
   - Reuses existing services from `/services/` directory
   - Reuses existing business logic from `/core/` directory
 
@@ -56,26 +56,22 @@ pip install -r requirements.txt
 ```
 
 The following packages are needed for the web version:
-- `fastapi` - Modern web framework
-- `uvicorn` - ASGI server
+- `flask` - WSGI web framework (cPanel compatible)
 - `jinja2` - Template engine
-- `python-multipart` - Form data handling
 
 ### Start the Server
 
 ```bash
-python web_app.py
+python start_web.py
 ```
 
 The application will be available at: `http://localhost:8000`
 
-Or run with custom host/port:
+Or run directly:
 
 ```bash
-uvicorn web_app:app --host 0.0.0.0 --port 8000 --reload
+python -c "from web_app import app; app.run(host='0.0.0.0', port=8000)"
 ```
-
-The `--reload` flag enables auto-reload on code changes (useful for development).
 
 ## File Structure
 
@@ -128,10 +124,10 @@ web/
 Add new endpoints in `/web_app.py`:
 
 ```python
-@app.get("/api/your-endpoint")
-async def your_endpoint():
+@app.route("/api/your-endpoint")
+def your_endpoint():
     # Reuse existing services/core functions
-    return {"data": "your data"}
+    return jsonify({"data": "your data"})
 ```
 
 ### Styling
@@ -151,7 +147,7 @@ Modify `/web/static/css/style.css` to customize the appearance.
 
 ## Security Notes
 
-- Passwords are handled securely using bcrypt (same as desktop version)
+- Passwords are handled securely using passlib (pbkdf2_sha256)
 - Session data stored in browser sessionStorage
 - **TODO**: Add proper authentication tokens (JWT) instead of sessionStorage
 - **TODO**: Add HTTPS support for production
@@ -176,7 +172,7 @@ Modify `/web/static/css/style.css` to customize the appearance.
 If port 8000 is already in use, specify a different port:
 
 ```bash
-python -c "import uvicorn; from web_app import app; uvicorn.run(app, host='0.0.0.0', port=8001)"
+python -c "from web_app import app; app.run(host='0.0.0.0', port=8001)"
 ```
 
 ### Module Import Errors
@@ -185,7 +181,7 @@ Make sure you're running from the repository root:
 
 ```bash
 cd /path/to/HRMS_app
-python web_app.py
+python start_web.py
 ```
 
 ### Database Connection Issues

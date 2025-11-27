@@ -156,7 +156,7 @@ python /tmp/test_fixes.py
 To test the API endpoints (requires running server):
 ```bash
 # Start server
-python -m uvicorn web_app:app --host 0.0.0.0 --port 8000
+python -m flask web_app:app --host 0.0.0.0 --port 8000
 
 # Test endpoints (in another terminal)
 curl http://localhost:8000/api/admin/salary-history
