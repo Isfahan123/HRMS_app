@@ -1,6 +1,6 @@
 # HRMS Web Application
 
-A comprehensive Human Resource Management System with both desktop (PyQt5) and web (FastAPI) interfaces.
+A comprehensive Human Resource Management System with both desktop (PyQt5) and web (Flask) interfaces.
 
 ## 🌟 Features
 
@@ -166,8 +166,8 @@ ENVIRONMENT=production
 
 ```
 HRMS_app/
-├── web_app.py              # FastAPI main application
-├── passenger_wsgi.py       # WSGI adapter for cPanel/Passenger
+├── web_app.py              # Flask main application
+├── passenger_wsgi.py       # WSGI entry point for cPanel/Passenger
 ├── start_web.py            # Development server launcher
 ├── main.py                 # Desktop application (PyQt5)
 ├── .htaccess               # Apache/cPanel configuration
@@ -194,10 +194,10 @@ HRMS_app/
 ## 🌐 Technology Stack
 
 ### Backend
-- **Framework**: FastAPI (Python 3.9+, 3.11 recommended)
+- **Framework**: Flask (Python 3.9+, 3.11 recommended) - Native WSGI for cPanel compatibility
 - **Database**: Supabase (PostgreSQL)
-- **Authentication**: Bcrypt
-- **WSGI Server**: Passenger (cPanel) / Uvicorn (development)
+- **Authentication**: Passlib (pbkdf2_sha256)
+- **WSGI Server**: Passenger (cPanel) / Flask dev server (development)
 
 ### Frontend
 - **Templates**: Jinja2
@@ -302,7 +302,7 @@ This project is private and proprietary. All rights reserved.
 
 ## 🙏 Acknowledgments
 
-- FastAPI for the excellent web framework
+- Flask for the reliable WSGI web framework
 - Supabase for the backend-as-a-service platform
 - PyQt5 for the desktop GUI framework
 - The Python community for amazing tools and libraries

@@ -1,5 +1,8 @@
 """
-Passenger WSGI entry point for HRMS (FastAPI)
+Passenger WSGI entry point for HRMS (Flask)
+
+Flask is a native WSGI framework, so no conversion is needed.
+This works directly with cPanel Passenger without additional adapters.
 """
 
 import sys
@@ -15,9 +18,9 @@ try:
 except:
     pass
 
-# Import FastAPI app
+# Import Flask app
 try:
-    from web_app import app
+    from web_app import app as application
 except Exception as e:
     import traceback
     log_path = os.path.join(os.path.dirname(__file__), "passenger_error.log")
@@ -27,15 +30,6 @@ except Exception as e:
         f.write(traceback.format_exc() + "\n")
     raise
 
-# Convert ASGI → WSGI (FastAPI → Passenger)
-try:
-    from a2wsgi import ASGIAdapter
-    application = ASGIAdapter(app)
-except Exception as e:
-    raise RuntimeError(
-        "a2wsgi failed — ensure a2wsgi is installed in requirements.txt"
-    ) from e
-
 # Optional debug
 if os.environ.get("DEBUG") == "1":
-    print("Passenger WSGI initialized")
+    print("Passenger WSGI initialized with Flask")

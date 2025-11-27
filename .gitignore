@@ -52,3 +52,5 @@ htmlcov/
 .env.local
 web/nodejs_modules/node_modules/
 tmp/
+# FastAPI backup (replaced by Flask)
+web_app_fastapi_backup.py

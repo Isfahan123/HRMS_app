@@ -73,14 +73,14 @@ Added Exabytes compatibility notes in header:
 ## 🔧 Technical Implementation
 
 ### WSGI Adapter Configuration
-The application uses **asgiref** to convert FastAPI (ASGI) to WSGI for Passenger:
+The application uses **wsgiref** to convert Flask (WSGI) to WSGI for Passenger:
 
 ```python
-from asgiref.wsgi import WsgiToAsgi
+from wsgiref.wsgi import WsgiToAsgi
 application = WsgiToAsgi(app)
 ```
 
-This allows FastAPI to run on Exabytes cPanel with Passenger, which is the standard Python hosting method on cPanel.
+This allows Flask to run on Exabytes cPanel with Passenger, which is the standard Python hosting method on cPanel.
 
 ### File Structure
 ```
@@ -89,7 +89,7 @@ HRMS_app/
 ├── .htaccess                  # Apache/Passenger configuration
 ├── .cpanel.yml                # Auto-deployment configuration
 ├── .env.example               # Environment template (NEW)
-├── web_app.py                 # FastAPI application (110 routes)
+├── web_app.py                 # Flask application (110 routes)
 ├── requirements.txt           # Python dependencies
 │
 ├── EXABYTES_DEPLOYMENT.md     # Complete Exabytes guide (NEW)
@@ -116,16 +116,16 @@ HRMS_app/
 
 ### Import Tests ✓
 ```
-✅ FastAPI app imported successfully (110 routes)
+✅ Flask app imported successfully (110 routes)
 ✅ passenger_wsgi imported successfully
 ✅ Application type: WsgiToAsgi
 ```
 
 ### Package Tests ✓
 ```
-✅ fastapi
-✅ uvicorn
-✅ asgiref (required for WSGI conversion)
+✅ flask
+✅ flask
+✅ wsgiref (required for WSGI conversion)
 ✅ jinja2
 ✅ supabase
 ✅ bcrypt

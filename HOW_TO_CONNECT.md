@@ -67,7 +67,7 @@ Before connecting, ensure you have:
 
 ### `passenger_wsgi.py` - WSGI Entry Point
 - Already configured - **No changes needed**
-- Converts FastAPI to WSGI for Passenger
+- Flask is native WSGI - works directly with Passenger
 
 ### `.htaccess` - Apache Configuration
 **You must update:**
@@ -96,9 +96,9 @@ Exabytes Server (Apache + Passenger)
     ↓
 .htaccess (routes to Python app)
     ↓
-passenger_wsgi.py (WSGI adapter)
+passenger_wsgi.py (Flask app)
     ↓
-web_app.py (FastAPI application)
+web_app.py (Flask application)
     ↓
 Supabase (PostgreSQL database)
 ```
@@ -106,10 +106,9 @@ Supabase (PostgreSQL database)
 ### Key Components:
 
 1. **Apache + Passenger** - Web server that runs Python apps on cPanel
-2. **passenger_wsgi.py** - Converts ASGI (FastAPI) to WSGI (Passenger)
-3. **asgiref** - Python library that provides the ASGI-to-WSGI bridge
-4. **FastAPI** - Modern Python web framework
-5. **Supabase** - Cloud database (PostgreSQL)
+2. **passenger_wsgi.py** - Exports Flask app as WSGI application
+3. **Flask** - Native WSGI Python web framework
+4. **Supabase** - Cloud database (PostgreSQL)
 
 ---
 
@@ -121,10 +120,7 @@ curl https://yourdomain.com/health
 ```
 Expected: `{"status":"healthy","timestamp":"..."}`
 
-### Test 2: API Documentation
-Visit: `https://yourdomain.com/docs`
-
-### Test 3: Login Page
+### Test 2: Login Page
 Visit: `https://yourdomain.com`
 
 ---
@@ -188,9 +184,8 @@ tail -f ~/public_html/hrms/log/passenger.log
 | Exabytes Login | https://my.exabytes.com |
 | Supabase | https://supabase.com |
 | Application | https://yourdomain.com |
-| API Docs | https://yourdomain.com/docs |
 | Health Check | https://yourdomain.com/health |
 
 ---
 
-**Summary:** The HRMS app connects to Exabytes cPanel using Passenger (Python WSGI server). Create a Python app in cPanel, upload files, install dependencies, configure `.env` and `.htaccess`, then restart. That's it!
+**Summary:** The HRMS app connects to Exabytes cPanel using Passenger (Python WSGI server). Flask is a native WSGI framework, so it works directly with Passenger without any conversion layers. Create a Python app in cPanel, upload files, install dependencies, configure `.env` and `.htaccess`, then restart. That's it!

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Test script to verify which API endpoints are working and which fail
+Works with Flask-based HRMS web application
 """
 
-import asyncio
-import httpx
+import requests
 from typing import Dict, List
 
 BASE_URL = "http://localhost:8000"
@@ -30,11 +30,11 @@ TEST_ENDPOINTS = [
     ("GET", "/api/admin/attendance", "List attendance records"),
 ]
 
-async def test_endpoint(client: httpx.AsyncClient, method: str, path: str, description: str) -> Dict:
+def test_endpoint(method: str, path: str, description: str) -> Dict:
     """Test a single endpoint"""
     try:
         if method == "GET":
-            response = await client.get(f"{BASE_URL}{path}", timeout=5.0)
+            response = requests.get(f"{BASE_URL}{path}", timeout=5.0)
         else:
             return {"path": path, "status": "skipped", "description": description}
         
@@ -49,7 +49,7 @@ async def test_endpoint(client: httpx.AsyncClient, method: str, path: str, descr
             "has_data": bool(data.get("data")) if isinstance(data, dict) else False,
             "error": data.get("message") if isinstance(data, dict) and not data.get("success") else None
         }
-    except httpx.ConnectError:
+    except requests.ConnectionError:
         return {
             "path": path,
             "description": description,
@@ -64,18 +64,16 @@ async def test_endpoint(client: httpx.AsyncClient, method: str, path: str, descr
             "error": str(e)
         }
 
-async def main():
+def main():
     """Main test function"""
     print("=" * 80)
-    print("HRMS API ENDPOINT TESTING")
+    print("HRMS API ENDPOINT TESTING (Flask)")
     print("=" * 80)
     print(f"\nTesting against: {BASE_URL}")
     print(f"Total endpoints to test: {len(TEST_ENDPOINTS)}\n")
     
-    async with httpx.AsyncClient() as client:
-        # Test all endpoints
-        tasks = [test_endpoint(client, method, path, desc) for method, path, desc in TEST_ENDPOINTS]
-        results = await asyncio.gather(*tasks)
+    # Test all endpoints
+    results = [test_endpoint(method, path, desc) for method, path, desc in TEST_ENDPOINTS]
     
     # Categorize results
     working = []
@@ -103,7 +101,7 @@ async def main():
         print("⚠️  CONNECTION ERROR")
         print("-" * 80)
         print("Cannot connect to the server. Make sure it's running:")
-        print("  python web_app.py")
+        print("  python start_web.py")
         print()
         return
     
@@ -166,4 +164,4 @@ async def main():
         print()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

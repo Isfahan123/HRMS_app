@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Startup script for HRMS Web Application
-This script starts the FastAPI web server
+This script starts the Flask web server
 """
 
 import sys
@@ -33,35 +33,29 @@ load_dotenv()
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    import uvicorn
     from web_app import app
     
     # Get configuration from environment variables
     host = os.getenv("WEB_HOST", "0.0.0.0")
     port = int(os.getenv("WEB_PORT", "8000"))
-    reload = os.getenv("WEB_RELOAD", "false").lower() == "true"
+    debug = os.getenv("WEB_RELOAD", "false").lower() == "true" or os.getenv("DEBUG", "false").lower() == "true"
     environment = os.getenv("ENVIRONMENT", "production")
     
     print("=" * 60)
-    print("HRMS Web Application")
+    print("HRMS Web Application (Flask)")
     print("=" * 60)
     print(f"\nEnvironment: {environment}")
     print("\nStarting web server...")
     print("\nAccess the application at:")
     print(f"  → http://localhost:{port}")
-    print("\nAPI documentation at:")
-    print(f"  → http://localhost:{port}/docs (Swagger UI)")
-    print(f"  → http://localhost:{port}/redoc (ReDoc)")
     print("\nPress Ctrl+C to stop the server")
     print("=" * 60)
     print()
     
-    uvicorn.run(
-        app, 
+    app.run(
         host=host, 
         port=port,
-        reload=reload,
-        log_level="info"
+        debug=debug
     )
     
 except KeyboardInterrupt:

@@ -18,7 +18,7 @@ The HRMS web application has been successfully configured for cPanel Python depl
 | `passenger_wsgi.py` | ✅ Ready | WSGI entry point | 2.2 KB |
 | `.htaccess` | ✅ Ready | Apache config | 2.4 KB |
 | `.cpanel.yml` | ✅ Ready | Auto-deployment | 3.5 KB |
-| `web_app.py` | ✅ Ready | FastAPI app | 92 KB |
+| `web_app.py` | ✅ Ready | Flask app | 92 KB |
 | `requirements.txt` | ✅ Ready | Dependencies | 395 B |
 
 ### Documentation ✅
@@ -43,16 +43,16 @@ The HRMS web application has been successfully configured for cPanel Python depl
 ## Technical Verification
 
 ### ✅ Python Application
-- **FastAPI app**: Imports successfully
+- **Flask app**: Imports successfully
 - **Routes**: 90 endpoints registered
 - **WSGI adapter**: Working correctly
-- **Type**: WsgiToAsgi (asgiref)
+- **Type**: WsgiToAsgi (wsgiref)
 
 ### ✅ Required Packages
 All critical packages verified:
-- ✅ fastapi
-- ✅ uvicorn
-- ✅ asgiref
+- ✅ flask
+- ✅ flask
+- ✅ wsgiref
 - ✅ jinja2
 - ✅ supabase
 - ✅ bcrypt
@@ -132,8 +132,8 @@ All critical packages verified:
 
 2. **Package Tests**
    - ✅ All required packages present
-   - ✅ ASGI to WSGI conversion works
-   - ✅ FastAPI app has routes
+   - ✅ WSGI to WSGI conversion works
+   - ✅ Flask app has routes
 
 3. **Configuration Tests**
    - ✅ .htaccess has Passenger config
@@ -282,7 +282,7 @@ touch passenger_wsgi.py
 ### External Resources
 - [cPanel Documentation](https://docs.cpanel.net/)
 - [Passenger Documentation](https://www.phusionpassenger.com/docs/)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Flask Documentation](https://flask.tiangolo.com/)
 - [Supabase Documentation](https://supabase.com/docs)
 
 ---
