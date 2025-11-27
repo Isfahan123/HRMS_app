@@ -1,47 +1,53 @@
-# HRMS Web Application - Apache/cPanel Configuration
-# ========================================================================
-# IMPORTANT: This file contains paths specific to the original deployment.
-# You MUST update the following lines with your own paths:
-#   - PassengerPython: path to your Python interpreter
-#   - PassengerAppRoot: path to your application directory
+# HRMS Web Application - Apache/cPanel Configuration Template
+# ============================================================
+# 
+# SETUP INSTRUCTIONS:
+# 1. Copy this file to .htaccess: cp .htaccess.example .htaccess
+# 2. Replace YOUR_CPANEL_USERNAME with your actual cPanel username
+# 3. Replace YOUR_APP_FOLDER with your app folder name (e.g., hrms or public_html)
+# 4. Update Python version (3.11) to match your cPanel Python App version
 #
-# See CPANEL_TROUBLESHOOTING.md for help with configuration.
-# ========================================================================
+# Example for user 'john' with app in 'hrms' folder using Python 3.11:
+#   PassengerPython /home/john/virtualenv/hrms/3.11/bin/python
+#   PassengerAppRoot /home/john/public_html/hrms
 
 # Enable Passenger
 PassengerEnabled On
 
-# Python interpreter path
-# FORMAT: /home/YOUR_USERNAME/virtualenv/YOUR_APP/PYTHON_VERSION/bin/python
-# CHANGE THIS to match your cPanel username and virtual environment
-PassengerPython /home/enigmagr/virtualenv/form.enigmagroup.com.my/3.11/bin/python
+# Python interpreter path - MUST UPDATE THIS
+# Format: /home/YOUR_CPANEL_USERNAME/virtualenv/YOUR_APP_FOLDER/PYTHON_VERSION/bin/python
+PassengerPython /home/YOUR_CPANEL_USERNAME/virtualenv/YOUR_APP_FOLDER/3.11/bin/python
 
-# Application root directory
-# FORMAT: /home/YOUR_USERNAME/public_html/YOUR_APP (or subdomain path)
-# CHANGE THIS to match your cPanel username and app folder
-PassengerAppRoot /home/enigmagr/form.enigmagroup.com.my
+# Application root - MUST UPDATE THIS
+# Format: /home/YOUR_CPANEL_USERNAME/public_html/YOUR_APP_FOLDER (or subdomain path)
+PassengerAppRoot /home/YOUR_CPANEL_USERNAME/public_html/YOUR_APP_FOLDER
 
-# WSGI entry point - DO NOT CHANGE
+# WSGI entry point - do not change
 PassengerStartupFile passenger_wsgi.py
-# Performance tuning for Passenger
-# Adjust based on your hosting plan resources
+
+# Performance tuning
 PassengerMinInstances 1
 PassengerMaxPoolSize 4
 PassengerStartTimeout 600
+
 # Application environment
 SetEnv ENVIRONMENT production
-# Enable error pages
+
+# Error pages
 ErrorDocument 404 /404.html
 ErrorDocument 500 /500.html
+
 # Security headers
 Header always set X-Frame-Options "SAMEORIGIN"
 Header always set X-Content-Type-Options "nosniff"
 Header always set X-XSS-Protection "1; mode=block"
-# Compression for static files
+
+# Compression
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
 </IfModule>
-# Cache static files
+
+# Static file caching
 <IfModule mod_expires.c>
     ExpiresActive On
     ExpiresByType image/jpg "access plus 1 year"
@@ -53,9 +59,11 @@ Header always set X-XSS-Protection "1; mode=block"
     ExpiresByType application/javascript "access plus 1 month"
     ExpiresByType text/javascript "access plus 1 month"
 </IfModule>
+
 # Prevent directory listing
 Options -Indexes
-# Protect sensitive files
+
+# Protect sensitive files (dotfiles, Python, logs, etc.)
 <FilesMatch "^\.">
     Order allow,deny
     Deny from all
@@ -64,26 +72,24 @@ Options -Indexes
     Order allow,deny
     Deny from all
 </FilesMatch>
-# Allow access to passenger_wsgi.py (required by Passenger)
+
+# Allow passenger_wsgi.py (required by Passenger)
 <Files "passenger_wsgi.py">
     Order allow,deny
     Allow from all
 </Files>
-# Allow static files
+
+# Allow static assets
 <FilesMatch "\.(css|js|jpg|jpeg|png|gif|svg|woff|woff2|ttf|eot|ico)$">
     Order allow,deny
     Allow from all
 </FilesMatch>
-# Rewrite rules for clean URLs (if needed)
+
+# URL rewriting (optional)
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
-    # Redirect www to non-www (optional)
-    # RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
-    # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
-    
-    # Force HTTPS (optional, uncomment if you have SSL)
+    # Force HTTPS (uncomment if you have SSL)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
-
