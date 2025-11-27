@@ -1,96 +1,41 @@
 """
-HRMS Web Application - Passenger WSGI Entry Point
-
-This file is the entry point for Passenger (cPanel Python hosting).
-It converts the FastAPI ASGI application to a WSGI application
-that Passenger can serve.
-
-Compatible with:
-- Exabytes cPanel hosting
-- General cPanel with Passenger
-- Any hosting provider that supports Passenger for Python
-
-PYTHON VERSION REQUIREMENT: Python 3.9+ (Python 3.11 recommended)
-
-DO NOT MODIFY unless you know what you're doing!
+Passenger WSGI entry point for HRMS (FastAPI)
 """
 
 import sys
 import os
 
-# Check Python version compatibility FIRST
-# Required: Python 3.9+ (packages: supabase, holidays, pandas require 3.9+)
-MIN_PYTHON_VERSION = (3, 9)
-if sys.version_info < MIN_PYTHON_VERSION:
-    error_msg = (
-        f"HRMS requires Python {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}+ "
-        f"but found {sys.version_info.major}.{sys.version_info.minor}. "
-        f"Required packages (supabase, holidays, pandas) are incompatible with older Python versions."
-    )
-    # Log to file for debugging
-    try:
-        log_dir = os.path.join(os.path.dirname(__file__), 'log')
-        os.makedirs(log_dir, exist_ok=True)
-        from datetime import datetime
-        with open(os.path.join(log_dir, 'python_version_error.log'), 'a') as f:
-            f.write(f"[{datetime.now()}] {error_msg}\n")
-    except (OSError, IOError):
-        pass
-    raise RuntimeError(error_msg)
-
-# Ensure the application directory is in the Python path
-# This allows imports to work correctly
+# Ensure app directory added to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Load environment variables from .env file
-# This must be done before importing the application
+# Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:
-    # python-dotenv not installed, environment variables
-    # must be set via cPanel or server configuration
+except:
     pass
 
-# Import the FastAPI application
+# Import FastAPI app
 try:
     from web_app import app
-except ImportError as e:
-    # If imports fail, log the error for debugging
+except Exception as e:
     import traceback
-    error_msg = f"Failed to import web_app: {e}\n{traceback.format_exc()}"
-    
-    # Try to log to file
-    try:
-        log_dir = os.path.join(os.path.dirname(__file__), 'log')
-        os.makedirs(log_dir, exist_ok=True)
-        with open(os.path.join(log_dir, 'passenger_error.log'), 'a') as f:
-            from datetime import datetime
-            f.write(f"\n[{datetime.now()}] {error_msg}\n")
-    except:
-        pass
-    
-    # Re-raise the error so Passenger shows it
+    log_path = os.path.join(os.path.dirname(__file__), "passenger_error.log")
+    with open(log_path, "a") as f:
+        f.write("\n--- Import Error ---\n")
+        f.write(str(e) + "\n")
+        f.write(traceback.format_exc() + "\n")
     raise
 
-# Convert FastAPI ASGI application to WSGI
-# Passenger expects a WSGI application, but FastAPI is ASGI
-# The a2wsgi library provides the correct ASGI → WSGI bridge
+# Convert ASGI → WSGI (FastAPI → Passenger)
 try:
-    from a2wsgi import ASGIMiddleware
-    application = ASGIMiddleware(app)
-except ImportError as e:
-    raise ImportError(
-        "a2wsgi is required for Passenger deployment. "
-        "Install it with: pip install a2wsgi"
+    from a2wsgi import ASGIAdapter
+    application = ASGIAdapter(app)
+except Exception as e:
+    raise RuntimeError(
+        "a2wsgi failed — ensure a2wsgi is installed in requirements.txt"
     ) from e
 
-# For debugging: print successful initialization
-# This will appear in Passenger logs
-# Set DEBUG=1 or DEBUG=true in environment to enable
-debug_enabled = os.environ.get('DEBUG', '').lower() in ('1', 'true')
-if debug_enabled:
-    print("✓ HRMS WSGI application initialized successfully")
-    print(f"✓ Python path: {sys.path[0]}")
-    print(f"✓ Application type: {type(application)}")
-    print(f"✓ FastAPI app: {app.title}")
+# Optional debug
+if os.environ.get("DEBUG") == "1":
+    print("Passenger WSGI initialized")
