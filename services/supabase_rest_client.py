@@ -44,6 +44,7 @@ class QueryBuilder:
         self._filters: List[str] = []
         self._order_column: Optional[str] = None
         self._order_desc: bool = False
+        self._order_nullslast: bool = False
         self._limit_value: Optional[int] = None
         self._offset_value: Optional[int] = None
         self._body: Optional[Dict] = None
@@ -51,11 +52,24 @@ class QueryBuilder:
         self._prefer_headers: List[str] = []
         self._range_start: Optional[int] = None
         self._range_end: Optional[int] = None
+        self._count_option: Optional[str] = None  # 'exact', 'planned', 'estimated'
     
-    def select(self, columns: str = '*') -> 'QueryBuilder':
-        """Set columns to select."""
+    def select(self, columns: str = '*', count: Optional[str] = None) -> 'QueryBuilder':
+        """
+        Set columns to select.
+        
+        Args:
+            columns: Comma-separated column names or '*' for all columns
+            count: Count option - 'exact', 'planned', or 'estimated'. 
+                   When provided, the response will include a count of matching rows.
+        
+        Returns:
+            QueryBuilder for method chaining
+        """
         self._select_columns = columns
         self._method = 'GET'
+        if count in ('exact', 'planned', 'estimated'):
+            self._count_option = count
         return self
     
     def insert(self, data: Union[Dict, List[Dict]]) -> 'QueryBuilder':
@@ -163,11 +177,68 @@ class QueryBuilder:
         self._filters.append(f"{column}=not.{operator}.{self._encode_value(value)}")
         return self
     
+    def filter(self, column: str, operator: str, value: Any) -> 'QueryBuilder':
+        """
+        Apply a filter using any PostgREST operator.
+        
+        Args:
+            column: Column name to filter on
+            operator: PostgREST operator (e.g., 'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike', 'is', 'in', 'cs', 'cd', 'ov')
+            value: Value to filter by
+        
+        Returns:
+            QueryBuilder for method chaining
+        """
+        # Handle special value types
+        if operator == 'in' and isinstance(value, (list, tuple)):
+            encoded = ','.join(str(v) for v in value)
+            self._filters.append(f"{column}=in.({encoded})")
+        elif operator == 'is':
+            self._filters.append(f"{column}=is.{str(value).lower()}")
+        else:
+            self._filters.append(f"{column}={operator}.{self._encode_value(value)}")
+        return self
+    
+    def match(self, query: Dict[str, Any]) -> 'QueryBuilder':
+        """
+        Match multiple columns with equality.
+        
+        This is a convenience method for filtering by multiple column values at once.
+        
+        Args:
+            query: Dictionary of column-value pairs to match
+        
+        Returns:
+            QueryBuilder for method chaining
+        
+        Example:
+            client.table('users').match({'status': 'active', 'role': 'admin'}).execute()
+        """
+        for column, value in query.items():
+            self.eq(column, value)
+        return self
+    
     # Ordering and pagination
-    def order(self, column: str, desc: bool = False, nullsfirst: bool = False) -> 'QueryBuilder':
-        """Order results by column."""
+    def order(self, column: str, desc: bool = False, nullsfirst: bool = False, nullslast: bool = False) -> 'QueryBuilder':
+        """
+        Order results by column.
+        
+        Args:
+            column: Column name to order by
+            desc: If True, order descending; otherwise ascending
+            nullsfirst: If True, put NULL values first
+            nullslast: If True, put NULL values last (takes precedence over nullsfirst if both are True)
+        
+        Returns:
+            QueryBuilder for method chaining
+        """
         direction = 'desc' if desc else 'asc'
-        nulls = '.nullsfirst' if nullsfirst else ''
+        if nullslast:
+            nulls = '.nullslast'
+        elif nullsfirst:
+            nulls = '.nullsfirst'
+        else:
+            nulls = ''
         self._order_column = f"{column}.{direction}{nulls}"
         return self
     
@@ -237,16 +308,18 @@ class QueryBuilder:
         """Build headers for the request."""
         headers = self._client._get_headers()
         
-        if self._prefer_headers:
-            headers['Prefer'] = ', '.join(self._prefer_headers)
+        # Collect all Prefer header values
+        prefer_values = list(self._prefer_headers)
+        
+        # Add count option if specified
+        if self._count_option:
+            prefer_values.append(f'count={self._count_option}')
         
         if self._upsert_conflict:
-            # Add on-conflict header for upsert
-            on_conflict_value = headers.get('Prefer', '')
-            if on_conflict_value:
-                on_conflict_value += ', '
-            on_conflict_value += f'on_conflict={self._upsert_conflict}'
-            headers['Prefer'] = on_conflict_value
+            prefer_values.append(f'on_conflict={self._upsert_conflict}')
+        
+        if prefer_values:
+            headers['Prefer'] = ', '.join(prefer_values)
         
         if self._range_start is not None and self._range_end is not None:
             headers['Range'] = f'{self._range_start}-{self._range_end}'
@@ -454,6 +527,202 @@ class StorageBucket:
             
         except requests.RequestException as e:
             raise Exception(f"Storage download request failed: {str(e)}")
+    
+    def list(self, path: str = '', limit: int = 100, offset: int = 0, 
+             sort_by: Optional[Dict[str, str]] = None, search: Optional[str] = None) -> List[Dict]:
+        """
+        List files in a storage bucket directory.
+        
+        Args:
+            path: Path prefix to list files from (empty string for root)
+            limit: Maximum number of files to return (default 100)
+            offset: Offset for pagination (default 0)
+            sort_by: Optional sort configuration, e.g., {'column': 'name', 'order': 'asc'}
+            search: Optional search term to filter file names
+        
+        Returns:
+            List of file/folder metadata dictionaries
+        
+        Example:
+            files = client.storage.from_('bucket').list('folder/', limit=50)
+        """
+        url = f"{self._client.url}/storage/v1/object/list/{self._bucket_name}"
+        
+        headers = {
+            'apikey': self._client.key,
+            'Authorization': f'Bearer {self._client.key}',
+            'Content-Type': 'application/json',
+        }
+        
+        body: Dict[str, Any] = {
+            'prefix': path,
+            'limit': limit,
+            'offset': offset,
+        }
+        
+        if sort_by:
+            body['sortBy'] = sort_by
+        
+        if search:
+            body['search'] = search
+        
+        try:
+            response = requests.post(url, headers=headers, json=body, timeout=30)
+            
+            if response.status_code >= 400:
+                error_msg = response.text
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('message', error_msg)
+                except Exception:
+                    pass
+                raise Exception(f"Storage list failed: {error_msg}")
+            
+            try:
+                return response.json() if response.text else []
+            except json.JSONDecodeError:
+                return []
+            
+        except requests.RequestException as e:
+            raise Exception(f"Storage list request failed: {str(e)}")
+    
+    def move(self, from_path: str, to_path: str) -> Dict:
+        """
+        Move a file within the storage bucket.
+        
+        Args:
+            from_path: Current path of the file
+            to_path: New path for the file
+        
+        Returns:
+            Response dictionary with move result
+        """
+        url = f"{self._client.url}/storage/v1/object/move"
+        
+        headers = {
+            'apikey': self._client.key,
+            'Authorization': f'Bearer {self._client.key}',
+            'Content-Type': 'application/json',
+        }
+        
+        body = {
+            'bucketId': self._bucket_name,
+            'sourceKey': from_path,
+            'destinationKey': to_path,
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=body, timeout=30)
+            
+            if response.status_code >= 400:
+                error_msg = response.text
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('message', error_msg)
+                except Exception:
+                    pass
+                raise Exception(f"Storage move failed: {error_msg}")
+            
+            try:
+                return response.json() if response.text else {}
+            except json.JSONDecodeError:
+                return {}
+            
+        except requests.RequestException as e:
+            raise Exception(f"Storage move request failed: {str(e)}")
+    
+    def copy(self, from_path: str, to_path: str) -> Dict:
+        """
+        Copy a file within the storage bucket.
+        
+        Args:
+            from_path: Source path of the file
+            to_path: Destination path for the copy
+        
+        Returns:
+            Response dictionary with copy result
+        """
+        url = f"{self._client.url}/storage/v1/object/copy"
+        
+        headers = {
+            'apikey': self._client.key,
+            'Authorization': f'Bearer {self._client.key}',
+            'Content-Type': 'application/json',
+        }
+        
+        body = {
+            'bucketId': self._bucket_name,
+            'sourceKey': from_path,
+            'destinationKey': to_path,
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=body, timeout=30)
+            
+            if response.status_code >= 400:
+                error_msg = response.text
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('message', error_msg)
+                except Exception:
+                    pass
+                raise Exception(f"Storage copy failed: {error_msg}")
+            
+            try:
+                return response.json() if response.text else {}
+            except json.JSONDecodeError:
+                return {}
+            
+        except requests.RequestException as e:
+            raise Exception(f"Storage copy request failed: {str(e)}")
+    
+    def create_signed_url(self, path: str, expires_in: int = 3600) -> str:
+        """
+        Create a signed URL for temporary access to a private file.
+        
+        Args:
+            path: Path to the file in the bucket
+            expires_in: Number of seconds until the URL expires (default 3600 = 1 hour)
+        
+        Returns:
+            Signed URL string
+        """
+        url = f"{self._client.url}/storage/v1/object/sign/{self._bucket_name}/{path}"
+        
+        headers = {
+            'apikey': self._client.key,
+            'Authorization': f'Bearer {self._client.key}',
+            'Content-Type': 'application/json',
+        }
+        
+        body = {
+            'expiresIn': expires_in,
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=body, timeout=30)
+            
+            if response.status_code >= 400:
+                error_msg = response.text
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('message', error_msg)
+                except Exception:
+                    pass
+                raise Exception(f"Storage create_signed_url failed: {error_msg}")
+            
+            try:
+                data = response.json() if response.text else {}
+                signed_url = data.get('signedURL', '')
+                if signed_url and not signed_url.startswith('http'):
+                    # If it's a relative URL, prepend the base URL
+                    signed_url = f"{self._client.url}{signed_url}"
+                return signed_url
+            except json.JSONDecodeError:
+                return ''
+            
+        except requests.RequestException as e:
+            raise Exception(f"Storage create_signed_url request failed: {str(e)}")
 
 
 class StorageClient:
@@ -538,6 +807,50 @@ class SupabaseRestClient:
             QueryBuilder instance
         """
         return QueryBuilder(self, table_name)
+    
+    def rpc(self, function_name: str, params: Optional[Dict] = None) -> SupabaseResponse:
+        """
+        Call a Postgres function (RPC).
+        
+        Args:
+            function_name: Name of the Postgres function to call
+            params: Optional dictionary of parameters to pass to the function
+        
+        Returns:
+            SupabaseResponse with the function result
+        
+        Example:
+            result = client.rpc('get_user_count', {'department': 'engineering'})
+        """
+        url = f"{self.url}/rest/v1/rpc/{function_name}"
+        headers = self._get_headers()
+        
+        try:
+            if params:
+                response = requests.post(url, headers=headers, json=params, timeout=30)
+            else:
+                response = requests.post(url, headers=headers, json={}, timeout=30)
+            
+            if response.status_code >= 400:
+                error_data = None
+                try:
+                    error_data = response.json()
+                except Exception:
+                    error_data = {'message': response.text}
+                
+                error_msg = error_data.get('message', '') if isinstance(error_data, dict) else str(error_data)
+                code = error_data.get('code', '') if isinstance(error_data, dict) else ''
+                raise Exception(f"RPC error ({response.status_code}): {code} - {error_msg}")
+            
+            try:
+                data = response.json() if response.text else None
+            except json.JSONDecodeError:
+                data = None
+            
+            return SupabaseResponse(data=data)
+            
+        except requests.RequestException as e:
+            raise Exception(f"RPC request failed: {str(e)}")
 
 
 # Type alias for compatibility with code that imports Client type

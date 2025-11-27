@@ -40,6 +40,11 @@ class TestSupabaseRestClient(unittest.TestCase):
         """Test that table() returns a QueryBuilder."""
         qb = self.client.table('test_table')
         self.assertIsInstance(qb, QueryBuilder)
+    
+    def test_client_has_rpc(self):
+        """Test that client has rpc method."""
+        self.assertTrue(hasattr(self.client, 'rpc'))
+        self.assertTrue(callable(self.client.rpc))
 
 
 class TestQueryBuilder(unittest.TestCase):
@@ -57,6 +62,33 @@ class TestQueryBuilder(unittest.TestCase):
         """Test that select() returns self for chaining."""
         result = self.qb.select('*')
         self.assertIs(result, self.qb)
+
+    def test_select_with_count(self):
+        """Test that select() with count parameter sets count option."""
+        self.qb.select('id', count='exact')
+        self.assertEqual(self.qb._count_option, 'exact')
+    
+    def test_select_count_in_headers(self):
+        """Test that count option is included in Prefer header."""
+        self.qb.select('id', count='exact')
+        headers = self.qb._build_headers()
+        self.assertIn('Prefer', headers)
+        self.assertIn('count=exact', headers['Prefer'])
+    
+    def test_select_count_planned(self):
+        """Test that count='planned' works."""
+        self.qb.select('*', count='planned')
+        self.assertEqual(self.qb._count_option, 'planned')
+    
+    def test_select_count_estimated(self):
+        """Test that count='estimated' works."""
+        self.qb.select('*', count='estimated')
+        self.assertEqual(self.qb._count_option, 'estimated')
+    
+    def test_select_count_invalid_ignored(self):
+        """Test that invalid count values are ignored."""
+        self.qb.select('*', count='invalid')
+        self.assertIsNone(self.qb._count_option)
 
     def test_eq_filter(self):
         """Test that eq() adds filter and returns self."""
@@ -100,6 +132,21 @@ class TestQueryBuilder(unittest.TestCase):
         """Test order() descending."""
         self.qb.order('created_at', desc=True)
         self.assertEqual(self.qb._order_column, 'created_at.desc')
+    
+    def test_order_nullsfirst(self):
+        """Test order() with nullsfirst."""
+        self.qb.order('created_at', desc=True, nullsfirst=True)
+        self.assertEqual(self.qb._order_column, 'created_at.desc.nullsfirst')
+    
+    def test_order_nullslast(self):
+        """Test order() with nullslast."""
+        self.qb.order('created_at', desc=False, nullslast=True)
+        self.assertEqual(self.qb._order_column, 'created_at.asc.nullslast')
+    
+    def test_order_nullslast_takes_precedence(self):
+        """Test that nullslast takes precedence over nullsfirst when both are True."""
+        self.qb.order('created_at', nullsfirst=True, nullslast=True)
+        self.assertEqual(self.qb._order_column, 'created_at.asc.nullslast')
 
     def test_limit(self):
         """Test limit()."""
@@ -125,6 +172,36 @@ class TestQueryBuilder(unittest.TestCase):
         self.assertIn('apikey', headers)
         self.assertIn('Authorization', headers)
         self.assertEqual(headers['Content-Type'], 'application/json')
+    
+    def test_filter_method(self):
+        """Test filter() method with various operators."""
+        qb = self.client.table('employees')
+        qb.filter('name', 'eq', 'John')
+        self.assertIn('name=eq.John', qb._filters)
+    
+    def test_filter_with_in_operator(self):
+        """Test filter() with 'in' operator and list value."""
+        qb = self.client.table('employees')
+        qb.filter('id', 'in', [1, 2, 3])
+        self.assertIn('id=in.(1,2,3)', qb._filters)
+    
+    def test_filter_with_is_operator(self):
+        """Test filter() with 'is' operator."""
+        qb = self.client.table('employees')
+        qb.filter('deleted_at', 'is', None)
+        self.assertIn('deleted_at=is.none', qb._filters)
+    
+    def test_match_method(self):
+        """Test match() method with multiple column-value pairs."""
+        qb = self.client.table('employees')
+        qb.match({'status': 'active', 'department': 'engineering'})
+        self.assertIn('status=eq.active', qb._filters)
+        self.assertIn('department=eq.engineering', qb._filters)
+    
+    def test_match_returns_self(self):
+        """Test that match() returns self for chaining."""
+        result = self.qb.match({'status': 'active'})
+        self.assertIs(result, self.qb)
 
 
 class TestSupabaseResponse(unittest.TestCase):
@@ -156,6 +233,11 @@ class TestSupabaseResponse(unittest.TestCase):
         """Test bool conversion with error."""
         resp = SupabaseResponse(error={'message': 'Error'})
         self.assertFalse(resp)  # Error means falsy
+    
+    def test_response_with_count(self):
+        """Test response with count."""
+        resp = SupabaseResponse(data=[{'id': 1}], count=100)
+        self.assertEqual(resp.count, 100)
 
 
 class TestStorageClient(unittest.TestCase):
@@ -181,6 +263,36 @@ class TestStorageClient(unittest.TestCase):
         url = bucket.get_public_url('path/to/file.jpg')
         expected = 'https://example.supabase.co/storage/v1/object/public/my-bucket/path/to/file.jpg'
         self.assertEqual(url, expected)
+    
+    def test_bucket_has_list_method(self):
+        """Test that StorageBucket has list method."""
+        bucket = self.client.storage.from_('test-bucket')
+        self.assertTrue(hasattr(bucket, 'list'))
+        self.assertTrue(callable(bucket.list))
+    
+    def test_bucket_has_move_method(self):
+        """Test that StorageBucket has move method."""
+        bucket = self.client.storage.from_('test-bucket')
+        self.assertTrue(hasattr(bucket, 'move'))
+        self.assertTrue(callable(bucket.move))
+    
+    def test_bucket_has_copy_method(self):
+        """Test that StorageBucket has copy method."""
+        bucket = self.client.storage.from_('test-bucket')
+        self.assertTrue(hasattr(bucket, 'copy'))
+        self.assertTrue(callable(bucket.copy))
+    
+    def test_bucket_has_create_signed_url_method(self):
+        """Test that StorageBucket has create_signed_url method."""
+        bucket = self.client.storage.from_('test-bucket')
+        self.assertTrue(hasattr(bucket, 'create_signed_url'))
+        self.assertTrue(callable(bucket.create_signed_url))
+    
+    def test_bucket_has_download_method(self):
+        """Test that StorageBucket has download method."""
+        bucket = self.client.storage.from_('test-bucket')
+        self.assertTrue(hasattr(bucket, 'download'))
+        self.assertTrue(callable(bucket.download))
 
 
 if __name__ == '__main__':
